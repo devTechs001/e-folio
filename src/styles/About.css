@@ -1,0 +1,289 @@
+
+/* About Section */
+.about {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 8rem 9% 3rem; /* Increased top padding to account for header */
+  background: var(--bgColor);
+  gap: 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blob Effect */
+.about::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: var(--mainColor);
+  border-radius: 50%;
+  filter: blur(150px);
+  opacity: 0.2;
+  top: -100px;
+  right: -100px;
+  animation: blobFloat 8s infinite alternate;
+}
+
+.about::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: var(--mainColor);
+  border-radius: 50%;
+  filter: blur(150px);
+  opacity: 0.2;
+  bottom: -50px;
+  left: -50px;
+  animation: blobFloat 10s infinite alternate-reverse;
+}
+
+@keyframes blobFloat {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  100% {
+    transform: translate(-30px, 30px) scale(0.9);
+  }
+}
+
+.about-content {
+  max-width: 60rem;
+  position: relative;
+  z-index: 1;
+}
+
+.about-content h3 {
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.about-content h3 span {
+  color: var(--mainColor);
+}
+
+.about-content h1 {
+  font-size: 5.6rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 2rem 0;
+}
+
+.about-content .multiple-text {
+  position: relative;
+  color: var(--mainColor);
+  font-weight: 600;
+}
+
+.about-content p {
+  font-size: 1.6rem;
+  margin: 2rem 0 3rem;
+  line-height: 1.7;
+  color: var(--textColor);
+}
+
+.about-content p:last-of-type {
+  margin-bottom: 4rem;
+}
+
+/* Social Media Icons Section */
+.social-media {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.social-media a {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  font-size: 2rem;
+  color: var(--bgColor);
+  transition: 0.5s ease;
+}
+
+/* Social Media Icon Colors - Matching your About.jsx */
+.social-media a:nth-child(1) {
+  background: #1877f2; /* Facebook */
+}
+
+.social-media a:nth-child(2) {
+  background: #E4405F; /* Instagram */
+}
+
+.social-media a:nth-child(3) {
+  background: #171515; /* GitHub */
+}
+
+.social-media a:nth-child(4) {
+  background: #26A5E4; /* Telegram */
+}
+
+.social-media a:nth-child(5) {
+  background: #25D366; /* WhatsApp */
+}
+
+.social-media a:hover {
+  transform: scale(1.1) translateY(-5px);
+  box-shadow: 0 0 1rem currentColor;
+}
+
+.btn {
+  display: inline-flex;
+  padding: 1.2rem 2.8rem;
+  background: var(--mainColor);
+  border-radius: 4rem;
+  font-size: 1.6rem;
+  color: var(--bgColor);
+  letter-spacing: .1rem;
+  font-weight: 600;
+  transition: .5s ease;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn:hover {
+  box-shadow: 0 0 1rem var(--mainColor);
+  transform: translateY(-3px);
+}
+
+/* Add position relative and z-index to ensure image stays above the blob */
+.about-image {
+  position: relative;
+  width: 35rem;
+  height: 35rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+}
+
+.about-image::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--mainColor);
+  filter: blur(30px);
+  opacity: 0.2;
+  animation: pulseGlow 3s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+}
+
+.about-image img {
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  border: .2rem solid var(--mainColor);
+  object-fit: cover;
+}
+
+.about-image .circle-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(0);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border-top: .2rem solid var(--bgColor);
+  border-bottom: .2rem solid var(--bgColor);
+  border-left: .2rem solid var(--mainColor);
+  border-right: .2rem solid var(--mainColor);
+  animation: aboutSpinner 8s linear infinite;
+}
+
+@keyframes aboutSpinner {
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .about {
+    padding: 0 4%;
+  }
+}
+
+@media (max-width: 768px) {
+  .about {
+    flex-direction: column-reverse;
+    text-align: center;
+    padding: 8rem 4% 2rem; /* Adjusted padding */
+  }
+
+  .about-content h1 {
+    font-size: 4rem;
+  }
+
+  .about-content h3 {
+    font-size: 2.4rem;
+  }
+
+  .social-media {
+    justify-content: center;
+  }
+
+  .about-image {
+    width: 28rem;
+    height: 28rem;
+    margin: 4rem auto 0;
+  }
+
+  .about::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .about::after {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about {
+    padding: 7rem 4% 2rem; /* Further adjusted for smaller screens */
+  }
+
+  .about-content h1 {
+    font-size: 3.2rem;
+  }
+
+  .about-content h3 {
+    font-size: 2rem;
+  }
+
+  .about-image {
+    width: 22rem;
+    height: 22rem;
+  }
+
+  .about::before,
+  .about::after {
+    width: 200px;
+    height: 200px;
+  }
+}

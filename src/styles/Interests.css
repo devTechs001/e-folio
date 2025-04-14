@@ -1,0 +1,206 @@
+/* Interests Section */
+.interests {
+  background: var(--sbgColor);
+  padding: 5rem 2rem;
+  color: var(--textColor);
+  position: relative;
+}
+
+/* Title Styling */
+.title-container {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+}
+
+.title {
+  font-size: 3.5rem;
+  color: var(--textColor);
+  display: inline-flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.title span {
+  color: var(--mainColor);
+  position: relative;
+}
+
+.star-left, .star-right {
+  color: var(--mainColor);
+  font-size: 2.5rem;
+  animation: starPulse 2s infinite;
+}
+
+.star-left {
+  animation-delay: 0.5s;
+}
+
+.title-underline {
+  width: 150px;
+  height: 4px;
+  background: var(--mainColor);
+  margin: 1rem auto;
+  position: relative;
+  border-radius: 2px;
+}
+
+.title-underline::before,
+.title-underline::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: var(--mainColor);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.title-underline::before {
+  left: -20px;
+}
+
+.title-underline::after {
+  right: -20px;
+}
+
+/* Interests Grid */
+.interests-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.interest-box {
+  background: var(--bgColor);
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  transition: all 0.4s ease;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.interest-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(0, 238, 255, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: 0.6s;
+}
+
+.interest-box:hover::before {
+  transform: translateX(100%);
+}
+
+.interest-box:hover {
+  transform: translateY(-10px);
+  border-color: var(--mainColor);
+  box-shadow: 0 0 20px rgba(0, 238, 255, 0.2);
+}
+
+/* Icon Styling */
+.icon-3d {
+  font-size: 3.5rem;
+  color: var(--mainColor);
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.interest-box:hover .icon-3d {
+  transform: scale(1.2) rotate(360deg);
+  text-shadow: 0 0 15px var(--mainColor);
+}
+
+.interest-box h3 {
+  font-size: 2rem;
+  color: var(--mainColor);
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.interest-box p {
+  font-size: 1.4rem;
+  color: var(--textColor);
+  line-height: 1.6;
+}
+
+/* Animations */
+@keyframes starPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .title {
+    font-size: 3rem;
+    gap: 1.5rem;
+  }
+
+  .interests-container {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .interest-box {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .interests {
+    padding: 3rem 1rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    gap: 1rem;
+  }
+
+  .star-left, .star-right {
+    font-size: 2rem;
+  }
+
+  .interests-container {
+    grid-template-columns: 1fr;
+  }
+
+  .interest-box h3 {
+    font-size: 1.8rem;
+  }
+
+  .interest-box p {
+    font-size: 1.2rem;
+  }
+}
+
+/* Dark mode considerations */
+@media (prefers-color-scheme: dark) {
+  .interest-box {
+    background: var(--bgColor);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .interest-box,
+  .icon-3d,
+  .star-left,
+  .star-right {
+    animation: none;
+    transition: none;
+  }
+}
+

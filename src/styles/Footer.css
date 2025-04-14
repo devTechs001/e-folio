@@ -1,0 +1,222 @@
+/* Footer Section */
+.footer {
+  position: relative;
+  background: var(--bgColor);
+  padding: 3rem 2rem;
+  color: var(--textColor);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  align-items: center;
+}
+
+/* Social Dots Section */
+.footer-social {
+  display: flex;
+  gap: 2rem;
+  justify-content: flex-start;
+}
+
+.dot {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+}
+
+/* Dot colors and animations for social links */
+.dot-github {
+  background: #333;
+  animation: pulseGithub 2s infinite;
+}
+
+.dot-linkedin {
+  background: #0077b5;
+  animation: pulseLinkedin 2s infinite;
+}
+
+.dot-instagram {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  animation: pulseInstagram 2s infinite;
+}
+
+.dot-whatsapp {
+  background: #25d366;
+  animation: pulseWhatsapp 2s infinite;
+}
+
+.dot-heart {
+  background: #ff4d4d;
+  animation: pulseHeart 1.5s infinite;
+  margin: 0 0.5rem;
+}
+
+/* Pulse animations for each dot */
+@keyframes pulseGithub {
+  0%, 100% { transform: scale(1); background: #333; }
+  50% { transform: scale(1.3); background: #666; }
+}
+
+@keyframes pulseLinkedin {
+  0%, 100% { transform: scale(1); background: #0077b5; }
+  50% { transform: scale(1.3); background: #00a0dc; }
+}
+
+@keyframes pulseInstagram {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); filter: brightness(1.2); }
+}
+
+@keyframes pulseWhatsapp {
+  0%, 100% { transform: scale(1); background: #25d366; }
+  50% { transform: scale(1.3); background: #128c7e; }
+}
+
+@keyframes pulseHeart {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.8; }
+}
+
+/* Footer Text Section */
+.footer-text {
+  text-align: center;
+}
+
+.footer-text p {
+  font-size: 1.6rem;
+  margin: 0.5rem 0;
+  color: var(--textColor);
+}
+
+/* Footer Links Section */
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  justify-content: flex-end;
+}
+
+.footer-links a {
+  color: var(--textColor);
+  font-size: 1.6rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.footer-links a:hover {
+  color: var(--mainColor);
+}
+
+.footer-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--mainColor);
+  transition: width 0.3s ease;
+}
+
+.footer-links a:hover::after {
+  width: 100%;
+}
+
+/* Scroll to Top Dots */
+.scroll-dots {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+  z-index: 999;
+  padding: 1rem;
+  border-radius: 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+.dot-scroll {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--mainColor);
+  animation: scrollDots 1.5s infinite;
+}
+
+.dot-scroll:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot-scroll:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes scrollDots {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* Hover effects for social dots */
+.footer-social a:hover .dot {
+  transform: scale(1.5);
+  transition: transform 0.3s ease;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 3rem;
+  }
+
+  .footer-social,
+  .footer-links {
+    justify-content: center;
+  }
+
+  .footer-text p {
+    font-size: 1.4rem;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+  }
+
+  .footer-links a {
+    font-size: 1.4rem;
+  }
+
+  .dot {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .footer {
+    padding: 2rem 1rem;
+  }
+
+  .footer-social {
+    gap: 1.5rem;
+  }
+
+  .scroll-dots {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .dot {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}

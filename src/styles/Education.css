@@ -1,0 +1,162 @@
+
+/* Education Section */
+.education {
+  background: var(--bgColor);
+  padding: 5rem 9% 2rem;
+  min-height: 100vh;
+}
+
+.education .heading {
+  text-align: center;
+  font-size: 4.5rem;
+  margin-bottom: 5rem;
+  color: var(--textColor);
+}
+
+.education .heading span {
+  color: var(--mainColor);
+}
+
+.education-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  padding: 0 5%;
+}
+
+.education-box {
+  position: relative;
+  background: var(--sbgColor);
+  padding: 3rem 2rem;
+  border-radius: 2rem;
+  text-align: center;
+  border: .2rem solid var(--sbgColor);
+  transition: .5s ease;
+  opacity: 0;
+  animation: fadeIn 1s ease-in forwards;
+}
+
+.education-box:nth-child(1) { animation-delay: 0.2s; }
+.education-box:nth-child(2) { animation-delay: 0.4s; }
+.education-box:nth-child(3) { animation-delay: 0.6s; }
+.education-box:nth-child(4) { animation-delay: 0.8s; }
+
+.education-box:hover {
+  border-color: var(--mainColor);
+  transform: scale(1.02);
+}
+
+.education-box i {
+  font-size: 5rem;
+  color: var(--mainColor);
+  margin-bottom: 1.5rem;
+  transition: .5s ease;
+}
+
+.education-box:hover i {
+  color: var(--textColor);
+}
+
+.education-year {
+  font-size: 1.6rem;
+  color: var(--mainColor);
+  font-weight: 600;
+  margin-bottom: 1rem;
+  background: rgba(0, 238, 255, 0.1);
+  padding: .5rem 1rem;
+  border-radius: 1rem;
+  display: inline-block;
+}
+
+.education-box h3 {
+  font-size: 2.2rem;
+  color: var(--textColor);
+  margin-bottom: 1rem;
+  transition: .5s ease;
+}
+
+.education-box:hover h3 {
+  color: var(--mainColor);
+}
+
+.education-box p {
+  font-size: 1.4rem;
+  color: var(--textColor);
+  margin: .5rem 0;
+}
+
+.education-details {
+  margin-top: 1.5rem;
+  font-size: 1.3rem;
+  color: var(--textColor);
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .education {
+    padding: 5rem 3%;
+  }
+}
+
+@media (max-width: 991px) {
+  .education .heading {
+    font-size: 4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .education .heading {
+    font-size: 3.5rem;
+  }
+  
+  .education-box {
+    padding: 2rem 1.5rem;
+  }
+  
+  .education-box h3 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 450px) {
+  .education .heading {
+    font-size: 3rem;
+  }
+  
+  .education-box {
+    padding: 2rem 1rem;
+  }
+  
+  .education-box h3 {
+    font-size: 1.8rem;
+  }
+}
+
+/* Dark mode considerations */
+@media (prefers-color-scheme: dark) {
+  .education-box {
+    box-shadow: 0 0 1rem rgba(0, 238, 255, 0.1);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .education-box {
+    animation: none;
+    opacity: 1;
+  }
+}
+

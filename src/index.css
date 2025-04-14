@@ -1,0 +1,343 @@
+@import url(https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap);
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-decoration: none;
+  border: none;
+  outline: none;
+  scroll-behavior: smooth;
+  font-family: 'Poppins', sans-serif;
+}
+
+:root {
+  --bgColor: #1f242d;
+  --sbgColor: #323946;
+  --textColor: #fff;
+  --mainColor: #0ef;
+  --alt-color: #1a2b3c;
+  --ol-color: #0e1022;
+}
+
+html {
+  font-size: 62.5%;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* General Text Styling */
+body {
+  font-family: 'Poppins', sans-serif;
+  /* Ensure consistent font across the site */
+  line-height: 1.6;
+  /* Improve readability */
+  color: var(--textColor);
+  /* Default text color */
+  background: var(--bgColor);
+  overflow-x: hidden;
+}
+
+span {
+  color: var(--mainColor);
+}
+
+.title {
+  text-align: center;
+  font-size: 3rem;
+  /* Increased font size for better emphasis */
+  font-weight: bold;
+  /* Added bold styling */
+  color: var(--mainColor);
+  /* Use main color for consistency */
+  margin-bottom: 2rem;
+  /* Added spacing below the title */
+  text-transform: uppercase;
+  /* Make the title uppercase */
+  text-decoration: underline;
+  text-underline-offset: 8px;
+  text-decoration-thickness: 4px;
+}
+
+/* Button Styling */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  background: var(--mainColor);
+  color: var(--textColor);
+  border-radius: 4rem;
+  box-shadow: 0 0 1rem var(--mainColor);
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.5s ease;
+}
+
+.btn:hover {
+  background: var(--mainColor);
+  color: var(--bgColor);
+  box-shadow: none;
+  transform: translateY(-2px);
+}
+
+/* Mobile Menu Styles */
+@media screen and (max-width: 768px) {
+  .header {
+    padding: 2rem 3%;
+  }
+
+  .header .menu-icon {
+    display: block;
+  }
+
+  .header .navbar {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    padding: 1rem 3%;
+    background: var(--bgColor);
+    border-top: .1rem solid rgba(0, 0, 0, .2);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header .navbar.active {
+    display: flex;
+  }
+
+  .header .navbar a {
+    display: block;
+    font-size: 2rem;
+    margin: 1rem 0;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .header {
+    padding: 2rem 2%;
+  }
+
+  .header .navbar {
+    padding: 1rem 2%;
+  }
+
+  .header .navbar a {
+    font-size: 1.8rem;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .header .navbar a {
+    font-size: 1.6rem;
+  }
+}
+
+/* Landscape mode adjustments */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .header {
+    padding: 1rem 3%;
+  }
+
+  .home-content h3 {
+    font-size: 2rem;
+  }
+
+  .home-content h1 {
+    font-size: 4rem;
+  }
+
+  .home-content p {
+    font-size: 1.4rem;
+  }
+
+  .about-content h2 {
+    font-size: 2.5rem;
+  }
+
+  .about-content h3 {
+    font-size: 2rem;
+  }
+
+  .about-content p {
+    font-size: 1.4rem;
+  }
+
+  .services h2,
+  .portfolio h2,
+  .contact h2 {
+    font-size: 2.5rem;
+  }
+}
+
+/* Fix for iOS Safari 100vh issue */
+@supports (-webkit-touch-callout: none) {
+  .home {
+    min-height: -webkit-fill-available;
+  }
+}
+
+
+
+/* Landscape mode adjustments */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .about {
+    padding: 1.5rem;
+  }
+
+  .about-content {
+    margin-bottom: 1rem;
+  }
+
+  .about-image {
+    width: 20rem;
+    height: 20rem;
+  }
+
+  .about-image::before {
+    width: 22rem;
+    height: 22rem;
+  }
+
+  .about-image::after {
+    width: 24rem;
+    height: 24rem;
+  }
+}
+
+
+.theme-toggle {
+    font-size: 2.6rem;
+    color: var(--text-color);
+    cursor: pointer;
+    background: none;
+}
+
+
+.multiple-text {
+  color: var(--mainColor);
+  display: inline-block;
+  min-width: 200px;
+  min-height: 1em;
+  border: 1px solid transparent;
+  /* This helps visualize the element */
+}
+
+@media screen and (max-width: 768px) {
+  .about {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .about-content {
+    padding-right: 0;
+    max-width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  .about-image {
+    width: 28rem;
+    height: 28rem;
+    margin: 0 auto;
+  }
+
+  .about-image::before {
+    width: 32rem;
+    height: 32rem;
+    opacity: 0.6;
+  }
+
+  .about-image::after {
+    width: 34rem;
+    height: 34rem;
+    opacity: 0.4;
+    filter: blur(12px);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .about {
+    padding: 1.5rem;
+  }
+
+  .about-content {
+    margin-bottom: 1.5rem;
+  }
+
+  .about-image {
+    width: 22rem;
+    height: 22rem;
+  }
+
+  .about-image::before {
+    width: 24rem;
+    height: 24rem;
+    opacity: 0.5;
+  }
+
+  .about-image::after {
+    width: 26rem;
+    height: 26rem;
+    opacity: 0.3;
+    filter: blur(10px);
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .about {
+    padding: 1rem;
+  }
+
+  .about-image {
+    width: 18rem;
+    height: 18rem;
+  }
+
+  .about-image::before {
+    width: 20rem;
+    height: 20rem;
+    opacity: 0.4;
+  }
+
+  .about-image::after {
+    width: 22rem;
+    height: 22rem;
+    opacity: 0.2;
+    filter: blur(8px);
+  }
+}
+
+
+/* Media Queries */
+@media screen and (max-width: 992px) {
+
+  .skills-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .container1,
+  .container2 {
+    width: 100%;
+    margin-left: 0;
+    padding: 40px 50px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .bar .info span {
+    font-size: 15px;
+  }
+
+  .progress-line span::after {
+    font-size: 13px;
+  }
+}
+
+
