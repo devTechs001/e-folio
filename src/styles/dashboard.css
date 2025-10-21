@@ -1,0 +1,144 @@
+/* Dashboard Styling - Prevent text selection and UI improvements */
+
+/* Prevent text selection on UI elements */
+.sidebar-container,
+.sidebar-header,
+.sidebar-nav,
+.sidebar-footer,
+.dashboard-layout,
+.page-header,
+.header,
+.navbar,
+.nav-link,
+.collaborate-btn,
+.collaborate-link,
+button,
+.nav-item,
+[role="button"],
+.dashboard-btn,
+.logo,
+nav,
+header {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Allow text selection in content areas */
+.page-content,
+textarea,
+input,
+.message-content,
+.email-content,
+.project-description {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Smooth scrolling */
+* {
+    scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 239, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 239, 255, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar-container {
+        width: 80px !important;
+    }
+    
+    .main-content {
+        margin-left: 80px !important;
+        width: calc(100% - 80px) !important;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+
+/* Button hover effects */
+button {
+    transition: all 0.3s ease;
+    outline: none;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button:focus {
+    outline: none;
+}
+
+/* Input focus effects */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 239, 255, 0.2);
+}
+
+/* Card hover effects */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Prevent dragging of images and icons */
+img,
+svg {
+    -webkit-user-drag: none;
+    -moz-user-drag: none;
+    user-drag: none;
+}
+
+/* Loading animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth transitions for theme changes */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Disable transitions during page load */
+.preload * {
+    transition: none !important;
+}

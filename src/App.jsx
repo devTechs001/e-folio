@@ -1,15 +1,33 @@
 import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import Header from './components/Header';
-import About from './components/About';
-import Skills from './components/Skills';
-import Education from './components/Education';
-import Interests from './components/Interests';
-import Projects from './components/Projects';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
+import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import NotificationProvider from './components/NotificationSystem';
+import LandingPage from './pages/LandingPage';
+import Dashboard from './pages/Dashboard';
+import LoginPage from './pages/LoginPage';
+import CollaborationRequest from './components/CollaborationRequestStyled';
+import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
+
+// Component to handle hash navigation
+const HashNavigationHandler = () => {
+    const location = useLocation();
+    
+    useEffect(() => {
+        // Handle hash navigation for landing page sections
+        if (location.hash) {
+            const element = document.getElementById(location.hash.substring(1));
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }, [location]);
+    
+    return null;
+};
 
 const App = () => {
     useEffect(() => {
@@ -20,18 +38,32 @@ const App = () => {
     }, []);
 
     return (
-        <div>
-            <Header />
-            <main>
-                <About />
-                <Skills />
-                <Education />
-                <Interests />
-                <Projects />
-                <Contact />
-            </main>
-            <Footer />
-        </div>
+        <ThemeProvider>
+            <AuthProvider>
+                <NotificationProvider>
+                    <Router>
+                        <div className="App min-h-screen">
+                            <HashNavigationHandler />
+                            <Routes>
+                                <Route path="/" element={<LandingPage />} />
+                                <Route path="/login" element={<LoginPage />} />
+                                <Route path="/collaborate" element={<CollaborationRequest />} />
+                                <Route 
+                                    path="/dashboard/*" 
+                                    element={
+                                        <ProtectedRoute>
+                                            <Dashboard />
+                                        </ProtectedRoute>
+                                    } 
+                                />
+                                {/* Catch-all route for 404 */}
+                                <Route path="*" element={<LandingPage />} />
+                            </Routes>
+                        </div>
+                    </Router>
+                </NotificationProvider>
+            </AuthProvider>
+        </ThemeProvider>
     );
 };
 
