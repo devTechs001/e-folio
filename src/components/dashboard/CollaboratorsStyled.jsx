@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Trash2, Shield, Edit, Check, X, Lock, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
+import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
 
 const Collaborators = () => {
@@ -13,8 +14,27 @@ const Collaborators = () => {
     const [showInviteForm, setShowInviteForm] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState('collaborator');
+    const [loading, setLoading] = useState(true);
+    const [collaborators, setCollaborators] = useState([]);
 
-    const [collaborators, setCollaborators] = useState([
+    useEffect(() => {
+        loadCollaborators();
+    }, []);
+
+    const loadCollaborators = async () => {
+        try {
+            setLoading(true);
+            const response = await apiService.getCollaborators();
+            setCollaborators(response.collaborators || getDemoCollaborators());
+        } catch (err) {
+            console.error('Error loading collaborators:', err);
+            setCollaborators(getDemoCollaborators());
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getDemoCollaborators = () => [
         {
             id: 1,
             name: 'John Developer',
@@ -35,7 +55,7 @@ const Collaborators = () => {
             lastActive: '1 day ago',
             permissions: ['view-projects']
         }
-    ]);
+    ];
 
     if (!isOwner()) {
         return (
@@ -72,7 +92,33 @@ const Collaborators = () => {
         );
     }
 
-    const handleInvite = () => {
+    const handleInvite = async () => {
+        if (!inviteEmail) {
+            error('Please enter an email address');
+            return;
+        }
+
+        try {
+            const response = await apiService.submitCollaborationRequest({
+                email: inviteEmail,
+                role: inviteRole
+            });
+            
+            if (response.success) {
+                success('Invitation sent successfully!');
+                setShowInviteForm(false);
+                setInviteEmail('');
+                loadCollaborators();
+            } else {
+                error(response.message || 'Failed to send invitation');
+            }
+        } catch (err) {
+            console.error('Error sending invitation:', err);
+            error('Failed to send invitation. Please try again.');
+        }
+    };
+
+    const handleInviteDemo = () => {
         if (!inviteEmail) {
             error('Please enter an email address');
             return;

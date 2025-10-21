@@ -1,44 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import apiService from '../../services/api.service';
 
 const Analytics = () => {
     const { isOwner } = useAuth();
     const [analyticsData, setAnalyticsData] = useState({
-        totalViews: 1234,
-        uniqueVisitors: 892,
-        projectViews: 456,
-        contactForms: 23,
-        collaborationRequests: 7
+        totalViews: 0,
+        uniqueVisitors: 0,
+        projectViews: 0,
+        contactForms: 0,
+        collaborationRequests: 0
     });
-
+    const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('7d');
     const [chartData, setChartData] = useState([]);
 
     useEffect(() => {
-        // Simulate analytics data
-        const generateChartData = () => {
-            const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-            const data = [];
-            
-            for (let i = days - 1; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                data.push({
-                    date: date.toLocaleDateString(),
-                    views: Math.floor(Math.random() * 100) + 20,
-                    visitors: Math.floor(Math.random() * 50) + 10
-                });
-            }
-            return data;
-        };
-
-        setChartData(generateChartData());
+        loadAnalytics();
     }, [timeRange]);
+
+    const loadAnalytics = async () => {
+        try {
+            setLoading(true);
+            const response = await apiService.getAnalytics();
+            
+            if (response.success) {
+                setAnalyticsData(response.analytics);
+                setChartData(response.chartData || generateDemoChartData());
+            } else {
+                // Fallback to demo data
+                setAnalyticsData({
+                    totalViews: 1234,
+                    uniqueVisitors: 892,
+                    projectViews: 456,
+                    contactForms: 23,
+                    collaborationRequests: 7
+                });
+                setChartData(generateDemoChartData());
+            }
+        } catch (err) {
+            console.error('Error loading analytics:', err);
+            // Use demo data on error
+            setAnalyticsData({
+                totalViews: 1234,
+                uniqueVisitors: 892,
+                projectViews: 456,
+                contactForms: 23,
+                collaborationRequests: 7
+            });
+            setChartData(generateDemoChartData());
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const generateDemoChartData = () => {
+        const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+        const data = [];
+        
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            data.push({
+                date: date.toLocaleDateString(),
+                views: Math.floor(Math.random() * 100) + 20,
+                visitors: Math.floor(Math.random() * 50) + 10
+            });
+        }
+        return data;
+    };
 
     const metrics = [
         {
             title: 'Total Views',
-            value: analyticsData.totalViews.toLocaleString(),
+            value: (analyticsData.totalViews || 0).toLocaleString(),
             change: '+12%',
             icon: 'fas fa-eye',
             color: '#0ef',
@@ -46,7 +81,7 @@ const Analytics = () => {
         },
         {
             title: 'Unique Visitors',
-            value: analyticsData.uniqueVisitors.toLocaleString(),
+            value: (analyticsData.uniqueVisitors || 0).toLocaleString(),
             change: '+8%',
             icon: 'fas fa-users',
             color: '#00d4ff',
@@ -54,7 +89,7 @@ const Analytics = () => {
         },
         {
             title: 'Project Views',
-            value: analyticsData.projectViews.toLocaleString(),
+            value: (analyticsData.projectViews || 0).toLocaleString(),
             change: '+15%',
             icon: 'fas fa-project-diagram',
             color: '#0ef',
@@ -62,7 +97,7 @@ const Analytics = () => {
         },
         {
             title: 'Contact Forms',
-            value: analyticsData.contactForms.toString(),
+            value: (analyticsData.contactForms || 0).toString(),
             change: '+3',
             icon: 'fas fa-envelope',
             color: '#00d4ff',
@@ -70,7 +105,7 @@ const Analytics = () => {
         },
         {
             title: 'Collaboration Requests',
-            value: analyticsData.collaborationRequests.toString(),
+            value: (analyticsData.collaborationRequests || 0).toString(),
             change: '+2',
             icon: 'fas fa-handshake',
             color: '#0ef',

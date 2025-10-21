@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const User = require('../models/User.model');
 
 class AuthController {
     // Login handler
@@ -15,30 +16,59 @@ class AuthController {
                 });
             }
 
-            // Check owner credentials
-            if (email === process.env.OWNER_EMAIL && password === process.env.OWNER_PASSWORD) {
-                const token = jwt.sign(
-                    { email, role: 'owner', id: 'owner_001' },
-                    process.env.JWT_SECRET || 'efolio_secret',
-                    { expiresIn: '7d' }
-                );
+            // Find user in database
+            const user = await User.findOne({ email: email.toLowerCase() });
 
-                return res.json({
-                    success: true,
-                    user: {
-                        id: 'owner_001',
-                        name: process.env.OWNER_NAME || 'Owner',
-                        email,
-                        role: 'owner'
-                    },
-                    token
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials'
                 });
             }
 
-            // Invalid credentials
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid credentials'
+            // Verify password
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (!isPasswordValid) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials'
+                });
+            }
+
+            // Check if user is active
+            if (user.status !== 'active') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Account is not active. Please contact the administrator.'
+                });
+            }
+
+            // Update last login
+            user.lastLogin = new Date();
+            await user.save();
+
+            // Generate JWT token
+            const token = jwt.sign(
+                { 
+                    email: user.email, 
+                    role: user.role, 
+                    id: user._id 
+                },
+                process.env.JWT_SECRET || 'efolio_secret',
+                { expiresIn: '7d' }
+            );
+
+            return res.json({
+                success: true,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    avatar: user.avatar
+                },
+                token
             });
         } catch (error) {
             console.error('Login error:', error);

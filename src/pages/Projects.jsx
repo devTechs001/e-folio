@@ -1,8 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import apiService from '../services/api.service';
 import '../styles/Projects.css';
 
 const Projects = () => {
-    const projects = [
+    const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadProjects();
+    }, []);
+
+    const loadProjects = async () => {
+        try {
+            console.log('Fetching projects from API...');
+            const response = await apiService.getProjects();
+            console.log('Projects API response:', response);
+            
+            if (response.success && response.projects && response.projects.length > 0) {
+                console.log(`Loaded ${response.projects.length} projects from database`);
+                setProjects(response.projects);
+            } else {
+                console.log('No projects from API, using fallback data');
+                setProjects(getFallbackProjects());
+            }
+        } catch (error) {
+            console.error('Error loading projects:', error);
+            console.log('Using fallback projects due to error');
+            setProjects(getFallbackProjects());
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getFallbackProjects = () => [
         {
             title: "E-Commerce Platform",
             description: "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management.",
@@ -88,36 +118,40 @@ const Projects = () => {
                         data-aos="fade-up" 
                         data-aos-delay={index * 100}
                     >
-                        <img src={project.imageUrl} alt={project.title} />
+                        <img src={project.images?.[0]?.url || project.imageUrl} alt={project.title} />
                         <div className="project-layer">
                             <h4>{project.title}</h4>
                             <p>{project.description}</p>
                             <div className="project-tech">
-                                {project.technologies.map((tech, techIndex) => (
+                                {project.technologies?.map((tech, techIndex) => (
                                     <span key={techIndex} className="tech-tag">{tech}</span>
                                 ))}
                             </div>
                             <div className="project-links">
-                                <a 
-                                    href={project.githubUrl} 
-                                    className="project-link github"
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    aria-label="View source code on GitHub"
-                                >
-                                    <i className="fa-brands fa-github"></i>
-                                    <span>Source</span>
-                                </a>
-                                <a 
-                                    href={project.demoUrl} 
-                                    className="project-link demo"
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    aria-label="View live demo"
-                                >
-                                    <i className="fa-solid fa-arrow-up-right-from-square"></i>
-                                    <span>Live Demo</span>
-                                </a>
+                                {(project.links?.github || project.githubUrl) && (
+                                    <a 
+                                        href={project.links?.github || project.githubUrl} 
+                                        className="project-link github"
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        aria-label="View source code on GitHub"
+                                    >
+                                        <i className="fa-brands fa-github"></i>
+                                        <span>Source</span>
+                                    </a>
+                                )}
+                                {(project.links?.live || project.links?.demo || project.demoUrl) && (
+                                    <a 
+                                        href={project.links?.live || project.links?.demo || project.demoUrl} 
+                                        className="project-link demo"
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        aria-label="View live demo"
+                                    >
+                                        <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                                        <span>Live Demo</span>
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>

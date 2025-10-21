@@ -1,27 +1,68 @@
-import React, { useState } from 'react';
-import { UserPlus, Check, X, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, Check, X, Mail, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
+import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
 
 const CollaborationRequests = () => {
     const { isOwner } = useAuth();
     const { theme } = useTheme();
-    const { success } = useNotifications();
-    const [requests, setRequests] = useState([
-        { id: 1, name: 'Alex Johnson', email: 'alex@example.com', message: 'Would love to collaborate on projects', date: '2024-01-20', avatar: 'AJ' },
-        { id: 2, name: 'Emma Wilson', email: 'emma@example.com', message: 'Interested in contributing to your work', date: '2024-01-19', avatar: 'EW' }
-    ]);
+    const { success, error } = useNotifications();
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleApprove = (id, name) => {
-        setRequests(prev => prev.filter(r => r.id !== id));
-        success(`Approved collaboration request from ${name}`);
+    useEffect(() => {
+        loadRequests();
+    }, []);
+
+    const loadRequests = async () => {
+        try {
+            setLoading(true);
+            const response = await apiService.getCollaborationRequests();
+            setRequests(response.requests || getDemoRequests());
+        } catch (err) {
+            console.error('Error loading requests:', err);
+            setRequests(getDemoRequests());
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleReject = (id, name) => {
-        setRequests(prev => prev.filter(r => r.id !== id));
-        success(`Rejected collaboration request from ${name}`);
+    const getDemoRequests = () => [
+        { id: 1, name: 'Alex Johnson', email: 'alex@example.com', message: 'Would love to collaborate on projects', submittedAt: '2024-01-20', status: 'pending' },
+        { id: 2, name: 'Emma Wilson', email: 'emma@example.com', message: 'Interested in contributing to your work', submittedAt: '2024-01-19', status: 'pending' }
+    ];
+
+    const handleApprove = async (id, name) => {
+        try {
+            const response = await apiService.approveRequest(id);
+            if (response.success) {
+                setRequests(prev => prev.filter(r => r.id !== id));
+                success(`✅ Approved ${name}! Invite link: ${response.inviteLink}`);
+            } else {
+                error(response.message || 'Failed to approve request');
+            }
+        } catch (err) {
+            console.error('Error approving request:', err);
+            error('Failed to approve request. Please try again.');
+        }
+    };
+
+    const handleReject = async (id, name) => {
+        try {
+            const response = await apiService.rejectRequest(id);
+            if (response.success) {
+                setRequests(prev => prev.filter(r => r.id !== id));
+                success(`Rejected collaboration request from ${name}`);
+            } else {
+                error(response.message || 'Failed to reject request');
+            }
+        } catch (err) {
+            console.error('Error rejecting request:', err);
+            error('Failed to reject request. Please try again.');
+        }
     };
 
     if (!isOwner()) {
@@ -31,7 +72,12 @@ const CollaborationRequests = () => {
     return (
         <DashboardLayout title="Collaboration Requests" subtitle="Review and manage collaboration requests">
             <div style={{ padding: '24px' }}>
-                {requests.length === 0 ? (
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '60px', color: theme.textSecondary }}>
+                        <Clock size={64} style={{ margin: '0 auto 20px', opacity: 0.5 }} className="animate-spin" />
+                        <p>Loading requests...</p>
+                    </div>
+                ) : requests.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '60px', color: theme.textSecondary }}>
                         <UserPlus size={64} style={{ margin: '0 auto 20px', opacity: 0.5 }} />
                         <p>No pending requests</p>
@@ -52,8 +98,13 @@ const CollaborationRequests = () => {
                                 }}>{request.avatar}</div>
                                 <div>
                                     <h4 style={{ color: theme.text, margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>{request.name}</h4>
-                                    <p style={{ color: theme.textSecondary, margin: '0 0 8px 0', fontSize: '14px' }}>{request.email}</p>
+                                    <p style={{ color: theme.textSecondary, margin: '0 0 8px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Mail size={14} /> {request.email}
+                                    </p>
                                     <p style={{ color: theme.text, margin: 0, fontSize: '14px' }}>{request.message}</p>
+                                    <p style={{ color: theme.textSecondary, margin: '8px 0 0 0', fontSize: '12px' }}>
+                                        Submitted: {new Date(request.submittedAt).toLocaleDateString()}
+                                    </p>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '12px' }}>

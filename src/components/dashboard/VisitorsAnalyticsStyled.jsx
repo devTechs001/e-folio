@@ -1,34 +1,107 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, TrendingUp, Globe, Monitor, Smartphone, Eye, MapPin, Clock } from 'lucide-react';
+import { Users, TrendingUp, Globe, Monitor, Smartphone, Eye, MapPin, Clock, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
 
 const VisitorsAnalytics = () => {
     const { isOwner } = useAuth();
     const { theme } = useTheme();
+    const [analytics, setAnalytics] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (isOwner()) {
+            fetchAnalytics();
+            const interval = setInterval(fetchAnalytics, 5000); // Refresh every 5 seconds
+            return () => clearInterval(interval);
+        }
+    }, [isOwner]);
+
+    const fetchAnalytics = async () => {
+        try {
+            const response = await apiService.request('/tracking/analytics/realtime');
+            if (response.success) {
+                setAnalytics(response.analytics);
+            }
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const stats = [
-        { label: 'Total Visitors', value: '12,847', change: '+12.5%', icon: Users, color: theme.primary },
-        { label: 'Page Views', value: '45,231', change: '+8.2%', icon: Eye, color: '#3b82f6' },
-        { label: 'Avg. Session', value: '3m 24s', change: '+5.1%', icon: Clock, color: '#10b981' },
-        { label: 'Bounce Rate', value: '42.3%', change: '-3.2%', icon: TrendingUp, color: '#f59e0b' }
+        { 
+            label: 'Active Now', 
+            value: analytics?.activeNow || 0, 
+            change: 'Live', 
+            icon: Activity, 
+            color: '#10b981',
+            isLive: true
+        },
+        { 
+            label: 'Today Total', 
+            value: analytics?.todayTotal || 0, 
+            change: '+' + ((analytics?.todayTotal || 0) * 0.12).toFixed(1) + '%', 
+            icon: Users, 
+            color: theme.primary 
+        },
+        { 
+            label: 'Top Page Views', 
+            value: analytics?.topPages?.[0]?.count || 0, 
+            change: analytics?.topPages?.[0]?._id || 'N/A', 
+            icon: Eye, 
+            color: '#3b82f6' 
+        },
+        { 
+            label: 'Device Split', 
+            value: `${analytics?.devices?.desktop || 0}/${analytics?.devices?.mobile || 0}`, 
+            change: 'Desktop/Mobile', 
+            icon: Monitor, 
+            color: '#f59e0b' 
+        }
     ];
 
-    const topCountries = [
-        { country: 'United States', visitors: 3542, percentage: 27.6, flag: '🇺🇸' },
-        { country: 'United Kingdom', visitors: 2156, percentage: 16.8, flag: '🇬🇧' },
-        { country: 'Germany', visitors: 1847, percentage: 14.4, flag: '🇩🇪' },
-        { country: 'Canada', visitors: 1234, percentage: 9.6, flag: '🇨🇦' },
-        { country: 'Australia', visitors: 987, percentage: 7.7, flag: '🇦🇺' }
-    ];
+    const topCountries = analytics?.locations?.map(loc => ({
+        country: loc._id || 'Unknown',
+        visitors: loc.count,
+        percentage: ((loc.count / (analytics.todayTotal || 1)) * 100).toFixed(1),
+        flag: getCountryFlag(loc._id)
+    })) || [];
 
     const devices = [
-        { type: 'Desktop', count: 6842, percentage: 53.2, icon: Monitor, color: '#3b82f6' },
-        { type: 'Mobile', count: 4567, percentage: 35.5, icon: Smartphone, color: '#10b981' },
-        { type: 'Tablet', count: 1438, percentage: 11.3, icon: Monitor, color: '#f59e0b' }
+        { 
+            type: 'Desktop', 
+            count: analytics?.devices?.desktop || 0, 
+            percentage: ((analytics?.devices?.desktop || 0) / ((analytics?.devices?.desktop || 0) + (analytics?.devices?.mobile || 1)) * 100).toFixed(1), 
+            icon: Monitor, 
+            color: '#3b82f6' 
+        },
+        { 
+            type: 'Mobile', 
+            count: analytics?.devices?.mobile || 0, 
+            percentage: ((analytics?.devices?.mobile || 0) / ((analytics?.devices?.desktop || 1) + (analytics?.devices?.mobile || 0)) * 100).toFixed(1), 
+            icon: Smartphone, 
+            color: '#10b981' 
+        }
     ];
+
+    const getCountryFlag = (country) => {
+        const flags = {
+            'United States': '🇺🇸',
+            'United Kingdom': '🇬🇧',
+            'Germany': '🇩🇪',
+            'Canada': '🇨🇦',
+            'Australia': '🇦🇺',
+            'France': '🇫🇷',
+            'India': '🇮🇳',
+            'Japan': '🇯🇵'
+        };
+        return flags[country] || '🌍';
+    };
 
     if (!isOwner()) {
         return (

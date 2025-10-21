@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import trackingService from '../services/tracking.service';
 import Header from './Header';
 import About from './About';
 import Skills from './Skills';
@@ -14,36 +15,19 @@ import ReviewFloatingButton from '../components/ReviewFloatingButton';
 const LandingPage = () => {
     const { isOwner } = useAuth();
 
+    useEffect(() => {
+        // Initialize visitor tracking
+        trackingService.init();
+        trackingService.trackPageView('/', 'Home - E-Folio Portfolio');
+
+        return () => {
+            // Cleanup if needed
+        };
+    }, []);
+
     return (
         <div className="landing-page">
             <Header />
-            
-            {/* Owner Dashboard Access Button */}
-            {isOwner() && (
-                <div className="dashboard-access" style={{
-                    position: 'fixed',
-                    top: '20px',
-                    right: '20px',
-                    zIndex: 1000
-                }}>
-                    <Link 
-                        to="/dashboard" 
-                        className="dashboard-btn"
-                        style={{
-                            background: 'linear-gradient(45deg, #0ef, #00d4ff)',
-                            color: '#081b29',
-                            padding: '12px 24px',
-                            borderRadius: '25px',
-                            textDecoration: 'none',
-                            fontWeight: 'bold',
-                            boxShadow: '0 4px 15px rgba(0, 239, 255, 0.3)',
-                            transition: 'all 0.3s ease'
-                        }}
-                    >
-                        <i className="fas fa-tachometer-alt"></i> Dashboard
-                    </Link>
-                </div>
-            )}
 
             {/* Collaboration Invitation Section */}
             <div className="collaboration-banner" style={{
@@ -61,24 +45,24 @@ const LandingPage = () => {
                 </p>
                 <Link 
                     to="/collaborate" 
-                    className="collaborate-btn"
-                    style={{
-                        background: 'linear-gradient(135deg, #00efff, #00d4ff)',
-                        border: 'none',
-                        color: '#081b29',
-                        padding: '16px 40px',
-                        borderRadius: '12px',
-                        textDecoration: 'none',
-                        fontWeight: '700',
-                        fontSize: '18px',
-                        fontFamily: "'Poppins', sans-serif",
-                        transition: 'all 0.3s ease',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        boxShadow: '0 8px 24px rgba(0, 239, 255, 0.4)',
-                        transform: 'scale(1)'
-                    }}
+                                        className="collaborate-btn"
+                        style={{
+                            background: 'linear-gradient(135deg,rgb(28, 105, 110),rgb(44, 101, 112))',
+                            border: 'none',
+                            color: '#034c79', // Change to dark blue for contrast
+                            padding: '16px 40px',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            fontWeight: '700',
+                            fontSize: '18px',
+                            fontFamily: "'Poppins', sans-serif",
+                            transition: 'all 0.3s ease',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            boxShadow: '0 8px 24px rgba(0, 239, 255, 0.4)',
+                            transform: 'scale(1)'
+                        }}
                     onMouseOver={(e) => {
                         e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
                         e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 239, 255, 0.6)';

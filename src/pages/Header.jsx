@@ -66,43 +66,55 @@ const Header = () => {
                 </a>
 
                 <nav className={`navbar ${isMenuOpen ? 'active' : ''} ${isMobile && !visible ? 'hidden' : 'visible'}`}>
-                    <a href="#about" className="nav-link" onClick={closeMenu} style={{ fontSize: '16px', fontWeight: '600', fontFamily: "'Poppins', sans-serif" }}>
-                        <i className="fas fa-user" style={{ fontSize: '18px' }}></i>
+                    <a href="#about" className="nav-link" onClick={closeMenu} style={{ fontSize: '17px' }}>
+                        <i className="fas fa-user" style={{ fontSize: '19px' }}></i>
                         <span>About</span>
                     </a>
-                    <a href="#skills" className="nav-link" onClick={closeMenu} style={{ fontSize: '16px', fontWeight: '600', fontFamily: "'Poppins', sans-serif" }}>
-                        <i className="fas fa-cogs" style={{ fontSize: '18px' }}></i>
+                    <a href="#skills" className="nav-link" onClick={closeMenu} style={{ fontSize: '17px' }}>
+                        <i className="fas fa-cogs" style={{ fontSize: '19px' }}></i>
                         <span>Skills</span>
                     </a>
-                    <a href="#education" className="nav-link" onClick={closeMenu} style={{ fontSize: '16px', fontWeight: '600', fontFamily: "'Poppins', sans-serif" }}>
-                        <i className="fas fa-graduation-cap" style={{ fontSize: '18px' }}></i>
+                    <a href="#education" className="nav-link" onClick={closeMenu} style={{ fontSize: '17px' }}>
+                        <i className="fas fa-graduation-cap" style={{ fontSize: '19px' }}></i>
                         <span>Education</span>
                     </a>
-                    <a href="#interests" className="nav-link" onClick={closeMenu} style={{ fontSize: '16px', fontWeight: '600', fontFamily: "'Poppins', sans-serif" }}>
-                        <i className="fas fa-heart" style={{ fontSize: '18px' }}></i>
+                    <a href="#interests" className="nav-link" onClick={closeMenu} style={{ fontSize: '17px' }}>
+                        <i className="fas fa-heart" style={{ fontSize: '19px' }}></i>
                         <span>Interests</span>
                     </a>
-                    <a href="#projects" className="nav-link" onClick={closeMenu} style={{ fontSize: '16px', fontWeight: '600', fontFamily: "'Poppins', sans-serif" }}>
-                        <i className="fas fa-project-diagram" style={{ fontSize: '18px' }}></i>
+                    <a href="#projects" className="nav-link" onClick={closeMenu} style={{ fontSize: '17px' }}>
+                        <i className="fas fa-project-diagram" style={{ fontSize: '19px' }}></i>
                         <span>Projects</span>
                     </a>
-                    <a href="#contact" className="nav-link" onClick={closeMenu} style={{ fontSize: '16px', fontWeight: '600', fontFamily: "'Poppins', sans-serif" }}>
-                        <i className="fas fa-envelope" style={{ fontSize: '18px' }}></i>
+                    <a href="#contact" className="nav-link" onClick={closeMenu} style={{ fontSize: '17px' }}>
+                        <i className="fas fa-envelope" style={{ fontSize: '19px' }}></i>
                         <span>Contact</span>
                     </a>
-                    <Link to="/collaborate" className="nav-link collaborate-link" onClick={closeMenu} style={{
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        fontFamily: "'Poppins', sans-serif",
-                        background: 'linear-gradient(135deg, #00efff, #00d4ff)',
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        color: '#081b29',
-                        marginLeft: '12px',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 4px 15px rgba(0, 239, 255, 0.4)'
+                    <Link to="/dashboard" className="nav-link nav-link-special" onClick={closeMenu} style={{
+                        background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                        color: '#ffffff',
+                        padding: '12px 24px',
+                        borderRadius: '10px',
+                        marginLeft: '20px',
+                        boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
+                        fontSize: '17px',
+                        fontWeight: '700'
                     }}>
-                        <i className="fas fa-handshake" style={{ fontSize: '18px' }}></i>
+                        <i className="fas fa-tachometer-alt" style={{ fontSize: '19px' }}></i>
+                        <span>Dashboard</span>
+                    </Link>
+                    <Link to="/collaborate" className="nav-link nav-link-special" onClick={closeMenu} style={{
+                        background: 'linear-gradient(135deg, #00efff, #00d4ff)',
+                        color: '#081b29',
+                        padding: '12px 24px',
+                        borderRadius: '10px',
+                        marginLeft: '8px',
+                        boxShadow: '0 4px 15px rgba(0, 239, 255, 0.4)',
+                        fontSize: '17px',
+                        fontWeight: '900',
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <i className="fas fa-handshake" style={{ fontSize: '19px', fontWeight: '900' }}></i>
                         <span>Collaborate</span>
                     </Link>
                 </nav>

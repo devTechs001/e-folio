@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Layout, Edit3, Eye, Save, Plus, Trash2, Settings, Monitor, Tablet, Smartphone, Code } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    Layout, Edit3, Eye, Save, Plus, Trash2, Settings, Monitor, Tablet, Smartphone, Code,
+    Download, Upload, Palette, Type, Image as ImageIcon, Link as LinkIcon,
+    Undo, Redo, FileText, Globe, Mail, Github, Linkedin, Twitter, Instagram,
+    CheckCircle, ChevronDown, ChevronUp, X
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
@@ -12,6 +17,10 @@ const PortfolioEditor = () => {
     const { success } = useNotifications();
     const [editorMode, setEditorMode] = useState('visual');
     const [viewportSize, setViewportSize] = useState('desktop');
+    const [activePanel, setActivePanel] = useState('sections');
+    const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+    const panels = ['sections', 'design', 'content', 'export'];
 
     const [sections, setSections] = useState([
         { id: 1, name: 'Header', type: 'navigation', visible: true },

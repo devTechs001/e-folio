@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { User, Mail, Lock, Key, ArrowLeft, LogIn, Shield } from 'lucide-react';
 
 const LoginPage = ({ collaborator = false }) => {
     const [formData, setFormData] = useState({
@@ -30,28 +31,29 @@ const LoginPage = ({ collaborator = false }) => {
         try {
             let role = 'visitor';
             
-            // Determine user role based on credentials
-            if (formData.email === 'owner@efolio.com' && formData.password === 'owner123') {
-                role = 'owner';
-            } else if (collaborator && formData.accessCode === 'COLLAB2024') {
+            // Determine user role
+            if (collaborator && formData.accessCode === 'COLLAB2024') {
                 role = 'collaborator';
             } else if (collaborator) {
-                throw new Error('Invalid collaboration access code');
+                setError('Invalid collaboration access code');
+                setLoading(false);
+                return;
             }
 
+            // Attempt login via backend API
             const result = await login(formData, role);
             
             if (result.success) {
-                if (role === 'owner' || role === 'collaborator') {
+                if (result.role === 'owner' || result.role === 'collaborator') {
                     navigate('/dashboard');
                 } else {
                     navigate('/');
                 }
             } else {
-                setError(result.error);
+                setError(result.error || 'Login failed. Please check your credentials.');
             }
         } catch (err) {
-            setError(err.message);
+            setError(err.message || 'An error occurred during login. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -76,6 +78,13 @@ const LoginPage = ({ collaborator = false }) => {
                 width: '100%'
             }}>
                 <div className="login-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                        {collaborator ? (
+                            <Shield size={48} color="#0ef" strokeWidth={2} />
+                        ) : (
+                            <LogIn size={48} color="#0ef" strokeWidth={2} />
+                        )}
+                    </div>
                     <h2 style={{ color: '#0ef', marginBottom: '10px' }}>
                         {collaborator ? 'Collaborate Access' : 'Portfolio Access'}
                     </h2>
@@ -89,7 +98,8 @@ const LoginPage = ({ collaborator = false }) => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ color: '#ededed', display: 'block', marginBottom: '8px' }}>
+                        <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <User size={18} color="#0ef" />
                             Name
                         </label>
                         <input
@@ -100,19 +110,21 @@ const LoginPage = ({ collaborator = false }) => {
                             required
                             style={{
                                 width: '100%',
-                                padding: '12px',
+                                padding: '12px 12px 12px 40px',
                                 background: 'transparent',
                                 border: '2px solid #0ef',
                                 borderRadius: '8px',
                                 color: '#ededed',
-                                fontSize: '16px'
+                                fontSize: '16px',
+                                position: 'relative'
                             }}
                             placeholder="Enter your name"
                         />
                     </div>
 
                     <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ color: '#ededed', display: 'block', marginBottom: '8px' }}>
+                        <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <Mail size={18} color="#0ef" />
                             Email
                         </label>
                         <input
@@ -123,7 +135,7 @@ const LoginPage = ({ collaborator = false }) => {
                             required
                             style={{
                                 width: '100%',
-                                padding: '12px',
+                                padding: '12px 12px 12px 40px',
                                 background: 'transparent',
                                 border: '2px solid #0ef',
                                 borderRadius: '8px',
@@ -135,7 +147,8 @@ const LoginPage = ({ collaborator = false }) => {
                     </div>
 
                     <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ color: '#ededed', display: 'block', marginBottom: '8px' }}>
+                        <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <Lock size={18} color="#0ef" />
                             Password
                         </label>
                         <input
@@ -146,7 +159,7 @@ const LoginPage = ({ collaborator = false }) => {
                             required
                             style={{
                                 width: '100%',
-                                padding: '12px',
+                                padding: '12px 12px 12px 40px',
                                 background: 'transparent',
                                 border: '2px solid #0ef',
                                 borderRadius: '8px',
@@ -159,7 +172,8 @@ const LoginPage = ({ collaborator = false }) => {
 
                     {collaborator && (
                         <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label style={{ color: '#ededed', display: 'block', marginBottom: '8px' }}>
+                            <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                <Key size={18} color="#0ef" />
                                 Collaboration Access Code
                             </label>
                             <input
@@ -170,7 +184,7 @@ const LoginPage = ({ collaborator = false }) => {
                                 required
                                 style={{
                                     width: '100%',
-                                    padding: '12px',
+                                    padding: '12px 12px 12px 40px',
                                     background: 'transparent',
                                     border: '2px solid #0ef',
                                     borderRadius: '8px',
@@ -208,10 +222,21 @@ const LoginPage = ({ collaborator = false }) => {
                             fontSize: '16px',
                             fontWeight: 'bold',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.3s ease'
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
                         }}
                     >
-                        {loading ? 'Signing In...' : (collaborator ? 'Access Collaboration' : 'Sign In')}
+                        {loading ? (
+                            'Signing In...'
+                        ) : (
+                            <>
+                                <LogIn size={20} />
+                                {collaborator ? 'Access Collaboration' : 'Sign In'}
+                            </>
+                        )}
                     </button>
                 </form>
 
@@ -221,32 +246,15 @@ const LoginPage = ({ collaborator = false }) => {
                         style={{
                             color: '#0ef',
                             textDecoration: 'none',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
                         }}
                     >
-                        ← Back to Portfolio
+                        <ArrowLeft size={16} />
+                        Back to Portfolio
                     </Link>
-                </div>
-
-                {/* Demo Credentials */}
-                <div style={{
-                    marginTop: '30px',
-                    padding: '15px',
-                    background: 'rgba(0, 239, 255, 0.1)',
-                    borderRadius: '8px',
-                    border: '1px solid #0ef'
-                }}>
-                    <h4 style={{ color: '#0ef', marginBottom: '10px', fontSize: '14px' }}>
-                        Demo Credentials:
-                    </h4>
-                    <p style={{ color: '#ededed', fontSize: '12px', margin: '5px 0' }}>
-                        <strong>Owner:</strong> owner@efolio.com / owner123
-                    </p>
-                    {collaborator && (
-                        <p style={{ color: '#ededed', fontSize: '12px', margin: '5px 0' }}>
-                            <strong>Collab Code:</strong> COLLAB2024
-                        </p>
-                    )}
                 </div>
             </div>
         </div>

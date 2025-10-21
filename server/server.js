@@ -14,9 +14,12 @@ const collaborationRoutes = require('./routes/collaboration.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const skillsRoutes = require('./routes/skills.routes');
 const projectsRoutes = require('./routes/projects.routes');
+const chatRoutes = require('./routes/chat.routes');
+const aiRoutes = require('./routes/ai.routes');
+const trackingRoutes = require('./routes/tracking.routes');
 
 // Import handlers
-const chatHandler = require('./socket/chat.handler');
+const chatHandler = require('./socket/chat.handler.enhanced');
 const connectDB = require('./config/database');
 
 const app = express();
@@ -46,6 +49,9 @@ app.use('/api/collaboration', collaborationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/projects', projectsRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/tracking', trackingRoutes);
 
 
 // API Routes

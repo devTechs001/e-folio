@@ -6,7 +6,8 @@ import {
     Home, FolderKanban, Settings, Palette, BarChart3, 
     Users, UserPlus, Image, Mail, MessageSquare, Bot,
     FileEdit, TrendingUp, LogOut, ArrowLeft, Menu, X,
-    Wrench
+    Wrench, User, GraduationCap, Activity, PieChart,
+    TrendingDown, Clock, Globe
 } from 'lucide-react';
 
 const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems }) => {
@@ -28,7 +29,11 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems }) => {
         'fas fa-comments': MessageSquare,
         'fas fa-robot': Bot,
         'fas fa-edit': FileEdit,
-        'fas fa-cog': Settings
+        'fas fa-cog': Settings,
+        'fas fa-user': User,
+        'fas fa-graduation-cap': GraduationCap,
+        'fas fa-activity': Activity,
+        'fas fa-pie-chart': PieChart
     };
 
     const getIcon = (iconClass) => {

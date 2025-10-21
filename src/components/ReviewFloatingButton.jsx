@@ -3,31 +3,48 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X, Send, ThumbsUp, Share2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
+import trackingService from '../services/tracking.service';
 
 const ReviewFloatingButton = () => {
     const { theme } = useTheme();
-    const { success } = useNotifications();
+    const { success, error } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [formData, setFormData] = useState({ name: '', email: '', comment: '' });
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const reviews = JSON.parse(localStorage.getItem('portfolio_reviews') || '[]');
-        reviews.push({
-            id: Date.now(),
-            ...formData,
-            rating,
-            date: new Date().toISOString(),
-            likes: 0,
-            shares: 0
-        });
-        localStorage.setItem('portfolio_reviews', JSON.stringify(reviews));
-        success('Thank you for your review!');
-        setIsOpen(false);
-        setRating(0);
-        setFormData({ name: '', email: '', comment: '' });
+        
+        if (!rating) {
+            error('Please select a rating');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const response = await trackingService.submitReview({
+                name: formData.name,
+                email: formData.email,
+                rating,
+                comment: formData.comment
+            });
+
+            if (response.success) {
+                success('Thank you for your review!');
+                setIsOpen(false);
+                setRating(0);
+                setFormData({ name: '', email: '', comment: '' });
+            } else {
+                error('Failed to submit review. Please try again.');
+            }
+        } catch (err) {
+            console.error('Review submission error:', err);
+            error('Error submitting review. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -254,26 +271,28 @@ const ReviewFloatingButton = () => {
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <motion.button
                                         type="submit"
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                        disabled={submitting}
+                                        whileHover={{ scale: submitting ? 1 : 1.02 }}
+                                        whileTap={{ scale: submitting ? 1 : 0.98 }}
                                         style={{
                                             flex: 1,
                                             padding: '14px',
-                                            background: 'linear-gradient(135deg, #00efff, #00d4ff)',
+                                            background: submitting ? '#6b7280' : 'linear-gradient(135deg, #00efff, #00d4ff)',
                                             border: 'none',
                                             borderRadius: '10px',
                                             color: '#081b29',
                                             fontSize: '16px',
                                             fontWeight: '700',
-                                            cursor: 'pointer',
+                                            cursor: submitting ? 'not-allowed' : 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             gap: '8px',
-                                            boxShadow: '0 4px 15px rgba(0, 239, 255, 0.4)'
+                                            boxShadow: '0 4px 15px rgba(0, 239, 255, 0.4)',
+                                            opacity: submitting ? 0.7 : 1
                                         }}
                                     >
-                                        <Send size={18} /> Submit Review
+                                        <Send size={18} /> {submitting ? 'Submitting...' : 'Submit Review'}
                                     </motion.button>
                                 </div>
 
@@ -285,38 +304,76 @@ const ReviewFloatingButton = () => {
                                     paddingTop: '16px',
                                     borderTop: `1px solid ${theme.border || 'rgba(0, 239, 255, 0.2)'}`
                                 }}>
-                                    <button type="button" style={{
-                                        flex: 1,
-                                        padding: '10px',
-                                        background: `${theme.primary || '#00efff'}15`,
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        color: theme.primary || '#00efff',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '6px'
-                                    }}>
-                                        <ThumbsUp size={16} /> Like
+                                    <button 
+                                        type="button" 
+                                        onClick={() => success('Thanks for liking this portfolio!')}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            background: `${theme.primary || '#00efff'}15`,
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            color: theme.primary || '#00efff',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px',
+                                            transition: 'all 0.3s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = `${theme.primary || '#00efff'}30`;
+                                            e.currentTarget.style.transform = 'scale(1.05)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = `${theme.primary || '#00efff'}15`;
+                                            e.currentTarget.style.transform = 'scale(1)';
+                                        }}
+                                    >
+                                        <ThumbsUp size={16} /> Like Portfolio
                                     </button>
-                                    <button type="button" style={{
-                                        flex: 1,
-                                        padding: '10px',
-                                        background: `${theme.primary || '#00efff'}15`,
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        color: theme.primary || '#00efff',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '6px'
-                                    }}>
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            if (navigator.share) {
+                                                navigator.share({
+                                                    title: 'Check out this portfolio!',
+                                                    text: 'Amazing developer portfolio',
+                                                    url: window.location.href
+                                                }).then(() => success('Thanks for sharing!'))
+                                                .catch(err => console.log('Share cancelled'));
+                                            } else {
+                                                navigator.clipboard.writeText(window.location.href);
+                                                success('Link copied to clipboard!');
+                                            }
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            background: `${theme.primary || '#00efff'}15`,
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            color: theme.primary || '#00efff',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px',
+                                            transition: 'all 0.3s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = `${theme.primary || '#00efff'}30`;
+                                            e.currentTarget.style.transform = 'scale(1.05)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = `${theme.primary || '#00efff'}15`;
+                                            e.currentTarget.style.transform = 'scale(1)';
+                                        }}
+                                    >
                                         <Share2 size={16} /> Share
                                     </button>
                                 </div>

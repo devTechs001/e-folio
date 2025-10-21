@@ -21,7 +21,9 @@ import PortfolioEditor from '../components/dashboard/PortfolioEditorStyled';
 import Collaborators from '../components/dashboard/CollaboratorsStyled';
 import MediaManager from '../components/dashboard/MediaManagerStyled';
 import VisitorsAnalytics from '../components/dashboard/VisitorsAnalyticsStyled';
-import EmailManager from '../components/dashboard/EmailManagerStyled';
+import AITrackingSystem from '../components/dashboard/AITrackingSystem';
+import ReviewsManager from '../components/dashboard/ReviewsManager';
+import EmailManager from '../components/dashboard/EmailManagerEnhanced';
 import CollaborationRequests from '../components/dashboard/CollaborationRequestsStyled';
 import LearningCenter from '../components/dashboard/LearningCenterStyled';
 
@@ -80,10 +82,24 @@ const Dashboard = () => {
             roles: ['owner']
         },
         {
+            path: '/dashboard/ai-tracking',
+            icon: 'fas fa-robot',
+            label: 'AI Tracking',
+            component: AITrackingSystem,
+            roles: ['owner']
+        },
+        {
             path: '/dashboard/visitors',
             icon: 'fas fa-user-friends',
             label: 'Visitors',
             component: VisitorsAnalytics,
+            roles: ['owner']
+        },
+        {
+            path: '/dashboard/reviews',
+            icon: 'fas fa-star-half-alt',
+            label: 'Reviews',
+            component: ReviewsManager,
             roles: ['owner']
         },
         {

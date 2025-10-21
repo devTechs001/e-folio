@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import { AuthProvider } from './contexts/AuthContext';
+import AuthProvider from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import NotificationProvider from './components/NotificationSystem';
 import LandingPage from './pages/LandingPage';

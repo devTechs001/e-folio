@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { themePresets, getThemeNames } from '../themes/themePresets';
 
 const ThemeContext = createContext();
 
@@ -324,7 +325,9 @@ export const ThemeProvider = ({ children }) => {
         return saved || 'cyber';
     });
 
-    const theme = themes[currentTheme];
+    // Merge existing themes with new theme presets
+    const allThemes = { ...themes, ...themePresets };
+    const theme = allThemes[currentTheme] || themes.cyber;
 
     useEffect(() => {
         localStorage.setItem('efolio-theme', currentTheme);
@@ -350,7 +353,7 @@ export const ThemeProvider = ({ children }) => {
     }, [currentTheme, theme]);
 
     const changeTheme = (themeId) => {
-        if (themes[themeId]) {
+        if (allThemes[themeId]) {
             setCurrentTheme(themeId);
         }
     };
@@ -358,7 +361,10 @@ export const ThemeProvider = ({ children }) => {
     const value = {
         currentTheme,
         theme,
-        themes: Object.values(themes),
+        themes: Object.values(allThemes).map(t => ({
+            ...t,
+            id: t.id || Object.keys(allThemes).find(key => allThemes[key] === t)
+        })),
         changeTheme
     };
 
