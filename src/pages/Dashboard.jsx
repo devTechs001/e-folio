@@ -10,8 +10,8 @@ import Profile from '../components/dashboard/Profile';
 
 // Dashboard Components
 import DashboardHome from '../components/dashboard/DashboardHomeStyled';
-import ProjectManager from '../components/dashboard/ProjectManagerStyled';
-import SkillsEditor from '../components/dashboard/SkillsEditor';
+import ProjectManager from '../components/dashboard/ProjectManagerEnhanced';
+import SkillsEditor from '../components/dashboard/SkillsEditorEnhanced';
 import ThemeManager from '../components/dashboard/ThemeManagerStyled';
 import Analytics from '../components/dashboard/Analytics';
 import Settings from '../components/dashboard/SettingsStyled';

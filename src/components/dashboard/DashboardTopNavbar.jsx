@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Search, User, Settings, LogOut, Menu } from 'lucide-react';
+import { Bell, Search, User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
@@ -24,27 +24,6 @@ const DashboardTopNavbar = ({ onToggleSidebar }) => {
         }}>
             {/* Left Section */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button
-                    onClick={onToggleSidebar}
-                    style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '10px',
-                        background: `${theme.primary}15`,
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: theme.primary,
-                        transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.background = `${theme.primary}25`}
-                    onMouseOut={(e) => e.currentTarget.style.background = `${theme.primary}15`}
-                >
-                    <Menu size={20} />
-                </button>
-
                 {/* Search Bar */}
                 <div style={{
                     position: 'relative',
