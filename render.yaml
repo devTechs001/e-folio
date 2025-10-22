@@ -38,8 +38,37 @@ services:
       - key: VITE_SOCKET_URL
         value: https://e-folio-backend.onrender.com
 
+<<<<<<< HEAD
 # IMPORTANT: 
 # 1. Deploy via Blueprint to create BOTH services automatically
 # 2. After deployment, update CLIENT_URL, VITE_API_URL, and VITE_SOCKET_URL with actual Render URLs
 # 3. Add MONGODB_URI to backend service environment variables
 # 4. MongoDB Atlas setup required (free tier): https://cloud.mongodb.com
+=======
+  # Backend service
+  - type: web
+    name: e-folio-backend
+    env: node
+    plan: starter
+    region: oregon
+    buildCommand: cd server && npm install
+    startCommand: cd server && node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false  # Set this manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: e-folio-frontend
+          property: host
+
+  # Database (MongoDB Atlas recommended - configure manually)
+  # Or use Render's managed MongoDB
+>>>>>>> c57b94dc2805c8be4e8c63b438d303ae46cc3a37
