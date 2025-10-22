@@ -1,5 +1,26 @@
 services:
-  # Frontend service
+  # Backend API Service
+  - type: web
+    name: e-folio-backend
+    env: node
+    plan: starter
+    region: oregon
+    buildCommand: cd server && npm install
+    startCommand: cd server && node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false  # Add this manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: https://e-folio-frontend.onrender.com
+
+  # Frontend Static Site
   - type: web
     name: e-folio-frontend
     env: static
@@ -13,39 +34,12 @@ services:
       - key: NODE_VERSION
         value: 18
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: e-folio-backend
-          property: host
+        value: https://e-folio-backend.onrender.com
       - key: VITE_SOCKET_URL
-        fromService:
-          type: web
-          name: e-folio-backend
-          property: host
+        value: https://e-folio-backend.onrender.com
 
-  # Backend service
-  - type: web
-    name: e-folio-backend
-    env: node
-    plan: starter
-    region: oregon
-    buildCommand: cd server && npm install
-    startCommand: cd server && npm start
-    healthCheckPath: /api/health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 5000
-      - key: MONGODB_URI
-        sync: false  # Set this manually in Render dashboard
-      - key: JWT_SECRET
-        generateValue: true
-      - key: CLIENT_URL
-        fromService:
-          type: web
-          name: e-folio-frontend
-          property: host
-
-  # Database (MongoDB Atlas recommended - configure manually)
-  # Or use Render's managed MongoDB
+# IMPORTANT: 
+# 1. Deploy via Blueprint to create BOTH services automatically
+# 2. After deployment, update CLIENT_URL, VITE_API_URL, and VITE_SOCKET_URL with actual Render URLs
+# 3. Add MONGODB_URI to backend service environment variables
+# 4. MongoDB Atlas setup required (free tier): https://cloud.mongodb.com
