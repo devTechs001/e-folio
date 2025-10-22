@@ -10,7 +10,7 @@ export default defineConfig({
       }
     })
   ],
-  base: '/',
+  base: '/e-folio/',
   build: {
     assetsDir: 'assets',
     rollupOptions: {

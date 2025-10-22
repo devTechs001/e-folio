@@ -13,13 +13,48 @@ const CollaborationRequest = () => {
     const [formData, setFormData] = useState({
         name: '', email: '', role: '', message: '', skills: []
     });
+    const [emailSuggestions, setEmailSuggestions] = useState([]);
+    const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
 
-    const skillOptions = ['React', 'Node.js', 'TypeScript', 'Python', 'UI/UX Design', 'DevOps', 'Mobile Development'];
+    const skillOptions = [
+        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'TypeScript', 
+        'Python', 'Django', 'Flask', 'UI/UX Design', 'DevOps', 'Docker', 
+        'Kubernetes', 'AWS', 'Azure', 'MongoDB', 'PostgreSQL', 'GraphQL',
+        'Mobile Development', 'React Native', 'Flutter', 'Testing', 'CI/CD'
+    ];
+
+    const roleOptions = [
+        'Frontend Developer', 'Backend Developer', 'Full Stack Developer',
+        'UI/UX Designer', 'DevOps Engineer', 'Mobile Developer',
+        'Data Scientist', 'Project Manager', 'Technical Writer'
+    ];
+
+    const emailDomains = ['@gmail.com', '@yahoo.com', '@outlook.com', '@hotmail.com'];
+
+    const handleEmailChange = (value) => {
+        setFormData({ ...formData, email: value });
+        
+        // Auto-suggest email domains
+        if (value.includes('@')) {
+            setEmailSuggestions([]);
+        } else if (value.length > 2 && !value.includes('@')) {
+            setEmailSuggestions(emailDomains);
+        } else {
+            setEmailSuggestions([]);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.email || !formData.message) {
             error('Please fill in all required fields');
+            return;
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            error('Please enter a valid email address');
             return;
         }
         

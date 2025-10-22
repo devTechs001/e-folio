@@ -1,8 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import apiService from '../services/api.service';
 import '../styles/Skills.css';
 
 const Skills = () => {
-    const technicalSkills = [
+    const [technicalSkills, setTechnicalSkills] = useState([]);
+    const [professionalSkills, setProfessionalSkills] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadSkills();
+    }, []);
+
+    const loadSkills = async () => {
+        try {
+            console.log('Fetching skills from API...');
+            const response = await apiService.getSkills();
+            console.log('Skills API response:', response);
+            
+            if (response.success && response.skills && response.skills.length > 0) {
+                console.log(`Loaded ${response.skills.length} skills from database`);
+                const technical = response.skills.filter(s => s.type === 'technical');
+                const professional = response.skills.filter(s => s.type === 'professional');
+                
+                setTechnicalSkills(technical.slice(0, 8)); // Show top 8
+                setProfessionalSkills(professional.slice(0, 4)); // Show top 4
+            } else {
+                console.log('No skills from API, using fallback data');
+                setTechnicalSkills(getFallbackTechnicalSkills());
+                setProfessionalSkills(getFallbackProfessionalSkills());
+            }
+        } catch (error) {
+            console.error('Error loading skills:', error);
+            console.log('Using fallback skills due to error');
+            setTechnicalSkills(getFallbackTechnicalSkills());
+            setProfessionalSkills(getFallbackProfessionalSkills());
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getFallbackTechnicalSkills = () => [
         { name: "HTML5", level: 90, icon: "fa-brands fa-html5" },
         { name: "CSS3", level: 85, icon: "fa-brands fa-css3-alt" },
         { name: "JavaScript", level: 80, icon: "fa-brands fa-js" },
@@ -13,12 +50,24 @@ const Skills = () => {
         { name: "Database", level: 60, icon: "fa-solid fa-database" }
     ];
 
-    const professionalSkills = [
+    const getFallbackProfessionalSkills = () => [
         { name: "Problem Solving", level: 90 },
         { name: "Creativity", level: 85 },
         { name: "Team Work", level: 95 },
         { name: "Communication", level: 85 }
     ];
+
+    if (loading) {
+        return (
+            <section className="skills" id="skills">
+                <h2 className="heading">My <span>Skills</span></h2>
+                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--textColor)' }}>
+                    <i className="fas fa-spinner fa-spin" style={{ fontSize: '3rem', color: 'var(--mainColor)' }}></i>
+                    <p style={{ marginTop: '1rem' }}>Loading skills...</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="skills" id="skills">

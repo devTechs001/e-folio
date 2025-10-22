@@ -29,7 +29,7 @@ const visitorSchema = new mongoose.Schema({
         timezone: String
     },
     device: {
-        type: String,
+        type: { type: String },
         browser: String,
         os: String,
         isMobile: Boolean,

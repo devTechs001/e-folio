@@ -4,6 +4,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import AuthProvider from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LandingPageThemeProvider } from './contexts/LandingPageThemeContext';
 import { SocketProvider } from './contexts/SocketContext';
 import NotificationProvider from './components/NotificationSystem';
 import LandingPage from './pages/LandingPage';
@@ -43,11 +44,15 @@ const App = () => {
             <AuthProvider>
                 <NotificationProvider>
                     <SocketProvider>
-                        <Router>
+                        <Router basename="/e-folio">
                             <div className="App min-h-screen">
                                 <HashNavigationHandler />
                                 <Routes>
-                                    <Route path="/" element={<LandingPage />} />
+                                    <Route path="/" element={
+                                        <LandingPageThemeProvider>
+                                            <LandingPage />
+                                        </LandingPageThemeProvider>
+                                    } />
                                     <Route path="/login" element={<LoginPage />} />
                                     <Route path="/collaborate" element={<CollaborationRequest />} />
                                     <Route 
@@ -59,7 +64,11 @@ const App = () => {
                                         } 
                                     />
                                     {/* Catch-all route for 404 */}
-                                    <Route path="*" element={<LandingPage />} />
+                                    <Route path="*" element={
+                                        <LandingPageThemeProvider>
+                                            <LandingPage />
+                                        </LandingPageThemeProvider>
+                                    } />
                                 </Routes>
                             </div>
                         </Router>

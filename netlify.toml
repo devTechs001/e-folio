@@ -1,0 +1,54 @@
+[build]
+  # Build command
+  command = "npm run build"
+  
+  # Directory that contains the deploy-ready HTML files and assets
+  publish = "dist"
+  
+  # Environment variables for build
+  [build.environment]
+    NODE_VERSION = "18"
+
+# Redirects for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Environment-specific settings
+[context.production.environment]
+  VITE_API_URL = "https://your-backend-api.com"
+  VITE_SOCKET_URL = "https://your-backend-api.com"
+
+[context.deploy-preview.environment]
+  VITE_API_URL = "https://preview-backend.netlify.app"
+  VITE_SOCKET_URL = "https://preview-backend.netlify.app"
+
+[context.branch-deploy.environment]
+  VITE_API_URL = "https://dev-backend.netlify.app"
+  VITE_SOCKET_URL = "https://dev-backend.netlify.app"

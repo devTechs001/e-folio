@@ -1,0 +1,61 @@
+/* Landing Page Height Fixes */
+/* Override excessive min-heights that make page too long */
+
+.about,
+.skills,
+.education,
+.interests,
+.projects,
+.contact {
+  min-height: auto !important;
+}
+
+/* Adjust section paddings for better spacing */
+.about {
+  padding: 8rem 9% 6rem !important;
+}
+
+.skills {
+  padding: 5rem 9% 4rem !important;
+}
+
+.education {
+  padding: 5rem 9% 4rem !important;
+}
+
+.interests {
+  padding: 5rem 9% 4rem !important;
+}
+
+.projects {
+  padding: 5rem 9% 4rem !important;
+}
+
+.contact {
+  padding: 5rem 9% 4rem !important;
+}
+
+/* Ensure smooth transitions */
+.about,
+.skills,
+.education,
+.interests,
+.projects,
+.contact {
+  transition: all 0.3s ease;
+}
+
+/* Maintain mobile responsiveness */
+@media screen and (max-width: 768px) {
+  .about {
+    padding: 6rem 5% 4rem !important;
+  }
+  
+  .skills,
+  .education,
+  .interests,
+  .projects,
+  .contact {
+    padding: 4rem 5% 3rem !important;
+  }
+}

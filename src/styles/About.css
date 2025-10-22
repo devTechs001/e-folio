@@ -11,44 +11,99 @@
   overflow: hidden;
 }
 
-/* Blob Effect */
+/* Enhanced Blob Effects */
 .about::before {
   content: '';
   position: absolute;
-  width: 400px;
-  height: 400px;
-  background: var(--mainColor);
-  border-radius: 50%;
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, var(--mainColor), rgba(124, 58, 237, 0.5));
+  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
   filter: blur(150px);
-  opacity: 0.2;
-  top: -100px;
-  right: -100px;
-  animation: blobFloat 8s infinite alternate;
+  opacity: 0.3;
+  top: -150px;
+  right: -150px;
+  animation: blobMorph 20s ease-in-out infinite, blobFloat 8s ease-in-out infinite alternate;
 }
 
 .about::after {
   content: '';
   position: absolute;
-  width: 300px;
-  height: 300px;
-  background: var(--mainColor);
-  border-radius: 50%;
-  filter: blur(150px);
-  opacity: 0.2;
-  bottom: -50px;
-  left: -50px;
-  animation: blobFloat 10s infinite alternate-reverse;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(225deg, rgba(0, 239, 255, 0.4), rgba(139, 92, 246, 0.3));
+  border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%;
+  filter: blur(120px);
+  opacity: 0.25;
+  bottom: -100px;
+  left: -100px;
+  animation: blobMorph 15s ease-in-out infinite reverse, blobFloat 10s ease-in-out infinite alternate-reverse;
+}
+
+/* Additional blob for more depth */
+.about-content::before {
+  content: '';
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(0, 239, 255, 0.15), transparent);
+  border-radius: 48% 52% 65% 35% / 58% 43% 57% 42%;
+  filter: blur(80px);
+  opacity: 0.4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: blobPulse 12s ease-in-out infinite, blobRotate 25s linear infinite;
+  z-index: 0;
 }
 
 @keyframes blobFloat {
   0% {
     transform: translate(0, 0) scale(1);
   }
-  50% {
-    transform: translate(30px, -30px) scale(1.1);
+  33% {
+    transform: translate(50px, -40px) scale(1.15);
+  }
+  66% {
+    transform: translate(-40px, 50px) scale(0.95);
   }
   100% {
-    transform: translate(-30px, 30px) scale(0.9);
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes blobMorph {
+  0%, 100% {
+    border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+  }
+  25% {
+    border-radius: 40% 60% 70% 30% / 50% 60% 30% 60%;
+  }
+  50% {
+    border-radius: 54% 46% 38% 62% / 49% 70% 30% 51%;
+  }
+  75% {
+    border-radius: 61% 39% 55% 45% / 61% 38% 62% 39%;
+  }
+}
+
+@keyframes blobPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 0.2;
+  }
+}
+
+@keyframes blobRotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
@@ -103,15 +158,16 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: 50%;
-  font-size: 2.2rem;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 1.2rem;
+  font-size: 2.6rem;
   color: var(--bgColor);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
+  backdrop-filter: blur(5px);
 }
 
 .social-media a::before {
@@ -232,13 +288,34 @@
 .about-image::before {
   content: '';
   position: absolute;
-  width: 100%;
-  height: 100%;
+  width: 115%;
+  height: 115%;
   border-radius: 50%;
-  background: var(--mainColor);
-  filter: blur(30px);
-  opacity: 0.2;
-  animation: pulseGlow 3s infinite;
+  background: linear-gradient(135deg, var(--mainColor), rgba(139, 92, 246, 0.8), rgba(0, 239, 255, 0.6));
+  filter: blur(50px);
+  opacity: 0;
+  animation: pulseGlow 4s ease-in-out infinite;
+  z-index: -1;
+}
+
+.about-image::after {
+  content: '';
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--mainColor) 0deg,
+    rgba(139, 92, 246, 0.8) 90deg,
+    rgba(0, 239, 255, 0.6) 180deg,
+    rgba(139, 92, 246, 0.8) 270deg,
+    var(--mainColor) 360deg
+  );
+  filter: blur(25px);
+  opacity: 0.4;
+  animation: imageRotate 15s linear infinite;
+  z-index: -1;
 }
 
 @keyframes pulseGlow {
@@ -247,8 +324,17 @@
     opacity: 0.2;
   }
   50% {
-    transform: scale(1.1);
-    opacity: 0.3;
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+}
+
+@keyframes imageRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
