@@ -90,32 +90,49 @@ const Header = () => {
                         <i className="fas fa-envelope" style={{ fontSize: '19px' }}></i>
                         <span>Contact</span>
                     </a>
-                    <Link to="/dashboard" className="nav-link nav-link-special" onClick={closeMenu} style={{
+                    <Link to="/dashboard" className="nav-link nav-link-special dashboard-icon-btn" onClick={closeMenu} style={{
                         background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
                         color: '#ffffff',
-                        padding: '12px 24px',
-                        borderRadius: '10px',
+                        padding: '14px 14px',
+                        borderRadius: '12px',
                         marginLeft: '20px',
-                        boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
-                        fontSize: '17px',
-                        fontWeight: '700'
+                        boxShadow: '0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(99, 102, 241, 0.3)',
+                        fontSize: '22px',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '48px',
+                        height: '48px',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        position: 'relative',
+                        overflow: 'hidden'
                     }}>
-                        <i className="fas fa-tachometer-alt" style={{ fontSize: '19px' }}></i>
-                        <span>Dashboard</span>
+                        <i className="fas fa-grip-horizontal" style={{ 
+                            fontSize: '20px',
+                            filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+                        }}></i>
                     </Link>
-                    <Link to="/collaborate" className="nav-link nav-link-special" onClick={closeMenu} style={{
-                        background: 'linear-gradient(135deg, #00efff, #00d4ff)',
-                        color: '#081b29',
-                        padding: '12px 24px',
-                        borderRadius: '10px',
+                    <Link to="/collaborate" className="nav-link nav-link-special collaborate-btn-header" onClick={closeMenu} style={{
+                        background: 'linear-gradient(135deg, #00efff, #7c3aed, #00efff)',
+                        backgroundSize: '200% 200%',
+                        color: '#ffffff',
+                        padding: '14px 28px',
+                        borderRadius: '12px',
                         marginLeft: '8px',
-                        boxShadow: '0 4px 15px rgba(0, 239, 255, 0.4)',
+                        boxShadow: '0 0 20px rgba(0, 239, 255, 0.6), 0 0 40px rgba(124, 58, 237, 0.4)',
                         fontSize: '17px',
                         fontWeight: '900',
-                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                        border: '2px solid rgba(0, 239, 255, 0.5)',
+                        animation: 'gradientShift 3s ease infinite, pulse 2s ease-in-out infinite',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease'
                     }}>
-                        <i className="fas fa-handshake" style={{ fontSize: '19px', fontWeight: '900' }}></i>
-                        <span>Collaborate</span>
+                        <i className="fas fa-handshake" style={{ fontSize: '20px', fontWeight: '900', marginRight: '8px' }}></i>
+                        <span style={{ position: 'relative', zIndex: 1 }}>Collaborate</span>
+                        <i className="fas fa-sparkles" style={{ fontSize: '14px', marginLeft: '6px' }}></i>
                     </Link>
                 </nav>
 

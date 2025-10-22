@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api.service';
 
-const AuthContext = createContext();
+const AuthContext = createContext(undefined);
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -147,3 +147,8 @@ const AuthProvider = ({ children }) => {
 
 export { AuthContext };
 export default AuthProvider;
+
+// Add displayName for better debugging
+if (process.env.NODE_ENV !== 'production') {
+    AuthProvider.displayName = 'AuthProvider';
+}

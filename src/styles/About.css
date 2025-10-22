@@ -103,39 +103,100 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 4rem;
-  height: 4rem;
+  width: 4.5rem;
+  height: 4.5rem;
   border-radius: 50%;
-  font-size: 2rem;
+  font-size: 2.2rem;
   color: var(--bgColor);
-  transition: 0.5s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
 }
 
-/* Social Media Icon Colors - Matching your About.jsx */
+.social-media a::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: inherit;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.social-media a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  border-radius: 50%;
+  transform: translateX(-100%) rotate(45deg);
+  transition: transform 0.6s;
+}
+
+/* Social Media Icon Colors - Enhanced Gradients */
 .social-media a:nth-child(1) {
-  background: #1877f2; /* Facebook */
+  background: linear-gradient(135deg, #1877f2, #0c63d4); /* Facebook */
+  box-shadow: 0 5px 15px rgba(24, 119, 242, 0.3);
 }
 
 .social-media a:nth-child(2) {
-  background: #E4405F; /* Instagram */
+  background: linear-gradient(135deg, #E4405F, #c13584); /* Instagram */
+  box-shadow: 0 5px 15px rgba(228, 64, 95, 0.3);
 }
 
 .social-media a:nth-child(3) {
-  background: #171515; /* GitHub */
+  background: linear-gradient(135deg, #333, #000); /* GitHub */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
 }
 
 .social-media a:nth-child(4) {
-  background: #26A5E4; /* Telegram */
+  background: linear-gradient(135deg, #26A5E4, #0088cc); /* Telegram */
+  box-shadow: 0 5px 15px rgba(38, 165, 228, 0.3);
 }
 
 .social-media a:nth-child(5) {
-  background: #25D366; /* WhatsApp */
+  background: linear-gradient(135deg, #25D366, #128c7e); /* WhatsApp */
+  box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
 }
 
 .social-media a:hover {
-  transform: scale(1.1) translateY(-5px);
-  box-shadow: 0 0 1rem currentColor;
+  transform: scale(1.15) translateY(-8px) rotate(5deg);
+  border-color: currentColor;
+  filter: brightness(1.2);
 }
+
+.social-media a:hover::before {
+  opacity: 0.6;
+}
+
+.social-media a:hover::after {
+  transform: translateX(100%) rotate(45deg);
+}
+
+.social-media a:active {
+  transform: scale(1.05) translateY(-4px);
+}
+
+@keyframes iconPulseAbout {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.social-media a {
+  animation: iconPulseAbout 3s ease-in-out infinite;
+}
+
+.social-media a:nth-child(1) { animation-delay: 0s; }
+.social-media a:nth-child(2) { animation-delay: 0.2s; }
+.social-media a:nth-child(3) { animation-delay: 0.4s; }
+.social-media a:nth-child(4) { animation-delay: 0.6s; }
+.social-media a:nth-child(5) { animation-delay: 0.8s; }
 
 .btn {
   display: inline-flex;

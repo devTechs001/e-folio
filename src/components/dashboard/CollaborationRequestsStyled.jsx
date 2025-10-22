@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserPlus, Check, X, Mail, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
@@ -9,31 +10,38 @@ import DashboardLayout from './DashboardLayout';
 const CollaborationRequests = () => {
     const { isOwner } = useAuth();
     const { theme } = useTheme();
+    const { on, off } = useSocket();
     const { success, error } = useNotifications();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         loadRequests();
-    }, []);
+        
+        // Listen for real-time new collaboration requests
+        const handleNewRequest = (request) => {
+            setRequests(prev => [request, ...prev]);
+        };
+        
+        on('new_collaboration_request', handleNewRequest);
+        
+        return () => {
+            off('new_collaboration_request', handleNewRequest);
+        };
+    }, [on, off]);
 
     const loadRequests = async () => {
         try {
             setLoading(true);
             const response = await apiService.getCollaborationRequests();
-            setRequests(response.requests || getDemoRequests());
+            setRequests(response.requests || []);
         } catch (err) {
             console.error('Error loading requests:', err);
-            setRequests(getDemoRequests());
+            setRequests([]);
         } finally {
             setLoading(false);
         }
     };
-
-    const getDemoRequests = () => [
-        { id: 1, name: 'Alex Johnson', email: 'alex@example.com', message: 'Would love to collaborate on projects', submittedAt: '2024-01-20', status: 'pending' },
-        { id: 2, name: 'Emma Wilson', email: 'emma@example.com', message: 'Interested in contributing to your work', submittedAt: '2024-01-19', status: 'pending' }
-    ];
 
     const handleApprove = async (id, name) => {
         try {
@@ -95,7 +103,7 @@ const CollaborationRequests = () => {
                                     background: theme.gradient, display: 'flex', alignItems: 'center',
                                     justifyContent: 'center', color: theme.background, fontWeight: '700',
                                     fontSize: '18px', boxShadow: `0 4px 12px ${theme.primary}40`
-                                }}>{request.avatar}</div>
+                                }}>{request.name ? request.name.charAt(0).toUpperCase() : '?'}</div>
                                 <div>
                                     <h4 style={{ color: theme.text, margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>{request.name}</h4>
                                     <p style={{ color: theme.textSecondary, margin: '0 0 8px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>

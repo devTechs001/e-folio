@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { themePresets, getThemeNames } from '../themes/themePresets';
 
-const ThemeContext = createContext();
+const ThemeContext = createContext(undefined);
 
 export const useTheme = () => {
     const context = useContext(ThemeContext);
@@ -285,8 +285,8 @@ export const themes = {
         fontHeading: "'Rajdhani', sans-serif",
         fontBody: "'Fira Code', monospace"
     },
-    sunset: {
-        id: 'sunset',
+    sunsetParadise: {
+        id: 'sunsetParadise',
         name: 'Sunset Paradise',
         primary: '#ff6b6b',
         secondary: '#ffd93d',

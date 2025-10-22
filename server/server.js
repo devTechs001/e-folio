@@ -69,6 +69,10 @@ app.get('/health', (req, res) => {
 // Initialize Socket.io handlers
 chatHandler(io);
 
+// Pass Socket.IO instance to collaboration controller
+const collaborationController = require('./controllers/collaboration.controller');
+collaborationController.setSocketIO(io);
+
 // Error handling
 app.use((err, req, res, next) => {
     console.error(err.stack);

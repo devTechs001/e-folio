@@ -97,7 +97,7 @@ const Dashboard = () => {
         },
         {
             path: '/dashboard/reviews',
-            icon: 'fas fa-star-half-alt',
+            icon: 'fas fa-comments',
             label: 'Reviews',
             component: ReviewsManager,
             roles: ['owner']

@@ -8,13 +8,13 @@
     "dev": "nodemon server.js",
     "seed": "node seed.js",
     "seed:projects": "node seedProjects.js",
-    "seed:all": "node seed.js && node seedProjects.js",
+    "seed:skills": "node seedSkills.js",
+    "seed:all": "node seed.js && node seedProjects.js && node seedSkills.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["portfolio", "real-time", "socket.io", "collaboration", "ai"],
   "author": "E-Folio Team",
   "license": "MIT",
-  "packageManager": "pnpm@10.18.3",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",

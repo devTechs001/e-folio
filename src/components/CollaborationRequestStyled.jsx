@@ -4,6 +4,7 @@ import { Send, User, Mail, Briefcase, MessageSquare, CheckCircle, ArrowLeft } fr
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
+import apiService from '../services/api.service';
 
 const CollaborationRequest = () => {
     const { theme } = useTheme();
@@ -15,17 +16,25 @@ const CollaborationRequest = () => {
 
     const skillOptions = ['React', 'Node.js', 'TypeScript', 'Python', 'UI/UX Design', 'DevOps', 'Mobile Development'];
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.email || !formData.message) {
             error('Please fill in all required fields');
             return;
         }
-        const requests = JSON.parse(localStorage.getItem('collaboration_requests') || '[]');
-        requests.push({ id: Date.now(), ...formData, status: 'pending', submittedAt: new Date().toISOString() });
-        localStorage.setItem('collaboration_requests', JSON.stringify(requests));
-        setSubmitted(true);
-        success('Request submitted successfully!');
+        
+        try {
+            const response = await apiService.submitCollaborationRequest(formData);
+            if (response.success) {
+                setSubmitted(true);
+                success('Request submitted successfully! We will review it and get back to you soon.');
+            } else {
+                error(response.message || 'Failed to submit request');
+            }
+        } catch (err) {
+            console.error('Submission error:', err);
+            error(err.message || 'Failed to submit request. Please try again.');
+        }
     };
 
     if (submitted) {

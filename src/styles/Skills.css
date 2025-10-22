@@ -3,6 +3,30 @@
   background: var(--sbgColor);
   padding: 5rem 9% 2rem;
   min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.skills::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 239, 255, 0.05) 0%, transparent 70%);
+  animation: float 20s ease-in-out infinite;
+}
+
+.skills::after {
+  content: '';
+  position: absolute;
+  bottom: -50%;
+  left: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
+  animation: float 15s ease-in-out infinite reverse;
 }
 
 .heading {
@@ -46,22 +70,95 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 4rem;
   padding: 3rem;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1400px) {
+  .skills-container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
 }
 
 /* Technical Skills Container */
 .container1 {
-  background: var(--bgColor);
+  background: linear-gradient(135deg, rgba(8, 27, 41, 0.9), rgba(0, 239, 255, 0.05));
   padding: 3rem;
-  border-radius: 1rem;
-  box-shadow: 0 0 1rem rgba(0, 238, 255, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 238, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 239, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  position: relative;
+  z-index: 1;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.container1:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 15px 50px rgba(0, 239, 255, 0.3), 0 0 60px rgba(0, 239, 255, 0.2);
 }
 
 /* Professional Skills Container */
 .container2 {
-  background: var(--bgColor);
+  background: linear-gradient(135deg, rgba(8, 27, 41, 0.9), rgba(124, 58, 237, 0.05));
   padding: 3rem;
-  border-radius: 1rem;
-  box-shadow: 0 0 1rem rgba(0, 238, 255, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  position: relative;
+  z-index: 1;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.container2:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 15px 50px rgba(124, 58, 237, 0.3), 0 0 60px rgba(124, 58, 237, 0.2);
+}
+
+/* Make containers flexible for dynamic content */
+.technical-bars,
+.radial-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  max-height: 600px;
+  padding-right: 10px;
+}
+
+.technical-bars::-webkit-scrollbar,
+.radial-bars::-webkit-scrollbar {
+  width: 6px;
+}
+
+.technical-bars::-webkit-scrollbar-track,
+.radial-bars::-webkit-scrollbar-track {
+  background: rgba(0, 239, 255, 0.05);
+  border-radius: 3px;
+}
+
+.technical-bars::-webkit-scrollbar-thumb,
+.radial-bars::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #00efff, #7c3aed);
+  border-radius: 3px;
+}
+
+.technical-bars::-webkit-scrollbar-thumb:hover,
+.radial-bars::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c3aed, #00efff);
 }
 
 /* Technical Skills Styles */
@@ -90,7 +187,9 @@
 
 .technical-bars .bar .info i {
   font-size: 2rem;
-  transition: 0.3s;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: drop-shadow(0 0 10px currentColor);
+  animation: iconPulse 2s ease-in-out infinite;
 }
 
 /* Icon Colors */
@@ -104,7 +203,18 @@
 .fa-database { color: #00758f; }
 
 .technical-bars .bar:hover .info i {
-  transform: scale(1.2);
+  transform: scale(1.3) rotate(360deg);
+  filter: drop-shadow(0 0 20px currentColor);
+  animation: none;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 15px currentColor);
+  }
 }
 
 .technical-bars .bar .info span {
@@ -129,8 +239,23 @@
   height: 100%;
   width: 0;
   left: 0;
-  background: var(--mainColor);
+  background: linear-gradient(90deg, #00efff, #7c3aed, #00efff);
+  background-size: 200% 100%;
   transition: width 1s cubic-bezier(0.1, 0.42, 0.85, 1);
+  animation: progressGlow 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(0, 239, 255, 0.5), 0 0 20px rgba(0, 239, 255, 0.3);
+  border-radius: 0.6rem;
+}
+
+@keyframes progressGlow {
+  0%, 100% {
+    background-position: 0% 50%;
+    box-shadow: 0 0 10px rgba(0, 239, 255, 0.5), 0 0 20px rgba(0, 239, 255, 0.3);
+  }
+  50% {
+    background-position: 100% 50%;
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.6), 0 0 30px rgba(124, 58, 237, 0.4);
+  }
 }
 
 .progress span {
@@ -138,23 +263,33 @@
   right: 0;
   top: -3rem;
   font-size: 1.3rem;
-  font-weight: 500;
-  color: var(--textColor);
-  background: var(--mainColor);
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.3rem;
+  font-weight: 700;
+  color: #081b29;
+  background: linear-gradient(135deg, #00efff, #7c3aed);
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
   opacity: 0;
-  animation: showText 0.5s 1s linear forwards;
+  animation: showText 0.5s 1s linear forwards, tooltipFloat 2s ease-in-out infinite;
+  box-shadow: 0 4px 15px rgba(0, 239, 255, 0.4);
+}
+
+@keyframes tooltipFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 /* Professional Skills Styles */
 .radial-bars {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 3rem;
   padding: 2rem;
   justify-items: center;
-  align-items: center;
+  align-items: start;
 }
 
 .radial-bar {
@@ -165,6 +300,34 @@
   opacity: 0;
   transform: scale(0.8);
   animation: zoomIn 1s ease forwards;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.radial-bar:hover {
+  transform: scale(1.1) rotate(5deg);
+  filter: drop-shadow(0 0 20px rgba(0, 239, 255, 0.6));
+}
+
+.radial-bar::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  background: conic-gradient(from 0deg, transparent, rgba(0, 239, 255, 0.1), transparent, rgba(124, 58, 237, 0.1));
+  border-radius: 50%;
+  animation: rotate 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.radial-bar:hover::before {
+  opacity: 1;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .radial-bar:nth-child(1) { animation-delay: 0.2s; }
@@ -191,10 +354,26 @@
 }
 
 .radial-bar svg circle:nth-child(2) {
-  stroke: var(--mainColor);
+  stroke: url(#gradient);
   stroke-dasharray: 283;
   stroke-dashoffset: 283;
   animation: progressCircle 1s ease forwards;
+  filter: drop-shadow(0 0 8px rgba(0, 239, 255, 0.6));
+}
+
+/* Add gradient definition for SVG */
+.radial-bar svg::before {
+  content: '';
+  position: absolute;
+}
+
+.radial-bar svg defs linearGradient {
+  stop:first-child {
+    stop-color: #00efff;
+  }
+  stop:last-child {
+    stop-color: #7c3aed;
+  }
 }
 
 .radial-bar .percentage {
@@ -203,10 +382,23 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 2.2rem;
-  font-weight: 600;
-  color: var(--mainColor);
+  font-weight: 700;
+  background: linear-gradient(135deg, #00efff, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   opacity: 0;
-  animation: showText 0.5s 0.5s linear forwards;
+  animation: showText 0.5s 0.5s linear forwards, numberPulse 2s ease-in-out infinite;
+  text-shadow: 0 0 20px rgba(0, 239, 255, 0.5);
+}
+
+@keyframes numberPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
 }
 
 .radial-bar .text {
@@ -215,9 +407,16 @@
   margin-top: 2rem;
   margin-bottom: 2rem;
   color: var(--textColor);
-  font-weight: 500;
+  font-weight: 600;
   opacity: 0;
   animation: showText 0.5s 0.5s linear forwards;
+  text-shadow: 0 2px 10px rgba(0, 239, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.radial-bar:hover .text {
+  color: var(--mainColor);
+  text-shadow: 0 0 15px rgba(0, 239, 255, 0.8);
 }
 
 /* Animations */

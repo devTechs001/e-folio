@@ -58,32 +58,18 @@ const SkillsEditorEnhanced = () => {
         try {
             setLoading(true);
             const response = await ApiService.getSkills();
-            const skills = response.skills || getDemoSkills();
+            const skills = response.skills || [];
             
             setTechnicalSkills(skills.filter(s => s.type === 'technical'));
             setProfessionalSkills(skills.filter(s => s.type === 'professional'));
         } catch (err) {
             console.error('Error loading skills:', err);
-            const demo = getDemoSkills();
-            setTechnicalSkills(demo.filter(s => s.type === 'technical'));
-            setProfessionalSkills(demo.filter(s => s.type === 'professional'));
+            setTechnicalSkills([]);
+            setProfessionalSkills([]);
         } finally {
             setLoading(false);
         }
     };
-
-    const getDemoSkills = () => [
-        { id: 1, name: 'React', level: 90, category: 'Frontend', type: 'technical', color: '#61dafb', icon: 'fa-brands fa-react' },
-        { id: 2, name: 'Node.js', level: 85, category: 'Backend', type: 'technical', color: '#68a063', icon: 'fa-brands fa-node-js' },
-        { id: 3, name: 'TypeScript', level: 80, category: 'Frontend', type: 'technical', color: '#3178c6', icon: 'fa-brands fa-js' },
-        { id: 4, name: 'Python', level: 75, category: 'Backend', type: 'technical', color: '#3776ab', icon: 'fa-brands fa-python' },
-        { id: 5, name: 'HTML5', level: 95, category: 'Frontend', type: 'technical', color: '#e34c26', icon: 'fa-brands fa-html5' },
-        { id: 6, name: 'CSS3', level: 90, category: 'Frontend', type: 'technical', color: '#264de4', icon: 'fa-brands fa-css3-alt' },
-        { id: 7, name: 'Problem Solving', level: 95, type: 'professional' },
-        { id: 8, name: 'Team Collaboration', level: 90, type: 'professional' },
-        { id: 9, name: 'Communication', level: 85, type: 'professional' },
-        { id: 10, name: 'Leadership', level: 80, type: 'professional' }
-    ];
 
     const handleAddSkill = async () => {
         if (!newSkill.name.trim()) {

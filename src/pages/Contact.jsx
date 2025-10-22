@@ -51,22 +51,57 @@ const Contact = () => {
                     </div>
 
                     <div className="social-links">
-                        <h4>Follow Me</h4>
-                        <div className="social-icons">
-                            <a href="https://github.com/devTechs001" target="_blank" rel="noopener noreferrer" title="GitHub">
-                                <i className="fab fa-github"></i>
+                        <h4 style={{ marginBottom: '20px', color: 'var(--mainColor)', fontSize: '18px' }}>Follow Me</h4>
+                        <div className="social-icons" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                            <a href="https://github.com/devTechs001" target="_blank" rel="noopener noreferrer" title="GitHub" className="social-icon-modern" style={{
+                                width: '50px', height: '50px', borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #333, #000)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <i className="fab fa-github" style={{ fontSize: '24px', color: '#fff', zIndex: 1 }}></i>
                             </a>
-                            <a href="https://www.linkedin.com/in/daniel-mukula" target="_blank" rel="noopener noreferrer" title="LinkedIn">
-                                <i className="fab fa-linkedin-in"></i>
+                            <a href="https://www.linkedin.com/in/daniel-mukula" target="_blank" rel="noopener noreferrer" title="LinkedIn" className="social-icon-modern" style={{
+                                width: '50px', height: '50px', borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #0077b5, #005582)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 5px 15px rgba(0, 119, 181, 0.4)',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <i className="fab fa-linkedin-in" style={{ fontSize: '24px', color: '#fff', zIndex: 1 }}></i>
                             </a>
-                            <a href="https://www.facebook.com/profile.php?id=100089960419104" target="_blank" rel="noopener noreferrer" title="Facebook">
-                                <i className="fab fa-facebook-f"></i>
+                            <a href="https://www.facebook.com/profile.php?id=100089960419104" target="_blank" rel="noopener noreferrer" title="Facebook" className="social-icon-modern" style={{
+                                width: '50px', height: '50px', borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #1877f2, #0c63d4)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 5px 15px rgba(24, 119, 242, 0.4)',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <i className="fab fa-facebook-f" style={{ fontSize: '24px', color: '#fff', zIndex: 1 }}></i>
                             </a>
-                            <a href="https://www.instagram.com/king_wisdom_ndk/" target="_blank" rel="noopener noreferrer" title="Instagram">
-                                <i className="fab fa-instagram"></i>
+                            <a href="https://www.instagram.com/king_wisdom_ndk/" target="_blank" rel="noopener noreferrer" title="Instagram" className="social-icon-modern" style={{
+                                width: '50px', height: '50px', borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 5px 15px rgba(225, 48, 108, 0.4)',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <i className="fab fa-instagram" style={{ fontSize: '24px', color: '#fff', zIndex: 1 }}></i>
                             </a>
-                            <a href="https://wa.me/254758175275" target="_blank" rel="noopener noreferrer" title="WhatsApp">
-                                <i className="fab fa-whatsapp"></i>
+                            <a href="https://wa.me/254758175275" target="_blank" rel="noopener noreferrer" title="WhatsApp" className="social-icon-modern" style={{
+                                width: '50px', height: '50px', borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #25d366, #128c7e)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 5px 15px rgba(37, 211, 102, 0.4)',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <i className="fab fa-whatsapp" style={{ fontSize: '24px', color: '#fff', zIndex: 1 }}></i>
                             </a>
                         </div>
                     </div>

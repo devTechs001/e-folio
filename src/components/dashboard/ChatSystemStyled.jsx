@@ -3,16 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Users, Search, MoreVertical, Phone, Video, Smile } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import DashboardLayout from './DashboardLayout';
 
 const ChatSystem = () => {
     const { user } = useAuth();
     const { theme } = useTheme();
+    const { socket, connected, on, off, joinRoom, leaveRoom, sendMessage } = useSocket();
     const { info } = useNotifications();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [activeRoom, setActiveRoom] = useState('general');
+    const [typingUsers, setTypingUsers] = useState([]);
     const messagesEndRef = useRef(null);
 
     const rooms = [
@@ -27,55 +30,77 @@ const ChatSystem = () => {
         { id: 3, name: 'Mike Tester', avatar: 'MT', status: 'busy' }
     ]);
 
+    // Join room and listen for messages
     useEffect(() => {
-        const sampleMessages = [
-            {
-                id: 1,
-                user: 'John Developer',
-                avatar: 'JD',
-                message: 'Hey everyone! Just pushed the new feature branch.',
-                timestamp: new Date(Date.now() - 3600000),
-                roomId: 'general'
-            },
-            {
-                id: 2,
-                user: 'Sarah Designer',
-                avatar: 'SD',
-                message: 'Looks great! The UI improvements are really nice.',
-                timestamp: new Date(Date.now() - 3000000),
-                roomId: 'general'
-            },
-            {
-                id: 3,
-                user: user?.name || 'You',
-                avatar: user?.name?.charAt(0) || 'Y',
-                message: 'Thanks! Ready for the next sprint planning?',
-                timestamp: new Date(Date.now() - 1800000),
-                roomId: 'general',
-                isOwn: true
-            }
-        ];
-        setMessages(sampleMessages);
-    }, [user]);
+        if (connected && activeRoom) {
+            joinRoom(activeRoom);
+
+            // Listen for room history
+            const handleRoomHistory = (data) => {
+                if (data.roomId === activeRoom) {
+                    setMessages(data.messages.map(msg => ({
+                        id: msg._id,
+                        user: msg.senderName,
+                        avatar: msg.senderName?.charAt(0) || 'U',
+                        message: msg.content,
+                        timestamp: new Date(msg.createdAt),
+                        roomId: msg.room,
+                        isOwn: msg.sender === user?.id
+                    })));
+                }
+            };
+
+            // Listen for new messages
+            const handleNewMessage = (msg) => {
+                if (msg.room === activeRoom) {
+                    setMessages(prev => [...prev, {
+                        id: msg._id,
+                        user: msg.senderName,
+                        avatar: msg.senderName?.charAt(0) || 'U',
+                        message: msg.content,
+                        timestamp: new Date(msg.createdAt),
+                        roomId: msg.room,
+                        isOwn: msg.sender === user?.id
+                    }]);
+                }
+            };
+
+            // Listen for typing indicators
+            const handleUserTyping = (data) => {
+                if (data.roomId === activeRoom && data.userId !== user?.id) {
+                    if (data.isTyping) {
+                        setTypingUsers(prev => [...new Set([...prev, data.user])]);
+                    } else {
+                        setTypingUsers(prev => prev.filter(u => u !== data.user));
+                    }
+                }
+            };
+
+            on('room_history', handleRoomHistory);
+            on('new_message', handleNewMessage);
+            on('user_typing', handleUserTyping);
+
+            return () => {
+                off('room_history', handleRoomHistory);
+                off('new_message', handleNewMessage);
+                off('user_typing', handleUserTyping);
+                leaveRoom(activeRoom);
+            };
+        }
+    }, [connected, activeRoom, joinRoom, leaveRoom, on, off, user]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     const handleSendMessage = () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !connected) return;
 
-        const newMsg = {
-            id: Date.now(),
-            user: user?.name || 'You',
-            avatar: user?.name?.charAt(0) || 'Y',
-            message: newMessage,
-            timestamp: new Date(),
-            roomId: activeRoom,
-            isOwn: true
-        };
+        sendMessage(activeRoom, {
+            content: newMessage,
+            type: 'text'
+        });
 
-        setMessages(prev => [...prev, newMsg]);
         setNewMessage('');
     };
 

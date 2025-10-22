@@ -7,7 +7,7 @@ import {
     Users, UserPlus, Image, Mail, MessageSquare, Bot,
     FileEdit, TrendingUp, LogOut, ArrowLeft, Menu, X,
     Wrench, User, GraduationCap, Activity, PieChart,
-    TrendingDown, Clock, Globe
+    TrendingDown, Clock, Globe, Star
 } from 'lucide-react';
 
 const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems }) => {
@@ -33,7 +33,9 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems }) => {
         'fas fa-user': User,
         'fas fa-graduation-cap': GraduationCap,
         'fas fa-activity': Activity,
-        'fas fa-pie-chart': PieChart
+        'fas fa-pie-chart': PieChart,
+        'fas fa-star': Star,
+        'fas fa-star-half-alt': Star
     };
 
     const getIcon = (iconClass) => {

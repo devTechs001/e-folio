@@ -45,35 +45,41 @@ const LandingPage = () => {
                 </p>
                 <Link 
                     to="/collaborate" 
-                                        className="collaborate-btn"
-                        style={{
-                            background: 'linear-gradient(135deg,rgb(28, 105, 110),rgb(44, 101, 112))',
-                            border: 'none',
-                            color: '#034c79', // Change to dark blue for contrast
-                            padding: '16px 40px',
-                            borderRadius: '12px',
-                            textDecoration: 'none',
-                            fontWeight: '700',
-                            fontSize: '18px',
-                            fontFamily: "'Poppins', sans-serif",
-                            transition: 'all 0.3s ease',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            boxShadow: '0 8px 24px rgba(0, 239, 255, 0.4)',
-                            transform: 'scale(1)'
-                        }}
+                    className="collaborate-btn-landing"
+                    style={{
+                        background: 'linear-gradient(135deg, #00efff, #7c3aed, #00efff)',
+                        backgroundSize: '200% 200%',
+                        animation: 'gradientShift 3s ease infinite, float 3s ease-in-out infinite',
+                        border: '3px solid rgba(0, 239, 255, 0.8)',
+                        color: '#ffffff',
+                        padding: '18px 48px',
+                        borderRadius: '16px',
+                        textDecoration: 'none',
+                        fontWeight: '900',
+                        fontSize: '20px',
+                        fontFamily: "'Poppins', sans-serif",
+                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        boxShadow: '0 0 30px rgba(0, 239, 255, 0.6), 0 0 60px rgba(124, 58, 237, 0.4), 0 10px 40px rgba(0, 0, 0, 0.3)',
+                        transform: 'scale(1)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
+                    }}
                     onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 239, 255, 0.6)';
+                        e.currentTarget.style.transform = 'scale(1.08) translateY(-4px) rotate(1deg)';
+                        e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 239, 255, 0.9), 0 0 80px rgba(124, 58, 237, 0.6), 0 15px 50px rgba(0, 0, 0, 0.4)';
                     }}
                     onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 239, 255, 0.4)';
+                        e.currentTarget.style.transform = 'scale(1) translateY(0) rotate(0deg)';
+                        e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 239, 255, 0.6), 0 0 60px rgba(124, 58, 237, 0.4), 0 10px 40px rgba(0, 0, 0, 0.3)';
                     }}
                 >
-                    <i className="fas fa-handshake" style={{ fontSize: '22px' }}></i> 
-                    <span>Collaborate with Me</span>
+                    <i className="fas fa-rocket" style={{ fontSize: '24px', animation: 'bounce 1s ease-in-out infinite' }}></i> 
+                    <span style={{ letterSpacing: '0.5px' }}>Collaborate with Me</span>
+                    <i className="fas fa-sparkles" style={{ fontSize: '18px', animation: 'twinkle 1.5s ease-in-out infinite' }}></i>
                 </Link>
             </div>
 

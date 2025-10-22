@@ -3,7 +3,14 @@ const Invite = require('../models/Invite.model');
 const User = require('../models/User.model');
 const crypto = require('crypto');
 
+// Get Socket.IO instance
+let io;
+
 class CollaborationController {
+    // Set Socket.IO instance
+    setSocketIO(socketIO) {
+        io = socketIO;
+    }
     // Submit collaboration request
     async submitRequest(req, res) {
         try {
@@ -38,6 +45,20 @@ class CollaborationController {
             });
 
             await newRequest.save();
+
+            // Emit Socket.IO event to notify owner in real-time
+            if (io) {
+                io.emit('new_collaboration_request', {
+                    id: newRequest._id,
+                    name: newRequest.name,
+                    email: newRequest.email,
+                    role: newRequest.role,
+                    message: newRequest.message,
+                    skills: newRequest.skills,
+                    status: newRequest.status,
+                    submittedAt: newRequest.submittedAt
+                });
+            }
 
             res.json({
                 success: true,
@@ -120,6 +141,15 @@ class CollaborationController {
 
             const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:5174'}/invite/${inviteToken}`;
 
+            // Emit Socket.IO event
+            if (io) {
+                io.emit('request_approved', {
+                    requestId: request._id,
+                    email: request.email,
+                    inviteLink
+                });
+            }
+
             res.json({
                 success: true,
                 message: 'Request approved! Invite link generated.',
@@ -152,6 +182,14 @@ class CollaborationController {
             request.reviewedAt = new Date();
             request.reviewedBy = owner?._id;
             await request.save();
+
+            // Emit Socket.IO event
+            if (io) {
+                io.emit('request_rejected', {
+                    requestId: request._id,
+                    email: request.email
+                });
+            }
 
             res.json({
                 success: true,

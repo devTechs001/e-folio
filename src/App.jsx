@@ -4,6 +4,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import AuthProvider from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { SocketProvider } from './contexts/SocketContext';
 import NotificationProvider from './components/NotificationSystem';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
@@ -41,26 +42,28 @@ const App = () => {
         <ThemeProvider>
             <AuthProvider>
                 <NotificationProvider>
-                    <Router>
-                        <div className="App min-h-screen">
-                            <HashNavigationHandler />
-                            <Routes>
-                                <Route path="/" element={<LandingPage />} />
-                                <Route path="/login" element={<LoginPage />} />
-                                <Route path="/collaborate" element={<CollaborationRequest />} />
-                                <Route 
-                                    path="/dashboard/*" 
-                                    element={
-                                        <ProtectedRoute>
-                                            <Dashboard />
-                                        </ProtectedRoute>
-                                    } 
-                                />
-                                {/* Catch-all route for 404 */}
-                                <Route path="*" element={<LandingPage />} />
-                            </Routes>
-                        </div>
-                    </Router>
+                    <SocketProvider>
+                        <Router>
+                            <div className="App min-h-screen">
+                                <HashNavigationHandler />
+                                <Routes>
+                                    <Route path="/" element={<LandingPage />} />
+                                    <Route path="/login" element={<LoginPage />} />
+                                    <Route path="/collaborate" element={<CollaborationRequest />} />
+                                    <Route 
+                                        path="/dashboard/*" 
+                                        element={
+                                            <ProtectedRoute>
+                                                <Dashboard />
+                                            </ProtectedRoute>
+                                        } 
+                                    />
+                                    {/* Catch-all route for 404 */}
+                                    <Route path="*" element={<LandingPage />} />
+                                </Routes>
+                            </div>
+                        </Router>
+                    </SocketProvider>
                 </NotificationProvider>
             </AuthProvider>
         </ThemeProvider>

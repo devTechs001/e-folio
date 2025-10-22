@@ -45,44 +45,11 @@ const ProjectManagerEnhanced = () => {
             setProjects(response.projects || []);
         } catch (err) {
             console.error('Error loading projects:', err);
-            // Fallback to demo data if API fails
-            setProjects(getDemoProjects());
+            setProjects([]);
         } finally {
             setLoading(false);
         }
     };
-
-    const getDemoProjects = () => [
-        {
-            id: '1',
-            title: 'E-Portfolio Website',
-            description: 'Modern portfolio with real-time features',
-            technologies: ['React', 'Node.js', 'MongoDB', 'Socket.io'],
-            status: 'completed',
-            category: 'Web',
-            links: { github: 'https://github.com/...', live: 'https://...' },
-            images: [
-                { url: 'https://via.placeholder.com/800x400/0ef/081b29?text=Portfolio+Dashboard', caption: 'Dashboard View' },
-                { url: 'https://via.placeholder.com/800x400/00d4ff/081b29?text=Project+Gallery', caption: 'Projects Section' }
-            ],
-            featured: true,
-            createdAt: '2024-01-15'
-        },
-        {
-            id: '2',
-            title: 'Task Management App',
-            description: 'Collaborative task manager with Kanban board',
-            technologies: ['React', 'Firebase', 'TailwindCSS'],
-            status: 'in-progress',
-            category: 'Web',
-            links: { github: 'https://github.com/...' },
-            images: [
-                { url: 'https://via.placeholder.com/800x400/f59e0b/081b29?text=Kanban+Board', caption: 'Task Board' }
-            ],
-            featured: false,
-            createdAt: '2024-02-01'
-        }
-    ];
 
     const handleAddProject = async () => {
         if (!newProject.title || !newProject.description) {

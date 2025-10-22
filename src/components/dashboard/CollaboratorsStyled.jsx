@@ -25,37 +25,14 @@ const Collaborators = () => {
         try {
             setLoading(true);
             const response = await apiService.getCollaborators();
-            setCollaborators(response.collaborators || getDemoCollaborators());
+            setCollaborators(response.collaborators || []);
         } catch (err) {
             console.error('Error loading collaborators:', err);
-            setCollaborators(getDemoCollaborators());
+            setCollaborators([]);
         } finally {
             setLoading(false);
         }
     };
-
-    const getDemoCollaborators = () => [
-        {
-            id: 1,
-            name: 'John Developer',
-            email: 'john@example.com',
-            role: 'collaborator',
-            avatar: 'JD',
-            joinedDate: '2024-01-15',
-            lastActive: '2 hours ago',
-            permissions: ['edit-projects', 'view-analytics']
-        },
-        {
-            id: 2,
-            name: 'Sarah Designer',
-            email: 'sarah@example.com',
-            role: 'viewer',
-            avatar: 'SD',
-            joinedDate: '2024-01-20',
-            lastActive: '1 day ago',
-            permissions: ['view-projects']
-        }
-    ];
 
     if (!isOwner()) {
         return (
