@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (CRITICAL - never commit!)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+server/.env
+server/.env.*
+!server/.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

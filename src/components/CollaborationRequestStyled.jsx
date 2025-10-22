@@ -104,46 +104,46 @@ const CollaborationRequest = () => {
     }
 
     return (
-        <div style={{ minHeight: '100vh', padding: '40px 20px', background: theme.background }}>
+        <div style={{ minHeight: '100vh', padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 20px)', background: theme.background }}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ marginBottom: '32px', textAlign: 'center' }}>
-                    <h1 style={{ color: theme.text, fontSize: '36px', fontWeight: '700', marginBottom: '12px', fontFamily: theme.fontHeading }}>
+                <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ marginBottom: 'clamp(24px, 4vw, 32px)', textAlign: 'center' }}>
+                    <h1 style={{ color: theme.text, fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: '700', marginBottom: '12px', fontFamily: theme.fontHeading }}>
                         Collaborate with Me
                     </h1>
-                    <p style={{ color: theme.textSecondary, fontSize: '16px', lineHeight: '1.6' }}>
+                    <p style={{ color: theme.textSecondary, fontSize: 'clamp(14px, 2vw, 16px)', lineHeight: '1.6', padding: '0 clamp(8px, 2vw, 16px)' }}>
                         Let's work together! Fill out the form below to request collaboration access.
                     </p>
                 </motion.div>
 
                 <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} onSubmit={handleSubmit} style={{
-                    background: `${theme.surface}80`, borderRadius: '20px', padding: '32px',
+                    background: `${theme.surface}80`, borderRadius: 'clamp(12px, 3vw, 20px)', padding: 'clamp(20px, 4vw, 32px)',
                     border: `1px solid ${theme.border}`, backdropFilter: 'blur(10px)'
                 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                         <div>
-                            <label style={{ display: 'block', color: theme.textSecondary, fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
-                                <User size={16} style={{ display: 'inline', marginRight: '6px' }} /> Full Name *
+                            <label style={{ display: 'block', color: theme.textSecondary, fontSize: 'clamp(13px, 2vw, 14px)', marginBottom: '8px', fontWeight: '600' }}>
+                                <User size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} /> Full Name *
                             </label>
                             <input required type="text" value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 style={{
-                                    width: '100%', padding: '12px 16px', background: `${theme.background}80`,
+                                    width: '100%', padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px)', background: `${theme.background}80`,
                                     border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.text,
-                                    fontSize: '15px', outline: 'none'
+                                    fontSize: 'clamp(14px, 2vw, 15px)', outline: 'none', boxSizing: 'border-box'
                                 }}
                                 placeholder="John Doe"
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', color: theme.textSecondary, fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
-                                <Mail size={16} style={{ display: 'inline', marginRight: '6px' }} /> Email Address *
+                            <label style={{ display: 'block', color: theme.textSecondary, fontSize: 'clamp(13px, 2vw, 14px)', marginBottom: '8px', fontWeight: '600' }}>
+                                <Mail size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} /> Email Address *
                             </label>
                             <input required type="email" value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 style={{
-                                    width: '100%', padding: '12px 16px', background: `${theme.background}80`,
+                                    width: '100%', padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px)', background: `${theme.background}80`,
                                     border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.text,
-                                    fontSize: '15px', outline: 'none'
+                                    fontSize: 'clamp(14px, 2vw, 15px)', outline: 'none', boxSizing: 'border-box'
                                 }}
                                 placeholder="john@example.com"
                             />
@@ -151,25 +151,25 @@ const CollaborationRequest = () => {
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', color: theme.textSecondary, fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
-                            <Briefcase size={16} style={{ display: 'inline', marginRight: '6px' }} /> Your Role
+                        <label style={{ display: 'block', color: theme.textSecondary, fontSize: 'clamp(13px, 2vw, 14px)', marginBottom: '8px', fontWeight: '600' }}>
+                            <Briefcase size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} /> Your Role
                         </label>
                         <input type="text" value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                             style={{
-                                width: '100%', padding: '12px 16px', background: `${theme.background}80`,
+                                width: '100%', padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px)', background: `${theme.background}80`,
                                 border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.text,
-                                fontSize: '15px', outline: 'none'
+                                fontSize: 'clamp(14px, 2vw, 15px)', outline: 'none', boxSizing: 'border-box'
                             }}
                             placeholder="e.g., Developer, Designer, Project Manager"
                         />
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', color: theme.textSecondary, fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
-                            Skills
+                        <label style={{ display: 'block', color: theme.textSecondary, fontSize: 'clamp(13px, 2vw, 14px)', marginBottom: '12px', fontWeight: '600' }}>
+                            Skills (Select all that apply)
                         </label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(6px, 1.5vw, 8px)', maxHeight: '300px', overflowY: 'auto', padding: '4px' }}>
                             {skillOptions.map(skill => (
                                 <button key={skill} type="button"
                                     onClick={() => setFormData({
@@ -179,41 +179,49 @@ const CollaborationRequest = () => {
                                             : [...formData.skills, skill]
                                     })}
                                     style={{
-                                        padding: '8px 16px', borderRadius: '8px',
+                                        padding: 'clamp(6px, 1.5vw, 8px) clamp(10px, 2vw, 16px)', borderRadius: '8px',
                                         background: formData.skills.includes(skill) ? theme.gradient : `${theme.primary}15`,
                                         border: `1px solid ${formData.skills.includes(skill) ? theme.primary : theme.border}`,
                                         color: formData.skills.includes(skill) ? theme.background : theme.text,
-                                        cursor: 'pointer', fontSize: '14px', fontWeight: '600'
+                                        cursor: 'pointer', fontSize: 'clamp(12px, 2vw, 14px)', fontWeight: '600',
+                                        transition: 'all 0.2s ease', whiteSpace: 'nowrap'
                                     }}
                                 >
                                     {skill}
                                 </button>
                             ))}
                         </div>
+                        <p style={{ color: theme.textSecondary, fontSize: 'clamp(11px, 1.5vw, 12px)', marginTop: '8px', fontStyle: 'italic' }}>
+                            {formData.skills.length} skill{formData.skills.length !== 1 ? 's' : ''} selected
+                        </p>
                     </div>
 
                     <div style={{ marginBottom: '24px' }}>
-                        <label style={{ display: 'block', color: theme.textSecondary, fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
-                            <MessageSquare size={16} style={{ display: 'inline', marginRight: '6px' }} /> Message *
+                        <label style={{ display: 'block', color: theme.textSecondary, fontSize: 'clamp(13px, 2vw, 14px)', marginBottom: '8px', fontWeight: '600' }}>
+                            <MessageSquare size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} /> Message *
                         </label>
-                        <textarea required value={formData.message} rows={5}
+                        <textarea required value={formData.message} rows={window.innerWidth < 640 ? 4 : 5}
                             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                             style={{
-                                width: '100%', padding: '12px 16px', background: `${theme.background}80`,
+                                width: '100%', padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px)', background: `${theme.background}80`,
                                 border: `1px solid ${theme.border}`, borderRadius: '10px', color: theme.text,
-                                fontSize: '15px', outline: 'none', resize: 'vertical', fontFamily: theme.fontBody
+                                fontSize: 'clamp(14px, 2vw, 15px)', outline: 'none', resize: 'vertical', fontFamily: theme.fontBody,
+                                boxSizing: 'border-box', minHeight: 'clamp(100px, 15vw, 120px)'
                             }}
                             placeholder="Tell me about yourself and why you'd like to collaborate..."
                         />
                     </div>
 
                     <button type="submit" style={{
-                        width: '100%', padding: '16px', background: theme.gradient, border: 'none',
-                        borderRadius: '12px', color: theme.background, fontSize: '16px', fontWeight: '700',
+                        width: '100%', padding: 'clamp(12px, 2.5vw, 16px)', background: theme.gradient, border: 'none',
+                        borderRadius: '12px', color: theme.background, fontSize: 'clamp(14px, 2.5vw, 16px)', fontWeight: '700',
                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         gap: '8px', boxShadow: `0 8px 24px ${theme.primary}40`, transition: 'all 0.3s ease'
                     }}>
-                        <Send size={20} /> Submit Collaboration Request
+                        <Send size={window.innerWidth < 640 ? 18 : 20} /> 
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {window.innerWidth < 640 ? 'Submit Request' : 'Submit Collaboration Request'}
+                        </span>
                     </button>
                 </motion.form>
 

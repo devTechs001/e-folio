@@ -30,7 +30,7 @@ services:
     plan: starter
     region: oregon
     buildCommand: cd server && npm install
-    startCommand: cd server && npm start
+    startCommand: cd server && node server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
