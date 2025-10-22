@@ -10,7 +10,8 @@ export default defineConfig({
       }
     })
   ],
-  base: '/e-folio/',
+  // Use /e-folio/ for GitHub Pages, / for other deployments
+  base: process.env.GITHUB_PAGES === 'true' ? '/e-folio/' : '/',
   build: {
     assetsDir: 'assets',
     rollupOptions: {

@@ -44,7 +44,7 @@ const App = () => {
             <AuthProvider>
                 <NotificationProvider>
                     <SocketProvider>
-                        <Router basename="/e-folio">
+                        <Router basename={import.meta.env.BASE_URL}>
                             <div className="App min-h-screen">
                                 <HashNavigationHandler />
                                 <Routes>

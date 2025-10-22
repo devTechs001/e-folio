@@ -1,19 +1,15 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
+const Skill = require('./models/Skill.model');
 
-// Define Skill Schema
-const skillSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    level: { type: Number, required: true, min: 0, max: 100 },
-    category: String,
-    type: { type: String, enum: ['technical', 'professional'], required: true },
-    color: String,
-    icon: String,
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-});
+// Default user ID (update this after creating your owner user)
+const DEFAULT_USER_ID = '507f1f77bcf86cd799439011'; // This will be replaced by actual user ID
 
-const Skill = mongoose.model('Skill', skillSchema);
+// Add userId to all skills
+const createSkillsWithUserId = () => skills.map(skill => ({
+    ...skill,
+    userId: DEFAULT_USER_ID
+}));
 
 const skills = [
     // Frontend Skills
@@ -95,8 +91,9 @@ async function seedSkills() {
         await Skill.deleteMany({});
         console.log('🗑️  Cleared existing skills');
 
-        // Insert new skills
-        const insertedSkills = await Skill.insertMany(skills);
+        // Insert new skills with userId
+        const skillsWithUserId = createSkillsWithUserId();
+        const insertedSkills = await Skill.insertMany(skillsWithUserId);
         console.log(`\n✅ Successfully seeded ${insertedSkills.length} skills!`);
         
         console.log('\n📊 Skills breakdown:');
