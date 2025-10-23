@@ -4,9 +4,8 @@ const connectDB = async () => {
     try {
         const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/efolio';
 
+        // Options for MongoDB connection (removed deprecated useNewUrlParser and useUnifiedTopology)
         const options = {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
         };

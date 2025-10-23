@@ -46,13 +46,13 @@
 
 # Environment-specific settings
 [context.production.environment]
-  VITE_API_URL = "https://your-backend-api.com"
-  VITE_SOCKET_URL = "https://your-backend-api.com"
+  VITE_API_URL = "https://e-folio-backend-server.onrender.com/api"
+  VITE_SOCKET_URL = "https://e-folio-backend-server.onrender.com"
 
 [context.deploy-preview.environment]
-  VITE_API_URL = "https://preview-backend.netlify.app"
-  VITE_SOCKET_URL = "https://preview-backend.netlify.app"
+  VITE_API_URL = "https://e-folio-backend-server.onrender.com/api"
+  VITE_SOCKET_URL = "https://e-folio-backend-server.onrender.com"
 
 [context.branch-deploy.environment]
-  VITE_API_URL = "https://dev-backend.netlify.app"
-  VITE_SOCKET_URL = "https://dev-backend.netlify.app"
+  VITE_API_URL = "https://e-folio-backend-server.onrender.com/api"
+  VITE_SOCKET_URL = "https://e-folio-backend-server.onrender.com"
