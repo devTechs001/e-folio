@@ -1,0 +1,39 @@
+chore: Configure production deployment for Netlify and Render
+
+Updated deployment configuration with production URLs and environment variables:
+
+FRONTEND (Netlify):
+- Updated netlify.toml with backend URL: https://e-folio-backend-server.onrender.com
+- Added custom favicon with E-Folio branding
+- Configured VITE_API_URL and VITE_SOCKET_URL
+
+BACKEND (Render):
+- Updated render.yaml with production settings
+- Fixed MongoDB deprecated options (removed useNewUrlParser, useUnifiedTopology)
+- Configured environment variables for e-folio-backend-server
+
+DOCUMENTATION:
+- Created DEPLOYMENT_GUIDE.md (comprehensive deployment instructions)
+- Created ENVIRONMENT_VARIABLES.md (quick reference)
+- Created DEPLOYMENT_CHANGES_SUMMARY.md (changes summary)
+- Updated .env.example files with clear production examples
+
+NEXT STEPS:
+1. Add MongoDB Atlas IP whitelist (0.0.0.0/0)
+2. Verify Render environment variables
+3. Test deployment
+
+Files modified:
+- netlify.toml
+- render.yaml
+- .env.example
+- server/.env.example
+- server/config/database.js
+- index.html
+
+Files created:
+- public/favicon.svg
+- public/favicon.ico
+- DEPLOYMENT_GUIDE.md
+- ENVIRONMENT_VARIABLES.md
+- DEPLOYMENT_CHANGES_SUMMARY.md

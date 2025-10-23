@@ -24,9 +24,21 @@ const connectDB = require('./config/database');
 
 const app = express();
 const server = http.createServer(app);
+
+// Socket.IO CORS - Allow multiple origins
+const socketAllowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.CLIENT_URL?.replace(/\/$/, ''),
+    process.env.CLIENT_URL?.concat('/'),
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://e-folio-pro.netlify.app',
+    'https://e-folio-pro.netlify.app/'
+].filter(Boolean);
+
 const io = socketIo(server, {
     cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:5173",
+        origin: socketAllowedOrigins,
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -34,10 +46,32 @@ const io = socketIo(server, {
 
 const PORT = process.env.PORT || 5000;
 
+// CORS Configuration - Allow multiple origins and handle trailing slashes
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.CLIENT_URL?.replace(/\/$/, ''), // Remove trailing slash
+    process.env.CLIENT_URL?.concat('/'),         // Add trailing slash
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://e-folio-pro.netlify.app',
+    'https://e-folio-pro.netlify.app/'
+].filter(Boolean); // Remove undefined values
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`⚠️ CORS blocked origin: ${origin}`);
+            console.warn(`Allowed origins:`, allowedOrigins);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
