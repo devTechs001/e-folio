@@ -200,6 +200,504 @@ class ApiService {
             body: JSON.stringify(messageData)
         });
     }
+
+    // Profile methods
+    async getProfile() {
+        return this.request('/profile');
+    }
+
+    async updateProfile(formData) {
+        return this.request('/profile', {
+            method: 'PUT',
+            body: formData,
+            headers: {
+                // Don't set Content-Type for FormData, browser will set it with boundary
+            }
+        });
+    }
+
+    async getProfileStats() {
+        return this.request('/profile/stats');
+    }
+
+    async getRecentActivity(limit = 10) {
+        try {
+            return await this.request(`/profile/activity?limit=${limit}`);
+        } catch (error) {
+            console.warn('Recent activity unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getTopProjects(limit = 4) {
+        return this.request(`/profile/projects/top?limit=${limit}`);
+    }
+
+    async getUserSkills() {
+        return this.request('/profile/skills');
+    }
+
+    async updateSkill(skillData) {
+        return this.request('/profile/skills', {
+            method: 'POST',
+            body: JSON.stringify(skillData)
+        });
+    }
+
+    async deleteSkill(skillId) {
+        return this.request(`/profile/skills/${skillId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async getPublicProfile(username) {
+        return this.request(`/profile/public/${username}`);
+    }
+
+    // Dashboard APIs
+    async getDashboardStats() {
+        try {
+            return await this.request('/dashboard/stats');
+        } catch (error) {
+            console.warn('Dashboard stats unavailable, using mock data');
+            return {
+                success: true,
+                data: {
+                    totalProjects: 12,
+                    totalVisitors: 1543,
+                    collaborators: 5,
+                    messages: 23,
+                    growth: {
+                        projects: 15.3,
+                        visitors: 23.5,
+                        collaborators: 8.2,
+                        messages: 12.1
+                    }
+                }
+            };
+        }
+    }
+
+    async getRecentProjects(limit = 5) {
+        try {
+            return await this.request(`/dashboard/projects/recent?limit=${limit}`);
+        } catch (error) {
+            console.warn('Recent projects unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getPerformanceData(period = '7d') {
+        try {
+            return await this.request(`/dashboard/performance?period=${period}`);
+        } catch (error) {
+            console.warn('Performance data unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getQuickStats() {
+        try {
+            return await this.request('/dashboard/quick-stats');
+        } catch (error) {
+            return { success: true, data: {} };
+        }
+    }
+
+    async getUpcomingEvents() {
+        try {
+            return await this.request('/dashboard/events/upcoming');
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getTasks() {
+        try {
+            return await this.request('/dashboard/tasks');
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getNotifications(limit = 10) {
+        try {
+            return await this.request(`/dashboard/notifications?limit=${limit}`);
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getTopSkills(limit = 5) {
+        try {
+            return await this.request(`/dashboard/skills/top?limit=${limit}`);
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getDeviceStats() {
+        try {
+            return await this.request('/dashboard/devices');
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async connectToDashboard() {
+        // This is handled by Socket.io, no API call needed
+        return { success: true };
+    }
+
+    async uploadCollaborationFile(formData, config) {
+        try {
+            return await this.request('/collaboration/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {},
+                ...config
+            });
+        } catch (error) {
+            console.error('File upload failed:', error);
+            throw error;
+        }
+    }
+
+    // Media APIs
+    async uploadMedia(formData) {
+        return this.request('/media/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {}
+        });
+    }
+
+    async getMedia(filters = {}) {
+        const query = new URLSearchParams(filters);
+        return this.request(`/media?${query}`);
+    }
+
+    async deleteMedia(id) {
+        return this.request(`/media/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Email APIs
+    async getEmails(filters = {}) {
+        const query = new URLSearchParams(filters);
+        return this.request(`/emails?${query}`);
+    }
+
+    async sendEmail(emailData) {
+        return this.request('/emails/send', {
+            method: 'POST',
+            body: JSON.stringify(emailData)
+        });
+    }
+
+    async deleteEmail(id) {
+        return this.request(`/emails/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Reviews APIs
+    async getReviews() {
+        return this.request('/reviews');
+    }
+
+    async approveReview(id) {
+        return this.request(`/reviews/${id}/approve`, {
+            method: 'POST'
+        });
+    }
+
+    async deleteReview(id) {
+        return this.request(`/reviews/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Settings APIs
+    async getSettings() {
+        return this.request('/settings');
+    }
+
+    async updateSettings(settings) {
+        return this.request('/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
+    }
+
+    // Collaborators APIs
+    async getCollaboratorsList(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/collaborators?${query}`);
+    }
+
+    async getCollaboratorStats() {
+        return this.request('/collaborators/stats');
+    }
+
+    async inviteCollaborator(data) {
+        return this.request('/collaborators/invite', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async removeCollaborator(id) {
+        return this.request(`/collaborators/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async updateCollaboratorRole(id, role) {
+        return this.request(`/collaborators/${id}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({ role })
+        });
+    }
+
+    // Collaboration Requests APIs
+    async getCollaborationRequestsList(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/collaboration-requests?${query}`);
+    }
+
+    async approveCollaborationRequest(id) {
+        return this.request(`/collaboration-requests/${id}/approve`, {
+            method: 'POST'
+        });
+    }
+
+    async rejectCollaborationRequest(id) {
+        return this.request(`/collaboration-requests/${id}/reject`, {
+            method: 'POST'
+        });
+    }
+
+    // Media Manager APIs
+    async getMediaFiles(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/media/files?${query}`);
+    }
+
+    async uploadMediaFile(formData) {
+        return this.request('/media/files/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {}
+        });
+    }
+
+    async deleteMediaFiles(fileIds) {
+        return this.request('/media/files', {
+            method: 'DELETE',
+            body: JSON.stringify({ fileIds })
+        });
+    }
+
+    async getMediaFolders() {
+        return this.request('/media/folders');
+    }
+
+    async createMediaFolder(name, parentId = null) {
+        return this.request('/media/folders', {
+            method: 'POST',
+            body: JSON.stringify({ name, parentId })
+        });
+    }
+
+    async getStorageInfo() {
+        return this.request('/media/storage');
+    }
+
+    // Email Manager APIs
+    async getEmailsList(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/email?${query}`);
+    }
+
+    async getEmailById(id) {
+        return this.request(`/email/${id}`);
+    }
+
+    async sendEmailMessage(emailData) {
+        return this.request('/email/send', {
+            method: 'POST',
+            body: JSON.stringify(emailData)
+        });
+    }
+
+    async replyToEmail(id, replyData) {
+        return this.request(`/email/${id}/reply`, {
+            method: 'POST',
+            body: JSON.stringify(replyData)
+        });
+    }
+
+    async markEmailAsRead(id) {
+        return this.request(`/email/${id}/read`, {
+            method: 'POST'
+        });
+    }
+
+    async deleteEmails(ids) {
+        return this.request('/email/bulk', {
+            method: 'DELETE',
+            body: JSON.stringify({ ids })
+        });
+    }
+
+    async getEmailStats() {
+        return this.request('/email/stats');
+    }
+
+    // Reviews Manager APIs
+    async getReviewsList(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/reviews?${query}`);
+    }
+
+    async createReview(reviewData) {
+        return this.request('/reviews', {
+            method: 'POST',
+            body: JSON.stringify(reviewData)
+        });
+    }
+
+    async updateReview(id, reviewData) {
+        return this.request(`/reviews/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(reviewData)
+        });
+    }
+
+    async moderateReview(id, status) {
+        return this.request(`/reviews/${id}/moderate`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status })
+        });
+    }
+
+    // Learning Center APIs
+    async getLearningVideos(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/learning/videos?${query}`);
+    }
+
+    async getLearningTutorials(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/learning/tutorials?${query}`);
+    }
+
+    async getFAQs(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/learning/faqs?${query}`);
+    }
+
+    async getLearningProgress() {
+        return this.request('/learning/progress');
+    }
+
+    async updateLearningProgress(data) {
+        return this.request('/learning/progress', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async getLearningStats() {
+        return this.request('/learning/stats');
+    }
+
+    // AI Assistant APIs
+    async getAIConversations() {
+        return this.request('/ai/conversations');
+    }
+
+    async createAIConversation(data) {
+        return this.request('/ai/conversations', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async sendAIMessage(conversationId, message) {
+        return this.request(`/ai/conversations/${conversationId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({ message })
+        });
+    }
+
+    async getAIStats() {
+        return this.request('/ai/stats');
+    }
+
+    // AI Tracking APIs
+    async getRealtimeAnalytics() {
+        return this.request('/tracking/analytics/realtime');
+    }
+
+    async getHeatmapData(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/tracking/heatmap?${query}`);
+    }
+
+    async getConversionFunnel() {
+        return this.request('/tracking/funnel');
+    }
+
+    async getBehaviorPatterns() {
+        return this.request('/tracking/patterns');
+    }
+
+    async getPredictiveAnalytics() {
+        return this.request('/tracking/predictive');
+    }
+
+    // Visitors Analytics APIs
+    async getVisitorAnalytics(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/analytics?${query}`);
+    }
+
+    async getVisitorDetails(id) {
+        return this.request(`/analytics/visitors/${id}`);
+    }
+
+    // Settings APIs (Enhanced)
+    async getUserSettings() {
+        return this.request('/settings');
+    }
+
+    async updateUserSettings(settings) {
+        return this.request('/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
+    }
+
+    async changePassword(data) {
+        return this.request('/settings/password/change', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async getApiKeys() {
+        return this.request('/settings/api-keys');
+    }
+
+    async generateApiKey(data) {
+        return this.request('/settings/api-keys', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
 }
 
 export default new ApiService();

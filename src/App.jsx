@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -17,7 +17,7 @@ import './index.css';
 // Component to handle hash navigation
 const HashNavigationHandler = () => {
     const location = useLocation();
-    
+
     useEffect(() => {
         // Handle hash navigation for landing page sections
         if (location.hash) {
@@ -27,7 +27,7 @@ const HashNavigationHandler = () => {
             }
         }
     }, [location]);
-    
+
     return null;
 };
 

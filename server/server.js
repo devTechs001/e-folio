@@ -4,24 +4,36 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
 
+// Import handlers
+const chatHandler = require('./socket/chat.handler.enhanced');
+const connectDB = require('./config/database');
+
 // Import routes
 const authRoutes = require('./routes/auth.routes');
 const collaborationRoutes = require('./routes/collaboration.routes');
+const collaborationRequestsRoutes = require('./routes/collaboration-requests.routes');
+const collaboratorsRoutes = require('./routes/collaborators.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const skillsRoutes = require('./routes/skills.routes');
 const projectsRoutes = require('./routes/projects.routes');
 const chatRoutes = require('./routes/chat.routes');
 const aiRoutes = require('./routes/ai.routes');
 const trackingRoutes = require('./routes/tracking.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const profileRoutes = require('./routes/profile.routes');
+const settingsRoutes = require('./routes/settings.routes');
+const emailRoutes = require('./routes/email.routes');
+const reviewsRoutes = require('./routes/reviews.routes');
+const mediaRoutes = require('./routes/media.routes');
+const learningRoutes = require('./routes/learning.routes');
 
-// Import handlers
-const chatHandler = require('./socket/chat.handler.enhanced');
-const connectDB = require('./config/database');
-
+// Create Express app and server
 const app = express();
 const server = http.createServer(app);
 
@@ -77,15 +89,27 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/collaboration', collaborationRoutes);
+app.use('/api/collaboration-requests', collaborationRequestsRoutes);
+app.use('/api/collaborators', collaboratorsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/tracking', trackingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/learning', learningRoutes);
 
 
 // API Routes
@@ -105,7 +129,7 @@ chatHandler(io);
 
 // Pass Socket.IO instance to collaboration controller
 const collaborationController = require('./controllers/collaboration.controller');
-collaborationController.setSocketIO(io);
+// collaborationController.setSocketIO(io); // Function doesn't exist
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -132,3 +156,4 @@ process.on('SIGTERM', () => {
         process.exit(0);
     });
 });
+

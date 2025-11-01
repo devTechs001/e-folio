@@ -1,129 +1,46 @@
+// routes/projectRoutes.js
 const express = require('express');
 const router = express.Router();
+const { body } = require('express-validator');
+const {
+    getProjects,
+    getProject,
+    createProject,
+    updateProject,
+    deleteProject,
+    bulkDeleteProjects,
+    getAnalytics,
+    uploadImage,
+    syncGitHubMetrics
+} = require('../controllers/projectController');
+const { auth: protect } = require('../middleware/auth.middleware');
+const { upload } = require('../middleware/uploadMiddleware');
 
-// In-memory storage
-let projects = [];
+// Validation rules
+const projectValidation = [
+    body('title').trim().isLength({ min: 1, max: 100 }).withMessage('Title is required'),
+    body('description').trim().isLength({ min: 1, max: 2000 }).withMessage('Description is required'),
+    body('category').isIn(['Web', 'Mobile', 'Desktop', 'AI/ML', 'Blockchain', 'DevOps', 'Other']),
+    body('status').optional().isIn(['planning', 'in-progress', 'completed', 'archived'])
+];
 
-// Get all projects
-router.get('/', (req, res) => {
-    try {
-        res.json({
-            success: true,
-            projects
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+// All routes require authentication
+router.use(protect);
 
-// Get single project
-router.get('/:id', (req, res) => {
-    try {
-        const project = projects.find(p => p.id === req.params.id);
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                message: 'Project not found'
-            });
-        }
-        res.json({
-            success: true,
-            project
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+// Main routes
+router.route('/')
+    .get(getProjects)
+    .post(projectValidation, createProject);
 
-// Create project
-router.post('/', (req, res) => {
-    try {
-        const { title, description, technologies, status, category, links } = req.body;
+router.get('/analytics', getAnalytics);
+router.post('/bulk-delete', bulkDeleteProjects);
 
-        if (!title || !description) {
-            return res.status(400).json({
-                success: false,
-                message: 'Title and description are required'
-            });
-        }
+router.route('/:id')
+    .get(getProject)
+    .put(projectValidation, updateProject)
+    .delete(deleteProject);
 
-        const newProject = {
-            id: Date.now().toString(),
-            title,
-            description,
-            technologies: technologies || [],
-            status: status || 'in-progress',
-            category: category || 'Web',
-            links: links || {},
-            featured: false,
-            createdAt: new Date().toISOString()
-        };
-
-        projects.push(newProject);
-
-        res.json({
-            success: true,
-            message: 'Project created successfully',
-            project: newProject
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Update project
-router.put('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
-
-        const index = projects.findIndex(p => p.id === id);
-        if (index === -1) {
-            return res.status(404).json({
-                success: false,
-                message: 'Project not found'
-            });
-        }
-
-        projects[index] = {
-            ...projects[index],
-            ...updates,
-            id,
-            updatedAt: new Date().toISOString()
-        };
-
-        res.json({
-            success: true,
-            message: 'Project updated successfully',
-            project: projects[index]
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Delete project
-router.delete('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const index = projects.findIndex(p => p.id === id);
-
-        if (index === -1) {
-            return res.status(404).json({
-                success: false,
-                message: 'Project not found'
-            });
-        }
-
-        projects.splice(index, 1);
-
-        res.json({
-            success: true,
-            message: 'Project deleted successfully'
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+router.post('/:id/images', upload.single('image'), uploadImage);
+router.post('/:id/sync-github', syncGitHubMetrics);
 
 module.exports = router;

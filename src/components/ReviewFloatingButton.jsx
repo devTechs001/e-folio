@@ -57,28 +57,16 @@ const ReviewFloatingButton = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(true)}
-                style={{
-                    position: 'fixed',
-                    bottom: '32px',
-                    right: '32px',
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #00efff, #00d4ff)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 32px rgba(0, 239, 255, 0.6)',
-                    zIndex: 1000
-                }}
+                className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-500 
+                           border-none cursor-pointer flex items-center justify-center 
+                           shadow-[0_8px_32px_rgba(0,239,255,0.6)] z-[1000]
+                           hover:shadow-[0_12px_40px_rgba(0,239,255,0.8)] transition-shadow duration-300"
             >
                 <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
                 >
-                    <Star size={28} style={{ color: '#081b29' }} fill="#081b29" />
+                    <Star size={28} className="text-slate-900 fill-slate-900" />
                 </motion.div>
             </motion.button>
 
@@ -90,85 +78,73 @@ const ReviewFloatingButton = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsOpen(false)}
-                        style={{
-                            position: 'fixed',
-                            inset: 0,
-                            background: 'rgba(0, 0, 0, 0.7)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 1001,
-                            padding: '20px',
-                            backdropFilter: 'blur(8px)'
-                        }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center 
+                                   z-[1001] p-4 sm:p-6 md:p-8"
                     >
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
+                            className="rounded-3xl p-6 sm:p-8 max-w-lg w-full 
+                                       shadow-2xl shadow-black/50 border"
                             style={{
                                 background: theme.surface || '#0f2438',
-                                borderRadius: '24px',
-                                padding: '32px',
-                                maxWidth: '500px',
-                                width: '100%',
-                                border: `1px solid ${theme.border || 'rgba(0, 239, 255, 0.2)'}`,
-                                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+                                borderColor: theme.border || 'rgba(0, 239, 255, 0.2)'
                             }}
                         >
                             {/* Header */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                <h2 style={{
-                                    color: theme.text || '#ededed',
-                                    fontSize: '24px',
-                                    fontWeight: '700',
-                                    margin: 0,
-                                    fontFamily: "'Orbitron', 'Poppins', sans-serif"
-                                }}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 
+                                    className="text-2xl md:text-3xl font-bold m-0 font-['Orbitron']"
+                                    style={{ color: theme.text || '#ededed' }}
+                                >
                                     Leave a Review
                                 </h2>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: theme.textSecondary || '#b0b0b0',
-                                        cursor: 'pointer',
-                                        padding: '4px'
-                                    }}
+                                    className="bg-transparent border-none cursor-pointer p-1 
+                                             hover:opacity-70 transition-opacity duration-200"
+                                    style={{ color: theme.textSecondary || '#b0b0b0' }}
                                 >
                                     <X size={24} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSubmit}>
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 {/* Rating */}
-                                <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-                                    <p style={{ color: theme.textSecondary || '#b0b0b0', marginBottom: '12px', fontSize: '14px' }}>
+                                <div className="text-center">
+                                    <p 
+                                        className="mb-3 text-sm md:text-base"
+                                        style={{ color: theme.textSecondary || '#b0b0b0' }}
+                                    >
                                         Rate your experience
                                     </p>
-                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                    <div className="flex gap-2 justify-center">
                                         {[1, 2, 3, 4, 5].map((star) => (
                                             <motion.button
                                                 key={star}
                                                 type="button"
-                                                whileHover={{ scale: 1.2 }}
+                                                whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
                                                 whileTap={{ scale: 0.9 }}
                                                 onClick={() => setRating(star)}
                                                 onMouseEnter={() => setHoverRating(star)}
                                                 onMouseLeave={() => setHoverRating(0)}
-                                                style={{
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    padding: '4px'
-                                                }}
+                                                className="bg-transparent border-none cursor-pointer p-1 
+                                                         transition-transform duration-200"
                                             >
                                                 <Star
                                                     size={32}
-                                                    fill={(hoverRating || rating) >= star ? '#ffd700' : 'none'}
-                                                    stroke={(hoverRating || rating) >= star ? '#ffd700' : theme.textSecondary || '#b0b0b0'}
+                                                    className={`transition-all duration-200 ${
+                                                        (hoverRating || rating) >= star 
+                                                            ? 'fill-yellow-400 stroke-yellow-400' 
+                                                            : 'fill-none'
+                                                    }`}
+                                                    style={{ 
+                                                        stroke: (hoverRating || rating) >= star 
+                                                            ? '#ffd700' 
+                                                            : theme.textSecondary || '#b0b0b0' 
+                                                    }}
                                                     strokeWidth={2}
                                                 />
                                             </motion.button>
@@ -177,14 +153,11 @@ const ReviewFloatingButton = () => {
                                 </div>
 
                                 {/* Name */}
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{
-                                        display: 'block',
-                                        color: theme.textSecondary || '#b0b0b0',
-                                        fontSize: '14px',
-                                        marginBottom: '8px',
-                                        fontWeight: '600'
-                                    }}>
+                                <div>
+                                    <label 
+                                        className="block text-sm font-semibold mb-2"
+                                        style={{ color: theme.textSecondary || '#b0b0b0' }}
+                                    >
                                         Your Name
                                     </label>
                                     <input
@@ -193,57 +166,47 @@ const ReviewFloatingButton = () => {
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         placeholder="John Doe"
+                                        className="w-full px-4 py-3 rounded-xl text-base outline-none 
+                                                 transition-all duration-200 focus:ring-2 focus:ring-cyan-400/50
+                                                 placeholder:text-gray-500"
                                         style={{
-                                            width: '100%',
-                                            padding: '12px 16px',
                                             background: theme.background || '#081b29',
                                             border: `1px solid ${theme.border || 'rgba(0, 239, 255, 0.2)'}`,
-                                            borderRadius: '10px',
-                                            color: theme.text || '#ededed',
-                                            fontSize: '15px',
-                                            outline: 'none'
+                                            color: theme.text || '#ededed'
                                         }}
                                     />
                                 </div>
 
                                 {/* Email */}
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{
-                                        display: 'block',
-                                        color: theme.textSecondary || '#b0b0b0',
-                                        fontSize: '14px',
-                                        marginBottom: '8px',
-                                        fontWeight: '600'
-                                    }}>
-                                        Email (optional)
+                                <div>
+                                    <label 
+                                        className="block text-sm font-semibold mb-2"
+                                        style={{ color: theme.textSecondary || '#b0b0b0' }}
+                                    >
+                                        Email <span className="text-xs opacity-75">(optional)</span>
                                     </label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         placeholder="john@example.com"
+                                        className="w-full px-4 py-3 rounded-xl text-base outline-none 
+                                                 transition-all duration-200 focus:ring-2 focus:ring-cyan-400/50
+                                                 placeholder:text-gray-500"
                                         style={{
-                                            width: '100%',
-                                            padding: '12px 16px',
                                             background: theme.background || '#081b29',
                                             border: `1px solid ${theme.border || 'rgba(0, 239, 255, 0.2)'}`,
-                                            borderRadius: '10px',
-                                            color: theme.text || '#ededed',
-                                            fontSize: '15px',
-                                            outline: 'none'
+                                            color: theme.text || '#ededed'
                                         }}
                                     />
                                 </div>
 
                                 {/* Comment */}
-                                <div style={{ marginBottom: '24px' }}>
-                                    <label style={{
-                                        display: 'block',
-                                        color: theme.textSecondary || '#b0b0b0',
-                                        fontSize: '14px',
-                                        marginBottom: '8px',
-                                        fontWeight: '600'
-                                    }}>
+                                <div>
+                                    <label 
+                                        className="block text-sm font-semibold mb-2"
+                                        style={{ color: theme.textSecondary || '#b0b0b0' }}
+                                    >
                                         Your Review
                                     </label>
                                     <textarea
@@ -252,89 +215,64 @@ const ReviewFloatingButton = () => {
                                         onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                                         placeholder="Share your thoughts..."
                                         rows={4}
+                                        className="w-full px-4 py-3 rounded-xl text-base outline-none 
+                                                 resize-y font-['Poppins'] transition-all duration-200 
+                                                 focus:ring-2 focus:ring-cyan-400/50 placeholder:text-gray-500
+                                                 min-h-[100px]"
                                         style={{
-                                            width: '100%',
-                                            padding: '12px 16px',
                                             background: theme.background || '#081b29',
                                             border: `1px solid ${theme.border || 'rgba(0, 239, 255, 0.2)'}`,
-                                            borderRadius: '10px',
-                                            color: theme.text || '#ededed',
-                                            fontSize: '15px',
-                                            outline: 'none',
-                                            resize: 'vertical',
-                                            fontFamily: "'Poppins', sans-serif"
+                                            color: theme.text || '#ededed'
                                         }}
                                     />
                                 </div>
 
-                                {/* Action Buttons */}
-                                <div style={{ display: 'flex', gap: '12px' }}>
-                                    <motion.button
-                                        type="submit"
-                                        disabled={submitting}
-                                        whileHover={{ scale: submitting ? 1 : 1.02 }}
-                                        whileTap={{ scale: submitting ? 1 : 0.98 }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '14px',
-                                            background: submitting ? '#6b7280' : 'linear-gradient(135deg, #00efff, #00d4ff)',
-                                            border: 'none',
-                                            borderRadius: '10px',
-                                            color: '#081b29',
-                                            fontSize: '16px',
-                                            fontWeight: '700',
-                                            cursor: submitting ? 'not-allowed' : 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '8px',
-                                            boxShadow: '0 4px 15px rgba(0, 239, 255, 0.4)',
-                                            opacity: submitting ? 0.7 : 1
-                                        }}
-                                    >
-                                        <Send size={18} /> {submitting ? 'Submitting...' : 'Submit Review'}
-                                    </motion.button>
-                                </div>
+                                {/* Submit Button */}
+                                <motion.button
+                                    type="submit"
+                                    disabled={submitting}
+                                    whileHover={{ scale: submitting ? 1 : 1.02 }}
+                                    whileTap={{ scale: submitting ? 1 : 0.98 }}
+                                    className={`w-full py-3.5 rounded-xl border-none text-slate-900 
+                                              text-base font-bold flex items-center justify-center gap-2 
+                                              shadow-lg shadow-cyan-400/40 transition-all duration-300
+                                              ${submitting 
+                                                  ? 'bg-gray-500 cursor-not-allowed opacity-70' 
+                                                  : 'bg-gradient-to-r from-cyan-400 to-cyan-500 cursor-pointer hover:shadow-xl hover:shadow-cyan-400/60'
+                                              }`}
+                                >
+                                    <Send size={18} /> 
+                                    {submitting ? 'Submitting...' : 'Submit Review'}
+                                </motion.button>
 
                                 {/* Additional Actions */}
-                                <div style={{
-                                    display: 'flex',
-                                    gap: '12px',
-                                    marginTop: '16px',
-                                    paddingTop: '16px',
-                                    borderTop: `1px solid ${theme.border || 'rgba(0, 239, 255, 0.2)'}`
-                                }}>
-                                    <button 
+                                <div 
+                                    className="flex flex-col sm:flex-row gap-3 pt-4 mt-4 border-t"
+                                    style={{ borderColor: theme.border || 'rgba(0, 239, 255, 0.2)' }}
+                                >
+                                    <motion.button 
                                         type="button" 
                                         onClick={() => success('Thanks for liking this portfolio!')}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="flex-1 py-2.5 rounded-lg border-none text-sm font-semibold 
+                                                 cursor-pointer flex items-center justify-center gap-2 
+                                                 transition-all duration-300"
                                         style={{
-                                            flex: 1,
-                                            padding: '10px',
                                             background: `${theme.primary || '#00efff'}15`,
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            color: theme.primary || '#00efff',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '6px',
-                                            transition: 'all 0.3s'
+                                            color: theme.primary || '#00efff'
                                         }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.background = `${theme.primary || '#00efff'}30`;
-                                            e.currentTarget.style.transform = 'scale(1.05)';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.background = `${theme.primary || '#00efff'}15`;
-                                            e.currentTarget.style.transform = 'scale(1)';
                                         }}
                                     >
                                         <ThumbsUp size={16} /> Like Portfolio
-                                    </button>
-                                    <button 
+                                    </motion.button>
+                                    
+                                    <motion.button 
                                         type="button"
                                         onClick={() => {
                                             if (navigator.share) {
@@ -349,33 +287,24 @@ const ReviewFloatingButton = () => {
                                                 success('Link copied to clipboard!');
                                             }
                                         }}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="flex-1 py-2.5 rounded-lg border-none text-sm font-semibold 
+                                                 cursor-pointer flex items-center justify-center gap-2 
+                                                 transition-all duration-300"
                                         style={{
-                                            flex: 1,
-                                            padding: '10px',
                                             background: `${theme.primary || '#00efff'}15`,
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            color: theme.primary || '#00efff',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '6px',
-                                            transition: 'all 0.3s'
+                                            color: theme.primary || '#00efff'
                                         }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.background = `${theme.primary || '#00efff'}30`;
-                                            e.currentTarget.style.transform = 'scale(1.05)';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.background = `${theme.primary || '#00efff'}15`;
-                                            e.currentTarget.style.transform = 'scale(1)';
                                         }}
                                     >
                                         <Share2 size={16} /> Share
-                                    </button>
+                                    </motion.button>
                                 </div>
                             </form>
                         </motion.div>

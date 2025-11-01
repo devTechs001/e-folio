@@ -1,0 +1,435 @@
+// API Service for Frontend-Backend Communication
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+class ApiService {
+    constructor() {
+        this.baseURL = API_BASE_URL;
+    }
+
+    // Helper method to get auth headers
+    getHeaders() {
+        const token = localStorage.getItem('token');
+        return {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+    }
+
+    // Generic request method
+    async request(endpoint, options = {}) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                ...options,
+                headers: {
+                    ...this.getHeaders(),
+                    ...options.headers
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Request failed');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            
+            // Provide more specific error messages
+            if (error.message === 'Failed to fetch') {
+                throw new Error('Unable to connect to the server. Please ensure the backend is running.');
+            }
+            
+            throw error;
+        }
+    }
+
+    // Auth APIs
+    async login(email, password) {
+        return this.request('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+    }
+
+    async verifyToken() {
+        return this.request('/auth/verify');
+    }
+
+    // Skills APIs
+    async getSkills() {
+        return this.request('/skills');
+    }
+
+    async addSkill(skillData) {
+        return this.request('/skills', {
+            method: 'POST',
+            body: JSON.stringify(skillData)
+        });
+    }
+
+    async updateSkill(id, skillData) {
+        return this.request(`/skills/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(skillData)
+        });
+    }
+
+    async deleteSkill(id) {
+        return this.request(`/skills/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Projects APIs
+    async getProjects() {
+        return this.request('/projects');
+    }
+
+    async getProject(id) {
+        return this.request(`/projects/${id}`);
+    }
+
+    async createProject(projectData) {
+        return this.request('/projects', {
+            method: 'POST',
+            body: JSON.stringify(projectData)
+        });
+    }
+
+    async updateProject(id, projectData) {
+        return this.request(`/projects/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(projectData)
+        });
+    }
+
+    async deleteProject(id) {
+        return this.request(`/projects/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Collaboration APIs
+    async submitCollaborationRequest(requestData) {
+        return this.request('/collaboration/request', {
+            method: 'POST',
+            body: JSON.stringify(requestData)
+        });
+    }
+
+    async getCollaborationRequests() {
+        return this.request('/collaboration/requests');
+    }
+
+    async approveRequest(requestId) {
+        return this.request(`/collaboration/approve/${requestId}`, {
+            method: 'POST'
+        });
+    }
+
+    async rejectRequest(requestId) {
+        return this.request(`/collaboration/reject/${requestId}`, {
+            method: 'POST'
+        });
+    }
+
+    async getCollaborators() {
+        return this.request('/collaboration/collaborators');
+    }
+
+    // Analytics APIs
+    async trackVisitor(data) {
+        return this.request('/analytics/track', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async getAnalytics() {
+        return this.request('/analytics');
+    }
+
+    // AI APIs
+    async generateContent(prompt, type, context = {}) {
+        return this.request('/ai/generate', {
+            method: 'POST',
+            body: JSON.stringify({ prompt, type, context })
+        });
+    }
+
+    async improveContent(content, instructions = '') {
+        return this.request('/ai/improve', {
+            method: 'POST',
+            body: JSON.stringify({ content, instructions })
+        });
+    }
+
+    async getSuggestions(category, current = []) {
+        return this.request('/ai/suggestions', {
+            method: 'POST',
+            body: JSON.stringify({ category, current })
+        });
+    }
+
+    async analyzeContent(content, type) {
+        return this.request('/ai/analyze', {
+            method: 'POST',
+            body: JSON.stringify({ content, type })
+        });
+    }
+
+    async generateCode(description, language = 'javascript') {
+        return this.request('/ai/code', {
+            method: 'POST',
+            body: JSON.stringify({ description, language })
+        });
+    }
+
+    // Chat APIs
+    async getMessages(room, limit = 50, before = null) {
+        const query = new URLSearchParams({ limit, ...(before && { before }) });
+        return this.request(`/chat/messages/${room}?${query}`);
+    }
+
+    async sendMessage(messageData) {
+        return this.request('/chat/messages', {
+            method: 'POST',
+            body: JSON.stringify(messageData)
+        });
+    }
+
+    // Profile methods
+    async getProfile() {
+        return this.request('/profile');
+    }
+
+    async updateProfile(formData) {
+        return this.request('/profile', {
+            method: 'PUT',
+            body: formData,
+            headers: {
+                // Don't set Content-Type for FormData, browser will set it with boundary
+            }
+        });
+    }
+
+    async getProfileStats() {
+        return this.request('/profile/stats');
+    }
+
+    async getRecentActivity(limit = 10) {
+        try {
+            return await this.request(`/profile/activity?limit=${limit}`);
+        } catch (error) {
+            console.warn('Recent activity unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getTopProjects(limit = 4) {
+        return this.request(`/profile/projects/top?limit=${limit}`);
+    }
+
+    async getUserSkills() {
+        return this.request('/profile/skills');
+    }
+
+    async updateSkill(skillData) {
+        return this.request('/profile/skills', {
+            method: 'POST',
+            body: JSON.stringify(skillData)
+        });
+    }
+
+    async deleteSkill(skillId) {
+        return this.request(`/profile/skills/${skillId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async getPublicProfile(username) {
+        return this.request(`/profile/public/${username}`);
+    }
+
+    // Dashboard APIs
+    async getDashboardStats() {
+        try {
+            return await this.request('/dashboard/stats');
+        } catch (error) {
+            console.warn('Dashboard stats unavailable, using mock data');
+            return {
+                success: true,
+                data: {
+                    totalProjects: 12,
+                    totalVisitors: 1543,
+                    collaborators: 5,
+                    messages: 23,
+                    growth: {
+                        projects: 15.3,
+                        visitors: 23.5,
+                        collaborators: 8.2,
+                        messages: 12.1
+                    }
+                }
+            };
+        }
+    }
+
+    async getRecentProjects(limit = 5) {
+        try {
+            return await this.request(`/dashboard/projects/recent?limit=${limit}`);
+        } catch (error) {
+            console.warn('Recent projects unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getPerformanceData(period = '7d') {
+        try {
+            return await this.request(`/dashboard/performance?period=${period}`);
+        } catch (error) {
+            console.warn('Performance data unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getQuickStats() {
+        try {
+            return await this.request('/dashboard/quick-stats');
+        } catch (error) {
+            return { success: true, data: {} };
+        }
+    }
+
+    async getUpcomingEvents() {
+        try {
+            return await this.request('/dashboard/events/upcoming');
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getTasks() {
+        try {
+            return await this.request('/dashboard/tasks');
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getNotifications(limit = 10) {
+        try {
+            return await this.request(`/dashboard/notifications?limit=${limit}`);
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getTopSkills(limit = 5) {
+        try {
+            return await this.request(`/dashboard/skills/top?limit=${limit}`);
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async getDeviceStats() {
+        try {
+            return await this.request('/dashboard/devices');
+        } catch (error) {
+            return { success: true, data: [] };
+        }
+    }
+
+    async connectToDashboard() {
+        // This is handled by Socket.io, no API call needed
+        return { success: true };
+    }
+
+    async uploadCollaborationFile(formData, config) {
+        try {
+            return await this.request('/collaboration/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {},
+                ...config
+            });
+        } catch (error) {
+            console.error('File upload failed:', error);
+            throw error;
+        }
+    }
+
+    // Media APIs
+    async uploadMedia(formData) {
+        return this.request('/media/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {}
+        });
+    }
+
+    async getMedia(filters = {}) {
+        const query = new URLSearchParams(filters);
+        return this.request(`/media?${query}`);
+    }
+
+    async deleteMedia(id) {
+        return this.request(`/media/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Email APIs
+    async getEmails(filters = {}) {
+        const query = new URLSearchParams(filters);
+        return this.request(`/emails?${query}`);
+    }
+
+    async sendEmail(emailData) {
+        return this.request('/emails/send', {
+            method: 'POST',
+            body: JSON.stringify(emailData)
+        });
+    }
+
+    async deleteEmail(id) {
+        return this.request(`/emails/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Reviews APIs
+    async getReviews() {
+        return this.request('/reviews');
+    }
+
+    async approveReview(id) {
+        return this.request(`/reviews/${id}/approve`, {
+            method: 'POST'
+        });
+    }
+
+    async deleteReview(id) {
+        return this.request(`/reviews/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Settings APIs
+    async getSettings() {
+        return this.request('/settings');
+    }
+
+    async updateSettings(settings) {
+        return this.request('/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
+    }
+}
+
+export default new ApiService();

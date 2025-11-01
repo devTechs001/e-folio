@@ -1,20 +1,48 @@
 const express = require('express');
 const router = express.Router();
-const aiController = require('../controllers/ai.controller');
+const { auth } = require('../middleware/auth.middleware');
+const {
+    getConversations,
+    getConversation,
+    createConversation,
+    updateConversation,
+    deleteConversation,
+    sendMessage,
+    regenerateMessage,
+    rateMessage,
+    toggleBookmark,
+    getBookmarks,
+    searchMessages,
+    getStats,
+    exportConversation,
+    generateMarkdown
+} = require('../controllers/ai.controller');
 
-// Generate content
-router.post('/generate', aiController.generateContent);
+// All routes require authentication
+router.use(auth);
 
-// Improve content
-router.post('/improve', aiController.improveContent);
+// Conversations
+router.get('/conversations', getConversations);
+router.post('/conversations', createConversation);
+router.get('/conversations/:id', getConversation);
+router.put('/conversations/:id', updateConversation);
+router.delete('/conversations/:id', deleteConversation);
 
-// Get suggestions
-router.post('/suggestions', aiController.getSuggestions);
+// Messages
+router.post('/conversations/:id/messages', sendMessage);
+router.post('/messages/:id/regenerate', regenerateMessage);
+router.post('/messages/:id/rate', rateMessage);
 
-// Analyze content
-router.post('/analyze', aiController.analyzeContent);
+// Bookmarks
+router.post('/messages/:id/bookmark', toggleBookmark);
+router.get('/bookmarks', getBookmarks);
 
-// Generate code
-router.post('/code', aiController.generateCode);
+// Search & Stats
+router.get('/search', searchMessages);
+router.get('/stats', getStats);
+
+// Export
+router.get('/conversations/:id/export', exportConversation);
+router.post('/generate-markdown', generateMarkdown);
 
 module.exports = router;

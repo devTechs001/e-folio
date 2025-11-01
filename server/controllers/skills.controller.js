@@ -1,263 +1,368 @@
+// controllers/skillController.js
 const Skill = require('../models/Skill.model');
+const SkillGroup = require('../models/SkillGroup');
+const asyncHandler = require('express-async-handler');
+const { validationResult } = require('express-validator');
 
-class SkillsController {
-    // Get all skills
-    async getSkills(req, res) {
-        try {
-            const { type, category } = req.query;
-            
-            let query = {};
-            if (type) query.type = type;
-            if (category) query.category = category;
+// @desc    Get all skills
+// @route   GET /api/skills
+// @access  Private
+exports.getSkills = asyncHandler(async (req, res) => {
+    const {
+        type,
+        category,
+        level,
+        featured,
+        visible,
+        search,
+        sortBy = 'order',
+        order = 'asc'
+    } = req.query;
 
-            const skills = await Skill.find(query)
-                .sort({ order: 1, createdAt: -1 });
-
-            res.json({
-                success: true,
-                skills,
-                count: skills.length
-            });
-        } catch (error) {
-            console.error('Get skills error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to fetch skills',
-                error: error.message 
-            });
-        }
+    // Build filter
+    const filter = { userId: req.user.id };
+    
+    if (type) filter.type = type;
+    if (category) filter.category = category;
+    if (featured !== undefined) filter.featured = featured === 'true';
+    if (visible !== undefined) filter.visible = visible === 'true';
+    
+    if (level) {
+        if (level === 'beginner') filter.level = { $lt: 40 };
+        else if (level === 'intermediate') filter.level = { $gte: 40, $lt: 70 };
+        else if (level === 'advanced') filter.level = { $gte: 70 };
+    }
+    
+    if (search) {
+        filter.$or = [
+            { name: { $regex: search, $options: 'i' } },
+            { category: { $regex: search, $options: 'i' } }
+        ];
     }
 
-    // Get single skill by ID
-    async getSkillById(req, res) {
-        try {
-            const skill = await Skill.findById(req.params.id);
-            
-            if (!skill) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Skill not found'
-                });
-            }
+    // Build sort
+    const sortOptions = {};
+    sortOptions[sortBy] = order === 'desc' ? -1 : 1;
 
-            res.json({
-                success: true,
-                skill
-            });
-        } catch (error) {
-            console.error('Get skill error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to fetch skill',
-                error: error.message 
-            });
-        }
+    const skills = await Skill.find(filter)
+        .sort(sortOptions)
+        .populate('projects', 'title')
+        .lean();
+
+    res.json({
+        success: true,
+        skills,
+        count: skills.length
+    });
+});
+
+// @desc    Get single skill
+// @route   GET /api/skills/:id
+// @access  Private
+exports.getSkill = asyncHandler(async (req, res) => {
+    const skill = await Skill.findOne({
+        _id: req.params.id,
+        userId: req.user.id
+    }).populate('projects');
+
+    if (!skill) {
+        res.status(404);
+        throw new Error('Skill not found');
     }
 
-    // Create new skill
-    async createSkill(req, res) {
-        try {
-            const { name, level, category, type, color, icon, description, order } = req.body;
+    res.json({ success: true, skill });
+});
 
-            // Validation
-            if (!name || level === undefined) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Name and level are required'
-                });
-            }
-
-            if (level < 0 || level > 100) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Level must be between 0 and 100'
-                });
-            }
-
-            // Get userId from authenticated user (if auth middleware is applied)
-            // For now, use a default userId or get from request
-            const userId = req.user?.id || req.body.userId || '507f1f77bcf86cd799439011'; // Default ObjectId
-
-            const newSkill = new Skill({
-                name,
-                level: parseInt(level),
-                category: category || 'Frontend',
-                type: type || 'technical',
-                color: color || '#00efff',
-                icon,
-                description,
-                order: order || 0,
-                userId
-            });
-
-            await newSkill.save();
-
-            res.status(201).json({
-                success: true,
-                message: 'Skill created successfully',
-                skill: newSkill
-            });
-        } catch (error) {
-            console.error('Create skill error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to create skill',
-                error: error.message 
-            });
-        }
+// @desc    Add skill
+// @route   POST /api/skills
+// @access  Private
+exports.addSkill = asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400);
+        throw new Error('Validation failed');
     }
 
-    // Update skill
-    async updateSkill(req, res) {
-        try {
-            const { id } = req.params;
-            const { name, level, category, type, color, icon, description, order } = req.body;
+    // Get the max order value
+    const maxOrderSkill = await Skill.findOne({ userId: req.user.id })
+        .sort('-order')
+        .select('order')
+        .lean();
 
-            // Validation
-            if (level !== undefined && (level < 0 || level > 100)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Level must be between 0 and 100'
-                });
-            }
+    const skill = await Skill.create({
+        ...req.body,
+        userId: req.user.id,
+        order: (maxOrderSkill?.order || 0) + 1
+    });
 
-            const updateData = {};
-            if (name) updateData.name = name;
-            if (level !== undefined) updateData.level = parseInt(level);
-            if (category) updateData.category = category;
-            if (type) updateData.type = type;
-            if (color) updateData.color = color;
-            if (icon !== undefined) updateData.icon = icon;
-            if (description !== undefined) updateData.description = description;
-            if (order !== undefined) updateData.order = order;
+    res.status(201).json({ success: true, skill });
+});
 
-            const skill = await Skill.findByIdAndUpdate(
-                id,
-                updateData,
-                { new: true, runValidators: true }
-            );
+// @desc    Update skill
+// @route   PUT /api/skills/:id
+// @access  Private
+exports.updateSkill = asyncHandler(async (req, res) => {
+    const skill = await Skill.findOne({
+        _id: req.params.id,
+        userId: req.user.id
+    });
 
-            if (!skill) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Skill not found'
-                });
-            }
-
-            res.json({
-                success: true,
-                message: 'Skill updated successfully',
-                skill
-            });
-        } catch (error) {
-            console.error('Update skill error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to update skill',
-                error: error.message 
-            });
-        }
+    if (!skill) {
+        res.status(404);
+        throw new Error('Skill not found');
     }
 
-    // Delete skill
-    async deleteSkill(req, res) {
-        try {
-            const { id } = req.params;
+    // Update allowed fields
+    const allowedUpdates = [
+        'name', 'level', 'category', 'icon', 'color',
+        'yearsOfExperience', 'certifications', 'learningResources',
+        'visible', 'featured', 'endorsements', 'projects', 'groupId'
+    ];
 
-            const skill = await Skill.findByIdAndDelete(id);
-
-            if (!skill) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Skill not found'
-                });
-            }
-
-            res.json({
-                success: true,
-                message: 'Skill deleted successfully'
-            });
-        } catch (error) {
-            console.error('Delete skill error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to delete skill',
-                error: error.message 
-            });
+    allowedUpdates.forEach(field => {
+        if (req.body[field] !== undefined) {
+            skill[field] = req.body[field];
         }
+    });
+
+    await skill.save();
+
+    res.json({ success: true, skill });
+});
+
+// @desc    Delete skill
+// @route   DELETE /api/skills/:id
+// @access  Private
+exports.deleteSkill = asyncHandler(async (req, res) => {
+    const skill = await Skill.findOne({
+        _id: req.params.id,
+        userId: req.user.id
+    });
+
+    if (!skill) {
+        res.status(404);
+        throw new Error('Skill not found');
     }
 
-    // Bulk create skills (useful for seeding)
-    async bulkCreateSkills(req, res) {
-        try {
-            const { skills } = req.body;
+    await skill.deleteOne();
 
-            if (!Array.isArray(skills) || skills.length === 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Skills array is required'
-                });
-            }
+    res.json({ success: true, message: 'Skill deleted' });
+});
 
-            // Add default userId to all skills if not provided
-            const userId = req.user?.id || req.body.userId || '507f1f77bcf86cd799439011';
-            const skillsWithUserId = skills.map(skill => ({
-                ...skill,
-                userId: skill.userId || userId
-            }));
+// @desc    Bulk delete skills
+// @route   POST /api/skills/bulk-delete
+// @access  Private
+exports.bulkDeleteSkills = asyncHandler(async (req, res) => {
+    const { ids } = req.body;
 
-            const createdSkills = await Skill.insertMany(skillsWithUserId);
-
-            res.status(201).json({
-                success: true,
-                message: `${createdSkills.length} skills created successfully`,
-                skills: createdSkills
-            });
-        } catch (error) {
-            console.error('Bulk create skills error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to create skills',
-                error: error.message 
-            });
-        }
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        res.status(400);
+        throw new Error('Invalid skill IDs');
     }
 
-    // Get skills statistics
-    async getSkillsStats(req, res) {
-        try {
-            const totalSkills = await Skill.countDocuments();
-            const technicalSkills = await Skill.countDocuments({ type: 'technical' });
-            const professionalSkills = await Skill.countDocuments({ type: 'professional' });
+    const result = await Skill.deleteMany({
+        _id: { $in: ids },
+        userId: req.user.id
+    });
 
-            const categories = await Skill.aggregate([
-                { $group: { _id: '$category', count: { $sum: 1 } } },
-                { $sort: { count: -1 } }
-            ]);
+    res.json({
+        success: true,
+        message: `Deleted ${result.deletedCount} skills`
+    });
+});
 
-            const avgLevel = await Skill.aggregate([
-                { $group: { _id: null, avgLevel: { $avg: '$level' } } }
-            ]);
+// @desc    Reorder skills
+// @route   POST /api/skills/reorder
+// @access  Private
+exports.reorderSkills = asyncHandler(async (req, res) => {
+    const { skills } = req.body; // Array of { id, order }
 
-            res.json({
-                success: true,
-                stats: {
-                    total: totalSkills,
-                    technical: technicalSkills,
-                    professional: professionalSkills,
-                    averageLevel: avgLevel[0]?.avgLevel || 0,
-                    categories: categories.map(c => ({ category: c._id, count: c.count }))
+    if (!skills || !Array.isArray(skills)) {
+        res.status(400);
+        throw new Error('Invalid skills data');
+    }
+
+    const updatePromises = skills.map(({ id, order }) =>
+        Skill.updateOne(
+            { _id: id, userId: req.user.id },
+            { order }
+        )
+    );
+
+    await Promise.all(updatePromises);
+
+    res.json({ success: true, message: 'Skills reordered' });
+});
+
+// @desc    Get skill analytics
+// @route   GET /api/skills/analytics
+// @access  Private
+exports.getAnalytics = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    const [
+        totalSkills,
+        typeBreakdown,
+        categoryBreakdown,
+        levelBreakdown,
+        topSkills,
+        recentlyAdded,
+        averageLevel
+    ] = await Promise.all([
+        Skill.countDocuments({ userId }),
+        
+        Skill.aggregate([
+            { $match: { userId: userId } },
+            { $group: { _id: '$type', count: { $sum: 1 } } }
+        ]),
+        
+        Skill.aggregate([
+            { $match: { userId: userId, type: 'technical' } },
+            { $group: { _id: '$category', count: { $sum: 1 }, avgLevel: { $avg: '$level' } } },
+            { $sort: { count: -1 } }
+        ]),
+        
+        Skill.aggregate([
+            { $match: { userId: userId } },
+            {
+                $bucket: {
+                    groupBy: '$level',
+                    boundaries: [0, 40, 70, 100],
+                    default: 'Other',
+                    output: { count: { $sum: 1 } }
                 }
-            });
-        } catch (error) {
-            console.error('Get skills stats error:', error);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Failed to fetch skills statistics',
-                error: error.message 
-            });
-        }
-    }
-}
+            }
+        ]),
+        
+        Skill.find({ userId })
+            .sort({ level: -1 })
+            .limit(10)
+            .select('name level category color icon')
+            .lean(),
+        
+        Skill.find({ userId })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('name level createdAt')
+            .lean(),
+        
+        Skill.aggregate([
+            { $match: { userId: userId } },
+            { $group: { _id: null, avgLevel: { $avg: '$level' } } }
+        ])
+    ]);
 
-module.exports = new SkillsController();
+    res.json({
+        success: true,
+        analytics: {
+            totalSkills,
+            typeBreakdown,
+            categoryBreakdown,
+            levelBreakdown,
+            topSkills,
+            recentlyAdded,
+            averageLevel: Math.round(averageLevel[0]?.avgLevel || 0)
+        }
+    });
+});
+
+// Skill Groups
+
+// @desc    Get skill groups
+// @route   GET /api/skills/groups
+// @access  Private
+exports.getSkillGroups = asyncHandler(async (req, res) => {
+    const groups = await SkillGroup.find({ userId: req.user.id })
+        .sort('order')
+        .lean();
+
+    // Get skill count for each group
+    const groupsWithCounts = await Promise.all(
+        groups.map(async (group) => ({
+            ...group,
+            skillCount: await Skill.countDocuments({ groupId: group._id })
+        }))
+    );
+
+    res.json({
+        success: true,
+        groups: groupsWithCounts
+    });
+});
+
+// @desc    Create skill group
+// @route   POST /api/skills/groups
+// @access  Private
+exports.createSkillGroup = asyncHandler(async (req, res) => {
+    const { name, color, description } = req.body;
+
+    if (!name) {
+        res.status(400);
+        throw new Error('Group name is required');
+    }
+
+    const maxOrderGroup = await SkillGroup.findOne({ userId: req.user.id })
+        .sort('-order')
+        .select('order')
+        .lean();
+
+    const group = await SkillGroup.create({
+        userId: req.user.id,
+        name,
+        color: color || '#3b82f6',
+        description,
+        order: (maxOrderGroup?.order || 0) + 1
+    });
+
+    res.status(201).json({ success: true, group });
+});
+
+// @desc    Update skill group
+// @route   PUT /api/skills/groups/:id
+// @access  Private
+exports.updateSkillGroup = asyncHandler(async (req, res) => {
+    const group = await SkillGroup.findOne({
+        _id: req.params.id,
+        userId: req.user.id
+    });
+
+    if (!group) {
+        res.status(404);
+        throw new Error('Group not found');
+    }
+
+    const { name, color, description } = req.body;
+    
+    if (name) group.name = name;
+    if (color) group.color = color;
+    if (description !== undefined) group.description = description;
+
+    await group.save();
+
+    res.json({ success: true, group });
+});
+
+// @desc    Delete skill group
+// @route   DELETE /api/skills/groups/:id
+// @access  Private
+exports.deleteSkillGroup = asyncHandler(async (req, res) => {
+    const group = await SkillGroup.findOne({
+        _id: req.params.id,
+        userId: req.user.id
+    });
+
+    if (!group) {
+        res.status(404);
+        throw new Error('Group not found');
+    }
+
+    // Remove groupId from all skills in this group
+    await Skill.updateMany(
+        { groupId: group._id },
+        { $unset: { groupId: '' } }
+    );
+
+    await group.deleteOne();
+
+    res.json({ success: true, message: 'Group deleted' });
+});

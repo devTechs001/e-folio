@@ -1,22 +1,35 @@
+// routes/trackingRoutes.js
 const express = require('express');
 const router = express.Router();
-const trackingController = require('../controllers/tracking.controller');
+const {
+    initSession,
+    trackPageView,
+    trackEvent,
+    endSession,
+    getRealtimeAnalytics,
+    getHeatmapData,
+    getConversionFunnel,
+    getBehaviorPatterns,
+    getPredictiveAnalytics,
+    exportAnalytics
+} = require('../controllers/tracking.controller');
+const { auth, isOwner } = require('../middleware/auth.middleware');
 
-// Initialize visitor session
-router.post('/session/init', trackingController.initSession);
+// Public routes
+router.post('/session', initSession);
+router.post('/pageview', trackPageView);
+router.post('/event', trackEvent);
+router.post('/session/end', endSession);
 
-// Track page view
-router.post('/page', trackingController.trackPageView);
+// Protected routes (owner only)
+router.use(auth);
+router.use(isOwner);
 
-// Track event
-router.post('/event', trackingController.trackEvent);
-
-// Get real-time analytics
-router.get('/analytics/realtime', trackingController.getRealTimeAnalytics);
-
-// Reviews
-router.post('/review', trackingController.submitReview);
-router.get('/reviews', trackingController.getReviews);
-router.patch('/review/:id/moderate', trackingController.moderateReview);
+router.get('/analytics/realtime', getRealtimeAnalytics);
+router.get('/heatmap', getHeatmapData);
+router.get('/funnel', getConversionFunnel);
+router.get('/patterns', getBehaviorPatterns);
+router.get('/predictive', getPredictiveAnalytics);
+router.get('/export', exportAnalytics);
 
 module.exports = router;

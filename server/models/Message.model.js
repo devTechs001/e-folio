@@ -81,4 +81,4 @@ const messageSchema = new mongoose.Schema({
 messageSchema.index({ room: 1, createdAt: -1 });
 messageSchema.index({ sender: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Message', messageSchema);
+module.exports = mongoose.models.Message || mongoose.model('Message', messageSchema);

@@ -1,17 +1,54 @@
+// routes/skillRoutes.js
 const express = require('express');
 const router = express.Router();
-const skillsController = require('../controllers/skills.controller');
-// const { verifyToken } = require('../middleware/auth.middleware'); // Uncomment when auth is needed
+const { body } = require('express-validator');
+const {
+    getSkills,
+    getSkill,
+    addSkill,
+    updateSkill,
+    deleteSkill,
+    bulkDeleteSkills,
+    reorderSkills,
+    getAnalytics,
+    getSkillGroups,
+    createSkillGroup,
+    updateSkillGroup,
+    deleteSkillGroup
+} = require('../controllers/skills.controller');
+const { auth: protect } = require('../middleware/auth.middleware');
 
-// Public routes
-router.get('/', skillsController.getSkills);
-router.get('/stats', skillsController.getSkillsStats);
-router.get('/:id', skillsController.getSkillById);
+// Validation rules
+const skillValidation = [
+    body('name').trim().isLength({ min: 1, max: 50 }).withMessage('Name is required'),
+    body('type').isIn(['technical', 'professional']).withMessage('Invalid type'),
+    body('level').isInt({ min: 0, max: 100 }).withMessage('Level must be 0-100')
+];
 
-// Protected routes (uncomment verifyToken when auth is ready)
-router.post('/', /* verifyToken, */ skillsController.createSkill);
-router.post('/bulk', /* verifyToken, */ skillsController.bulkCreateSkills);
-router.put('/:id', /* verifyToken, */ skillsController.updateSkill);
-router.delete('/:id', /* verifyToken, */ skillsController.deleteSkill);
+// All routes require authentication
+router.use(protect);
+
+// Main routes
+router.route('/')
+    .get(getSkills)
+    .post(skillValidation, addSkill);
+
+router.get('/analytics', getAnalytics);
+router.post('/bulk-delete', bulkDeleteSkills);
+router.post('/reorder', reorderSkills);
+
+router.route('/:id')
+    .get(getSkill)
+    .put(updateSkill)
+    .delete(deleteSkill);
+
+// Group routes
+router.route('/groups')
+    .get(getSkillGroups)
+    .post(createSkillGroup);
+
+router.route('/groups/:id')
+    .put(updateSkillGroup)
+    .delete(deleteSkillGroup);
 
 module.exports = router;

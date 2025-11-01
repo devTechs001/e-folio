@@ -1,26 +1,49 @@
+// routes/collaboration.routes.js
 const express = require('express');
 const router = express.Router();
-const collaborationController = require('../controllers/collaboration.controller');
+const { auth, isOwner } = require('../middleware/auth.middleware');
+const {
+    getCollaborationRequests,
+    getCollaborationStats,
+    approveRequest,
+    rejectRequest,
+    bulkApproveRequests,
+    bulkRejectRequests,
+    archiveRequest,
+    exportRequests,
+    getRequestDetails,
+    addRequestNote
+} = require('../controllers/collaboration.controller');
 
-// Get all collaboration requests (owner only)
-router.get('/requests', collaborationController.getRequests);
+// All routes require authentication and owner role
+router.use(auth, isOwner);
 
-// Submit collaboration request
-router.post('/request', collaborationController.submitRequest);
+// Get requests with filtering
+router.get('/requests', getCollaborationRequests);
 
-// Approve collaboration request
-router.post('/approve/:id', collaborationController.approveRequest);
+// Get statistics
+router.get('/stats', getCollaborationStats);
 
-// Reject collaboration request
-router.post('/reject/:id', collaborationController.rejectRequest);
+// Get single request details
+router.get('/requests/:id', getRequestDetails);
 
-// Get all collaborators
-router.get('/collaborators', collaborationController.getCollaborators);
+// Approve request
+router.post('/requests/:id/approve', approveRequest);
 
-// Verify invite token
-router.get('/invite/:token', collaborationController.verifyInvite);
+// Reject request
+router.post('/requests/:id/reject', rejectRequest);
 
-// Accept invite and become collaborator
-router.post('/accept-invite/:token', collaborationController.acceptInvite);
+// Bulk operations
+router.post('/requests/bulk/approve', bulkApproveRequests);
+router.post('/requests/bulk/reject', bulkRejectRequests);
+
+// Archive request
+router.post('/requests/:id/archive', archiveRequest);
+
+// Add note to request
+router.post('/requests/:id/notes', addRequestNote);
+
+// Export requests
+router.get('/export', exportRequests);
 
 module.exports = router;

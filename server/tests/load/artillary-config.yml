@@ -1,0 +1,99 @@
+// tests/load/artillery-config.yml
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 300
+      arrivalRate: 10
+      name: "Sustained load"
+    - duration: 120
+      arrivalRate: 20
+      name: "Spike test"
+  processor: "./processor.js"
+  plugins:
+    expect: {}
+  http:
+    timeout: 10
+  
+scenarios:
+  - name: "Complete user journey"
+    weight: 70
+    flow:
+      - post:
+          url: "/api/tracking/session"
+          json:
+            referrer: "https://google.com"
+          capture:
+            - json: "$.sessionId"
+              as: "sessionId"
+          expect:
+            - statusCode: 200
+      
+      - think: 2
+      
+      - post:
+          url: "/api/tracking/pageview"
+          json:
+            sessionId: "{{ sessionId }}"
+            page: "/"
+            title: "Home"
+            timeSpent: 30000
+            scrollDepth: 75
+          expect:
+            - statusCode: 200
+      
+      - think: 3
+      
+      - post:
+          url: "/api/tracking/pageview"
+          json:
+            sessionId: "{{ sessionId }}"
+            page: "/projects"
+            title: "Projects"
+            timeSpent: 60000
+            scrollDepth: 80
+      
+      - think: 2
+      
+      - post:
+          url: "/api/tracking/event"
+          json:
+            sessionId: "{{ sessionId }}"
+            eventType: "click"
+            eventData:
+              element: "project-card"
+      
+      - think: 5
+      
+      - post:
+          url: "/api/tracking/session/end"
+          json:
+            sessionId: "{{ sessionId }}"
+  
+  - name: "Quick bounce"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/tracking/session"
+          json:
+            referrer: "https://google.com"
+          capture:
+            - json: "$.sessionId"
+              as: "sessionId"
+      
+      - think: 1
+      
+      - post:
+          url: "/api/tracking/pageview"
+          json:
+            sessionId: "{{ sessionId }}"
+            page: "/"
+            timeSpent: 5000
+            scrollDepth: 20
+      
+      - post:
+          url: "/api/tracking/session/end"
+          json:
+            sessionId: "{{ sessionId }}"

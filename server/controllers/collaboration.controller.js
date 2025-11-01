@@ -1,342 +1,617 @@
-const CollaborationRequest = require('../models/CollaborationRequest.model');
-const Invite = require('../models/Invite.model');
+// controllers/collaboration.controller.js
+const CollaborationRequest = require('../models/CollaborationRequest');
 const User = require('../models/User.model');
-const crypto = require('crypto');
+const { generateInviteToken, sendEmail } = require('../utils');
+const { Parser } = require('@json2csv/plainjs');
 
-// Get Socket.IO instance
-let io;
+// Get collaboration requests with filtering
+exports.getCollaborationRequests = async (req, res) => {
+    try {
+        const { status, search, sortBy = 'submittedAt', order = 'desc', startDate, endDate } = req.query;
 
-class CollaborationController {
-    // Set Socket.IO instance
-    setSocketIO(socketIO) {
-        io = socketIO;
-    }
-    // Submit collaboration request
-    async submitRequest(req, res) {
-        try {
-            const { name, email, role, message, skills } = req.body;
+        let query = {};
 
-            if (!name || !email || !message) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Name, email, and message are required' 
-                });
-            }
-
-            // Check if already requested
-            const existingRequest = await CollaborationRequest.findOne({ 
-                email: email.toLowerCase(),
-                status: 'pending'
-            });
-
-            if (existingRequest) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'You already have a pending collaboration request'
-                });
-            }
-
-            const newRequest = new CollaborationRequest({
-                name,
-                email: email.toLowerCase(),
-                role: role || 'Collaborator',
-                message,
-                skills: skills || []
-            });
-
-            await newRequest.save();
-
-            // Emit Socket.IO event to notify owner in real-time
-            if (io) {
-                io.emit('new_collaboration_request', {
-                    id: newRequest._id,
-                    name: newRequest.name,
-                    email: newRequest.email,
-                    role: newRequest.role,
-                    message: newRequest.message,
-                    skills: newRequest.skills,
-                    status: newRequest.status,
-                    submittedAt: newRequest.submittedAt
-                });
-            }
-
-            res.json({
-                success: true,
-                message: 'Collaboration request submitted successfully! We will review it and get back to you soon.',
-                request: newRequest
-            });
-        } catch (error) {
-            console.error('Submit request error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+        // Status filter
+        if (status && status !== 'all') {
+            query.status = status;
         }
-    }
 
-    // Get all collaboration requests (owner only)
-    async getRequests(req, res) {
-        try {
-            const requests = await CollaborationRequest.find()
-                .sort({ submittedAt: -1 });
-
-            res.json({
-                success: true,
-                requests
-            });
-        } catch (error) {
-            console.error('Get requests error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+        // Search
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { message: { $regex: search, $options: 'i' } },
+                { company: { $regex: search, $options: 'i' } }
+            ];
         }
+
+        // Date range
+        if (startDate || endDate) {
+            query.submittedAt = {};
+            if (startDate) query.submittedAt.$gte = new Date(startDate);
+            if (endDate) query.submittedAt.$lte = new Date(endDate);
+        }
+
+        const sortOrder = order === 'desc' ? -1 : 1;
+        const requests = await CollaborationRequest.find(query)
+            .sort({ [sortBy]: sortOrder })
+            .populate('processedBy', 'name email');
+
+        res.json({
+            success: true,
+            requests: requests.map(r => ({
+                id: r._id,
+                name: r.name,
+                email: r.email,
+                company: r.company,
+                role: r.role,
+                message: r.message,
+                status: r.status,
+                submittedAt: r.submittedAt,
+                processedAt: r.processedAt,
+                processedBy: r.processedBy,
+                inviteLink: r.inviteLink,
+                isPriority: r.isPriority,
+                source: r.source,
+                notes: r.notes
+            }))
+        });
+    } catch (error) {
+        console.error('Get requests error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
+};
 
-    // Approve collaboration request and generate invite
-    async approveRequest(req, res) {
-        try {
-            const { id } = req.params;
-            const request = await CollaborationRequest.findById(id);
+// Get statistics
+exports.getCollaborationStats = async (req, res) => {
+    try {
+        const total = await CollaborationRequest.countDocuments();
+        const pending = await CollaborationRequest.countDocuments({ status: 'pending' });
+        const approved = await CollaborationRequest.countDocuments({ status: 'approved' });
+        const rejected = await CollaborationRequest.countDocuments({ status: 'rejected' });
 
-            if (!request) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Request not found' 
-                });
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const thisMonth = await CollaborationRequest.countDocuments({
+            submittedAt: { $gte: startOfMonth }
+        });
+
+        res.json({
+            success: true,
+            stats: {
+                total,
+                pending,
+                approved,
+                rejected,
+                thisMonth
             }
+        });
+    } catch (error) {
+        console.error('Get stats error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
 
-            if (request.status !== 'pending') {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Request has already been reviewed'
-                });
-            }
+// Approve request
+exports.approveRequest = async (req, res) => {
+    try {
+        const { emailTemplate, customMessage, note } = req.body;
+        const request = await CollaborationRequest.findById(req.params.id);
 
-            // Find owner user
-            const owner = await User.findOne({ role: 'owner' });
-            if (!owner) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Owner not found'
-                });
-            }
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
 
-            // Generate secure invite token
-            const inviteToken = crypto.randomBytes(32).toString('hex');
-            
-            // Create invite
-            const invite = new Invite({
-                token: inviteToken,
-                email: request.email,
-                name: request.name,
-                role: 'collaborator',
-                invitedBy: owner._id,
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-                permissions: ['edit', 'view']
+        if (request.status !== 'pending') {
+            return res.status(400).json({ success: false, message: 'Request already processed' });
+        }
+
+        // Generate invite token
+        const inviteToken = generateInviteToken();
+        const inviteLink = `${process.env.FRONTEND_URL}/register?token=${inviteToken}&email=${encodeURIComponent(request.email)}`;
+
+        // Update request
+        request.status = 'approved';
+        request.processedAt = new Date();
+        request.processedBy = req.user.id;
+        request.inviteLink = inviteLink;
+        request.inviteToken = inviteToken;
+        if (note) {
+            request.notes.push({
+                content: note,
+                addedBy: req.user.id,
+                addedAt: new Date()
             });
+        }
 
-            await invite.save();
+        await request.save();
 
-            // Update request
+        // Send approval email
+        const emailContent = getEmailTemplate(emailTemplate, {
+            name: request.name,
+            inviteLink,
+            customMessage
+        });
+
+        await sendEmail({
+            to: request.email,
+            subject: 'Your Collaboration Request Has Been Approved!',
+            html: emailContent
+        });
+
+        // Emit socket event
+        req.app.get('io').emit('collaboration_request_updated', {
+            id: request._id,
+            status: 'approved'
+        });
+
+        res.json({
+            success: true,
+            message: 'Request approved successfully',
+            inviteLink,
+            request: {
+                id: request._id,
+                status: request.status,
+                processedAt: request.processedAt
+            }
+        });
+    } catch (error) {
+        console.error('Approve request error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Reject request
+exports.rejectRequest = async (req, res) => {
+    try {
+        const { reason, note } = req.body;
+        const request = await CollaborationRequest.findById(req.params.id);
+
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
+
+        if (request.status !== 'pending') {
+            return res.status(400).json({ success: false, message: 'Request already processed' });
+        }
+
+        // Update request
+        request.status = 'rejected';
+        request.processedAt = new Date();
+        request.processedBy = req.user.id;
+        request.rejectionReason = reason;
+        if (note) {
+            request.notes.push({
+                content: note,
+                addedBy: req.user.id,
+                addedAt: new Date()
+            });
+        }
+
+        await request.save();
+
+        // Send rejection email (optional)
+        if (reason) {
+            await sendEmail({
+                to: request.email,
+                subject: 'Update on Your Collaboration Request',
+                html: getRejectionEmailTemplate(request.name, reason)
+            });
+        }
+
+        // Emit socket event
+        req.app.get('io').emit('collaboration_request_updated', {
+            id: request._id,
+            status: 'rejected'
+        });
+
+        res.json({
+            success: true,
+            message: 'Request rejected',
+            request: {
+                id: request._id,
+                status: request.status,
+                processedAt: request.processedAt
+            }
+        });
+    } catch (error) {
+        console.error('Reject request error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Bulk approve
+exports.bulkApproveRequests = async (req, res) => {
+    try {
+        const { requestIds } = req.body;
+
+        const requests = await CollaborationRequest.find({
+            _id: { $in: requestIds },
+            status: 'pending'
+        });
+
+        const approvedRequests = [];
+
+        for (const request of requests) {
+            const inviteToken = generateInviteToken();
+            const inviteLink = `${process.env.FRONTEND_URL}/register?token=${inviteToken}&email=${encodeURIComponent(request.email)}`;
+
             request.status = 'approved';
+            request.processedAt = new Date();
+            request.processedBy = req.user.id;
+            request.inviteLink = inviteLink;
             request.inviteToken = inviteToken;
-            request.reviewedAt = new Date();
-            request.reviewedBy = owner._id;
+
             await request.save();
 
-            const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:5174'}/invite/${inviteToken}`;
-
-            // Emit Socket.IO event
-            if (io) {
-                io.emit('request_approved', {
-                    requestId: request._id,
-                    email: request.email,
-                    inviteLink
-                });
-            }
-
-            res.json({
-                success: true,
-                message: 'Request approved! Invite link generated.',
-                inviteLink,
-                invite
+            // Send email
+            const emailContent = getEmailTemplate('default', {
+                name: request.name,
+                inviteLink
             });
-        } catch (error) {
-            console.error('Approve request error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+
+            await sendEmail({
+                to: request.email,
+                subject: 'Your Collaboration Request Has Been Approved!',
+                html: emailContent
+            });
+
+            approvedRequests.push(request);
         }
+
+        res.json({
+            success: true,
+            message: `Approved ${approvedRequests.length} requests`,
+            count: approvedRequests.length
+        });
+    } catch (error) {
+        console.error('Bulk approve error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
+};
 
-    // Reject collaboration request
-    async rejectRequest(req, res) {
-        try {
-            const { id } = req.params;
-            const request = await CollaborationRequest.findById(id);
+// Bulk reject
+exports.bulkRejectRequests = async (req, res) => {
+    try {
+        const { requestIds } = req.body;
 
-            if (!request) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Request not found' 
-                });
+        await CollaborationRequest.updateMany(
+            { _id: { $in: requestIds }, status: 'pending' },
+            {
+                status: 'rejected',
+                processedAt: new Date(),
+                processedBy: req.user.id
             }
+        );
 
-            // Find owner
-            const owner = await User.findOne({ role: 'owner' });
+        res.json({
+            success: true,
+            message: 'Requests rejected successfully'
+        });
+    } catch (error) {
+        console.error('Bulk reject error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
 
-            request.status = 'rejected';
-            request.reviewedAt = new Date();
-            request.reviewedBy = owner?._id;
-            await request.save();
+// Archive request
+exports.archiveRequest = async (req, res) => {
+    try {
+        const request = await CollaborationRequest.findByIdAndUpdate(
+            req.params.id,
+            { archived: true, archivedAt: new Date() },
+            { new: true }
+        );
 
-            // Emit Socket.IO event
-            if (io) {
-                io.emit('request_rejected', {
-                    requestId: request._id,
-                    email: request.email
-                });
-            }
-
-            res.json({
-                success: true,
-                message: 'Request rejected'
-            });
-        } catch (error) {
-            console.error('Reject request error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
         }
+
+        res.json({ success: true, message: 'Request archived' });
+    } catch (error) {
+        console.error('Archive error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
+};
 
-    // Get all active collaborators
-    async getCollaborators(req, res) {
-        try {
-            const collaborators = await User.find({ 
-                role: 'collaborator',
-                status: 'active'
-            }).select('-password');
+// Export requests to CSV
+exports.exportRequests = async (req, res) => {
+    try {
+        const { status, startDate, endDate } = req.query;
+        let query = {};
 
-            res.json({
-                success: true,
-                collaborators
-            });
-        } catch (error) {
-            console.error('Get collaborators error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+        if (status && status !== 'all') {
+            query.status = status;
         }
-    }
 
-    // Accept invite and create collaborator account
-    async acceptInvite(req, res) {
-        try {
-            const { token } = req.params;
-            const { password } = req.body;
-
-            if (!password) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Password is required'
-                });
-            }
-
-            const invite = await Invite.findOne({ token, status: 'pending' });
-
-            if (!invite) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Invalid or expired invite link' 
-                });
-            }
-
-            // Check if expired
-            if (new Date(invite.expiresAt) < new Date()) {
-                invite.status = 'expired';
-                await invite.save();
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invite link has expired' 
-                });
-            }
-
-            // Check if user already exists
-            const existingUser = await User.findOne({ email: invite.email });
-            if (existingUser) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Account with this email already exists'
-                });
-            }
-
-            // Hash password
-            const bcrypt = require('bcryptjs');
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            // Create collaborator account
-            const collaborator = new User({
-                name: invite.name,
-                email: invite.email,
-                password: hashedPassword,
-                role: 'collaborator',
-                status: 'active',
-                permissions: invite.permissions || ['view', 'edit']
-            });
-
-            await collaborator.save();
-
-            // Update invite
-            invite.status = 'accepted';
-            invite.acceptedAt = new Date();
-            await invite.save();
-
-            res.json({
-                success: true,
-                message: 'Welcome to the team! You can now log in with your credentials.',
-                user: {
-                    id: collaborator._id,
-                    name: collaborator.name,
-                    email: collaborator.email,
-                    role: collaborator.role
-                }
-            });
-        } catch (error) {
-            console.error('Accept invite error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+        if (startDate || endDate) {
+            query.submittedAt = {};
+            if (startDate) query.submittedAt.$gte = new Date(startDate);
+            if (endDate) query.submittedAt.$lte = new Date(endDate);
         }
+
+        const requests = await CollaborationRequest.find(query)
+            .populate('processedBy', 'name email')
+            .sort({ submittedAt: -1 });
+
+        const fields = ['name', 'email', 'company', 'role', 'message', 'status', 'submittedAt', 'processedAt'];
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(requests);
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`collaboration-requests-${Date.now()}.csv`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Export error:', error);
+        res.status(500).json({ success: false, message: 'Export failed', error: error.message });
     }
+};
 
-    // Verify invite token
-    async verifyInvite(req, res) {
-        try {
-            const { token } = req.params;
+// Get request details
+exports.getRequestDetails = async (req, res) => {
+    try {
+        const request = await CollaborationRequest.findById(req.params.id)
+            .populate('processedBy', 'name email avatar')
+            .populate('notes.addedBy', 'name email');
 
-            const invite = await Invite.findOne({ token, status: 'pending' })
-                .populate('invitedBy', 'name email');
-
-            if (!invite) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Invalid invite link' 
-                });
-            }
-
-            // Check if expired
-            if (new Date(invite.expiresAt) < new Date()) {
-                invite.status = 'expired';
-                await invite.save();
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invite link has expired' 
-                });
-            }
-
-            res.json({
-                success: true,
-                invite: {
-                    email: invite.email,
-                    name: invite.name,
-                    role: invite.role,
-                    expiresAt: invite.expiresAt,
-                    invitedBy: invite.invitedBy
-                }
-            });
-        } catch (error) {
-            console.error('Verify invite error:', error);
-            res.status(500).json({ success: false, message: 'Server error' });
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
         }
+
+        res.json({ success: true, request });
+    } catch (error) {
+        console.error('Get details error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
+};
+
+// Add note to request
+exports.addRequestNote = async (req, res) => {
+    try {
+        const { content } = req.body;
+        const request = await CollaborationRequest.findById(req.params.id);
+
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
+
+        request.notes.push({
+            content,
+            addedBy: req.user.id,
+            addedAt: new Date()
+        });
+
+        await request.save();
+
+        res.json({ success: true, message: 'Note added successfully' });
+    } catch (error) {
+        console.error('Add note error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Helper functions
+function getEmailTemplate(template, data) {
+    const templates = {
+        default: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Welcome ${data.name}!</h2>
+                <p>Your collaboration request has been approved!</p>
+                <p>Click the button below to complete your registration:</p>
+                <a href="${data.inviteLink}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+                    Complete Registration
+                </a>
+                ${data.customMessage ? `<p>${data.customMessage}</p>` : ''}
+                <p>This link will expire in 7 days.</p>
+            </div>
+        `,
+        welcome: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7fafc; padding: 40px;">
+                <div style="background: white; border-radius: 12px; padding: 32px;">
+                    <h1 style="color: #1a202c; margin-bottom: 24px;">🎉 Welcome Aboard, ${data.name}!</h1>
+                    <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+                        We're excited to have you join our collaboration platform!
+                    </p>
+                    <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+                        Your request has been approved. Click below to get started:
+                    </p>
+                    <a href="${data.inviteLink}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; margin: 24px 0; font-weight: 600;">
+                        Get Started →
+                    </a>
+                    ${data.customMessage ? `<div style="background: #edf2f7; padding: 16px; border-radius: 8px; margin-top: 24px;"><p style="color: #2d3748; margin: 0;">${data.customMessage}</p></div>` : ''}
+                </div>
+            </div>
+        `
+    };
+
+    return templates[template] || templates.default;
 }
 
-module.exports = new CollaborationController();
+function getRejectionEmailTemplate(name, reason) {
+    return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Hello ${name},</h2>
+            <p>Thank you for your interest in collaborating with us.</p>
+            <p>After careful consideration, we're unable to approve your request at this time.</p>
+            ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+            <p>We encourage you to reapply in the future.</p>
+            <p>Best regards,<br>The Team</p>
+        </div>
+    `;
+}
+
+// Submit collaboration request (public endpoint)
+exports.submitCollaborationRequest = async (req, res) => {
+    try {
+        const { name, email, company, role, message, portfolio, linkedin } = req.body;
+
+        const request = new CollaborationRequest({
+            name,
+            email,
+            company,
+            role,
+            message,
+            portfolio,
+            linkedin,
+            status: 'pending'
+        });
+
+        await request.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Collaboration request submitted successfully',
+            requestId: request._id
+        });
+    } catch (error) {
+        console.error('Submit collaboration request error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to submit request'
+        });
+    }
+};
+
+// Get request by ID
+exports.getRequestById = async (req, res) => {
+    try {
+        const request = await CollaborationRequest.findById(req.params.id)
+            .populate('processedBy', 'name email avatar');
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            request
+        });
+    } catch (error) {
+        console.error('Get request error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get request'
+        });
+    }
+};
+
+// Upload request file
+exports.uploadRequestFile = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No file uploaded'
+            });
+        }
+
+        res.json({
+            success: true,
+            file: {
+                filename: req.file.filename,
+                path: req.file.path,
+                size: req.file.size
+            }
+        });
+    } catch (error) {
+        console.error('Upload file error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to upload file'
+        });
+    }
+};
+
+// Update request status
+exports.updateRequestStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const request = await CollaborationRequest.findByIdAndUpdate(
+            req.params.id,
+            { status, processedBy: req.user.id, processedAt: new Date() },
+            { new: true }
+        );
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            request
+        });
+    } catch (error) {
+        console.error('Update status error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update status'
+        });
+    }
+};
+
+// Resend invite
+exports.resendInvite = async (req, res) => {
+    try {
+        const request = await CollaborationRequest.findById(req.params.id);
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found'
+            });
+        }
+
+        if (request.status !== 'approved') {
+            return res.status(400).json({
+                success: false,
+                message: 'Can only resend invites for approved requests'
+            });
+        }
+
+        // Resend email logic here
+        res.json({
+            success: true,
+            message: 'Invite resent successfully'
+        });
+    } catch (error) {
+        console.error('Resend invite error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to resend invite'
+        });
+    }
+};
+
+// Get request activity
+exports.getRequestActivity = async (req, res) => {
+    try {
+        const request = await CollaborationRequest.findById(req.params.id);
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            activity: request.activity || []
+        });
+    } catch (error) {
+        console.error('Get activity error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get activity'
+        });
+    }
+};

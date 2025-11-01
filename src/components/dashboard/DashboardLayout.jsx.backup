@@ -1,0 +1,700 @@
+// client/src/components/Dashboard/DashboardLayout.jsx
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Menu,
+    X,
+    Bell,
+    Search,
+    Settings,
+    User,
+    LogOut,
+    ChevronDown,
+    Moon,
+    Sun,
+    Home,
+    FolderKanban,
+    BarChart3,
+    Users,
+    MessageSquare,
+    FileText,
+    Image,
+    Code,
+    Bookmark,
+    Calendar,
+    Briefcase,
+    Award,
+    Zap,
+    ChevronRight,
+    Filter,
+    Download,
+    Upload,
+    Share2,
+    MoreVertical,
+    Maximize2,
+    Minimize2
+} from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNotifications } from '../NotificationSystem';
+
+const DashboardLayout = ({ children, title, subtitle, actions, breadcrumbs, showSearch = true }) => {
+    const { user, logout } = useAuth();
+    const { theme, toggleTheme, isDark } = useTheme();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { notifications: systemNotifications } = useNotifications();
+
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState(3);
+
+    // Navigation items
+    const navigationItems = [
+        {
+            category: 'Main',
+            items: [
+                { icon: Home, label: 'Dashboard', path: '/dashboard', badge: null },
+                { icon: FolderKanban, label: 'Projects', path: '/dashboard/projects', badge: '12' },
+                { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics', badge: null },
+                { icon: Users, label: 'Collaborators', path: '/dashboard/collaborators', badge: '3' }
+            ]
+        },
+        {
+            category: 'Content',
+            items: [
+                { icon: MessageSquare, label: 'Messages', path: '/dashboard/messages', badge: '5' },
+                { icon: FileText, label: 'Blog', path: '/dashboard/blog', badge: null },
+                { icon: Image, label: 'Media', path: '/dashboard/media', badge: null },
+                { icon: Code, label: 'Snippets', path: '/dashboard/snippets', badge: null }
+            ]
+        },
+        {
+            category: 'Management',
+            items: [
+                { icon: Calendar, label: 'Schedule', path: '/dashboard/schedule', badge: null },
+                { icon: Briefcase, label: 'Portfolio', path: '/dashboard/portfolio', badge: null },
+                { icon: Award, label: 'Achievements', path: '/dashboard/achievements', badge: null },
+                { icon: Bookmark, label: 'Saved', path: '/dashboard/saved', badge: null }
+            ]
+        }
+    ];
+
+    // Quick actions
+    const quickActions = [
+        { icon: Upload, label: 'Upload', action: () => {} },
+        { icon: Share2, label: 'Share', action: () => {} },
+        { icon: Download, label: 'Export', action: () => {} }
+    ];
+
+    // Toggle fullscreen
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            setIsFullscreen(true);
+        } else {
+            document.exitFullscreen();
+            setIsFullscreen(false);
+        }
+    };
+
+    // Close dropdowns on outside click
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.user-menu')) setUserMenuOpen(false);
+            if (!e.target.closest('.notifications-menu')) setNotificationsOpen(false);
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    // Auto-close mobile menu on route change
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+            {/* Sidebar */}
+            <Sidebar
+                open={sidebarOpen}
+                mobileOpen={mobileMenuOpen}
+                navigationItems={navigationItems}
+                currentPath={location.pathname}
+                onClose={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Main Content Area */}
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+                {/* Top Header */}
+                <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50">
+                    <div className="px-4 sm:px-6 lg:px-8 py-4">
+                        <div className="flex items-center justify-between gap-4">
+                            {/* Left Section */}
+                            <div className="flex items-center gap-4 flex-1">
+                                {/* Mobile Menu Toggle */}
+                                <button
+                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                    className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    {mobileMenuOpen ? (
+                                        <X size={24} className="text-slate-300" />
+                                    ) : (
+                                        <Menu size={24} className="text-slate-300" />
+                                    )}
+                                </button>
+
+                                {/* Desktop Sidebar Toggle */}
+                                <button
+                                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                                    className="hidden lg:block p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    <Menu size={20} className="text-slate-300" />
+                                </button>
+
+                                {/* Search Bar */}
+                                {showSearch && (
+                                    <div className="hidden md:flex items-center flex-1 max-w-xl">
+                                        <div className="relative w-full">
+                                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                placeholder="Search projects, files, or commands..."
+                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                                            />
+                                            <kbd className="hidden lg:block absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-700/50 border border-slate-600 rounded text-xs text-slate-400">
+                                                ⌘K
+                                            </kbd>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right Section */}
+                            <div className="flex items-center gap-2">
+                                {/* Quick Actions */}
+                                <div className="hidden xl:flex items-center gap-1">
+                                    {quickActions.map((action, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={action.action}
+                                            className="p-2 hover:bg-slate-800 rounded-lg transition-colors group"
+                                            title={action.label}
+                                        >
+                                            <action.icon size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="hidden xl:block w-px h-6 bg-slate-700"></div>
+
+                                {/* Theme Toggle */}
+                                <button
+                                    onClick={toggleTheme}
+                                    className="p-2 hover:bg-slate-800 rounded-lg transition-colors group"
+                                    title="Toggle theme"
+                                >
+                                    {isDark ? (
+                                        <Sun size={18} className="text-slate-400 group-hover:text-yellow-400 transition-colors" />
+                                    ) : (
+                                        <Moon size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                    )}
+                                </button>
+
+                                {/* Fullscreen Toggle */}
+                                <button
+                                    onClick={toggleFullscreen}
+                                    className="hidden sm:block p-2 hover:bg-slate-800 rounded-lg transition-colors group"
+                                    title="Toggle fullscreen"
+                                >
+                                    {isFullscreen ? (
+                                        <Minimize2 size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                    ) : (
+                                        <Maximize2 size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                    )}
+                                </button>
+
+                                {/* Notifications */}
+                                <div className="relative notifications-menu">
+                                    <button
+                                        onClick={() => setNotificationsOpen(!notificationsOpen)}
+                                        className="relative p-2 hover:bg-slate-800 rounded-lg transition-colors group"
+                                    >
+                                        <Bell size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                        {unreadNotifications > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
+                                                {unreadNotifications}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {notificationsOpen && (
+                                            <NotificationsDropdown onClose={() => setNotificationsOpen(false)} />
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* User Menu */}
+                                <div className="relative user-menu">
+                                    <button
+                                        onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                        className="flex items-center gap-3 p-2 pr-3 hover:bg-slate-800 rounded-lg transition-colors group"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center ring-2 ring-slate-700 group-hover:ring-cyan-500/50 transition-all">
+                                            {user?.avatar ? (
+                                                <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full" />
+                                            ) : (
+                                                <span className="text-white text-sm font-semibold">
+                                                    {user?.name?.charAt(0) || 'U'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="hidden lg:block text-left">
+                                            <p className="text-sm font-medium text-slate-200">{user?.name || 'User'}</p>
+                                            <p className="text-xs text-slate-500">{user?.role || 'Member'}</p>
+                                        </div>
+                                        <ChevronDown size={16} className={`hidden lg:block text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {userMenuOpen && (
+                                            <UserDropdown user={user} onLogout={logout} onClose={() => setUserMenuOpen(false)} />
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Page Header */}
+                {(title || breadcrumbs) && (
+                    <div className="bg-slate-900/40 border-b border-slate-800/50">
+                        <div className="px-4 sm:px-6 lg:px-8 py-6">
+                            {/* Breadcrumbs */}
+                            {breadcrumbs && breadcrumbs.length > 0 && (
+                                <nav className="flex items-center gap-2 text-sm mb-4">
+                                    {breadcrumbs.map((crumb, index) => (
+                                        <React.Fragment key={index}>
+                                            {index > 0 && (
+                                                <ChevronRight size={14} className="text-slate-600" />
+                                            )}
+                                            {crumb.path ? (
+                                                <Link
+                                                    to={crumb.path}
+                                                    className="text-slate-400 hover:text-cyan-400 transition-colors"
+                                                >
+                                                    {crumb.label}
+                                                </Link>
+                                            ) : (
+                                                <span className="text-slate-200 font-medium">{crumb.label}</span>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </nav>
+                            )}
+
+                            {/* Title and Actions */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div className="flex-1">
+                                    {title && (
+                                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                                            {title}
+                                        </h1>
+                                    )}
+                                    {subtitle && (
+                                        <p className="text-slate-400 text-sm sm:text-base">{subtitle}</p>
+                                    )}
+                                </div>
+
+                                {actions && (
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        {actions}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Main Content */}
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {children}
+                    </motion.div>
+                </main>
+
+                {/* Footer */}
+                <footer className="border-t border-slate-800/50 bg-slate-900/40 px-4 sm:px-6 lg:px-8 py-6 mt-auto">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+                        <p>© 2024 Portfolio Dashboard. All rights reserved.</p>
+                        <div className="flex items-center gap-6">
+                            <a href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</a>
+                            <a href="/terms" className="hover:text-cyan-400 transition-colors">Terms</a>
+                            <a href="/support" className="hover:text-cyan-400 transition-colors">Support</a>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+                {mobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+                    />
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// Sidebar Component
+const Sidebar = ({ open, mobileOpen, navigationItems, currentPath, onClose }) => {
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <aside className={`hidden lg:block fixed top-0 left-0 h-screen bg-slate-900/80 backdrop-blur-xl border-r border-slate-800/50 transition-all duration-300 z-50 ${open ? 'w-64' : 'w-20'}`}>
+                <div className="flex flex-col h-full">
+                    {/* Logo */}
+                    <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-800/50">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                            <Zap size={24} className="text-white" />
+                        </div>
+                        {open && (
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Portfolio</h2>
+                                <p className="text-xs text-slate-400">Dashboard</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Navigation */}
+                    <nav className="flex-1 overflow-y-auto py-6 custom-scrollbar">
+                        {navigationItems.map((category, idx) => (
+                            <div key={idx} className="mb-6">
+                                {open && (
+                                    <h3 className="px-6 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        {category.category}
+                                    </h3>
+                                )}
+                                <div className="space-y-1 px-3">
+                                    {category.items.map((item, index) => (
+                                        <NavItem
+                                            key={index}
+                                            item={item}
+                                            active={currentPath === item.path}
+                                            collapsed={!open}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </nav>
+
+                    {/* Settings (Bottom) */}
+                    <div className="p-3 border-t border-slate-800/50">
+                        <NavItem
+                            item={{ icon: Settings, label: 'Settings', path: '/dashboard/settings' }}
+                            active={currentPath === '/dashboard/settings'}
+                            collapsed={!open}
+                        />
+                    </div>
+                </div>
+            </aside>
+
+            {/* Mobile Sidebar */}
+            <AnimatePresence>
+                {mobileOpen && (
+                    <motion.aside
+                        initial={{ x: -300 }}
+                        animate={{ x: 0 }}
+                        exit={{ x: -300 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        className="lg:hidden fixed top-0 left-0 h-screen w-64 bg-slate-900 border-r border-slate-800/50 z-50 overflow-y-auto"
+                    >
+                        <div className="flex flex-col h-full">
+                            {/* Logo */}
+                            <div className="flex items-center justify-between px-6 py-6 border-b border-slate-800/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                                        <Zap size={24} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-white">Portfolio</h2>
+                                        <p className="text-xs text-slate-400">Dashboard</p>
+                                    </div>
+                                </div>
+                                <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg">
+                                    <X size={20} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            {/* Navigation */}
+                            <nav className="flex-1 py-6">
+                                {navigationItems.map((category, idx) => (
+                                    <div key={idx} className="mb-6">
+                                        <h3 className="px-6 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            {category.category}
+                                        </h3>
+                                        <div className="space-y-1 px-3">
+                                            {category.items.map((item, index) => (
+                                                <NavItem
+                                                    key={index}
+                                                    item={item}
+                                                    active={currentPath === item.path}
+                                                    collapsed={false}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </nav>
+
+                            {/* Settings */}
+                            <div className="p-3 border-t border-slate-800/50">
+                                <NavItem
+                                    item={{ icon: Settings, label: 'Settings', path: '/dashboard/settings' }}
+                                    active={currentPath === '/dashboard/settings'}
+                                    collapsed={false}
+                                />
+                            </div>
+                        </div>
+                    </motion.aside>
+                )}
+            </AnimatePresence>
+        </>
+    );
+};
+
+// Navigation Item Component
+const NavItem = ({ item, active, collapsed }) => {
+    const navigate = useNavigate();
+
+    return (
+        <button
+            onClick={() => navigate(item.path)}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+                active
+                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30'
+                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+            }`}
+            title={collapsed ? item.label : ''}
+        >
+            <item.icon size={20} className={`flex-shrink-0 ${active ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+            {!collapsed && (
+                <>
+                    <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
+                    {item.badge && (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            active
+                                ? 'bg-cyan-500/20 text-cyan-400'
+                                : 'bg-slate-700 text-slate-300'
+                        }`}>
+                            {item.badge}
+                        </span>
+                    )}
+                </>
+            )}
+            {collapsed && item.badge && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                    {item.badge}
+                </div>
+            )}
+        </button>
+    );
+};
+
+// User Dropdown Component
+const UserDropdown = ({ user, onLogout, onClose }) => {
+    const navigate = useNavigate();
+
+    const menuItems = [
+        { icon: User, label: 'Profile', action: () => navigate('/dashboard/profile') },
+        { icon: Settings, label: 'Settings', action: () => navigate('/dashboard/settings') },
+        { icon: Bookmark, label: 'Saved Items', action: () => navigate('/dashboard/saved') },
+        { icon: Award, label: 'Achievements', action: () => navigate('/dashboard/achievements') }
+    ];
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="absolute right-0 top-full mt-2 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50"
+        >
+            {/* User Info */}
+            <div className="p-4 border-b border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center">
+                        {user?.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full" />
+                        ) : (
+                            <span className="text-white text-lg font-semibold">
+                                {user?.name?.charAt(0) || 'U'}
+                            </span>
+                        )}
+                    </div>
+                    <div>
+                        <p className="text-white font-semibold">{user?.name || 'User'}</p>
+                        <p className="text-slate-400 text-sm">{user?.email}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs rounded-full font-medium">
+                        {user?.role || 'Member'}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        Online
+                    </span>
+                </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="py-2">
+                {menuItems.map((item, index) => (
+                    <button
+                        key={index}
+                        onClick={() => {
+                            item.action();
+                            onClose();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+                    >
+                        <item.icon size={18} />
+                        <span className="text-sm">{item.label}</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* Logout */}
+            <div className="p-2 border-t border-slate-700">
+                <button
+                    onClick={() => {
+                        onLogout();
+                        onClose();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                >
+                    <LogOut size={18} />
+                    <span className="text-sm font-medium">Logout</span>
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+// Notifications Dropdown Component
+const NotificationsDropdown = ({ onClose }) => {
+    const notifications = [
+        {
+            id: 1,
+            type: 'success',
+            title: 'Project Published',
+            message: 'Your project "Portfolio Website" has been published successfully.',
+            time: '5 minutes ago',
+            read: false
+        },
+        {
+            id: 2,
+            type: 'info',
+            title: 'New Collaborator',
+            message: 'John Doe joined as a collaborator on "Mobile App".',
+            time: '1 hour ago',
+            read: false
+        },
+        {
+            id: 3,
+            type: 'warning',
+            title: 'Deadline Approaching',
+            message: 'Project "E-commerce Site" deadline is in 2 days.',
+            time: '3 hours ago',
+            read: true
+        }
+    ];
+
+    const getNotificationIcon = (type) => {
+        switch (type) {
+            case 'success':
+                return <div className="w-2 h-2 bg-green-500 rounded-full"></div>;
+            case 'warning':
+                return <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>;
+            case 'error':
+                return <div className="w-2 h-2 bg-red-500 rounded-full"></div>;
+            default:
+                return <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>;
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50"
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                <h3 className="text-white font-semibold">Notifications</h3>
+                <button className="text-xs text-cyan-400 hover:text-cyan-300 font-medium">
+                    Mark all as read
+                </button>
+            </div>
+
+            {/* Notifications List */}
+            <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                {notifications.map((notification) => (
+                    <div
+                        key={notification.id}
+                        className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${
+                            !notification.read ? 'bg-slate-700/20' : ''
+                        }`}
+                    >
+                        <div className="flex items-start gap-3">
+                            <div className="mt-1">{getNotificationIcon(notification.type)}</div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium text-sm mb-1">
+                                    {notification.title}
+                                </p>
+                                <p className="text-slate-400 text-xs mb-2">
+                                    {notification.message}
+                                </p>
+                                <p className="text-slate-500 text-xs">{notification.time}</p>
+                            </div>
+                            {!notification.read && (
+                                <div className="w-2 h-2 bg-cyan-500 rounded-full flex-shrink-0 mt-2"></div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 border-t border-slate-700 bg-slate-800/50">
+                <button className="w-full text-center text-sm text-cyan-400 hover:text-cyan-300 font-medium py-2">
+                    View all notifications
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+export default DashboardLayout;
