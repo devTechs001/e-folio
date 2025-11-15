@@ -142,14 +142,19 @@ const EmailManagerEnhanced = () => {
     const loadEmails = async () => {
         try {
             setLoading(true);
-            const response = await apiService.getEmails({
+            const params = {
                 folder: activeTab,
                 page: currentPage,
                 limit: emailsPerPage,
                 sortBy,
                 sortOrder,
                 ...filters
-            });
+            };
+            // Convert dateRange object to string if it exists
+            if (filters.dateRange && typeof filters.dateRange === 'object') {
+                params.dateRange = JSON.stringify(filters.dateRange);
+            }
+            const response = await apiService.getEmails(params);
             setEmails(response.emails || []);
         } catch (err) {
             console.error('Error loading emails:', err);

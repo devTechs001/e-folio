@@ -425,18 +425,18 @@ class ApiService {
     // Email APIs
     async getEmails(filters = {}) {
         const query = new URLSearchParams(filters);
-        return this.request(`/emails?${query}`);
+        return this.request(`/email?${query}`);
     }
 
     async sendEmail(emailData) {
-        return this.request('/emails/send', {
+        return this.request('/email/send', {
             method: 'POST',
             body: JSON.stringify(emailData)
         });
     }
 
     async deleteEmail(id) {
-        return this.request(`/emails/${id}`, {
+        return this.request(`/email/${id}`, {
             method: 'DELETE'
         });
     }
@@ -557,42 +557,46 @@ class ApiService {
     // Email Manager APIs
     async getEmailsList(params = {}) {
         const query = new URLSearchParams(params);
-        return this.request(`/emails?${query}`);
+        return this.request(`/email?${query}`);
     }
 
     async getEmailById(id) {
-        return this.request(`/emails/${id}`);
+        return this.request(`/email/${id}`);
     }
 
     async sendEmailMessage(emailData) {
-        return this.request('/emails/send', {
+        return this.request('/email/send', {
             method: 'POST',
             body: JSON.stringify(emailData)
         });
     }
 
     async replyToEmail(id, replyData) {
-        return this.request(`/emails/${id}/reply`, {
+        return this.request(`/email/${id}/reply`, {
             method: 'POST',
             body: JSON.stringify(replyData)
         });
     }
 
     async markEmailAsRead(id) {
-        return this.request(`/emails/${id}/read`, {
+        return this.request(`/email/${id}/read`, {
             method: 'POST'
         });
     }
 
     async deleteEmails(ids) {
-        return this.request('/emails/bulk', {
+        return this.request('/email/bulk', {
             method: 'DELETE',
             body: JSON.stringify({ ids })
         });
     }
 
     async getEmailStats() {
-        return this.request('/emails/stats');
+        return this.request('/email/stats');
+    }
+
+    async getQuickResponses() {
+        return this.request('/email/quick-responses/all');
     }
 
     // Reviews Manager APIs (Note: These endpoints may not be fully implemented in backend)
