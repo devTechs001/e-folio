@@ -4,7 +4,16 @@ const PageAnalytics = require('../models/PageAnalytics');
 const asyncHandler = require('express-async-handler');
 // const AIAnalysisService = require('../services/AIAnalysisService'); // Disabled - requires TensorFlow rebuild
 const GeoLocationService = require('../services/GeoLocationService');
-const { v4: uuidv4 } = require('uuid');
+// const { v4: uuidv4 } = require('uuid');
+
+// Simple UUID generator fallback
+const uuidv4 = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+};
 
 // @desc    Initialize tracking session
 // @route   POST /api/tracking/session
@@ -18,8 +27,11 @@ exports.initSession = asyncHandler(async (req, res) => {
     // Get device info from user agent
     const deviceInfo = parseUserAgent(req.headers['user-agent']);
     
+    // Format device info according to model - keeping it as a simple string
+    const device = deviceInfo.device.type || 'Unknown';
+    
     // Get location from IP
-    const location = await GeoLocationService.getLocation(req.ip);
+    const location = await GeoLocationService.getLocationFromIP(req.ip);
     
     // Create session
     const session = await TrackingSession.create({

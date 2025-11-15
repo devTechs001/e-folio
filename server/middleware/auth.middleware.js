@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { ObjectId } = require('mongoose').Types;
 const User = require('../models/User.model');
 
 // Protect routes
@@ -18,26 +19,39 @@ exports.auth = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'efolio_secret_key_2024');
-        req.user = await User.findById(decoded.id).select('-password');
+        
+        // For owner authentication, use decoded token directly
+        if (decoded.role === 'owner' && decoded.id === 'owner_001') {
+            req.user = {
+                id: new ObjectId('507f1f77bcf86cd799439011'), // Fixed ObjectId for owner
+                email: decoded.email,
+                role: decoded.role,
+                name: process.env.OWNER_NAME || 'Portfolio Owner',
+                _id: new ObjectId('507f1f77bcf86cd799439011')
+            };
+        } else {
+            // For other users, look up in database
+            req.user = await User.findById(decoded.id).select('-password');
 
-        if (!req.user) {
-            return res.status(401).json({
-                success: false,
-                message: 'User not found'
-            });
+            if (!req.user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            // Check if user is suspended
+            if (req.user.status === 'suspended') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your account has been suspended'
+                });
+            }
+
+            // Update last active
+            req.user.lastActive = Date.now();
+            await req.user.save();
         }
-
-        // Check if user is suspended
-        if (req.user.status === 'suspended') {
-            return res.status(403).json({
-                success: false,
-                message: 'Your account has been suspended'
-            });
-        }
-
-        // Update last active
-        req.user.lastActive = Date.now();
-        await req.user.save();
 
         next();
     } catch (error) {

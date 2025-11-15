@@ -1,4 +1,4 @@
-// routes/reviews.routes.js - Add upload endpoint
+// routes/reviews.routes.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -32,7 +32,29 @@ const upload = multer({
     }
 });
 
-// Add to routes
+// Main reviews routes
+router.route('/')
+    .get(reviewsController.getReviews)
+    .post(auth, reviewsController.createReview);
+
+router.route('/featured')
+    .get(reviewsController.getFeaturedReviews);
+
+router.route('/analytics')
+    .get(reviewsController.getReviewAnalytics);
+
+router.route('/:id')
+    .get(reviewsController.getReviewById)
+    .put(auth, reviewsController.updateReview)
+    .delete(auth, reviewsController.deleteReview);
+
+router.route('/:id/approve')
+    .post(auth, reviewsController.moderateReview);
+
+router.route('/:id/moderate')
+    .patch(auth, reviewsController.moderateReview);
+
+// Upload attachment endpoint
 router.post('/upload-attachment', upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
@@ -49,7 +71,7 @@ router.post('/upload-attachment', upload.single('file'), (req, res) => {
             fileSize: req.file.size
         });
     } catch (error) {
-        res.status(500).json({
+        res.status(50).json({
             success: false,
             message: 'Upload failed',
             error: error.message

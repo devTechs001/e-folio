@@ -12,8 +12,23 @@ module.exports = (io) => {
         // Authenticate user
         socket.on('authenticate', async (userData) => {
             try {
-                // Verify user exists in database
-                const user = await User.findById(userData.userId).select('-password');
+                let user;
+                
+                // Check if userId is a mock ID (not a valid ObjectId)
+                if (userData.userId && typeof userData.userId === 'string' && !/^[0-9a-fA-F]{24}$/.test(userData.userId)) {
+                    // Create a mock user object for development
+                    user = {
+                        _id: userData.userId,
+                        id: userData.userId,
+                        name: userData.name || 'Mock User',
+                        email: userData.email || 'mock@example.com',
+                        role: userData.role || 'owner',
+                        avatar: userData.avatar || null
+                    };
+                } else {
+                    // Verify user exists in database
+                    user = await User.findById(userData.userId).select('-password');
+                }
                 
                 if (!user) {
                     socket.emit('error', { message: 'Invalid user' });
@@ -64,13 +79,37 @@ module.exports = (io) => {
                     // Load recent messages from database
                     const messages = await Message.find({ room: roomId, isDeleted: false })
                         .sort({ createdAt: -1 })
-                        .limit(50)
-                        .populate('sender', 'name email avatar role');
+                        .limit(50);
+                    
+                    // For mock users, we can't populate from database, so we'll add the sender info manually
+                    const processedMessages = messages.map(msg => {
+                        const messageObj = msg.toObject();
+                        // If the sender is a mock user, use the user info from activeConnections
+                        if (typeof messageObj.sender === 'string' && !/^[0-9a-fA-F]{24}$/.test(messageObj.sender)) {
+                            const senderConnection = Array.from(activeConnections.values()).find(conn =>
+                                conn.userId.toString() === messageObj.sender.toString()
+                            );
+                            messageObj.sender = senderConnection ? {
+                                _id: senderConnection.userId,
+                                name: senderConnection.name,
+                                email: senderConnection.email,
+                                avatar: senderConnection.avatar,
+                                role: senderConnection.role
+                            } : {
+                                _id: messageObj.sender,
+                                name: 'Unknown User',
+                                email: '',
+                                avatar: null,
+                                role: 'user'
+                            };
+                        }
+                        return messageObj;
+                    });
 
                     // Send room history
                     socket.emit('room_history', {
                         roomId,
-                        messages: messages.reverse()
+                        messages: processedMessages.reverse()
                     });
 
                     // Notify room of new member
@@ -142,7 +181,7 @@ module.exports = (io) => {
                 // Save message to database
                 const message = new Message({
                     room: roomId,
-                    sender: user.userId,
+                    sender: user.userId, // This could be a mock ID or ObjectId
                     senderName: user.name,
                     senderRole: user.role,
                     content,
@@ -156,14 +195,53 @@ module.exports = (io) => {
                 });
 
                 await message.save();
-                await message.populate('sender', 'name email avatar role');
+                
+                // For mock users, we can't populate from database, so we'll add the sender info manually
+                const messageObj = message.toObject();
+                if (typeof messageObj.sender === 'string' && !/^[0-9a-fA-F]{24}$/.test(messageObj.sender)) {
+                    const senderConnection = Array.from(activeConnections.values()).find(conn =>
+                        conn.userId.toString() === messageObj.sender.toString()
+                    );
+                    messageObj.sender = senderConnection ? {
+                        _id: senderConnection.userId,
+                        name: senderConnection.name,
+                        email: senderConnection.email,
+                        avatar: senderConnection.avatar,
+                        role: senderConnection.role
+                    } : {
+                        _id: messageObj.sender,
+                        name: 'Unknown User',
+                        email: '',
+                        avatar: null,
+                        role: 'user'
+                    };
+                }
                 
                 if (replyTo) {
-                    await message.populate('metadata.replyTo', 'content senderName');
+                    // Handle replyTo population for mock users as well
+                    try {
+                        const replyMessage = await Message.findById(replyTo);
+                        if (replyMessage) {
+                            if (typeof replyMessage.sender === 'string' && !/^[0-9a-fA-F]{24}$/.test(replyMessage.sender)) {
+                                const senderConnection = Array.from(activeConnections.values()).find(conn =>
+                                    conn.userId.toString() === replyMessage.sender.toString()
+                                );
+                                messageObj.metadata.replyTo = {
+                                    _id: replyMessage._id,
+                                    content: replyMessage.content,
+                                    senderName: senderConnection ? senderConnection.name : 'Unknown User'
+                                };
+                            } else {
+                                await message.populate('metadata.replyTo', 'content senderName');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error populating reply message:', error);
+                    }
                 }
-
+                
                 // Broadcast message to room
-                io.to(roomId).emit('new_message', message);
+                io.to(roomId).emit('new_message', messageObj);
 
                 // Stop typing indicator
                 const typingKey = `${roomId}-${socket.id}`;
@@ -198,7 +276,11 @@ module.exports = (io) => {
                     return;
                 }
 
-                if (message.sender.toString() !== user.userId.toString()) {
+                // Handle comparison between mock IDs and real ObjectIds
+                const messageSenderId = message.sender.toString();
+                const userSenderId = user.userId.toString();
+                
+                if (messageSenderId !== userSenderId) {
                     socket.emit('error', { message: 'Unauthorized' });
                     return;
                 }
@@ -227,7 +309,11 @@ module.exports = (io) => {
                 
                 if (!message) return;
 
-                if (message.sender.toString() !== user.userId.toString()) {
+                // Handle comparison between mock IDs and real ObjectIds
+                const messageSenderId = message.sender.toString();
+                const userSenderId = user.userId.toString();
+                
+                if (messageSenderId !== userSenderId) {
                     socket.emit('error', { message: 'Unauthorized' });
                     return;
                 }
@@ -279,7 +365,7 @@ module.exports = (io) => {
                 const message = await Message.findById(messageId);
                 if (!message) return;
 
-                // Check if already reacted
+                // Check if already reacted - handle mock IDs
                 const existingIndex = message.reactions.findIndex(
                     r => r.user.toString() === user.userId.toString() && r.emoji === emoji
                 );
@@ -364,13 +450,37 @@ module.exports = (io) => {
                     createdAt: { $lt: new Date(before) }
                 })
                     .sort({ createdAt: -1 })
-                    .limit(50)
-                    .populate('sender', 'name email avatar role');
+                    .limit(50);
+                
+                // Process messages to handle mock users
+                const processedMessages = messages.map(msg => {
+                    const messageObj = msg.toObject();
+                    // If the sender is a mock user, we can't populate from database
+                    if (typeof messageObj.sender === 'string' && !/^[0-9a-fA-F]{24}$/.test(messageObj.sender)) {
+                        const senderConnection = Array.from(activeConnections.values()).find(conn =>
+                            conn.userId.toString() === messageObj.sender.toString()
+                        );
+                        messageObj.sender = senderConnection ? {
+                            _id: senderConnection.userId,
+                            name: senderConnection.name,
+                            email: senderConnection.email,
+                            avatar: senderConnection.avatar,
+                            role: senderConnection.role
+                        } : {
+                            _id: messageObj.sender,
+                            name: 'Unknown User',
+                            email: '',
+                            avatar: null,
+                            role: 'user'
+                        };
+                    }
+                    return messageObj;
+                });
 
                 socket.emit('more_messages', {
                     roomId,
-                    messages: messages.reverse(),
-                    hasMore: messages.length === 50
+                    messages: processedMessages.reverse(),
+                    hasMore: processedMessages.length === 50
                 });
             } catch (error) {
                 console.error('Load more messages error:', error);

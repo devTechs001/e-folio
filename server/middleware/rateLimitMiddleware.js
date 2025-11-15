@@ -1,17 +1,5 @@
 // middleware/rateLimitMiddleware.js
 const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
-const redis = require('redis');
-
-// Create Redis client (optional, for distributed rate limiting)
-let redisClient;
-if (process.env.REDIS_URL) {
-    redisClient = redis.createClient({
-        url: process.env.REDIS_URL,
-        legacyMode: true
-    });
-    redisClient.connect().catch(console.error);
-}
 
 /**
  * General API rate limiter
@@ -22,10 +10,6 @@ exports.generalLimiter = rateLimit({
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:general:'
-    }) : undefined
 });
 
 /**
@@ -36,10 +20,6 @@ exports.trackingLimiter = rateLimit({
     max: 60, // 60 requests per minute
     message: 'Rate limit exceeded for tracking requests.',
     skipSuccessfulRequests: false,
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:tracking:'
-    }) : undefined
 });
 
 /**
@@ -49,10 +29,6 @@ exports.analyticsLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 10, // 10 requests per minute
     message: 'Rate limit exceeded for analytics requests.',
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:analytics:'
-    }) : undefined
 });
 
 /**
@@ -62,10 +38,6 @@ exports.exportLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5, // 5 exports per hour
     message: 'Export rate limit exceeded. Please try again later.',
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:export:'
-    }) : undefined
 });
 
 /**
@@ -82,10 +54,6 @@ exports.dynamicLimiter = (options = {}) => {
             return options.max || 100;
         },
         message: options.message || 'Rate limit exceeded',
-        store: redisClient ? new RedisStore({
-            client: redisClient,
-            prefix: options.prefix || 'rl:dynamic:'
-        }) : undefined
     });
 };
 
