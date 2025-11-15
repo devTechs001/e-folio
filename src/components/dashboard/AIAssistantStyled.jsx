@@ -352,9 +352,9 @@ const AIAssistant = () => {
 
         return (
             <div className="space-y-2">
-                <ReactMarkdown
-                    className="prose prose-invert max-w-none"
-                    components={{
+                <div className="prose prose-invert max-w-none">
+                    <ReactMarkdown
+                        components={{
                         code({ node, inline, className, children, ...props }) {
                             const match = /language-(\w+)/.exec(className || '');
                             return !inline && match ? (
@@ -376,6 +376,7 @@ const AIAssistant = () => {
                 >
                     {isLong && !isExpanded ? message.content.substring(0, 500) + '...' : message.content}
                 </ReactMarkdown>
+                </div>
 
                 {isLong && (
                     <button
