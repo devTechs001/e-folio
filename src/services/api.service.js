@@ -152,7 +152,7 @@ class ApiService {
     }
 
     async getCollaborationRequests() {
-        return this.request('/collaboration/requests');
+        return this.request('/collaboration-requests/requests');
     }
 
     async approveRequest(requestId) {

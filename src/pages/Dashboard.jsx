@@ -13,7 +13,7 @@ import DashboardTopNavbar from '../components/dashboard/DashboardTopNavbar';
 import LoadingScreen from '../components/LoadingScreen';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-// Lazy load dashboard components for better performance
+// Lazy load dashboard components
 const DashboardHome = lazy(() => import('../components/dashboard/DashboardHomeStyled'));
 const ProjectManager = lazy(() => import('../components/dashboard/ProjectManagerEnhanced'));
 const SkillsEditor = lazy(() => import('../components/dashboard/SkillsEditorEnhanced'));
@@ -32,6 +32,26 @@ const EmailManager = lazy(() => import('../components/dashboard/EmailManagerEnha
 const CollaborationRequests = lazy(() => import('../components/dashboard/CollaborationRequestsStyled'));
 const LearningCenter = lazy(() => import('../components/dashboard/LearningCenterStyled'));
 const Profile = lazy(() => import('../components/dashboard/Profile'));
+
+// Wrapper components to avoid primitive value error
+const LazyDashboardHome = () => <DashboardHome />;
+const LazyProjectManager = () => <ProjectManager />;
+const LazySkillsEditor = () => <SkillsEditor />;
+const LazyThemeManager = () => <ThemeManager />;
+const LazyAnalytics = () => <Analytics />;
+const LazySettings = () => <Settings />;
+const LazyChatSystem = () => <ChatSystem />;
+const LazyAIAssistant = () => <AIAssistant />;
+const LazyPortfolioEditor = () => <PortfolioEditor />;
+const LazyCollaborators = () => <Collaborators />;
+const LazyMediaManager = () => <MediaManager />;
+const LazyVisitorsAnalytics = () => <VisitorsAnalytics />;
+const LazyAITrackingSystem = () => <AITrackingSystem />;
+const LazyReviewsManager = () => <ReviewsManager />;
+const LazyEmailManager = () => <EmailManager />;
+const LazyCollaborationRequests = () => <CollaborationRequests />;
+const LazyLearningCenter = () => <LearningCenter />;
+const LazyProfile = () => <Profile />;
 
 const Dashboard = () => {
     return (
@@ -136,7 +156,7 @@ const DashboardContent = () => {
             path: '/dashboard/reviews',
             icon: 'fas fa-star',
             label: 'Reviews',
-            component: ReviewsManager,
+            component: LazyReviewsManager,
             roles: ['owner'],
             badge: '3',
             category: 'Content',
@@ -186,7 +206,7 @@ const DashboardContent = () => {
             path: '/dashboard/collaboration-requests',
             icon: 'fas fa-user-plus',
             label: 'Collab Requests',
-            component: CollaborationRequests,
+            component: LazyCollaborationRequests,
             roles: ['owner'],
             badge: '1',
             category: 'Team',
