@@ -607,11 +607,25 @@ class ApiService {
     }
 
     async createReview(reviewData) {
-        // This endpoint may not be implemented in backend yet
-        return this.request('/reviews', {
+        // Use public endpoint for unauthenticated users
+        const endpoint = this.getToken() ? '/reviews' : '/reviews/submit';
+        return this.request(endpoint, {
             method: 'POST',
             body: JSON.stringify(reviewData)
         });
+    }
+
+    async uploadReviewAttachment(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        return fetch(`${this.baseURL}/reviews/upload-attachment`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.getToken()}`
+            },
+            body: formData
+        }).then(res => res.json());
     }
 
     async updateReview(id, reviewData) {

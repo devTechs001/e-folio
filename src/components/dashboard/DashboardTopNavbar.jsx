@@ -169,7 +169,7 @@ const DashboardTopNavbar = ({
     return (
         <>
             {/* Main Top Navbar */}
-            <header className="sticky top-0 z-[45] bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 shadow-lg">
+            <header className="sticky top-0 z-[40] bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 shadow-lg">
                 <div className="h-16 sm:h-[4.5rem] px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-full gap-4">
                         {/* Left Section */}

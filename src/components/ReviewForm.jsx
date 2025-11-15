@@ -7,16 +7,18 @@ import {
     FileText, Camera, Paperclip, User, Mail, MessageSquare
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from './NotificationSystem';
 import apiService from '../services/api.service';
 
 const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
     const { theme } = useTheme();
+    const { user, isAuthenticated } = useAuth();
     const { success: showSuccess, error: showError } = useNotifications();
     
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        name: user?.name || '',
+        email: user?.email || '',
         rating: 0,
         title: '',
         comment: '',
@@ -48,34 +50,40 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
 
     // Validation
     const validateField = (name, value) => {
-        let error = '';
-
-        switch (name) {
+        const errors = {};
+        
+        switch(name) {
             case 'name':
                 if (!value || value.trim().length < 2) {
-                    error = 'Name must be at least 2 characters';
+                    errors.name = 'Name must be at least 2 characters';
                 }
                 break;
             case 'email':
-                if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                    error = 'Please enter a valid email';
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (value && !emailRegex.test(value)) {
+                    errors.email = 'Please enter a valid email address';
                 }
                 break;
             case 'rating':
-                if (!value || value < 1) {
-                    error = 'Please select a rating';
+                if (!value || value < 1 || value > 5) {
+                    errors.rating = 'Please select a rating';
+                }
+                break;
+            case 'title':
+                if (value && value.length > 100) {
+                    errors.title = 'Title must be less than 100 characters';
                 }
                 break;
             case 'comment':
                 if (!value || value.trim().length < 10) {
-                    error = 'Review must be at least 10 characters';
+                    errors.comment = 'Review must be at least 10 characters';
+                } else if (value.length > 1000) {
+                    errors.comment = 'Review must be less than 1000 characters';
                 }
                 break;
-            default:
-                break;
         }
-
-        return error;
+        
+        return errors;
     };
 
     const handleBlur = (name) => {
@@ -112,32 +120,24 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
             }
 
             try {
-                const formData = new FormData();
-                formData.append('file', file);
-
-                const response = await apiService.uploadReviewAttachment(formData, {
-                    onUploadProgress: (progressEvent) => {
-                        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
-                    }
-                });
-
+                setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+                
+                const response = await apiService.uploadReviewAttachment(file);
+                
                 if (response.success) {
                     setAttachments(prev => [...prev, {
-                        name: file.name,
                         url: response.url,
-                        size: file.size
+                        fileName: response.fileName || file.name,
+                        fileSize: response.fileSize || file.size
                     }]);
-                    showSuccess(`${file.name} uploaded`);
+                } else {
+                    showError(`Failed to upload ${file.name}`);
                 }
-            } catch (err) {
-                showError(`Failed to upload ${file.name}`);
+            } catch (error) {
+                console.error('Upload error:', error);
+                showError(`Error uploading ${file.name}`);
             } finally {
-                setUploadProgress(prev => {
-                    const newProgress = { ...prev };
-                    delete newProgress[file.name];
-                    return newProgress;
-                });
+                setUploadProgress(prev => ({ ...prev, [file.name]: null }));
             }
         }
     };
@@ -189,7 +189,7 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
 
         try {
             setSubmitting(true);
-            const response = await apiService.submitReview({
+            const response = await apiService.createReview({
                 ...formData,
                 attachments
             });
@@ -218,52 +218,134 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
             ...prev,
             comment: prev.comment + emoji
         }));
-        setShowEmojiPicker(false);
     };
 
-    const StarRating = ({ value, onChange, size = 32, label = '', category = null }) => (
-        <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => {
-                    const currentHovered = category 
-                        ? (hoveredCategory.category === category ? hoveredCategory.value : 0)
-                        : hoveredRating;
-                    
-                    return (
-                        <Star
+    const validateStep = (step) => {
+    const stepErrors = {};
+    
+    if (step === 1) {
+        const nameError = validateField('name', formData.name);
+        const emailError = validateField('email', formData.email);
+        const ratingError = validateField('rating', formData.rating);
+        
+        if (nameError) stepErrors.name = nameError;
+        if (emailError) stepErrors.email = emailError;
+        if (ratingError) stepErrors.rating = ratingError;
+    } else if (step === 2) {
+        const commentError = validateField('comment', formData.comment);
+        if (commentError) stepErrors.comment = commentError;
+    }
+
+    setErrors(stepErrors);
+    return Object.keys(stepErrors).length === 0;
+};
+
+const handleNext = () => {
+    if (validateStep(currentStep)) {
+        setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    }
+};
+
+const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+};
+
+const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate all steps
+    const allValid = validateStep(1) && validateStep(2);
+    if (!allValid) {
+        showError('Please fill in all required fields correctly');
+        setCurrentStep(1);
+        return;
+    }
+
+    try {
+        setSubmitting(true);
+        const response = await apiService.createReview({
+            ...formData,
+            attachments
+        });
+        
+        if (response.success) {
+            setSubmitted(true);
+            showSuccess('Review submitted successfully!');
+            
+            setTimeout(() => {
+                onSuccess?.();
+                onClose();
+            }, 2000);
+        } else {
+            showError(response.message || 'Failed to submit review');
+        }
+    } catch (error) {
+        console.error('Review submission error:', error);
+        showError(error.message || 'Error submitting review. Please try again.');
+    } finally {
+        setSubmitting(false);
+    }
+};
+
+const insertEmoji = (emoji) => {
+    setFormData(prev => ({
+        ...prev,
+        comment: prev.comment + emoji
+    }));
+    setShowEmojiPicker(false);
+};
+
+const StarRating = ({ value, onChange, size = 32, label = '', category = null }) => {
+        const [hoveredStar, setHoveredStar] = useState(0);
+        const displayValue = hoveredStar || value;
+        
+        return (
+            <div className="flex flex-col items-center space-y-2">
+                {label && (
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {label}
+                    </span>
+                )}
+                <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <motion.button
                             key={star}
-                            size={size}
-                            className={`cursor-pointer transition-all transform hover:scale-110 ${
-                                star <= (currentHovered || value)
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300 dark:text-gray-600'
+                            type="button"
+                            className={`transition-all duration-200 ${
+                                star <= displayValue 
+                                    ? 'text-yellow-400 scale-110' 
+                                    : 'text-gray-300 dark:text-gray-600 hover:text-gray-400'
                             }`}
-                            onMouseEnter={() => {
-                                if (category) {
-                                    setHoveredCategory({ category, value: star });
-                                } else {
-                                    setHoveredRating(star);
-                                }
-                            }}
-                            onMouseLeave={() => {
-                                if (category) {
-                                    setHoveredCategory({ category: '', value: 0 });
-                                } else {
-                                    setHoveredRating(0);
-                                }
-                            }}
-                            onClick={() => onChange(star)}
-                        />
-                    );
-                })}
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                            onMouseEnter={() => setHoveredStar(star)}
+                            onMouseLeave={() => setHoveredStar(0)}
+                            onClick={() => onChange(category ? { ...value, [category]: star } : star)}
+                        >
+                            <Star 
+                                size={size} 
+                                fill={star <= displayValue ? 'currentColor' : 'none'}
+                                className="drop-shadow-sm"
+                            />
+                        </motion.button>
+                    ))}
+                </div>
+                {value > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-gray-500 dark:text-gray-400"
+                    >
+                        {value === 5 && 'Excellent!'}
+                        {value === 4 && 'Great!'}
+                        {value === 3 && 'Good'}
+                        {value === 2 && 'Fair'}
+                        {value === 1 && 'Needs Improvement'}
+                    </motion.div>
+                )}
             </div>
-            {label && (
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {value > 0 ? `${value}/5` : 'Not rated'}
-                </span>
-            )}
-        </div>
-    );
+        );
+    };
 
     const formatFileSize = (bytes) => {
         if (bytes === 0) return '0 Bytes';
@@ -295,8 +377,43 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center max-w-md shadow-2xl"
+                    transition={{ type: 'spring', damping: 20 }}
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center max-w-md shadow-2xl relative overflow-hidden"
                 >
+                    {/* Confetti effect */}
+                    {[...Array(6)].map((_, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ 
+                                x: 0, 
+                                y: 0, 
+                                rotate: 0,
+                                scale: 0
+                            }}
+                            animate={{
+                                x: (Math.random() - 0.5) * 200,
+                                y: -Math.random() * 200 - 50,
+                                rotate: Math.random() * 360,
+                                scale: [0, 1, 0]
+                            }}
+                            transition={{
+                                duration: 1.5,
+                                delay: i * 0.1,
+                                repeat: Infinity,
+                                repeatDelay: 3
+                            }}
+                            className="absolute"
+                            style={{
+                                top: '50%',
+                                left: '50%',
+                                width: '10px',
+                                height: '10px',
+                                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'][i],
+                                borderRadius: '50%'
+                            }}
+                        />
+                    ))}
+                    
                     <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1, rotate: 360 }}
@@ -305,15 +422,30 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
                     >
                         <CheckCircle size={48} className="text-green-500" />
                     </motion.div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                    <motion.h2 
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-3xl font-bold text-gray-900 dark:text-white mb-3"
+                    >
                         Thank You! 🎉
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    </motion.h2>
+                    <motion.p 
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="text-gray-600 dark:text-gray-400 mb-2"
+                    >
                         Your review has been submitted successfully!
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
+                    </motion.p>
+                    <motion.p 
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-sm text-gray-500 dark:text-gray-500"
+                    >
                         It will be published after moderation.
-                    </p>
+                    </motion.p>
                 </motion.div>
             </motion.div>
         );
@@ -562,9 +694,13 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
                                                     Minimum 10 characters
                                                 </p>
                                             )}
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {formData.comment.length} characters
-                                            </p>
+                                            <span className={`text-sm ${
+                                                formData.comment.length > 1000 
+                                                    ? 'text-red-500' 
+                                                    : 'text-gray-500 dark:text-gray-400'
+                                            }`}>
+                                                {formData.comment.length}/1000
+                                            </span>
                                         </div>
                                     </div>
 
@@ -749,11 +885,10 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
                                     {submitting ? (
                                         <>
                                             <motion.div
+                                                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                                                 animate={{ rotate: 360 }}
-                                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                            >
-                                                <Sparkles size={18} />
-                                            </motion.div>
+                                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                            />
                                             Submitting...
                                         </>
                                     ) : (

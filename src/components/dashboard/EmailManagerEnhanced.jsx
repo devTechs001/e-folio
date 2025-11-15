@@ -562,66 +562,81 @@ const EmailManagerEnhanced = () => {
             title="Email Manager" 
             subtitle="Manage portfolio inquiries and communications"
         >
-            {/* Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">Total Emails</p>
-                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.total}</p>
+            <div className="flex flex-col h-[calc(100vh-220px)] gap-4">
+                {/* Stats Bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 sm:p-5 border border-blue-200 dark:border-blue-800 shadow-sm"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">Total Emails</p>
+                                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.total}</p>
+                            </div>
+                            <Mail className="text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" size={32} />
                         </div>
-                        <Mail className="text-blue-600 dark:text-blue-400" size={32} />
-                    </div>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-4 sm:p-5 border border-yellow-200 dark:border-yellow-800 shadow-sm"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">Unread</p>
+                                <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{stats.unread}</p>
+                            </div>
+                            <Mail className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 ml-2" size={32} />
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 sm:p-5 border border-green-200 dark:border-green-800 shadow-sm"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm text-green-700 dark:text-green-300 mb-1">Sent</p>
+                                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.sent}</p>
+                            </div>
+                            <Send className="text-green-600 dark:text-green-400 flex-shrink-0 ml-2" size={32} />
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 sm:p-5 border border-purple-200 dark:border-purple-800 shadow-sm"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm text-purple-700 dark:text-purple-300 mb-1">Drafts</p>
+                                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.drafts}</p>
+                            </div>
+                            <Edit3 className="text-purple-600 dark:text-purple-400 flex-shrink-0 ml-2" size={32} />
+                        </div>
+                    </motion.div>
                 </div>
 
-                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">Unread</p>
-                            <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{stats.unread}</p>
-                        </div>
-                        <AlertCircle className="text-yellow-600 dark:text-yellow-400" size={32} />
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-green-700 dark:text-green-300 mb-1">Sent</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.sent}</p>
-                        </div>
-                        <Send className="text-green-600 dark:text-green-400" size={32} />
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-purple-700 dark:text-purple-300 mb-1">Drafts</p>
-                            <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.drafts}</p>
-                        </div>
-                        <Edit3 className="text-purple-600 dark:text-purple-400" size={32} />
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Email Interface */}
-            <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-[250px_400px_1fr]'} h-[calc(100vh-320px)] gap-0 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden`}>
+                {/* Main Email Interface */}
+            <div className={`flex flex-col lg:flex-row flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden gap-0`}>
                 
                 {/* Sidebar */}
-                {!isFullscreen && (
-                    <div className="bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-2 overflow-y-auto">
+                <div className={`${selectedEmail ? 'hidden lg:flex' : 'flex'} flex-col w-full lg:w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
+                    <div className="p-3 sm:p-4 flex flex-col gap-2 overflow-y-auto">
                         {/* Compose Button */}
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={() => {
                                 setComposing(true);
                                 resetCompose();
                             }}
-                            className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all mb-4"
+                            className="w-full px-3 sm:px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
                         >
-                            <Plus size={20} />
-                            Compose
-                        </button>
+                            <Plus size={18} />
+                            <span className="hidden sm:inline">Compose</span>
+                        </motion.button>
 
                         {/* Tabs */}
                         {tabs.map(tab => {
@@ -697,20 +712,19 @@ const EmailManagerEnhanced = () => {
                 )}
 
                 {/* Email List */}
-                {!isFullscreen && (
-                    <div className="flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                        {/* Search & Actions */}
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
-                            {/* Search */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search emails..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm"
-                                />
+                <div className={`${selectedEmail && !composing ? 'hidden lg:flex' : 'flex'} flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 w-full lg:w-96`}>
+                    {/* Search & Actions */}
+                    <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search emails..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm"
+                            />
                             </div>
 
                             {/* Actions Bar */}
@@ -962,13 +976,13 @@ const EmailManagerEnhanced = () => {
                 )}
 
                 {/* Email Content / Compose */}
-                <div className="flex flex-col bg-white dark:bg-gray-900">
+                <div className={`${selectedEmail || composing ? 'flex' : 'hidden lg:flex'} flex-col bg-white dark:bg-gray-900 flex-1`}>
                     {composing ? (
                         /* Compose View */
                         <div className="flex flex-col h-full">
                             {/* Compose Header */}
-                            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                                     {replying ? 'Reply' : forwarding ? 'Forward' : 'New Message'}
                                 </h3>
                                 <div className="flex items-center gap-2">

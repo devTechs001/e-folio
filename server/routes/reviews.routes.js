@@ -37,6 +37,9 @@ router.route('/')
     .get(reviewsController.getReviews)
     .post(auth, reviewsController.createReview);
 
+// Public review submission (no auth required)
+router.post('/submit', reviewsController.createReview);
+
 router.route('/featured')
     .get(reviewsController.getFeaturedReviews);
 

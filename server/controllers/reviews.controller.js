@@ -107,16 +107,29 @@ exports.createReview = async (req, res) => {
             });
         }
 
-        // Log activity
-        await ActivityLog.create({
-            action: 'review_submitted',
-            details: `New review from ${name} with ${rating} stars`,
-            metadata: {
-                reviewId: review._id,
-                rating,
-                email
-            }
-        });
+        // Log activity (only if user is authenticated)
+        if (req.user) {
+            await ActivityLog.create({
+                userId: req.user.id,
+                action: 'review_submitted',
+                details: `New review from ${name} with ${rating} stars`,
+                metadata: {
+                    reviewId: review._id,
+                    rating,
+                    email
+                }
+            });
+        } else {
+            await ActivityLog.create({
+                action: 'review_submitted',
+                details: `New public review from ${name} with ${rating} stars`,
+                metadata: {
+                    reviewId: review._id,
+                    rating,
+                    email
+                }
+            });
+        }
 
         res.json({
             success: true,

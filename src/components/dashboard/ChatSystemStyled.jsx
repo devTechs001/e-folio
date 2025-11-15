@@ -469,10 +469,47 @@ const ChatSystem = () => {
 
     return (
         <DashboardLayout title="Chat System" subtitle="Collaborate with your team in real-time">
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] h-[calc(100vh-200px)] gap-0 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-                
+            <div className="flex flex-col h-[calc(100vh-220px)] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                {/* Mobile Tab Bar */}
+                <div className="flex border-b border-gray-200 dark:border-gray-700 lg:hidden">
+                    <button
+                        onClick={() => setActiveTab('rooms')}
+                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                            activeTab === 'rooms'
+                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        }`}
+                    >
+                        <Hash size={16} className="inline mr-1" />
+                        Rooms
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('dms')}
+                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                            activeTab === 'dms'
+                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        }`}
+                    >
+                        <Users size={16} className="inline mr-1" />
+                        DMs
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('chat')}
+                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                            activeTab === 'chat'
+                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        }`}
+                    >
+                        <MessageSquare size={16} className="inline mr-1" />
+                        Chat
+                    </button>
+                </div>
+
+                <div className="flex flex-1 overflow-hidden">
                 {/* Left Sidebar - Rooms & Users */}
-                <div className="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+                <div className={`${activeTab === 'rooms' || activeTab === 'dms' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden`}>
                     {/* Search Bar */}
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                         <div className="relative">
@@ -487,8 +524,8 @@ const ChatSystem = () => {
                         </div>
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex border-b border-gray-200 dark:border-gray-700">
+                    {/* Tabs - Desktop Only */}
+                    <div className="hidden lg:flex border-b border-gray-200 dark:border-gray-700">
                         <button
                             onClick={() => setActiveTab('rooms')}
                             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
@@ -607,21 +644,23 @@ const ChatSystem = () => {
                 </div>
 
                 {/* Center - Chat Area */}
-                <div className="flex flex-col bg-gray-50 dark:bg-gray-900">
+                <div className={`${activeTab === 'chat' ? 'flex' : 'hidden'} lg:flex flex-col bg-gray-50 dark:bg-gray-900 flex-1`}>
                     {/* Chat Header */}
-                    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <Hash size={20} className="text-gray-400" />
+                    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex justify-between items-center">
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 truncate">
+                                <Hash size={20} className="text-gray-400 flex-shrink-0" />
                                 {rooms.find(r => r.id === activeRoom)?.name || activeRoom}
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                                 {rooms.find(r => r.id === activeRoom)?.members} members
                                 {typingUsers.length > 0 && (
                                     <span className="ml-2 text-blue-600 dark:text-blue-400">
                                         • {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
                                     </span>
                                 )}
+                            </p>
+                        </div>
                             </p>
                         </div>
                         <div className="flex items-center gap-2">

@@ -105,7 +105,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                 initial={false}
                 animate={{ width: collapsed ? 80 : 280 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="fixed left-0 top-0 bottom-0 z-40 hidden lg:flex flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-r border-slate-800/50 shadow-2xl"
+                className="fixed left-0 top-0 bottom-0 z-[50] hidden lg:flex flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-r border-slate-800/50 shadow-2xl"
             >
                 {/* Header */}
                 <div className={`flex-shrink-0 border-b border-slate-800/50 transition-all duration-300 ${
@@ -252,6 +252,8 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                                             getIcon={getIcon}
                                             showTooltip={showTooltip}
                                             setShowTooltip={setShowTooltip}
+                                            mobileMenuOpen={mobileMenuOpen}
+                                            setMobileMenuOpen={setMobileMenuOpen}
                                         />
                                     ))}
                                 </div>
@@ -267,6 +269,8 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                                     getIcon={getIcon}
                                     showTooltip={showTooltip}
                                     setShowTooltip={setShowTooltip}
+                                    mobileMenuOpen={mobileMenuOpen}
+                                    setMobileMenuOpen={setMobileMenuOpen}
                                 />
                             ))
                         )}
@@ -330,7 +334,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setMobileMenuOpen(false)}
-                            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[50]"
+                            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[55]"
                         />
 
                         {/* Mobile Sidebar */}
@@ -362,7 +366,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
 };
 
 // Navigation Item Component
-const NavItem = ({ item, collapsed, isActive, getIcon, showTooltip, setShowTooltip }) => {
+const NavItem = ({ item, collapsed, isActive, getIcon, showTooltip, setShowTooltip, mobileMenuOpen, setMobileMenuOpen }) => {
     const Icon = getIcon(item.icon);
     const hasNotification = item.badge && parseInt(item.badge) > 0;
 
@@ -372,6 +376,11 @@ const NavItem = ({ item, collapsed, isActive, getIcon, showTooltip, setShowToolt
                 to={item.path}
                 onMouseEnter={() => collapsed && setShowTooltip(item.label)}
                 onMouseLeave={() => setShowTooltip(null)}
+                onClick={() => {
+                    if (mobileMenuOpen) {
+                        setMobileMenuOpen(false);
+                    }
+                }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group relative overflow-hidden ${
                     isActive
                         ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20 border border-cyan-500/30'
