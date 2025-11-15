@@ -8,6 +8,17 @@ const BehaviorPatterns = ({ patterns }) => {
     const chartRef = useRef(null);
     const chartId = `behavior-patterns-${Math.random().toString(36).substr(2, 9)}`;
     
+    useEffect(() => {
+        return () => {
+            if (chartRef.current) {
+                const chart = ChartJS.getChart(chartId);
+                if (chart) {
+                    chart.destroy();
+                }
+            }
+        };
+    }, [chartId]);
+    
     if (!patterns || patterns.length === 0) return null;
 
     const radarData = {
@@ -42,18 +53,6 @@ const BehaviorPatterns = ({ patterns }) => {
             }
         }
     };
-
-    useEffect(() => {
-        return () => {
-            // Cleanup chart instance
-            if (chartRef.current) {
-                const chart = ChartJS.getChart(chartId);
-                if (chart) {
-                    chart.destroy();
-                }
-            }
-        };
-    }, [chartId]);
 
     return (
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">

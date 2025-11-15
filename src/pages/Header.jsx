@@ -55,7 +55,7 @@ const Header = () => {
         <header className={`header ${scrollPosition > 20 ? 'sticky' : ''}`}>
             <div className="header-container">
                 <a href="#about" className="logo" style={{
-                    fontSize: '28px',
+                    fontSize: '24px',
                     fontWeight: '800',
                     fontFamily: "'Orbitron', 'Poppins', sans-serif",
                     letterSpacing: '1px',
@@ -63,7 +63,7 @@ const Header = () => {
                     alignItems: 'center',
                     gap: '10px'
                 }}>
-                    <i className="fas fa-code" style={{ fontSize: '32px' }}></i> 
+                    <i className="fas fa-code" style={{ fontSize: '28px' }}></i> 
                     Danie<span style={{ color: '#0ef' }}>Tech</span>
                 </a>
 
@@ -115,35 +115,6 @@ const Header = () => {
                             filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
                         }}></i>
                     </Link>
-                    <button 
-                        className="nav-link nav-link-special theme-toggle-btn" 
-                        onClick={toggleTheme}
-                        style={{
-                            background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                            color: '#ffffff',
-                            padding: '14px 14px',
-                            borderRadius: '12px',
-                            marginLeft: '8px',
-                            boxShadow: '0 0 20px rgba(245, 158, 11, 0.5), 0 0 40px rgba(239, 68, 68, 0.3)',
-                            fontSize: '22px',
-                            fontWeight: '700',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '48px',
-                            height: '48px',
-                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            border: 'none',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`} style={{ 
-                            fontSize: '20px',
-                            filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-                        }}></i>
-                    </button>
                     <Link to="/collaborate" className="nav-link nav-link-special collaborate-btn-header" onClick={closeMenu} style={{
                         background: 'linear-gradient(135deg, #00efff, #7c3aed, #00efff)',
                         backgroundSize: '200% 200%',

@@ -11,7 +11,6 @@ import Projects from './Projects';
 import Contact from './Contact';
 import Footer from './Footer';
 import ReviewFloatingButton from '../components/ReviewFloatingButton';
-import ThemeSwitcher from '../components/ThemeSwitcher';
 import '../styles/landing-page-fixes.css';
 
 const LandingPage = () => {
@@ -99,9 +98,7 @@ const LandingPage = () => {
             {/* Review Floating Button */}
             <ReviewFloatingButton />
             
-            {/* Theme Switcher */}
-            <ThemeSwitcher />
-        </div>
+                    </div>
     );
 };
 

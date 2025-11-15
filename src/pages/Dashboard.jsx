@@ -370,13 +370,16 @@ const DashboardContent = () => {
                         }
                     >
                         <Routes location={location} key={location.pathname}>
-                            {flatMenuItems.map((item, index) => (
-                                <Route
-                                    key={index}
-                                    path={item.path.replace('/dashboard', '') || '/'}
-                                    element={<item.component />}
-                                />
-                            ))}
+                            {flatMenuItems.map((item, index) => {
+                                const Component = item.component;
+                                return (
+                                    <Route
+                                        key={index}
+                                        path={item.path.replace('/dashboard', '') || '/'}
+                                        element={<Component />}
+                                    />
+                                );
+                            })}
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
                     </Suspense>
