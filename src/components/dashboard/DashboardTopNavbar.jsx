@@ -169,17 +169,17 @@ const DashboardTopNavbar = ({
     return (
         <>
             {/* Main Top Navbar */}
-            <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 shadow-lg">
-                <div className="h-16 sm:h-18 px-4 sm:px-6 lg:px-8">
+            <header className="sticky top-0 z-[45] bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 shadow-lg">
+                <div className="h-16 sm:h-[4.5rem] px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-full gap-4">
                         {/* Left Section */}
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                             {/* Mobile Menu Toggle */}
                             <button
                                 onClick={onToggleMobileMenu}
-                                className="lg:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
+                                className="flex lg:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
                             >
-                                <Menu size={20} className="text-slate-300" />
+                                <Menu size={24} className="text-slate-300 flex-shrink-0" />
                             </button>
 
                             {/* Desktop Sidebar Toggle */}

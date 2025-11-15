@@ -105,7 +105,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                 initial={false}
                 animate={{ width: collapsed ? 80 : 280 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="fixed left-0 top-0 bottom-0 z-50 hidden lg:flex flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-r border-slate-800/50 shadow-2xl"
+                className="fixed left-0 top-0 bottom-0 z-40 hidden lg:flex flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-r border-slate-800/50 shadow-2xl"
             >
                 {/* Header */}
                 <div className={`flex-shrink-0 border-b border-slate-800/50 transition-all duration-300 ${
@@ -330,7 +330,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setMobileMenuOpen(false)}
-                            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[50]"
                         />
 
                         {/* Mobile Sidebar */}
@@ -339,7 +339,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                             animate={{ x: 0 }}
                             exit={{ x: -280 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-slate-900 border-r border-slate-800 shadow-2xl z-50 flex flex-col"
+                            className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-slate-900 border-r border-slate-800 shadow-2xl z-[60] flex flex-col"
                         >
                             {/* Same content as desktop but without collapse state */}
                             <MobileSidebarContent
