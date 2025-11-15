@@ -1,9 +1,13 @@
 // src/components/Dashboard/AITracking/BehaviorPatterns.jsx
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Layers, Route, Clock, MousePointer, Target } from 'lucide-react';
 import { Radar } from 'react-chartjs-2';
+import { Chart as ChartJS } from 'chart.js/auto';
 
 const BehaviorPatterns = ({ patterns }) => {
+    const chartRef = useRef(null);
+    const chartId = `behavior-patterns-${Math.random().toString(36).substr(2, 9)}`;
+    
     if (!patterns || patterns.length === 0) return null;
 
     const radarData = {
@@ -39,6 +43,18 @@ const BehaviorPatterns = ({ patterns }) => {
         }
     };
 
+    useEffect(() => {
+        return () => {
+            // Cleanup chart instance
+            if (chartRef.current) {
+                const chart = ChartJS.getChart(chartId);
+                if (chart) {
+                    chart.destroy();
+                }
+            }
+        };
+    }, [chartId]);
+
     return (
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
@@ -48,7 +64,7 @@ const BehaviorPatterns = ({ patterns }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="h-64">
-                    <Radar data={radarData} options={options} />
+                    <Radar ref={chartRef} id={chartId} data={radarData} options={options} />
                 </div>
 
                 <div className="space-y-3">

@@ -12,7 +12,10 @@ const {
     archiveRequest,
     exportRequests,
     getRequestDetails,
-    addRequestNote
+    addRequestNote,
+    getCollaborators,
+    getPendingInvites,
+    getCollaboratorActivity
 } = require('../controllers/collaboration.controller');
 
 // All routes require authentication and owner role
@@ -45,5 +48,14 @@ router.post('/requests/:id/notes', addRequestNote);
 
 // Export requests
 router.get('/export', exportRequests);
+
+// Get collaborators
+router.get('/collaborators', getCollaborators);
+
+// Get pending invites
+router.get('/invites/pending', getPendingInvites);
+
+// Get collaborator activity
+router.get('/activity', getCollaboratorActivity);
 
 module.exports = router;

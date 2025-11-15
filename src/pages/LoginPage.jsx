@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Mail, Lock, Key, ArrowLeft, LogIn, Shield } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { 
+    User, Mail, Lock, Key, ArrowLeft, LogIn, Shield, Eye, EyeOff,
+    Sparkles, AlertCircle, CheckCircle, Loader2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const LoginPage = ({ collaborator = false }) => {
+    const { isDarkMode } = useTheme();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -12,6 +18,8 @@ const LoginPage = ({ collaborator = false }) => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [focusedField, setFocusedField] = useState('');
     
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -60,203 +68,186 @@ const LoginPage = ({ collaborator = false }) => {
     };
 
     return (
-        <div className="login-page" style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #081b29, #0ef)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-        }}>
-            <div className="login-container" style={{
-                background: 'rgba(8, 27, 41, 0.95)',
-                padding: '40px',
-                borderRadius: '15px',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
-                border: '2px solid #0ef',
-                maxWidth: '400px',
-                width: '100%'
-            }}>
-                <div className="login-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-                        {collaborator ? (
-                            <Shield size={48} color="#0ef" strokeWidth={2} />
-                        ) : (
-                            <LogIn size={48} color="#0ef" strokeWidth={2} />
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-md"
+            >
+                {/* Back Button */}
+                <Link 
+                    to="/"
+                    className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
+                >
+                    <ArrowLeft size={20} />
+                    Back to Home
+                </Link>
+
+                {/* Login Card */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20"
+                >
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            className="inline-block mb-4"
+                        >
+                            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                <Shield size={40} className="text-white" />
+                            </div>
+                        </motion.div>
+                        <h1 className="text-3xl font-bold text-white mb-2">
+                            Welcome Back
+                        </h1>
+                        <p className="text-gray-300">
+                            {collaborator ? 'Enter your collaboration credentials' : 'Sign in to your account'}
+                        </p>
+                    </div>
+
+                    {/* Error Message */}
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center gap-3"
+                            >
+                                <AlertCircle size={20} className="text-red-400" />
+                                <span className="text-red-300 text-sm">{error}</span>
+                            </motion.div>
                         )}
-                    </div>
-                    <h2 style={{ color: '#0ef', marginBottom: '10px' }}>
-                        {collaborator ? 'Collaborate Access' : 'Portfolio Access'}
-                    </h2>
-                    <p style={{ color: '#ededed', fontSize: '14px' }}>
-                        {collaborator 
-                            ? 'Enter your collaboration details to access advanced features'
-                            : 'Sign in to access dashboard features'
-                        }
-                    </p>
-                </div>
+                    </AnimatePresence>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <User size={18} color="#0ef" />
-                            Name
-                        </label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            required
-                            style={{
-                                width: '100%',
-                                padding: '12px 12px 12px 40px',
-                                background: 'transparent',
-                                border: '2px solid #0ef',
-                                borderRadius: '8px',
-                                color: '#ededed',
-                                fontSize: '16px',
-                                position: 'relative'
-                            }}
-                            placeholder="Enter your name"
-                        />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <Mail size={18} color="#0ef" />
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                            style={{
-                                width: '100%',
-                                padding: '12px 12px 12px 40px',
-                                background: 'transparent',
-                                border: '2px solid #0ef',
-                                borderRadius: '8px',
-                                color: '#ededed',
-                                fontSize: '16px'
-                            }}
-                            placeholder="Enter your email"
-                        />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <Lock size={18} color="#0ef" />
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            style={{
-                                width: '100%',
-                                padding: '12px 12px 12px 40px',
-                                background: 'transparent',
-                                border: '2px solid #0ef',
-                                borderRadius: '8px',
-                                color: '#ededed',
-                                fontSize: '16px'
-                            }}
-                            placeholder="Enter your password"
-                        />
-                    </div>
-
-                    {collaborator && (
-                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label style={{ color: '#ededed', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                <Key size={18} color="#0ef" />
-                                Collaboration Access Code
-                            </label>
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Name Field */}
+                        <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                <User size={20} />
+                            </div>
                             <input
                                 type="text"
-                                name="accessCode"
-                                value={formData.accessCode}
+                                name="name"
+                                value={formData.name}
                                 onChange={handleChange}
+                                onFocus={() => setFocusedField('name')}
+                                onBlur={() => setFocusedField('')}
                                 required
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 12px 12px 40px',
-                                    background: 'transparent',
-                                    border: '2px solid #0ef',
-                                    borderRadius: '8px',
-                                    color: '#ededed',
-                                    fontSize: '16px'
-                                }}
-                                placeholder="Enter collaboration code"
+                                placeholder="Enter your full name"
+                                className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                                    focusedField === 'name' ? 'bg-white/10' : ''
+                                } ${error && formData.name === '' ? 'border-red-500/50' : 'border-white/20'}`}
                             />
                         </div>
-                    )}
 
-                    {error && (
-                        <div style={{
-                            color: '#ff4444',
-                            background: 'rgba(255, 68, 68, 0.1)',
-                            padding: '10px',
-                            borderRadius: '5px',
-                            marginBottom: '20px',
-                            textAlign: 'center'
-                        }}>
-                            {error}
+                        {/* Email Field */}
+                        <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                <Mail size={20} />
+                            </div>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                onFocus={() => setFocusedField('email')}
+                                onBlur={() => setFocusedField('')}
+                                required
+                                placeholder="Enter your email"
+                                className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                                    focusedField === 'email' ? 'bg-white/10' : ''
+                                } ${error && formData.email === '' ? 'border-red-500/50' : 'border-white/20'}`}
+                            />
                         </div>
-                    )}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            background: loading ? '#666' : 'linear-gradient(45deg, #0ef, #00d4ff)',
-                            color: '#081b29',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px'
-                        }}
-                    >
-                        {loading ? (
-                            'Signing In...'
-                        ) : (
-                            <>
-                                <LogIn size={20} />
-                                {collaborator ? 'Access Collaboration' : 'Sign In'}
-                            </>
+                        {/* Password Field */}
+                        <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                <Lock size={20} />
+                            </div>
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                onFocus={() => setFocusedField('password')}
+                                onBlur={() => setFocusedField('')}
+                                required
+                                placeholder="Enter your password"
+                                className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                                    focusedField === 'password' ? 'bg-white/10' : ''
+                                } ${error && formData.password === '' ? 'border-red-500/50' : 'border-white/20'}`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
+
+                        {/* Access Code (Collaborator Only) */}
+                        {collaborator && (
+                            <div className="relative">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                    <Key size={20} />
+                                </div>
+                                <input
+                                    type="text"
+                                    name="accessCode"
+                                    value={formData.accessCode}
+                                    onChange={handleChange}
+                                    onFocus={() => setFocusedField('accessCode')}
+                                    onBlur={() => setFocusedField('')}
+                                    placeholder="Enter collaboration access code"
+                                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                                        focusedField === 'accessCode' ? 'bg-white/10' : ''
+                                    } ${error && formData.accessCode === '' ? 'border-red-500/50' : 'border-white/20'}`}
+                                />
+                            </div>
                         )}
-                    </button>
-                </form>
 
-                <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <Link 
-                        to="/" 
-                        style={{
-                            color: '#0ef',
-                            textDecoration: 'none',
-                            fontSize: '14px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                        }}
-                    >
-                        <ArrowLeft size={16} />
-                        Back to Portfolio
-                    </Link>
-                </div>
-            </div>
+                        {/* Submit Button */}
+                        <motion.button
+                            type="submit"
+                            disabled={loading}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" />
+                                    Signing in...
+                                </>
+                            ) : (
+                                <>
+                                    <LogIn size={20} />
+                                    Sign In
+                                </>
+                            )}
+                        </motion.button>
+                    </form>
+
+                    {/* Footer */}
+                    <div className="mt-8 text-center">
+                        <p className="text-gray-400 text-sm">
+                            Don't have an account?{' '}
+                            <Link to="/register" className="text-purple-400 hover:text-purple-300 transition-colors">
+                                Sign up
+                            </Link>
+                        </p>
+                    </div>
+                </motion.div>
+            </motion.div>
         </div>
     );
 };

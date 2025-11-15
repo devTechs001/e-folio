@@ -14,7 +14,7 @@ import {
     Bookmark, Calendar, Clock, Globe, Award, Code
 } from 'lucide-react';
 
-const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [] }) => {
+const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMenuOpen, setMobileMenuOpen }) => {
     const { user, userRole, logout } = useAuth();
     const { theme, isDark } = useTheme();
     const location = useLocation();
@@ -322,14 +322,14 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [] }) => {
 
             {/* Mobile Sidebar - Slide from left */}
             <AnimatePresence>
-                {!collapsed && (
+                {mobileMenuOpen && (
                     <>
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setCollapsed(true)}
+                            onClick={() => setMobileMenuOpen(false)}
                             className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
                         />
 
@@ -351,7 +351,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [] }) => {
                                 location={location}
                                 getIcon={getIcon}
                                 logout={logout}
-                                onClose={() => setCollapsed(true)}
+                                onClose={() => setMobileMenuOpen(false)}
                             />
                         </motion.aside>
                     </>

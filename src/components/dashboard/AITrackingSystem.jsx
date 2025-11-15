@@ -16,6 +16,14 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
+import DeviceBreakdown from './AITracking/DeviceBreakdown';
+import GeographicDistribution from './AITracking/GeographicDistribution';
+import TopPages from './AITracking/TopPages';
+import TrafficSources from './AITracking/TrafficSources';
+import ConversionFunnel from './AITracking/ConversionFunnel';
+import BehaviorPatterns from './AITracking/BehaviourPatterns';
+import PredictiveAnalytics from './AITracking/PredictiveAnalysis';
+import VisitorDetailsModal from './AITracking/VisitorDetailModal';
 import {
     Chart as ChartJS,
     CategoryScale, LinearScale, PointElement, LineElement,
@@ -149,7 +157,7 @@ const AITrackingSystem = () => {
     const setupWebSocket = () => {
         if (!realTimeEnabled) return;
 
-        const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:5000';
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
         wsRef.current = new WebSocket(`${wsUrl}/tracking`);
 
         wsRef.current.onopen = () => {

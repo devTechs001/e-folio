@@ -112,6 +112,37 @@ class ApiService {
         });
     }
 
+    // Webhooks APIs
+    async getWebhooks() {
+        return this.request('/webhooks');
+    }
+
+    async createWebhook(webhookData) {
+        return this.request('/webhooks', {
+            method: 'POST',
+            body: JSON.stringify(webhookData)
+        });
+    }
+
+    async updateWebhook(id, webhookData) {
+        return this.request(`/webhooks/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(webhookData)
+        });
+    }
+
+    async deleteWebhook(id) {
+        return this.request(`/webhooks/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async testWebhook(id) {
+        return this.request(`/webhooks/${id}/test`, {
+            method: 'POST'
+        });
+    }
+
     // Collaboration APIs
     async submitCollaborationRequest(requestData) {
         return this.request('/collaboration/request', {
@@ -138,6 +169,14 @@ class ApiService {
 
     async getCollaborators() {
         return this.request('/collaboration/collaborators');
+    }
+
+    async getPendingInvites() {
+        return this.request('/collaboration/invites/pending');
+    }
+
+    async getCollaboratorActivity() {
+        return this.request('/collaboration/activity');
     }
 
     // Analytics APIs
@@ -191,7 +230,7 @@ class ApiService {
     // Chat APIs
     async getMessages(room, limit = 50, before = null) {
         const query = new URLSearchParams({ limit, ...(before && { before }) });
-        return this.request(`/chat/messages/${room}?${query}`);
+        return this.request(`/chat/rooms/${room}/messages?${query}`);
     }
 
     async sendMessage(messageData) {
@@ -464,17 +503,17 @@ class ApiService {
     // Collaboration Requests APIs
     async getCollaborationRequestsList(params = {}) {
         const query = new URLSearchParams(params);
-        return this.request(`/collaboration-requests?${query}`);
+        return this.request(`/collaboration/requests?${query}`);
     }
 
     async approveCollaborationRequest(id) {
-        return this.request(`/collaboration-requests/${id}/approve`, {
+        return this.request(`/collaboration/requests/${id}/approve`, {
             method: 'POST'
         });
     }
 
     async rejectCollaborationRequest(id) {
-        return this.request(`/collaboration-requests/${id}/reject`, {
+        return this.request(`/collaboration/requests/${id}/reject`, {
             method: 'POST'
         });
     }
@@ -518,51 +557,53 @@ class ApiService {
     // Email Manager APIs
     async getEmailsList(params = {}) {
         const query = new URLSearchParams(params);
-        return this.request(`/email?${query}`);
+        return this.request(`/emails?${query}`);
     }
 
     async getEmailById(id) {
-        return this.request(`/email/${id}`);
+        return this.request(`/emails/${id}`);
     }
 
     async sendEmailMessage(emailData) {
-        return this.request('/email/send', {
+        return this.request('/emails/send', {
             method: 'POST',
             body: JSON.stringify(emailData)
         });
     }
 
     async replyToEmail(id, replyData) {
-        return this.request(`/email/${id}/reply`, {
+        return this.request(`/emails/${id}/reply`, {
             method: 'POST',
             body: JSON.stringify(replyData)
         });
     }
 
     async markEmailAsRead(id) {
-        return this.request(`/email/${id}/read`, {
+        return this.request(`/emails/${id}/read`, {
             method: 'POST'
         });
     }
 
     async deleteEmails(ids) {
-        return this.request('/email/bulk', {
+        return this.request('/emails/bulk', {
             method: 'DELETE',
             body: JSON.stringify({ ids })
         });
     }
 
     async getEmailStats() {
-        return this.request('/email/stats');
+        return this.request('/emails/stats');
     }
 
-    // Reviews Manager APIs
+    // Reviews Manager APIs (Note: These endpoints may not be fully implemented in backend)
     async getReviewsList(params = {}) {
         const query = new URLSearchParams(params);
+        // Using the same endpoint as getReviews since backend reviews route may handle filtering
         return this.request(`/reviews?${query}`);
     }
 
     async createReview(reviewData) {
+        // This endpoint may not be implemented in backend yet
         return this.request('/reviews', {
             method: 'POST',
             body: JSON.stringify(reviewData)
@@ -570,6 +611,7 @@ class ApiService {
     }
 
     async updateReview(id, reviewData) {
+        // This endpoint may not be implemented in backend yet
         return this.request(`/reviews/${id}`, {
             method: 'PUT',
             body: JSON.stringify(reviewData)
@@ -577,6 +619,7 @@ class ApiService {
     }
 
     async moderateReview(id, status) {
+        // This endpoint may not be implemented in backend yet
         return this.request(`/reviews/${id}/moderate`, {
             method: 'PATCH',
             body: JSON.stringify({ status })
@@ -697,6 +740,55 @@ class ApiService {
             method: 'POST',
             body: JSON.stringify(data)
         });
+    }
+
+    // Portfolio Editor APIs
+    async getPortfolioConfig() {
+        try {
+            return await this.request('/portfolio/config');
+        } catch (error) {
+            console.warn('Portfolio config unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getPortfolioVersions() {
+        try {
+            return await this.request('/portfolio/versions');
+        } catch (error) {
+            console.warn('Portfolio versions unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Export Analytics API
+    async exportAnalytics(params) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/tracking/analytics/export?${query}`);
+        } catch (error) {
+            console.warn('Analytics export unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    // Reviews APIs
+    async getReviewAnalytics() {
+        try {
+            return await this.request('/reviews/analytics');
+        } catch (error) {
+            console.warn('Review analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getFeaturedReviews() {
+        try {
+            return await this.request('/reviews/featured');
+        } catch (error) {
+            console.warn('Featured reviews unavailable');
+            return { success: true, data: [] };
+        }
     }
 }
 

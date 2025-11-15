@@ -1,18 +1,29 @@
 // src/components/Dashboard/AIAssistant/VoiceAssistant.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Loader } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Settings, Save, Play, Pause } from 'lucide-react';
 
-const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
+const VoiceAssistant = ({ onTranscript, autoSpeak = true, onSaveTranscript, onPlayAudio }) => {
     const [isListening, setIsListening] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [volume, setVolume] = useState(0);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordedAudio, setRecordedAudio] = useState(null);
+    const [voiceSettings, setVoiceSettings] = useState({
+        rate: 1,
+        pitch: 1,
+        volume: 1,
+        voice: 'default'
+    });
+    const [availableVoices, setAvailableVoices] = useState([]);
     
     const recognitionRef = useRef(null);
     const synthRef = useRef(null);
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
     const animationRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
 
     useEffect(() => {
         // Initialize Speech Recognition
@@ -42,6 +53,18 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
         // Initialize Speech Synthesis
         if ('speechSynthesis' in window) {
             synthRef.current = window.speechSynthesis;
+            
+            // Load available voices
+            const loadVoices = () => {
+                const voices = synthRef.current.getVoices();
+                setAvailableVoices(voices);
+            };
+            
+            if (synthRef.current.getVoices().length > 0) {
+                loadVoices();
+            } else {
+                synthRef.current.onvoiceschanged = loadVoices;
+            }
         }
 
         // Initialize Audio Context for visualization
@@ -88,6 +111,52 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
         }
     };
 
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (event) => {
+                audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorderRef.current.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setRecordedAudio(audioBlob);
+                setIsRecording(false);
+            };
+
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error('Audio recording error:', err);
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+        }
+    };
+
+    const toggleRecording = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
+
+    const playRecordedAudio = () => {
+        if (recordedAudio) {
+            const audioUrl = URL.createObjectURL(recordedAudio);
+            const audio = new Audio(audioUrl);
+            audio.play();
+            onPlayAudio && onPlayAudio(audioUrl);
+        }
+    };
+
     const speak = (text, options = {}) => {
         if (!synthRef.current) return;
 
@@ -95,14 +164,18 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
         setIsSpeaking(true);
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = options.rate || 1;
-        utterance.pitch = options.pitch || 1;
-        utterance.volume = options.volume || 1;
+        utterance.rate = options.rate || voiceSettings.rate;
+        utterance.pitch = options.pitch || voiceSettings.pitch;
+        utterance.volume = options.volume || voiceSettings.volume;
         
-        // Get available voices
-        const voices = synthRef.current.getVoices();
-        const preferredVoice = voices.find(v => v.lang === 'en-US') || voices[0];
-        utterance.voice = preferredVoice;
+        // Select voice
+        let selectedVoice = null;
+        if (voiceSettings.voice !== 'default') {
+            selectedVoice = availableVoices.find(v => v.name === voiceSettings.voice) || availableVoices[0];
+        } else {
+            selectedVoice = availableVoices.find(v => v.lang.includes('en-US')) || availableVoices[0];
+        }
+        utterance.voice = selectedVoice;
 
         utterance.onend = () => {
             setIsSpeaking(false);
@@ -138,6 +211,12 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
         updateVolume();
     };
 
+    const saveTranscript = () => {
+        if (transcript && onSaveTranscript) {
+            onSaveTranscript(transcript);
+        }
+    };
+
     return (
         <div className="flex items-center gap-3">
             {/* Listening Button */}
@@ -148,6 +227,7 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
                         ? 'bg-red-500 animate-pulse'
                         : 'bg-white/10 hover:bg-white/20'
                 }`}
+                title={isListening ? "Stop listening" : "Start voice input"}
             >
                 {isListening ? <MicOff size={20} /> : <Mic size={20} />}
                 
@@ -162,6 +242,19 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
                 )}
             </button>
 
+            {/* Recording Button */}
+            <button
+                onClick={toggleRecording}
+                className={`p-3 rounded-xl transition-all flex items-center justify-center ${
+                    isRecording
+                        ? 'bg-orange-500 animate-pulse'
+                        : 'bg-white/10 hover:bg-white/20'
+                }`}
+                title={isRecording ? "Stop recording" : "Record audio"}
+            >
+                {isRecording ? <Pause size={20} /> : <Play size={20} />}
+            </button>
+
             {/* Speaking Indicator */}
             {isSpeaking && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/20 rounded-lg">
@@ -170,6 +263,7 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
                     <button
                         onClick={stopSpeaking}
                         className="p-1 hover:bg-white/10 rounded transition-all"
+                        title="Stop speaking"
                     >
                         <VolumeX size={14} />
                     </button>
@@ -178,10 +272,42 @@ const VoiceAssistant = ({ onTranscript, autoSpeak = true }) => {
 
             {/* Transcript Display */}
             {transcript && !isSpeaking && (
-                <div className="px-3 py-2 bg-white/5 rounded-lg text-sm max-w-xs truncate">
-                    {transcript}
+                <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg">
+                    <div className="text-sm max-w-xs truncate">
+                        {transcript}
+                    </div>
+                    <button
+                        onClick={saveTranscript}
+                        className="p-1 hover:bg-white/10 rounded transition-all"
+                        title="Save transcript"
+                    >
+                        <Save size={14} />
+                    </button>
                 </div>
             )}
+
+            {/* Play Recorded Audio */}
+            {recordedAudio && (
+                <button
+                    onClick={playRecordedAudio}
+                    className="p-3 bg-purple-500/20 hover:bg-purple-500/30 rounded-xl transition-all"
+                    title="Play recorded audio"
+                >
+                    <Play size={20} className="text-purple-500" />
+                </button>
+            )}
+
+            {/* Voice Settings */}
+            <button
+                onClick={() => {
+                    // Open voice settings modal (would be implemented in a real app)
+                    console.log('Open voice settings');
+                }}
+                className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+                title="Voice settings"
+            >
+                <Settings size={20} />
+            </button>
         </div>
     );
 };

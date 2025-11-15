@@ -594,7 +594,10 @@ exports.resendInvite = async (req, res) => {
 // Get request activity
 exports.getRequestActivity = async (req, res) => {
     try {
-        const request = await CollaborationRequest.findById(req.params.id);
+        const { requestId } = req.params;
+        const request = await CollaborationRequest.findById(requestId)
+            .populate('userId', 'name email')
+            .populate('notes.userId', 'name email');
 
         if (!request) {
             return res.status(404).json({
@@ -615,3 +618,77 @@ exports.getRequestActivity = async (req, res) => {
         });
     }
 };
+
+// Get collaborators
+const getCollaborators = async (req, res) => {
+    try {
+        const collaborators = await CollaborationRequest.find({ 
+            status: 'approved',
+            archived: false 
+        })
+        .populate('userId', 'name email avatar')
+        .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            collaborators: collaborators || []
+        });
+    } catch (error) {
+        console.error('Get collaborators error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get collaborators'
+        });
+    }
+};
+
+// Get pending invites
+const getPendingInvites = async (req, res) => {
+    try {
+        const invites = await CollaborationRequest.find({ 
+            status: 'pending',
+            archived: false 
+        })
+        .populate('userId', 'name email avatar')
+        .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            invites: invites || []
+        });
+    } catch (error) {
+        console.error('Get pending invites error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get pending invites'
+        });
+    }
+};
+
+// Get collaborator activity
+const getCollaboratorActivity = async (req, res) => {
+    try {
+        const activities = await CollaborationRequest.find({ 
+            status: 'approved',
+            archived: false 
+        })
+        .populate('userId', 'name email avatar')
+        .select('activity userId createdAt')
+        .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            activities: activities || []
+        });
+    } catch (error) {
+        console.error('Get collaborator activity error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get collaborator activity'
+        });
+    }
+};
+
+exports.getCollaborators = getCollaborators;
+exports.getPendingInvites = getPendingInvites;
+exports.getCollaboratorActivity = getCollaboratorActivity;

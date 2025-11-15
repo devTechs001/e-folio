@@ -18,6 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const DashboardTopNavbar = ({ 
     onToggleSidebar, 
+    onToggleMobileMenu,
     sidebarCollapsed,
     breadcrumbs = [],
     showBreadcrumbs = true,
@@ -175,7 +176,7 @@ const DashboardTopNavbar = ({
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                             {/* Mobile Menu Toggle */}
                             <button
-                                onClick={onToggleSidebar}
+                                onClick={onToggleMobileMenu}
                                 className="lg:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
                             >
                                 <Menu size={20} className="text-slate-300" />

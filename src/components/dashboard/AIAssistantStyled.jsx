@@ -17,7 +17,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import ReactMarkdown from 'react-markdown';
 
-const AIAssistantEnhanced = () => {
+const AIAssistant = () => {
     const { theme } = useTheme();
     const { user } = useAuth();
     const { success, error, info } = useNotifications();
@@ -931,4 +931,4 @@ const SettingsPanel = ({
     );
 };
 
-export default AIAssistantEnhanced;
+export default AIAssistant;

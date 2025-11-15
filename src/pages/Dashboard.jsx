@@ -286,6 +286,10 @@ const DashboardContent = () => {
         });
     };
 
+    const handleMobileMenuToggle = () => {
+        setMobileMenuOpen(prev => !prev);
+    };
+
     // Close mobile menu on route change
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -333,6 +337,8 @@ const DashboardContent = () => {
                 collapsed={sidebarCollapsed}
                 setCollapsed={handleSidebarToggle}
                 menuItems={filteredMenuItems}
+                mobileMenuOpen={mobileMenuOpen}
+                setMobileMenuOpen={setMobileMenuOpen}
             />
 
             {/* Main Content Area */}
@@ -342,7 +348,10 @@ const DashboardContent = () => {
                 {/* Top Navbar */}
                 <DashboardTopNavbar
                     onToggleSidebar={handleSidebarToggle}
+                    onToggleMobileMenu={handleMobileMenuToggle}
                     sidebarCollapsed={sidebarCollapsed}
+                    user={user}
+                    userRole={userRole}
                     breadcrumbs={breadcrumbs}
                     showBreadcrumbs={true}
                     showSearch={true}
@@ -350,40 +359,27 @@ const DashboardContent = () => {
 
                 {/* Page Content */}
                 <main className="flex-1 overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        <Suspense
-                            fallback={
-                                <div className="flex items-center justify-center min-h-[60vh]">
-                                    <div className="text-center">
-                                        <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-                                        <p className="text-slate-400">Loading...</p>
-                                    </div>
+                    <Suspense
+                        fallback={
+                            <div className="flex items-center justify-center min-h-[60vh]">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+                                    <p className="text-slate-400">Loading...</p>
                                 </div>
-                            }
-                        >
-                            <Routes location={location} key={location.pathname}>
-                                {flatMenuItems.map((item, index) => (
-                                    <Route
-                                        key={index}
-                                        path={item.path.replace('/dashboard', '') || '/'}
-                                        element={
-                                            <motion.div
-                                                variants={pageVariants}
-                                                initial="initial"
-                                                animate="animate"
-                                                exit="exit"
-                                                transition={{ duration: 0.3 }}
-                                                className="h-full"
-                                            >
-                                                <item.component />
-                                            </motion.div>
-                                        }
-                                    />
-                                ))}
-                                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                            </Routes>
-                        </Suspense>
-                    </AnimatePresence>
+                            </div>
+                        }
+                    >
+                        <Routes location={location} key={location.pathname}>
+                            {flatMenuItems.map((item, index) => (
+                                <Route
+                                    key={index}
+                                    path={item.path.replace('/dashboard', '') || '/'}
+                                    element={<item.component />}
+                                />
+                            ))}
+                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                    </Suspense>
                 </main>
 
                 {/* Footer - Optional */}

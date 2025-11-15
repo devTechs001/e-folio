@@ -7,6 +7,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LandingPageThemeProvider } from './contexts/LandingPageThemeContext';
 import { SocketProvider } from './contexts/SocketContext';
 import NotificationProvider from './components/NotificationSystem';
+import PublicReviews from './components/PublicReviews';
+import ReviewFloatingButton from "./components/ReviewFloatingButton";
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
@@ -54,7 +56,9 @@ const App = () => {
                                         </LandingPageThemeProvider>
                                     } />
                                     <Route path="/login" element={<LoginPage />} />
-                                    <Route path="/collaborate" element={<CollaborationRequest />} />
+                                <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
+                                <Route path="/collaborate" element={<CollaborationRequest />} />
+                                <Route path="/reviews" element={<PublicReviews />} />
                                     <Route 
                                         path="/dashboard/*" 
                                         element={

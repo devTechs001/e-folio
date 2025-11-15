@@ -69,6 +69,15 @@ const VisitorsAnalytics = () => {
     const [realtimeData, setRealtimeData] = useState([]);
     const [visitorFlow, setVisitorFlow] = useState([]);
 
+    // Helper functions
+    const formatDuration = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}m ${secs}s`;
+    };
+
+    // Move getCountryFlag function to the top to avoid initialization errors
+
     useEffect(() => {
         if (isOwner()) {
             fetchAnalytics();
@@ -165,6 +174,28 @@ const VisitorsAnalytics = () => {
         }
     });
 
+    // Move formatDuration function to the top to avoid initialization errors
+
+
+    const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-3 shadow-xl">
+                    <p className="text-slate-300 font-medium mb-2">{label}</p>
+                    {payload.map((entry, index) => (
+                        <div key={index} className="flex items-center justify-between gap-4">
+                            <span className="text-slate-400 text-sm">{entry.name}:</span>
+                            <span className="font-semibold" style={{ color: entry.color }}>
+                                {entry.value.toLocaleString()}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+        return null;
+    };
+
     const stats = useMemo(() => {
         if (!analytics) return [];
 
@@ -232,25 +263,36 @@ const VisitorsAnalytics = () => {
         ];
     }, [analytics, theme.primary]);
 
-    const formatDuration = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}m ${secs}s`;
-    };
 
     const topCountries = useMemo(() => {
         return (analytics?.locations || []).map(loc => ({
             country: loc._id || 'Unknown',
             visitors: loc.count,
-            percentage: ((loc.count / (analytics.todayTotal || 1)) * 100).toFixed(1),
+            percentage: ((loc.count / (analytics?.todayTotal || 1)) * 100).toFixed(1),
             flag: getCountryFlag(loc._id),
             change: (Math.random() * 20 - 5).toFixed(1)
         }));
     }, [analytics]);
 
+    const getCountryFlag = (country) => {
+        const flags = {
+            'United States': '🇺🇸',
+            'United Kingdom': '🇬🇧',
+            'Germany': '🇩🇪',
+            'Canada': '🇨🇦',
+            'Australia': '🇦🇺',
+            'France': '🇫🇷',
+            'India': '🇮🇳',
+            'Japan': '🇯🇵',
+            'Brazil': '🇧🇷',
+            'China': '🇨🇳'
+        };
+        return flags[country] || '🌍';
+    };
+
     const devices = useMemo(() => {
-        const total = (analytics?.devices?.desktop || 0) + 
-                     (analytics?.devices?.mobile || 0) + 
+        const total = (analytics?.devices?.desktop || 0) +
+                     (analytics?.devices?.mobile || 0) +
                      (analytics?.devices?.tablet || 0) || 1;
 
         return [
@@ -278,21 +320,6 @@ const VisitorsAnalytics = () => {
         ];
     }, [analytics]);
 
-    const getCountryFlag = (country) => {
-        const flags = {
-            'United States': '🇺🇸',
-            'United Kingdom': '🇬🇧',
-            'Germany': '🇩🇪',
-            'Canada': '🇨🇦',
-            'Australia': '🇦🇺',
-            'France': '🇫🇷',
-            'India': '🇮🇳',
-            'Japan': '🇯🇵',
-            'Brazil': '🇧🇷',
-            'China': '🇨🇳'
-        };
-        return flags[country] || '🌍';
-    };
 
     const exportData = useCallback(async (format) => {
         try {
@@ -316,24 +343,6 @@ const VisitorsAnalytics = () => {
         }
     }, [timeRange]);
 
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-3 shadow-xl">
-                    <p className="text-slate-300 font-medium mb-2">{label}</p>
-                    {payload.map((entry, index) => (
-                        <div key={index} className="flex items-center justify-between gap-4">
-                            <span className="text-slate-400 text-sm">{entry.name}:</span>
-                            <span className="font-semibold" style={{ color: entry.color }}>
-                                {entry.value.toLocaleString()}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-        return null;
-    };
 
     const CHART_COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'];
 
