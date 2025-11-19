@@ -382,10 +382,10 @@ const CurrentThemePreview = ({ theme, onExport, isFavorite, onToggleFavorite }) 
                     
                     {/* Color Palette */}
                     <div className="grid grid-cols-4 gap-2">
-                        <ColorSwatch color={theme.colors.primary} label="Primary" />
-                        <ColorSwatch color={theme.colors.secondary} label="Secondary" />
-                        <ColorSwatch color={theme.colors.accent} label="Accent" />
-                        <ColorSwatch color={theme.colors.background} label="Background" />
+                        <ColorSwatch color={theme.colors?.primary || '#0ef'} label="Primary" />
+                        <ColorSwatch color={theme.colors?.secondary || '#7c3aed'} label="Secondary" />
+                        <ColorSwatch color={theme.colors?.accent || '#00efff'} label="Accent" />
+                        <ColorSwatch color={theme.colors?.background || '#1f242d'} label="Background" />
                     </div>
                 </div>
 
@@ -493,7 +493,7 @@ const ThemeCard = ({ theme, isActive, isFavorite, onSelect, onToggleFavorite, on
 
                 {/* Color Swatches */}
                 <div className="flex gap-2 mb-4">
-                    {[theme.colors.primary, theme.colors.secondary, theme.colors.accent].map((color, idx) => (
+                    {[theme.colors?.primary || '#0ef', theme.colors?.secondary || '#7c3aed', theme.colors?.accent || '#00efff'].map((color, idx) => (
                         <div
                             key={idx}
                             className="flex-1 h-8 rounded border-2 border-slate-700"

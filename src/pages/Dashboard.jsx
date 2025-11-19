@@ -6,52 +6,232 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from '../components/NotificationSystem';
 import DashboardProvider, { useDashboard } from '../contexts/DashboardContext';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Dashboard Layout Components
 import DashboardSideNavbar from '../components/dashboard/DashboardSideNavbar';
 import DashboardTopNavbar from '../components/dashboard/DashboardTopNavbar';
 import LoadingScreen from '../components/LoadingScreen';
-import ErrorBoundary from '../components/ErrorBoundary';
 
-// Lazy load dashboard components
-const DashboardHome = lazy(() => import('../components/dashboard/DashboardHomeStyled'));
-const ProjectManager = lazy(() => import('../components/dashboard/ProjectManagerEnhanced'));
-const SkillsEditor = lazy(() => import('../components/dashboard/SkillsEditorEnhanced'));
-const ThemeManager = lazy(() => import('../components/dashboard/ThemeManagerStyled'));
-const Analytics = lazy(() => import('../components/dashboard/Analytics'));
-const Settings = lazy(() => import('../components/dashboard/SettingsStyled'));
-const ChatSystem = lazy(() => import('../components/dashboard/ChatSystemStyled'));
-const AIAssistant = lazy(() => import('../components/dashboard/AIAssistantStyled'));
-const PortfolioEditor = lazy(() => import('../components/dashboard/PortfolioEditorStyled'));
-const Collaborators = lazy(() => import('../components/dashboard/CollaboratorsStyled'));
-const MediaManager = lazy(() => import('../components/dashboard/MediaManagerStyled'));
-const VisitorsAnalytics = lazy(() => import('../components/dashboard/VisitorsAnalyticsStyled'));
-const AITrackingSystem = lazy(() => import('../components/dashboard/AITrackingSystem'));
-const ReviewsManager = lazy(() => import('../components/dashboard/ReviewsManager'));
-const EmailManager = lazy(() => import('../components/dashboard/EmailManagerEnhanced'));
-const CollaborationRequests = lazy(() => import('../components/dashboard/CollaborationRequestsStyled'));
-const LearningCenter = lazy(() => import('../components/dashboard/LearningCenterStyled'));
-const Profile = lazy(() => import('../components/dashboard/Profile'));
+// Lazy load dashboard components with error handling
+const DashboardHome = lazy(() => import('../components/dashboard/DashboardHomeStyled').catch(err => {
+    console.error('Failed to load DashboardHome:', err);
+    return { default: () => <div>Error loading Dashboard Home</div> };
+}));
+const ProjectManager = lazy(() => import('../components/dashboard/ProjectManagerEnhanced').catch(err => {
+    console.error('Failed to load ProjectManager:', err);
+    return { default: () => <div>Error loading Project Manager</div> };
+}));
+const SkillsEditor = lazy(() => import('../components/dashboard/SkillsEditorEnhanced').catch(err => {
+    console.error('Failed to load SkillsEditor:', err);
+    return { default: () => <div>Error loading Skills Editor</div> };
+}));
+const ThemeManager = lazy(() => import('../components/dashboard/ThemeManagerEnhnced').catch(err => {
+    console.error('Failed to load ThemeManager:', err);
+    return import('../components/dashboard/ThemeManagerFallback');
+}));
+const Analytics = lazy(() => import('../components/dashboard/Analytics').catch(err => {
+    console.error('Failed to load Analytics:', err);
+    return { default: () => <div>Error loading Analytics</div> };
+}));
+const Settings = lazy(() => import('../components/dashboard/SettingsStyled').catch(err => {
+    console.error('Failed to load Settings:', err);
+    return { default: () => <div>Error loading Settings</div> };
+}));
+const ChatSystem = lazy(() => import('../components/dashboard/ChatSystemStyled').catch(err => {
+    console.error('Failed to load ChatSystem:', err);
+    return { default: () => <div>Error loading Chat System</div> };
+}));
+const AIAssistant = lazy(() => import('../components/dashboard/AIAssistantStyled').catch(err => {
+    console.error('Failed to load AIAssistant:', err);
+    return { default: () => <div>Error loading AI Assistant</div> };
+}));
+const PortfolioEditor = lazy(() => import('../components/dashboard/PortfolioEditorStyled').catch(err => {
+    console.error('Failed to load PortfolioEditor:', err);
+    return { default: () => <div>Error loading Portfolio Editor</div> };
+}));
+const Collaborators = lazy(() => import('../components/dashboard/CollaboratorsStyled').catch(err => {
+    console.error('Failed to load Collaborators:', err);
+    return { default: () => <div>Error loading Collaborators</div> };
+}));
+const MediaManager = lazy(() => import('../components/dashboard/MediaManagerStyled').catch(err => {
+    console.error('Failed to load MediaManager:', err);
+    return { default: () => <div>Error loading Media Manager</div> };
+}));
+const VisitorsAnalytics = lazy(() => import('../components/dashboard/VisitorsAnalyticsStyled').catch(err => {
+    console.error('Failed to load VisitorsAnalytics:', err);
+    return { default: () => <div>Error loading Visitors Analytics</div> };
+}));
+const AITrackingSystem = lazy(() => import('../components/dashboard/AITrackingSystem').catch(err => {
+    console.error('Failed to load AITrackingSystem:', err);
+    return { default: () => <div>Error loading AI Tracking System</div> };
+}));
+const ReviewsManager = lazy(() => import('../components/dashboard/ReviewsManager').catch(err => {
+    console.error('Failed to load ReviewsManager:', err);
+    return { default: () => <div>Error loading Reviews Manager</div> };
+}));
+const EmailManager = lazy(() => import('../components/dashboard/EmailManagerEnhanced').catch(err => {
+    console.error('Failed to load EmailManager:', err);
+    return { default: () => <div>Error loading Email Manager</div> };
+}));
+const CollaborationRequests = lazy(() => import('../components/dashboard/CollaborationRequestsStyled').catch(err => {
+    console.error('Failed to load CollaborationRequests:', err);
+    return { default: () => <div>Error loading Collaboration Requests</div> };
+}));
+const LearningCenter = lazy(() => import('../components/dashboard/LearningCenterStyled').catch(err => {
+    console.error('Failed to load LearningCenter:', err);
+    return { default: () => <div>Error loading Learning Center</div> };
+}));
+const Profile = lazy(() => import('../components/dashboard/Profile').catch(err => {
+    console.error('Failed to load Profile:', err);
+    return { default: () => <div>Error loading Profile</div> };
+}));
 
 // Wrapper components to avoid primitive value error
-const LazyDashboardHome = () => <DashboardHome />;
-const LazyProjectManager = () => <ProjectManager />;
-const LazySkillsEditor = () => <SkillsEditor />;
-const LazyThemeManager = () => <ThemeManager />;
-const LazyAnalytics = () => <Analytics />;
-const LazySettings = () => <Settings />;
-const LazyChatSystem = () => <ChatSystem />;
-const LazyAIAssistant = () => <AIAssistant />;
-const LazyPortfolioEditor = () => <PortfolioEditor />;
-const LazyCollaborators = () => <Collaborators />;
-const LazyMediaManager = () => <MediaManager />;
-const LazyVisitorsAnalytics = () => <VisitorsAnalytics />;
-const LazyAITrackingSystem = () => <AITrackingSystem />;
-const LazyReviewsManager = () => <ReviewsManager />;
-const LazyEmailManager = () => <EmailManager />;
-const LazyCollaborationRequests = () => <CollaborationRequests />;
-const LazyLearningCenter = () => <LearningCenter />;
-const LazyProfile = () => <Profile />;
+const LazyDashboardHome = () => {
+    try {
+        return <DashboardHome />;
+    } catch (error) {
+        console.error('Error rendering DashboardHome:', error);
+        return <div>Error loading Dashboard Home</div>;
+    }
+};
+const LazyProjectManager = () => {
+    try {
+        return <ProjectManager />;
+    } catch (error) {
+        console.error('Error rendering ProjectManager:', error);
+        return <div>Error loading Project Manager</div>;
+    }
+};
+const LazySkillsEditor = () => {
+    try {
+        return <SkillsEditor />;
+    } catch (error) {
+        console.error('Error rendering SkillsEditor:', error);
+        return <div>Error loading Skills Editor</div>;
+    }
+};
+const LazyThemeManager = () => {
+    try {
+        return <ThemeManager />;
+    } catch (error) {
+        console.error('Error rendering ThemeManager:', error);
+        return <div>Error loading Theme Manager</div>;
+    }
+};
+const LazyAnalytics = () => {
+    try {
+        return <Analytics />;
+    } catch (error) {
+        console.error('Error rendering Analytics:', error);
+        return <div>Error loading Analytics</div>;
+    }
+};
+const LazySettings = () => {
+    try {
+        return <Settings />;
+    } catch (error) {
+        console.error('Error rendering Settings:', error);
+        return <div>Error loading Settings</div>;
+    }
+};
+const LazyChatSystem = () => {
+    try {
+        return <ChatSystem />;
+    } catch (error) {
+        console.error('Error rendering ChatSystem:', error);
+        return <div>Error loading Chat System</div>;
+    }
+};
+const LazyAIAssistant = () => {
+    try {
+        return <AIAssistant />;
+    } catch (error) {
+        console.error('Error rendering AIAssistant:', error);
+        return <div>Error loading AI Assistant</div>;
+    }
+};
+const LazyPortfolioEditor = () => {
+    try {
+        return <PortfolioEditor />;
+    } catch (error) {
+        console.error('Error rendering PortfolioEditor:', error);
+        return <div>Error loading Portfolio Editor</div>;
+    }
+};
+const LazyCollaborators = () => {
+    try {
+        return <Collaborators />;
+    } catch (error) {
+        console.error('Error rendering Collaborators:', error);
+        return <div>Error loading Collaborators</div>;
+    }
+};
+const LazyMediaManager = () => {
+    try {
+        return <MediaManager />;
+    } catch (error) {
+        console.error('Error rendering MediaManager:', error);
+        return <div>Error loading Media Manager</div>;
+    }
+};
+const LazyVisitorsAnalytics = () => {
+    try {
+        return <VisitorsAnalytics />;
+    } catch (error) {
+        console.error('Error rendering VisitorsAnalytics:', error);
+        return <div>Error loading Visitors Analytics</div>;
+    }
+};
+const LazyAITrackingSystem = () => {
+    try {
+        return <AITrackingSystem />;
+    } catch (error) {
+        console.error('Error rendering AITrackingSystem:', error);
+        return <div>Error loading AI Tracking System</div>;
+    }
+};
+const LazyReviewsManager = () => {
+    try {
+        return <ReviewsManager />;
+    } catch (error) {
+        console.error('Error rendering ReviewsManager:', error);
+        return <div>Error loading Reviews Manager</div>;
+    }
+};
+const LazyEmailManager = () => {
+    try {
+        return <EmailManager />;
+    } catch (error) {
+        console.error('Error rendering EmailManager:', error);
+        return <div>Error loading Email Manager</div>;
+    }
+};
+const LazyCollaborationRequests = () => {
+    try {
+        return <CollaborationRequests />;
+    } catch (error) {
+        console.error('Error rendering CollaborationRequests:', error);
+        return <div>Error loading Collaboration Requests</div>;
+    }
+};
+const LazyLearningCenter = () => {
+    try {
+        return <LearningCenter />;
+    } catch (error) {
+        console.error('Error rendering LearningCenter:', error);
+        return <div>Error loading Learning Center</div>;
+    }
+};
+const LazyProfile = () => {
+    try {
+        return <Profile />;
+    } catch (error) {
+        console.error('Error rendering Profile:', error);
+        return <div>Error loading Profile</div>;
+    }
+};
 
 const Dashboard = () => {
     return (
@@ -86,7 +266,7 @@ const DashboardContent = () => {
             path: '/dashboard',
             icon: 'fas fa-tachometer-alt',
             label: 'Overview',
-            component: DashboardHome,
+            component: LazyDashboardHome,
             roles: ['owner', 'collaborator'],
             badge: null,
             category: 'Main',
@@ -96,7 +276,7 @@ const DashboardContent = () => {
             path: '/dashboard/projects',
             icon: 'fas fa-project-diagram',
             label: 'Projects',
-            component: ProjectManager,
+            component: LazyProjectManager,
             roles: ['owner', 'collaborator'],
             badge: '12',
             category: 'Main',
@@ -106,7 +286,7 @@ const DashboardContent = () => {
             path: '/dashboard/analytics',
             icon: 'fas fa-chart-bar',
             label: 'Analytics',
-            component: Analytics,
+            component: LazyAnalytics,
             roles: ['owner'],
             badge: null,
             category: 'Main',
@@ -116,7 +296,7 @@ const DashboardContent = () => {
             path: '/dashboard/visitors',
             icon: 'fas fa-user-friends',
             label: 'Visitors',
-            component: VisitorsAnalytics,
+            component: LazyVisitorsAnalytics,
             roles: ['owner'],
             badge: null,
             category: 'Main',
@@ -126,7 +306,7 @@ const DashboardContent = () => {
             path: '/dashboard/portfolio-editor',
             icon: 'fas fa-edit',
             label: 'Portfolio Editor',
-            component: PortfolioEditor,
+            component: LazyPortfolioEditor,
             roles: ['owner'],
             badge: null,
             category: 'Content',
@@ -136,7 +316,7 @@ const DashboardContent = () => {
             path: '/dashboard/skills',
             icon: 'fas fa-cogs',
             label: 'Skills',
-            component: SkillsEditor,
+            component: LazySkillsEditor,
             roles: ['owner'],
             badge: null,
             category: 'Content',
@@ -146,7 +326,7 @@ const DashboardContent = () => {
             path: '/dashboard/media',
             icon: 'fas fa-images',
             label: 'Media',
-            component: MediaManager,
+            component: LazyMediaManager,
             roles: ['owner'],
             badge: null,
             category: 'Content',
@@ -166,7 +346,7 @@ const DashboardContent = () => {
             path: '/dashboard/emails',
             icon: 'fas fa-envelope',
             label: 'Emails',
-            component: EmailManager,
+            component: LazyEmailManager,
             roles: ['owner'],
             badge: '5',
             category: 'Communication',
@@ -176,7 +356,7 @@ const DashboardContent = () => {
             path: '/dashboard/chat',
             icon: 'fas fa-comments',
             label: 'Chat',
-            component: ChatSystem,
+            component: LazyChatSystem,
             roles: ['owner', 'collaborator'],
             badge: '2',
             category: 'Communication',
@@ -186,7 +366,7 @@ const DashboardContent = () => {
             path: '/dashboard/ai-assistant',
             icon: 'fas fa-robot',
             label: 'AI Assistant',
-            component: AIAssistant,
+            component: LazyAIAssistant,
             roles: ['owner', 'collaborator'],
             badge: 'New',
             category: 'Communication',
@@ -196,7 +376,7 @@ const DashboardContent = () => {
             path: '/dashboard/collaborators',
             icon: 'fas fa-users',
             label: 'Collaborators',
-            component: Collaborators,
+            component: LazyCollaborators,
             roles: ['owner'],
             badge: null,
             category: 'Team',
@@ -216,7 +396,7 @@ const DashboardContent = () => {
             path: '/dashboard/ai-tracking',
             icon: 'fas fa-activity',
             label: 'AI Tracking',
-            component: AITrackingSystem,
+            component: LazyAITrackingSystem,
             roles: ['owner'],
             badge: null,
             category: 'Advanced',
@@ -226,7 +406,7 @@ const DashboardContent = () => {
             path: '/dashboard/theme',
             icon: 'fas fa-palette',
             label: 'Themes',
-            component: ThemeManager,
+            component: LazyThemeManager,
             roles: ['owner'],
             badge: null,
             category: 'Advanced',
@@ -236,7 +416,7 @@ const DashboardContent = () => {
             path: '/dashboard/learning',
             icon: 'fas fa-graduation-cap',
             label: 'Learning Center',
-            component: LearningCenter,
+            component: LazyLearningCenter,
             roles: ['owner', 'collaborator'],
             badge: null,
             category: 'Advanced',
@@ -246,7 +426,7 @@ const DashboardContent = () => {
             path: '/dashboard/profile',
             icon: 'fas fa-user',
             label: 'Profile',
-            component: Profile,
+            component: LazyProfile,
             roles: ['owner', 'collaborator'],
             badge: null,
             category: 'Account',
@@ -256,7 +436,7 @@ const DashboardContent = () => {
             path: '/dashboard/settings',
             icon: 'fas fa-cog',
             label: 'Settings',
-            component: Settings,
+            component: LazySettings,
             roles: ['owner', 'collaborator'],
             badge: null,
             category: 'Account',
@@ -379,30 +559,45 @@ const DashboardContent = () => {
 
                 {/* Page Content */}
                 <main className="flex-1 overflow-hidden">
-                    <Suspense
-                        fallback={
-                            <div className="flex items-center justify-center min-h-[60vh]">
-                                <div className="text-center">
-                                    <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-                                    <p className="text-slate-400">Loading...</p>
-                                </div>
-                            </div>
-                        }
-                    >
-                        <Routes location={location} key={location.pathname}>
+                    <Routes location={location} key={location.pathname}>
                             {flatMenuItems.map((item, index) => {
                                 const Component = item.component;
+                                // Add error boundary and debugging for each route
+                                if (!Component) {
+                                    console.error(`Component for ${item.label} is undefined`);
+                                    return (
+                                        <Route
+                                            key={index}
+                                            path={item.path.replace('/dashboard', '') || '/'}
+                                            element={<div>Error: Component not found</div>}
+                                        />
+                                    );
+                                }
                                 return (
                                     <Route
                                         key={index}
                                         path={item.path.replace('/dashboard', '') || '/'}
-                                        element={<Component />}
+                                        element={
+                                            <ErrorBoundary>
+                                                <Suspense fallback={
+                                                    <div className="flex items-center justify-center min-h-[60vh]">
+                                                        <div className="text-center">
+                                                            <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+                                                            <p className="text-slate-400">Loading {item.label}...</p>
+                                                        </div>
+                                                    </div>
+                                                }>
+                                                    <div data-component-name={item.label}>
+                                                        <Component />
+                                                    </div>
+                                                </Suspense>
+                                            </ErrorBoundary>
+                                        }
                                     />
                                 );
                             })}
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
-                    </Suspense>
                 </main>
 
                 {/* Footer - Optional */}

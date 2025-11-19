@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Lazy Loading</title>
+</head>
+<body>
+    <h1>Testing Lazy Loading Components</h1>
+    <div id="test-results"></div>
+    
+    <script type="module">
+        async function testLazyImports() {
+            const results = document.getElementById('test-results');
+            const tests = [
+                { name: 'DashboardHome', path: '../components/dashboard/DashboardHomeStyled' },
+                { name: 'ProjectManager', path: '../components/dashboard/ProjectManagerEnhanced' },
+                { name: 'SkillsEditor', path: '../components/dashboard/SkillsEditorEnhanced' },
+                { name: 'ThemeManager', path: '../components/dashboard/ThemeManagerStyled' },
+                { name: 'Analytics', path: '../components/dashboard/Analytics' },
+                { name: 'Settings', path: '../components/dashboard/SettingsStyled' },
+                { name: 'ChatSystem', path: '../components/dashboard/ChatSystemStyled' },
+                { name: 'AIAssistant', path: '../components/dashboard/AIAssistantStyled' },
+                { name: 'PortfolioEditor', path: '../components/dashboard/PortfolioEditorStyled' },
+                { name: 'Collaborators', path: '../components/dashboard/CollaboratorsStyled' },
+                { name: 'MediaManager', path: '../components/dashboard/MediaManagerStyled' },
+                { name: 'VisitorsAnalytics', path: '../components/dashboard/VisitorsAnalyticsStyled' },
+                { name: 'AITrackingSystem', path: '../components/dashboard/AITrackingSystem' },
+                { name: 'ReviewsManager', path: '../components/dashboard/ReviewsManager' },
+                { name: 'EmailManager', path: '../components/dashboard/EmailManagerEnhanced' },
+                { name: 'CollaborationRequests', path: '../components/dashboard/CollaborationRequestsStyled' },
+                { name: 'LearningCenter', path: '../components/dashboard/LearningCenterStyled' },
+                { name: 'Profile', path: '../components/dashboard/Profile' }
+            ];
+            
+            results.innerHTML = '<h2>Testing component imports...</h2>';
+            
+            for (const test of tests) {
+                try {
+                    const module = await import(test.path);
+                    const component = module.default;
+                    results.innerHTML += `<p style="color: green;">✓ ${test.name}: ${component ? 'Component found' : 'No default export'}</p>`;
+                } catch (error) {
+                    results.innerHTML += `<p style="color: red;">✗ ${test.name}: ${error.message}</p>`;
+                }
+            }
+        }
+        
+        testLazyImports();
+    </script>
+</body>
+</html>

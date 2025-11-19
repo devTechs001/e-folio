@@ -211,6 +211,9 @@ const PortfolioEditor = () => {
         }
     });
 
+    // Ensure we always work with a sections array to avoid runtime errors
+    const sections = (portfolioConfig && portfolioConfig.sections) ? portfolioConfig.sections : [];
+
     const [sectionTemplates] = useState([
         {
             id: 'hero',
@@ -319,9 +322,32 @@ const PortfolioEditor = () => {
             const response = await apiService.getPortfolioConfig();
             
             if (response.success) {
-                setPortfolioConfig(response.data);
+                const incoming = response.data || {};
+                const defaultTheme = {
+                    primaryColor: '#06b6d4',
+                    secondaryColor: '#3b82f6',
+                    backgroundColor: '#0f172a',
+                    textColor: '#f8fafc',
+                    fontFamily: 'Inter, sans-serif',
+                    headingFont: 'Poppins, sans-serif'
+                };
+                const defaultSeo = { title: '', description: '', keywords: [], ogImage: '' };
+                const defaultSettings = { animations: true, smoothScroll: true, darkMode: true, showSocialLinks: true };
+
+                const normalized = {
+                    sections: Array.isArray(incoming.sections) ? incoming.sections : [],
+                    theme: { ...defaultTheme, ...(incoming.theme || {}) },
+                    seo: { ...defaultSeo, ...(incoming.seo || {}) },
+                    settings: { ...defaultSettings, ...(incoming.settings || {}) },
+                    ...incoming
+                };
+
+                // Ensure sections is normalized and present
+                normalized.sections = Array.isArray(normalized.sections) ? normalized.sections : [];
+
+                setPortfolioConfig(normalized);
                 setCurrentVersion(response.version);
-                addToHistory(response.data);
+                addToHistory(normalized);
             }
         } catch (err) {
             console.error('Failed to load config:', err);
@@ -389,10 +415,10 @@ const PortfolioEditor = () => {
         const { active, over } = event;
 
         if (active.id !== over.id) {
-            const oldIndex = portfolioConfig.sections.findIndex(s => s.id === active.id);
-            const newIndex = portfolioConfig.sections.findIndex(s => s.id === over.id);
+            const oldIndex = sections.findIndex(s => s.id === active.id);
+            const newIndex = sections.findIndex(s => s.id === over.id);
 
-            const newSections = arrayMove(portfolioConfig.sections, oldIndex, newIndex);
+            const newSections = arrayMove(sections, oldIndex, newIndex);
             updateConfig({ sections: newSections });
         }
     };
@@ -413,7 +439,7 @@ const PortfolioEditor = () => {
         };
 
         updateConfig({
-            sections: [...portfolioConfig.sections, newSection]
+            sections: [...sections, newSection]
         });
         
         setShowSectionModal(false);
@@ -421,7 +447,7 @@ const PortfolioEditor = () => {
     };
 
     const toggleSection = (id) => {
-        const newSections = portfolioConfig.sections.map(s =>
+        const newSections = sections.map(s =>
             s.id === id ? { ...s, visible: !s.visible } : s
         );
         updateConfig({ sections: newSections });
@@ -429,14 +455,14 @@ const PortfolioEditor = () => {
 
     const deleteSection = (id) => {
         if (confirm('Are you sure you want to delete this section?')) {
-            const newSections = portfolioConfig.sections.filter(s => s.id !== id);
+            const newSections = sections.filter(s => s.id !== id);
             updateConfig({ sections: newSections });
             success('Section deleted');
         }
     };
 
     const duplicateSection = (id) => {
-        const section = portfolioConfig.sections.find(s => s.id === id);
+    const section = sections.find(s => s.id === id);
         if (section) {
             const duplicate = {
                 ...section,
@@ -444,7 +470,7 @@ const PortfolioEditor = () => {
                 name: `${section.name} (Copy)`
             };
             updateConfig({
-                sections: [...portfolioConfig.sections, duplicate]
+                sections: [...sections, duplicate]
             });
             success('Section duplicated');
         }
@@ -455,7 +481,7 @@ const PortfolioEditor = () => {
     };
 
     const updateSection = (id, updates) => {
-        const newSections = portfolioConfig.sections.map(s =>
+        const newSections = sections.map(s =>
             s.id === id ? { ...s, ...updates } : s
         );
         updateConfig({ sections: newSections });
@@ -761,8 +787,8 @@ const PortfolioEditor = () => {
                                     >
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-sm font-semibold text-white">
-                                                Page Sections ({portfolioConfig.sections.length})
-                                            </h3>
+                                                    Page Sections ({sections.length})
+                                                </h3>
                                             <button
                                                 onClick={() => setShowSectionModal(true)}
                                                 className="p-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors"
@@ -776,11 +802,11 @@ const PortfolioEditor = () => {
                                             collisionDetection={closestCenter}
                                             onDragEnd={handleDragEnd}
                                         >
-                                            <SortableContext
-                                                items={portfolioConfig.sections.map(s => s.id)}
+                                                <SortableContext
+                                                items={sections.map(s => s.id)}
                                                 strategy={verticalListSortingStrategy}
                                             >
-                                                {portfolioConfig.sections.map((section) => (
+                                                {sections.map((section) => (
                                                     <SortableSection
                                                         key={section.id}
                                                         section={section}
@@ -794,7 +820,7 @@ const PortfolioEditor = () => {
                                             </SortableContext>
                                         </DndContext>
 
-                                        {portfolioConfig.sections.length === 0 && (
+                                        {sections.length === 0 && (
                                             <div className="text-center py-8 text-slate-500">
                                                 <Layers size={48} className="mx-auto mb-3 opacity-50" />
                                                 <p className="text-sm">No sections yet</p>
@@ -988,7 +1014,7 @@ const PortfolioEditor = () => {
                             <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 shadow-2xl min-h-[600px] overflow-hidden">
                                 {editorMode === 'visual' && (
                                     <div className="p-8">
-                                        {portfolioConfig.sections.filter(s => s.visible).length === 0 ? (
+                                        {sections.filter(s => s.visible).length === 0 ? (
                                             <div className="flex items-center justify-center min-h-[400px]">
                                                 <div className="text-center">
                                                     <Layout size={64} className="mx-auto mb-4 text-slate-600" />
@@ -1009,7 +1035,7 @@ const PortfolioEditor = () => {
                                             </div>
                                         ) : (
                                             <div className="space-y-6">
-                                                {portfolioConfig.sections.filter(s => s.visible).map((section) => (
+                                                {sections.filter(s => s.visible).map((section) => (
                                                     <motion.div
                                                         key={section.id}
                                                         initial={{ opacity: 0, y: 20 }}

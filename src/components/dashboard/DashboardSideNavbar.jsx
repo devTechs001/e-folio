@@ -139,10 +139,10 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                                 }`}
                             >
                                 {collapsed ? (
-                                    <Menu size={20} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
-                                ) : (
-                                    <X size={20} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
-                                )}
+                                        <ChevronRight size={20} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                    ) : (
+                                        <X size={20} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                                    )}
                             </button>
                         </div>
                     </div>

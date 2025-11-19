@@ -220,6 +220,19 @@
   color: var(--mainColor);
 }
 
+.nav-link.active {
+  color: var(--mainColor);
+}
+
+.nav-link.active::after {
+  width: 100%;
+  background: var(--mainColor);
+}
+
+.nav-link.active i {
+  color: var(--mainColor);
+}
+
 /* Special nav links (Dashboard, Collaborate) */
 .nav-link-special {
   margin-left: 1rem !important;

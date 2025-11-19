@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
@@ -68,11 +69,12 @@ import {
     Tooltip,
     Legend
 } from 'recharts';
-import { format, formatDistanceToNow, subDays, isToday, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, subDays, isToday, parseISO, isValid } from 'date-fns';
 
 const DashboardHome = () => {
     const { user } = useAuth();
     const { theme } = useTheme();
+    const { socket, connected } = useSocket();
     const { success, error: showError } = useNotifications();
     const wsRef = useRef(null);
 
@@ -106,7 +108,6 @@ const DashboardHome = () => {
     // Load initial data
     useEffect(() => {
         loadDashboardData();
-        setupWebSocket();
         
         // Refresh data every 30 seconds
         const refreshInterval = setInterval(() => {
@@ -115,23 +116,10 @@ const DashboardHome = () => {
 
         return () => {
             clearInterval(refreshInterval);
-            if (wsRef.current && typeof wsRef.current.close === 'function') {
-                wsRef.current.close();
-            }
         };
     }, []);
 
-    const setupWebSocket = async () => {
-        try {
-            // WebSocket is handled by SocketContext, just mark as connected
-            await apiService.connectToDashboard();
-            wsRef.current = { close: () => {} }; // Dummy object for cleanup
-        } catch (error) {
-            console.warn('WebSocket setup skipped:', error);
-        }
-    };
-
-    const handleRealtimeUpdate = (data) => {
+    const handleRealtimeUpdate = useCallback((data) => {
         switch (data.type) {
             case 'stats_update':
                 setStats(prev => ({ ...prev, ...data.stats }));
@@ -155,7 +143,33 @@ const DashboardHome = () => {
                 break;
         }
         setLastUpdate(new Date());
-    };
+    }, []);
+
+    const setupWebSocket = useCallback(() => {
+        // Use SocketContext for real-time updates
+        if (socket && connected) {
+            socket.on('stats_update', handleRealtimeUpdate);
+            socket.on('new_activity', handleRealtimeUpdate);
+            socket.on('new_notification', handleRealtimeUpdate);
+            socket.on('visitor_online', handleRealtimeUpdate);
+            socket.on('new_message', handleRealtimeUpdate);
+        }
+    }, [socket, connected, handleRealtimeUpdate]);
+
+    // Setup real-time socket listeners
+    useEffect(() => {
+        setupWebSocket();
+        
+        return () => {
+            if (socket) {
+                socket.off('stats_update', handleRealtimeUpdate);
+                socket.off('new_activity', handleRealtimeUpdate);
+                socket.off('new_notification', handleRealtimeUpdate);
+                socket.off('visitor_online', handleRealtimeUpdate);
+                socket.off('new_message', handleRealtimeUpdate);
+            }
+        };
+    }, [socket, connected, setupWebSocket, handleRealtimeUpdate]);
 
     const loadDashboardData = async (silent = false) => {
         try {
@@ -201,6 +215,16 @@ const DashboardHome = () => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+        }
+    };
+
+    const safeDate = (d) => {
+        if (!d) return null;
+        try {
+            const parsed = typeof d === 'string' ? parseISO(d) : new Date(d);
+            return isValid(parsed) ? parsed : null;
+        } catch (e) {
+            return null;
         }
     };
 
@@ -461,7 +485,10 @@ const DashboardHome = () => {
                                             </p>
                                             <p className="text-slate-400 text-xs flex items-center gap-1">
                                                 <Clock size={12} />
-                                                {formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}
+                                                {(() => {
+                                                    const d = safeDate(activity.timestamp);
+                                                    return d ? formatDistanceToNow(d, { addSuffix: true }) : 'unknown';
+                                                })()}
                                             </p>
                                         </div>
                                     </motion.div>
@@ -498,17 +525,26 @@ const DashboardHome = () => {
                                     >
                                         <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/30 rounded-lg flex flex-col items-center justify-center">
                                             <span className="text-cyan-400 font-bold text-xl">
-                                                {format(parseISO(event.date), 'dd')}
+                                                {(() => {
+                                                    const dt = safeDate(event.date);
+                                                    return dt ? format(dt, 'dd') : '--';
+                                                })()}
                                             </span>
                                             <span className="text-cyan-400 text-xs">
-                                                {format(parseISO(event.date), 'MMM')}
+                                                {(() => {
+                                                    const dt = safeDate(event.date);
+                                                    return dt ? format(dt, 'MMM') : '';
+                                                })()}
                                             </span>
                                         </div>
                                         <div className="flex-1">
                                             <h4 className="text-white font-medium mb-1">{event.title}</h4>
                                             <p className="text-slate-400 text-sm flex items-center gap-1">
                                                 <Clock size={12} />
-                                                {format(parseISO(event.date), 'h:mm a')}
+                                                {(() => {
+                                                    const dt = safeDate(event.date);
+                                                    return dt ? format(dt, 'h:mm a') : '';
+                                                })()}
                                             </p>
                                         </div>
                                         <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
@@ -564,7 +600,10 @@ const DashboardHome = () => {
                                                 {task.dueDate && (
                                                     <span className="text-slate-400 flex items-center gap-1">
                                                         <Clock size={12} />
-                                                        {format(parseISO(task.dueDate), 'MMM dd')}
+                                                        {(() => {
+                                                            const dt = safeDate(task.dueDate);
+                                                            return dt ? format(dt, 'MMM dd') : 'No date';
+                                                        })()}
                                                     </span>
                                                 )}
                                             </div>
@@ -620,7 +659,10 @@ const DashboardHome = () => {
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Clock size={12} />
-                                                {formatDistanceToNow(parseISO(project.createdAt), { addSuffix: true })}
+                                                {(() => {
+                                                    const d = safeDate(project.createdAt);
+                                                    return d ? formatDistanceToNow(d, { addSuffix: true }) : 'unknown';
+                                                })()}
                                             </span>
                                         </div>
                                     </div>
@@ -708,7 +750,10 @@ const DashboardHome = () => {
                                         <p className="text-white font-medium mb-1">{notification.title}</p>
                                         <p className="text-slate-400 text-sm mb-2">{notification.message}</p>
                                         <p className="text-slate-500 text-xs">
-                                            {formatDistanceToNow(parseISO(notification.createdAt), { addSuffix: true })}
+                                            {(() => {
+                                                const d = safeDate(notification.createdAt);
+                                                return d ? formatDistanceToNow(d, { addSuffix: true }) : 'unknown';
+                                            })()}
                                         </p>
                                     </div>
                                     <button

@@ -207,7 +207,7 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
             }
         } catch (error) {
             console.error('Review submission error:', error);
-            showError(error.message || 'Error submitting review. Please try again.');
+            showError('Error submitting review. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -218,82 +218,9 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
             ...prev,
             comment: prev.comment + emoji
         }));
+        setShowEmojiPicker(false);
     };
 
-    const validateStep = (step) => {
-    const stepErrors = {};
-    
-    if (step === 1) {
-        const nameError = validateField('name', formData.name);
-        const emailError = validateField('email', formData.email);
-        const ratingError = validateField('rating', formData.rating);
-        
-        if (nameError) stepErrors.name = nameError;
-        if (emailError) stepErrors.email = emailError;
-        if (ratingError) stepErrors.rating = ratingError;
-    } else if (step === 2) {
-        const commentError = validateField('comment', formData.comment);
-        if (commentError) stepErrors.comment = commentError;
-    }
-
-    setErrors(stepErrors);
-    return Object.keys(stepErrors).length === 0;
-};
-
-const handleNext = () => {
-    if (validateStep(currentStep)) {
-        setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-    }
-};
-
-const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-};
-
-const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validate all steps
-    const allValid = validateStep(1) && validateStep(2);
-    if (!allValid) {
-        showError('Please fill in all required fields correctly');
-        setCurrentStep(1);
-        return;
-    }
-
-    try {
-        setSubmitting(true);
-        const response = await apiService.createReview({
-            ...formData,
-            attachments
-        });
-        
-        if (response.success) {
-            setSubmitted(true);
-            showSuccess('Review submitted successfully!');
-            
-            setTimeout(() => {
-                onSuccess?.();
-                onClose();
-            }, 2000);
-        } else {
-            showError(response.message || 'Failed to submit review');
-        }
-    } catch (error) {
-        console.error('Review submission error:', error);
-        showError(error.message || 'Error submitting review. Please try again.');
-    } finally {
-        setSubmitting(false);
-    }
-};
-
-const insertEmoji = (emoji) => {
-    setFormData(prev => ({
-        ...prev,
-        comment: prev.comment + emoji
-    }));
-    setShowEmojiPicker(false);
-};
 
 const StarRating = ({ value, onChange, size = 32, label = '', category = null }) => {
         const [hoveredStar, setHoveredStar] = useState(0);

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Test</title>
+</head>
+<body>
+    <h1>Dashboard Component Test</h1>
+    <div id="test-results"></div>
+    
+    <script type="module">
+        async function testComponents() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<h2>Testing component imports...</h2>';
+            
+            const components = [
+                'DashboardHomeStyled',
+                'ProjectManagerEnhanced',
+                'SkillsEditorEnhanced',
+                'ThemeManagerEnhnced',
+                'Analytics',
+                'SettingsStyled',
+                'ChatSystemStyled',
+                'AIAssistantStyled',
+                'PortfolioEditorStyled',
+                'CollaboratorsStyled',
+                'MediaManagerStyled',
+                'VisitorsAnalyticsStyled',
+                'AITrackingSystem',
+                'ReviewsManager',
+                'EmailManagerEnhanced',
+                'CollaborationRequestsStyled',
+                'LearningCenterStyled',
+                'Profile'
+            ];
+            
+            for (const comp of components) {
+                try {
+                    const module = await import(`/src/components/dashboard/${comp}.jsx`);
+                    results.innerHTML += `<p style="color: green;">✓ ${comp}: Successfully imported</p>`;
+                } catch (error) {
+                    results.innerHTML += `<p style="color: red;">✗ ${comp}: ${error.message}</p>`;
+                }
+            }
+        }
+        
+        testComponents();
+    </script>
+</body>
+</html>

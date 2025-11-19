@@ -34,7 +34,7 @@ const RealtimeDashboard = () => {
     }, []);
 
     const connectWebSocket = () => {
-        const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:5000';
+        const wsUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('http', 'ws') || 'ws://localhost:5000';
         wsRef.current = new WebSocket(`${wsUrl}/tracking`);
 
         wsRef.current.onopen = () => {

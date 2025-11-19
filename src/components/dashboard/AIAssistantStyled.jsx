@@ -296,6 +296,17 @@ const AIAssistant = () => {
         }
     };
 
+    const safeFormatTime = (ts) => {
+        if (!ts) return '';
+        const d = ts instanceof Date ? ts : new Date(ts);
+        if (isNaN(d)) return '';
+        try {
+            return d.toLocaleTimeString();
+        } catch (e) {
+            return '';
+        }
+    };
+
     const exportConversation = async () => {
         try {
             const data = {
@@ -463,84 +474,86 @@ const AIAssistant = () => {
         >
             <div className="flex flex-col lg:flex-row h-[calc(100vh-220px)] gap-4">
                 {/* Sidebar - Conversation History */}
-                <AnimatePresence>
-                    {showHistory && (
-                        <motion.div
-                            initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: '100%', lg: '320px', opacity: 1 }}
-                            exit={{ width: 0, opacity: 0 }}
-                            className="border-r border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden rounded-l-xl lg:rounded-l-none lg:rounded-r-xl"
-                        >
-                            <div className="p-4 space-y-3">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold text-lg">Conversations</h3>
-                                    <button
-                                        onClick={() => setShowHistory(false)}
-                                        className="p-1 hover:bg-white/10 rounded-lg transition-all"
-                                    >
-                                        <X size={18} />
-                                    </button>
-                                </div>
-
-                                <div className="relative mb-4">
-                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search conversations..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg 
-                                                 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
-                                </div>
-
-                                {conversations
-                                    .filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                                    .map((conv) => (
-                                    <motion.div
-                                        key={conv.id}
-                                        whileHover={{ scale: 1.02 }}
-                                        onClick={() => loadConversation(conv.id)}
-                                        className={`p-3 rounded-lg cursor-pointer transition-all ${
-                                            currentConversation?.id === conv.id
-                                                ? 'bg-blue-500/20 border-2 border-blue-500'
-                                                : 'bg-white/5 hover:bg-white/10 border border-white/10'
-                                        }`}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-semibold text-sm truncate mb-1">
-                                                    {conv.title}
-                                                </h4>
-                                                <p className="text-xs text-gray-400 truncate">
-                                                    {conv.messages?.[conv.messages.length - 1]?.content || 'No messages'}
-                                                </p>
-                                                <span className="text-xs text-gray-500 mt-1 block">
-                                                    {new Date(conv.updatedAt).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteConversation(conv.id);
-                                                }}
-                                                className="p-1 hover:bg-red-500/20 rounded transition-all"
-                                            >
-                                                <Trash2 size={14} className="text-red-500" />
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                ))}
-
-                                {conversations.length === 0 && (
-                                    <div className="text-center py-8 text-gray-400">
-                                        <MessageSquare size={48} className="mx-auto mb-3 opacity-50" />
-                                        <p className="text-sm">No conversations yet</p>
+                <div className="w-full lg:w-[320px]">
+                    <AnimatePresence>
+                        {showHistory && (
+                            <motion.div
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: '100%', opacity: 1 }}
+                                exit={{ width: 0, opacity: 0 }}
+                                className="border-r border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden rounded-l-xl lg:rounded-l-none lg:rounded-r-xl lg:w-[320px]"
+                            >
+                                <div className="p-4 space-y-3">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-bold text-lg">Conversations</h3>
+                                        <button
+                                            onClick={() => setShowHistory(false)}
+                                            className="p-1 hover:bg-white/10 rounded-lg transition-all"
+                                        >
+                                            <X size={18} />
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                                        Welcome to AI Assistant
-                                    </h2>
+
+                                    <div className="relative mb-4">
+                                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search conversations..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        />
+                                    </div>
+
+                                    {conversations
+                                        .filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                                        .map((conv) => (
+                                        <motion.div
+                                            key={conv.id}
+                                            whileHover={{ scale: 1.02 }}
+                                            onClick={() => loadConversation(conv.id)}
+                                            className={`p-3 rounded-lg cursor-pointer transition-all ${
+                                                currentConversation?.id === conv.id
+                                                    ? 'bg-blue-500/20 border-2 border-blue-500'
+                                                    : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-semibold text-sm truncate mb-1">
+                                                        {conv.title}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-400 truncate">
+                                                        {conv.messages?.[conv.messages.length - 1]?.content || 'No messages'}
+                                                    </p>
+                                                    <span className="text-xs text-gray-500 mt-1 block">
+                                                        {new Date(conv.updatedAt).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteConversation(conv.id);
+                                                    }}
+                                                    className="p-1 hover:bg-red-500/20 rounded transition-all"
+                                                >
+                                                    <Trash2 size={14} className="text-red-500" />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+
+                                    {conversations.length === 0 && (
+                                        <div className="text-center py-8 text-gray-400">
+                                            <MessageSquare size={48} className="mx-auto mb-3 opacity-50" />
+                                            <p className="text-sm">No conversations yet</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                                    Welcome to AI Assistant
+                                </h2>
+                                <div className="text-center">
                                     <p className="text-gray-400 text-lg mb-8">
                                         Ask me anything about coding, design, or get help with your projects. 
                                         I'm powered by {aiModel} and ready to assist!
@@ -557,12 +570,9 @@ const AIAssistant = () => {
                                             whileHover={{ scale: 1.05, y: -4 }}
                                             whileTap={{ scale: 0.95 }}
                                             onClick={() => setInput(suggestion.prompt)}
-                                            className="p-5 bg-white/5 hover:bg-white/10 border border-white/10 
-                                                     rounded-xl text-left group transition-all backdrop-blur-xl"
+                                            className="p-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-left group transition-all backdrop-blur-xl"
                                         >
-                                            <div className={`w-12 h-12 rounded-xl bg-${suggestion.color}-500/10 
-                                                          flex items-center justify-center mb-3 group-hover:scale-110 
-                                                          transition-transform`}>
+                                            <div className={`w-12 h-12 rounded-xl bg-${suggestion.color}-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                                                 <suggestion.icon className={`text-${suggestion.color}-500`} size={24} />
                                             </div>
                                             <h3 className="font-semibold mb-1">{suggestion.text}</h3>
@@ -570,100 +580,105 @@ const AIAssistant = () => {
                                         </motion.button>
                                     ))}
                                 </div>
-                            </div>
-                        ) : (
-                            <AnimatePresence>
-                                {messages.map((message, index) => (
-                                    <motion.div
-                                        key={message.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className={`flex gap-4 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                                    >
-                                        {/* Avatar */}
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Main Messages Area */}
+                <div className="flex-1 flex flex-col">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <AnimatePresence>
+                            {messages.map((message, index) => (
+                                <motion.div
+                                    key={message.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className={`flex gap-4 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                                >
+                                    {/* Avatar */}
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                        message.type === 'user'
+                                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/50'
+                                            : 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-lg shadow-green-500/50'
+                                    }`}>
+                                        {message.type === 'user' ? (
+                                            <span className="text-white font-bold text-sm">
+                                                {user?.name?.[0] || 'U'}
+                                            </span>
+                                        ) : (
+                                            <Brain size={20} className="text-white" />
+                                        )}
+                                    </div>
+
+                                    {/* Message Content */}
+                                    <div className="flex-1 max-w-3xl">
+                                        <div className={`rounded-2xl p-5 ${
                                             message.type === 'user'
-                                                ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/50'
-                                                : 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-lg shadow-green-500/50'
+                                                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                                                : 'bg-white/5 border border-white/10 backdrop-blur-xl'
                                         }`}>
-                                            {message.type === 'user' ? (
-                                                <span className="text-white font-bold text-sm">
-                                                    {user?.name?.[0] || 'U'}
-                                                </span>
-                                            ) : (
-                                                <Brain size={20} className="text-white" />
+                                            {renderMessage(message)}
+
+                                            {message.streaming && (
+                                                <div className="flex gap-2 mt-2">
+                                                    {[0, 1, 2].map((i) => (
+                                                        <motion.div
+                                                            key={i}
+                                                            animate={{ y: [0, -8, 0] }}
+                                                            transition={{
+                                                                duration: 0.6,
+                                                                repeat: Infinity,
+                                                                delay: i * 0.2
+                                                            }}
+                                                            className="w-2 h-2 rounded-full bg-blue-500"
+                                                        />
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
 
-                                        {/* Message Content */}
-                                        <div className="flex-1 max-w-3xl">
-                                            <div className={`rounded-2xl p-5 ${
-                                                message.type === 'user'
-                                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                                                    : 'bg-white/5 border border-white/10 backdrop-blur-xl'
-                                            }`}>
-                                                {renderMessage(message)}
+                                        {/* Message Actions */}
+                                        <div className="flex items-center gap-2 mt-2 ml-2">
+                                                    <span className="text-xs text-gray-500">
+                                                        {safeFormatTime(message.timestamp)}
+                                                    </span>
 
-                                                {message.streaming && (
-                                                    <div className="flex gap-2 mt-2">
-                                                        {[0, 1, 2].map((i) => (
-                                                            <motion.div
-                                                                key={i}
-                                                                animate={{ y: [0, -8, 0] }}
-                                                                transition={{
-                                                                    duration: 0.6,
-                                                                    repeat: Infinity,
-                                                                    delay: i * 0.2
-                                                                }}
-                                                                className="w-2 h-2 rounded-full bg-blue-500"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Message Actions */}
-                                            <div className="flex items-center gap-2 mt-2 ml-2">
-                                                <span className="text-xs text-gray-500">
-                                                    {new Date(message.timestamp).toLocaleTimeString()}
-                                                </span>
-
-                                                {message.type === 'ai' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => copyToClipboard(message.content, message.id)}
-                                                            className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
-                                                        >
-                                                            {copiedId === message.id ? (
-                                                                <Check size={14} className="text-green-500" />
-                                                            ) : (
-                                                                <Copy size={14} className="text-gray-400" />
-                                                            )}
-                                                        </button>
-
-                                                        <button className="p-1.5 hover:bg-white/10 rounded-lg transition-all">
-                                                            <RefreshCw size={14} className="text-gray-400" />
-                                                        </button>
-
-                                                        <button className="p-1.5 hover:bg-white/10 rounded-lg transition-all">
-                                                            <Bookmark size={14} className="text-gray-400" />
-                                                        </button>
-
-                                                        {message.tokens && (
-                                                            <span className="text-xs text-gray-500 ml-auto">
-                                                                {message.tokens} tokens
-                                                            </span>
+                                            {message.type === 'ai' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => copyToClipboard(message.content, message.id)}
+                                                        className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
+                                                    >
+                                                        {copiedId === message.id ? (
+                                                            <Check size={14} className="text-green-500" />
+                                                        ) : (
+                                                            <Copy size={14} className="text-gray-400" />
                                                         )}
-                                                    </>
-                                                )}
-                                            </div>
+                                                    </button>
+
+                                                    <button className="p-1.5 hover:bg-white/10 rounded-lg transition-all">
+                                                        <RefreshCw size={14} className="text-gray-400" />
+                                                    </button>
+
+                                                    <button className="p-1.5 hover:bg-white/10 rounded-lg transition-all">
+                                                        <Bookmark size={14} className="text-gray-400" />
+                                                    </button>
+
+                                                    {message.tokens && (
+                                                        <span className="text-xs text-gray-500 ml-auto">
+                                                            {message.tokens} tokens
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        )}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
 
                         {isTyping && !messages.some(m => m.streaming) && (
                             <motion.div
@@ -671,8 +686,7 @@ const AIAssistant = () => {
                                 animate={{ opacity: 1 }}
                                 className="flex gap-4"
                             >
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 
-                                              flex items-center justify-center shadow-lg shadow-green-500/50">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/50">
                                     <Brain size={20} className="text-white" />
                                 </div>
                                 <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-5">
@@ -732,8 +746,7 @@ const AIAssistant = () => {
 
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all 
-                                         flex items-center justify-center"
+                                className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center justify-center"
                             >
                                 <Upload size={20} />
                             </button>
@@ -761,18 +774,14 @@ const AIAssistant = () => {
                                     }}
                                     placeholder="Ask me anything... (Shift+Enter for new line)"
                                     rows={3}
-                                    className="w-full p-4 bg-transparent border-none outline-none resize-none 
-                                             text-white placeholder-gray-400"
+                                    className="w-full p-4 bg-transparent border-none outline-none resize-none text-white placeholder-gray-400"
                                 />
                             </div>
 
                             <button
                                 onClick={handleSend}
                                 disabled={!input.trim() && selectedFiles.length === 0}
-                                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 
-                                         hover:to-purple-700 rounded-xl font-semibold transition-all shadow-lg 
-                                         shadow-blue-500/25 flex items-center gap-2 disabled:opacity-50 
-                                         disabled:cursor-not-allowed h-[60px]"
+                                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-[60px]"
                             >
                                 <Send size={20} />
                                 <span>Send</span>

@@ -5,7 +5,8 @@ import {
     Paperclip, Image as ImageIcon, File, X, Edit2, Trash2,
     Pin, Check, CheckCheck, Download, Plus, Settings,
     UserPlus, Hash, Lock, Bell, BellOff, Mic, Camera,
-    ChevronDown, AtSign, ThumbsUp, Heart, Laugh, AlertCircle
+    ChevronDown, AtSign, ThumbsUp, Heart, Laugh, AlertCircle,
+    MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -329,7 +330,7 @@ const ChatSystem = () => {
         user: msg.senderName,
         avatar: msg.senderAvatar || msg.senderName?.charAt(0) || 'U',
         message: msg.content,
-        timestamp: new Date(msg.createdAt),
+        timestamp: msg.createdAt ? new Date(msg.createdAt) : null,
         roomId: msg.room,
         isOwn: msg.sender === user?.id,
         edited: msg.edited,
@@ -339,6 +340,17 @@ const ChatSystem = () => {
         isPinned: msg.isPinned,
         readBy: msg.readBy || []
     });
+
+    const safeFormatTime = (ts, opts = { hour: '2-digit', minute: '2-digit' }) => {
+        if (!ts) return '';
+        const d = ts instanceof Date ? ts : new Date(ts);
+        if (isNaN(d)) return '';
+        try {
+            return d.toLocaleTimeString([], opts);
+        } catch (e) {
+            return '';
+        }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -661,8 +673,6 @@ const ChatSystem = () => {
                                 )}
                             </p>
                         </div>
-                            </p>
-                        </div>
                         <div className="flex items-center gap-2">
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
@@ -723,14 +733,14 @@ const ChatSystem = () => {
                                         </div>
 
                                         {/* Message Content */}
-                                        <div className={`flex flex-col max-w-[60%] ${msg.isOwn ? 'items-end' : 'items-start'}`}>
+                                        <div className={`flex flex-col max-w-[80%] md:max-w-[60%] ${msg.isOwn ? 'items-end' : 'items-start'}`}>
                                             {showAvatar && (
                                                 <div className={`flex items-center gap-2 mb-1 ${msg.isOwn ? 'flex-row-reverse' : ''}`}>
                                                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                                                         {msg.user}
                                                     </span>
                                                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {safeFormatTime(msg.timestamp)}
                                                     </span>
                                                 </div>
                                             )}
@@ -1102,6 +1112,7 @@ const ChatSystem = () => {
                     />
                 )}
             </AnimatePresence>
+        </div>
         </DashboardLayout>
     );
 };

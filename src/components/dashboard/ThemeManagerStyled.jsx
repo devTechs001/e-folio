@@ -1,645 +1,760 @@
-// client/src/contexts/ThemeContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// client/src/components/dashboard/ThemeManagerEnhanced.jsx
+import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Palette, Check, Download, Upload, Plus, X,
+    Search, Grid, List, Star, Sparkles,
+    Sun, Moon, Zap, Eye, Copy, Trash2,
+    Save, Heart
+} from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useNotifications } from '../NotificationSystem';
+import DashboardLayout from './DashboardLayout';
 
-const ThemeContext = createContext();
+const ThemeManager = () => {
+    const {
+        theme,
+        themes,
+        changeTheme,
+        currentTheme
+    } = useTheme();
 
-export const useTheme = () => {
-    const context = useContext(ThemeContext);
-    if (!context) {
-        throw new Error('useTheme must be used within ThemeProvider');
-    }
-    return context;
-};
+    const { success, error: showError } = useNotifications();
 
-// Comprehensive theme collection
-const themeCollection = {
-    // PROFESSIONAL THEMES
-    professional: [
-        {
-            id: 'corporate-blue',
-            name: 'Corporate Blue',
-            category: 'professional',
-            type: 'dark',
-            colors: {
-                primary: '#0ea5e9',
-                secondary: '#38bdf8',
-                accent: '#7dd3fc',
-                background: '#0f172a',
-                surface: '#1e293b',
-                text: '#f1f5f9',
-                textSecondary: '#94a3b8',
-                border: '#334155',
-                success: '#10b981',
-                warning: '#f59e0b',
-                error: '#ef4444',
-                info: '#3b82f6'
-            },
-            gradient: 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)',
-            fonts: {
-                heading: "'Inter', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'midnight-professional',
-            name: 'Midnight Pro',
-            category: 'professional',
-            type: 'dark',
-            colors: {
-                primary: '#6366f1',
-                secondary: '#818cf8',
-                accent: '#a5b4fc',
-                background: '#0a0a0f',
-                surface: '#1a1a2e',
-                text: '#f8fafc',
-                textSecondary: '#94a3b8',
-                border: '#2d3748',
-                success: '#22c55e',
-                warning: '#fbbf24',
-                error: '#f87171',
-                info: '#60a5fa'
-            },
-            gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-            fonts: {
-                heading: "'Outfit', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'JetBrains Mono', monospace"
-            }
-        },
-        {
-            id: 'slate-minimal',
-            name: 'Slate Minimal',
-            category: 'professional',
-            type: 'dark',
-            colors: {
-                primary: '#64748b',
-                secondary: '#94a3b8',
-                accent: '#cbd5e1',
-                background: '#0f172a',
-                surface: '#1e293b',
-                text: '#f1f5f9',
-                textSecondary: '#94a3b8',
-                border: '#334155',
-                success: '#10b981',
-                warning: '#f59e0b',
-                error: '#ef4444',
-                info: '#0ea5e9'
-            },
-            gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-            fonts: {
-                heading: "'Space Grotesk', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Source Code Pro', monospace"
-            }
-        }
-    ],
-
-    // CREATIVE THEMES
-    creative: [
-        {
-            id: 'vibrant-sunset',
-            name: 'Vibrant Sunset',
-            category: 'creative',
-            type: 'dark',
-            colors: {
-                primary: '#f97316',
-                secondary: '#fb923c',
-                accent: '#fdba74',
-                background: '#18181b',
-                surface: '#27272a',
-                text: '#fafafa',
-                textSecondary: '#a1a1aa',
-                border: '#3f3f46',
-                success: '#22c55e',
-                warning: '#eab308',
-                error: '#ef4444',
-                info: '#3b82f6'
-            },
-            gradient: 'linear-gradient(135deg, #f97316 0%, #dc2626 100%)',
-            fonts: {
-                heading: "'Poppins', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'neon-dreams',
-            name: 'Neon Dreams',
-            category: 'creative',
-            type: 'dark',
-            colors: {
-                primary: '#ec4899',
-                secondary: '#f472b6',
-                accent: '#f9a8d4',
-                background: '#0f0f23',
-                surface: '#1a1a3e',
-                text: '#faf5ff',
-                textSecondary: '#c4b5fd',
-                border: '#4c1d95',
-                success: '#10b981',
-                warning: '#fbbf24',
-                error: '#f43f5e',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
-            fonts: {
-                heading: "'Montserrat', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'aurora-borealis',
-            name: 'Aurora Borealis',
-            category: 'creative',
-            type: 'dark',
-            colors: {
-                primary: '#06b6d4',
-                secondary: '#22d3ee',
-                accent: '#67e8f9',
-                background: '#0c1222',
-                surface: '#1a2332',
-                text: '#f0f9ff',
-                textSecondary: '#93c5fd',
-                border: '#1e3a5f',
-                success: '#34d399',
-                warning: '#fbbf24',
-                error: '#f87171',
-                info: '#60a5fa'
-            },
-            gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%)',
-            fonts: {
-                heading: "'Raleway', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'cosmic-purple',
-            name: 'Cosmic Purple',
-            category: 'creative',
-            type: 'dark',
-            colors: {
-                primary: '#a855f7',
-                secondary: '#c084fc',
-                accent: '#d8b4fe',
-                background: '#0f0a1f',
-                surface: '#1e1533',
-                text: '#faf5ff',
-                textSecondary: '#c4b5fd',
-                border: '#4c1d95',
-                success: '#22c55e',
-                warning: '#f59e0b',
-                error: '#f43f5e',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-            fonts: {
-                heading: "'Orbitron', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Share Tech Mono', monospace"
-            }
-        }
-    ],
-
-    // NATURE THEMES
-    nature: [
-        {
-            id: 'forest-green',
-            name: 'Forest Green',
-            category: 'nature',
-            type: 'dark',
-            colors: {
-                primary: '#10b981',
-                secondary: '#34d399',
-                accent: '#6ee7b7',
-                background: '#064e3b',
-                surface: '#065f46',
-                text: '#f0fdf4',
-                textSecondary: '#86efac',
-                border: '#047857',
-                success: '#22c55e',
-                warning: '#fbbf24',
-                error: '#f87171',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            fonts: {
-                heading: "'Merriweather', serif",
-                body: "'Inter', sans-serif",
-                mono: "'Courier Prime', monospace"
-            }
-        },
-        {
-            id: 'ocean-blue',
-            name: 'Ocean Blue',
-            category: 'nature',
-            type: 'dark',
-            colors: {
-                primary: '#0284c7',
-                secondary: '#0ea5e9',
-                accent: '#38bdf8',
-                background: '#082f49',
-                surface: '#0c4a6e',
-                text: '#f0f9ff',
-                textSecondary: '#7dd3fc',
-                border: '#075985',
-                success: '#10b981',
-                warning: '#f59e0b',
-                error: '#ef4444',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #0284c7 0%, #0891b2 100%)',
-            fonts: {
-                heading: "'Lora', serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'sunset-orange',
-            name: 'Sunset Orange',
-            category: 'nature',
-            type: 'dark',
-            colors: {
-                primary: '#ea580c',
-                secondary: '#f97316',
-                accent: '#fb923c',
-                background: '#431407',
-                surface: '#7c2d12',
-                text: '#fff7ed',
-                textSecondary: '#fdba74',
-                border: '#9a3412',
-                success: '#22c55e',
-                warning: '#fbbf24',
-                error: '#dc2626',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)',
-            fonts: {
-                heading: "'Playfair Display', serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        }
-    ],
-
-    // LIGHT THEMES
-    light: [
-        {
-            id: 'clean-white',
-            name: 'Clean White',
-            category: 'light',
-            type: 'light',
-            colors: {
-                primary: '#3b82f6',
-                secondary: '#60a5fa',
-                accent: '#93c5fd',
-                background: '#ffffff',
-                surface: '#f8fafc',
-                text: '#0f172a',
-                textSecondary: '#64748b',
-                border: '#e2e8f0',
-                success: '#10b981',
-                warning: '#f59e0b',
-                error: '#ef4444',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            fonts: {
-                heading: "'Inter', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'soft-lavender',
-            name: 'Soft Lavender',
-            category: 'light',
-            type: 'light',
-            colors: {
-                primary: '#8b5cf6',
-                secondary: '#a78bfa',
-                accent: '#c4b5fd',
-                background: '#faf5ff',
-                surface: '#f3e8ff',
-                text: '#1e1b4b',
-                textSecondary: '#6b21a8',
-                border: '#e9d5ff',
-                success: '#10b981',
-                warning: '#f59e0b',
-                error: '#f43f5e',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)',
-            fonts: {
-                heading: "'Quicksand', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        },
-        {
-            id: 'mint-fresh',
-            name: 'Mint Fresh',
-            category: 'light',
-            type: 'light',
-            colors: {
-                primary: '#10b981',
-                secondary: '#34d399',
-                accent: '#6ee7b7',
-                background: '#f0fdf4',
-                surface: '#dcfce7',
-                text: '#064e3b',
-                textSecondary: '#047857',
-                border: '#bbf7d0',
-                success: '#22c55e',
-                warning: '#f59e0b',
-                error: '#ef4444',
-                info: '#06b6d4'
-            },
-            gradient: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
-            fonts: {
-                heading: "'Nunito', sans-serif",
-                body: "'Inter', sans-serif",
-                mono: "'Fira Code', monospace"
-            }
-        }
-    ],
-
-    // RETRO THEMES
-    retro: [
-        {
-            id: 'synthwave',
-            name: 'Synthwave',
-            category: 'retro',
-            type: 'dark',
-            colors: {
-                primary: '#ff00ff',
-                secondary: '#ff1493',
-                accent: '#00ffff',
-                background: '#1a0033',
-                surface: '#2d0066',
-                text: '#ffffff',
-                textSecondary: '#ff00ff',
-                border: '#4d0099',
-                success: '#00ff00',
-                warning: '#ffff00',
-                error: '#ff0000',
-                info: '#00ffff'
-            },
-            gradient: 'linear-gradient(135deg, #ff00ff 0%, #00ffff 100%)',
-            fonts: {
-                heading: "'Orbitron', sans-serif",
-                body: "'Roboto', sans-serif",
-                mono: "'VT323', monospace"
-            }
-        },
-        {
-            id: 'vaporwave',
-            name: 'Vaporwave',
-            category: 'retro',
-            type: 'dark',
-            colors: {
-                primary: '#ff6ec7',
-                secondary: '#ff71ce',
-                accent: '#01cdfe',
-                background: '#240041',
-                surface: '#36035c',
-                text: '#ffffff',
-                textSecondary: '#ff6ec7',
-                border: '#540082',
-                success: '#05ffa1',
-                warning: '#fffb96',
-                error: '#fe4a49',
-                info: '#01cdfe'
-            },
-            gradient: 'linear-gradient(135deg, #ff6ec7 0%, #01cdfe 100%)',
-            fonts: {
-                heading: "'Press Start 2P', cursive",
-                body: "'Roboto', sans-serif",
-                mono: "'VT323', monospace"
-            }
-        },
-        {
-            id: 'cyberpunk',
-            name: 'Cyberpunk',
-            category: 'retro',
-            type: 'dark',
-            colors: {
-                primary: '#fcee09',
-                secondary: '#ff2a6d',
-                accent: '#05d9e8',
-                background: '#000000',
-                surface: '#1a1a1a',
-                text: '#ffffff',
-                textSecondary: '#05d9e8',
-                border: '#333333',
-                success: '#00ff41',
-                warning: '#fcee09',
-                error: '#ff2a6d',
-                info: '#05d9e8'
-            },
-            gradient: 'linear-gradient(135deg, #fcee09 0%, #ff2a6d 50%, #05d9e8 100%)',
-            fonts: {
-                heading: "'Rajdhani', sans-serif",
-                body: "'Roboto', sans-serif",
-                mono: "'Share Tech Mono', monospace"
-            }
-        }
-    ],
-
-    // MONOCHROME THEMES
-    monochrome: [
-        {
-            id: 'pure-black',
-            name: 'Pure Black',
-            category: 'monochrome',
-            type: 'dark',
-            colors: {
-                primary: '#ffffff',
-                secondary: '#e5e5e5',
-                accent: '#cccccc',
-                background: '#000000',
-                surface: '#1a1a1a',
-                text: '#ffffff',
-                textSecondary: '#999999',
-                border: '#333333',
-                success: '#ffffff',
-                warning: '#e5e5e5',
-                error: '#999999',
-                info: '#cccccc'
-            },
-            gradient: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
-            fonts: {
-                heading: "'Space Mono', monospace",
-                body: "'Roboto Mono', monospace",
-                mono: "'Courier Prime', monospace"
-            }
-        },
-        {
-            id: 'grayscale',
-            name: 'Grayscale',
-            category: 'monochrome',
-            type: 'dark',
-            colors: {
-                primary: '#808080',
-                secondary: '#999999',
-                accent: '#b3b3b3',
-                background: '#1a1a1a',
-                surface: '#2d2d2d',
-                text: '#ffffff',
-                textSecondary: '#cccccc',
-                border: '#404040',
-                success: '#999999',
-                warning: '#b3b3b3',
-                error: '#666666',
-                info: '#808080'
-            },
-            gradient: 'linear-gradient(135deg, #404040 0%, #808080 100%)',
-            fonts: {
-                heading: "'Roboto', sans-serif",
-                body: "'Roboto', sans-serif",
-                mono: "'Roboto Mono', monospace"
-            }
-        }
-    ],
-
-    // HIGH CONTRAST THEMES
-    highContrast: [
-        {
-            id: 'high-contrast-dark',
-            name: 'High Contrast Dark',
-            category: 'accessibility',
-            type: 'dark',
-            colors: {
-                primary: '#00ffff',
-                secondary: '#00ff00',
-                accent: '#ffff00',
-                background: '#000000',
-                surface: '#1a1a1a',
-                text: '#ffffff',
-                textSecondary: '#00ffff',
-                border: '#ffffff',
-                success: '#00ff00',
-                warning: '#ffff00',
-                error: '#ff0000',
-                info: '#00ffff'
-            },
-            gradient: 'linear-gradient(135deg, #00ffff 0%, #00ff00 100%)',
-            fonts: {
-                heading: "'Arial', sans-serif",
-                body: "'Arial', sans-serif",
-                mono: "'Courier New', monospace"
-            }
-        },
-        {
-            id: 'high-contrast-light',
-            name: 'High Contrast Light',
-            category: 'accessibility',
-            type: 'light',
-            colors: {
-                primary: '#0000ff',
-                secondary: '#0066cc',
-                accent: '#0099ff',
-                background: '#ffffff',
-                surface: '#f0f0f0',
-                text: '#000000',
-                textSecondary: '#333333',
-                border: '#000000',
-                success: '#008000',
-                warning: '#ff8c00',
-                error: '#ff0000',
-                info: '#0000ff'
-            },
-            gradient: 'linear-gradient(135deg, #0000ff 0%, #0066cc 100%)',
-            fonts: {
-                heading: "'Arial', sans-serif",
-                body: "'Arial', sans-serif",
-                mono: "'Courier New', monospace"
-            }
-        }
-    ]
-};
-
-// Flatten all themes
-const allThemes = Object.values(themeCollection).flat();
-
-export const ThemeProvider = ({ children }) => {
-    const [currentTheme, setCurrentTheme] = useState(() => {
-        return localStorage.getItem('theme') || 'corporate-blue';
-    });
-    
-    const [isDark, setIsDark] = useState(true);
+    // Custom themes stored in localStorage
     const [customThemes, setCustomThemes] = useState(() => {
         const saved = localStorage.getItem('customThemes');
         return saved ? JSON.parse(saved) : [];
     });
 
-    const themes = [...allThemes, ...customThemes];
-    const theme = themes.find(t => t.id === currentTheme) || themes[0];
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [viewMode, setViewMode] = useState('grid'); // grid or list
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showCustomThemeModal, setShowCustomThemeModal] = useState(false);
+    const [favorites, setFavorites] = useState(() => {
+        const saved = localStorage.getItem('favoriteThemes');
+        return saved ? JSON.parse(saved) : [];
+    });
 
-    useEffect(() => {
-        localStorage.setItem('theme', currentTheme);
-        setIsDark(theme.type === 'dark');
-    }, [currentTheme, theme]);
+    const fileInputRef = useRef(null);
 
-    const changeTheme = (themeId) => {
-        setCurrentTheme(themeId);
+    // Combine built-in themes with custom themes
+    const allThemes = [...themes, ...customThemes];
+
+    // Add custom theme
+    const addCustomTheme = (newTheme) => {
+        const updatedCustomThemes = [...customThemes, newTheme];
+        setCustomThemes(updatedCustomThemes);
+        localStorage.setItem('customThemes', JSON.stringify(updatedCustomThemes));
     };
 
-    const addCustomTheme = (customTheme) => {
-        const newCustomThemes = [...customThemes, customTheme];
-        setCustomThemes(newCustomThemes);
-        localStorage.setItem('customThemes', JSON.stringify(newCustomThemes));
-    };
-
+    // Delete custom theme
     const deleteCustomTheme = (themeId) => {
-        const filtered = customThemes.filter(t => t.id !== themeId);
-        setCustomThemes(filtered);
-        localStorage.setItem('customThemes', JSON.stringify(filtered));
-        if (currentTheme === themeId) {
-            changeTheme(allThemes[0].id);
-        }
+        const updatedCustomThemes = customThemes.filter(t => t.id !== themeId);
+        setCustomThemes(updatedCustomThemes);
+        localStorage.setItem('customThemes', JSON.stringify(updatedCustomThemes));
+        success('Custom theme deleted');
     };
 
+    // Export theme
     const exportTheme = (themeId) => {
-        const themeToExport = themes.find(t => t.id === themeId);
+        const themeToExport = allThemes.find(t => t.id === themeId);
         if (themeToExport) {
             const dataStr = JSON.stringify(themeToExport, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${themeId}-theme.json`;
-            link.click();
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `theme-${themeId}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
         }
     };
 
+    // Import theme
     const importTheme = (themeData) => {
-        addCustomTheme(themeData);
+        if (themeData && themeData.id && themeData.name && themeData.colors) {
+            addCustomTheme({ ...themeData, custom: true });
+        } else {
+            throw new Error('Invalid theme format');
+        }
     };
 
-    const value = {
-        theme: theme.colors,
-        themes,
-        themeCollection,
-        currentTheme,
-        isDark,
-        changeTheme,
-        addCustomTheme,
-        deleteCustomTheme,
-        exportTheme,
-        importTheme,
-        fonts: theme.fonts,
-        gradient: theme.gradient,
-        themeName: theme.name,
-        themeCategory: theme.category
+    // Categories
+    const categories = [
+        { id: 'all', label: 'All Themes', icon: Grid },
+        { id: 'professional', label: 'Professional', icon: Zap },
+        { id: 'creative', label: 'Creative', icon: Sparkles },
+        { id: 'nature', label: 'Nature', icon: Sun },
+        { id: 'light', label: 'Light', icon: Sun },
+        { id: 'retro', label: 'Retro', icon: Star },
+        { id: 'monochrome', label: 'Monochrome', icon: Moon },
+        { id: 'accessibility', label: 'High Contrast', icon: Eye }
+    ];
+
+    // Filter themes
+    const filteredThemes = allThemes.filter(t => {
+        const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+        const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            t.category?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
+
+    // Handle theme change
+    const handleThemeChange = (themeId) => {
+        changeTheme(themeId);
+        success(`Theme changed to ${allThemes.find(t => t.id === themeId)?.name}`);
+    };
+
+    // Toggle favorite
+    const toggleFavorite = (themeId) => {
+        const newFavorites = favorites.includes(themeId)
+            ? favorites.filter(id => id !== themeId)
+            : [...favorites, themeId];
+        
+        setFavorites(newFavorites);
+        localStorage.setItem('favoriteThemes', JSON.stringify(newFavorites));
+    };
+
+    // Handle export
+    const handleExport = (themeId) => {
+        exportTheme(themeId);
+        success('Theme exported successfully');
+    };
+
+    // Handle import
+    const handleImport = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const themeData = JSON.parse(event.target.result);
+                    importTheme(themeData);
+                    success('Theme imported successfully');
+                } catch (err) {
+                    showError('Failed to import theme. Invalid file format.');
+                }
+            };
+            reader.readAsText(file);
+        }
+    };
+
+    // Get theme stats
+    const getThemeStats = () => {
+        return {
+            total: allThemes.length,
+            dark: allThemes.filter(t => t.type === 'dark').length,
+            light: allThemes.filter(t => t.type === 'light').length,
+            favorites: favorites.length
+        };
+    };
+
+    const stats = getThemeStats();
+
+    return (
+        <DashboardLayout
+            title="Theme Manager"
+            subtitle="Customize your dashboard appearance with beautiful themes"
+            actions={
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700/50">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-lg transition-all ${
+                                viewMode === 'grid'
+                                    ? 'bg-cyan-500/20 text-cyan-400'
+                                    : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Grid size={18} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-lg transition-all ${
+                                viewMode === 'list'
+                                    ? 'bg-cyan-500/20 text-cyan-400'
+                                    : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <List size={18} />
+                        </button>
+                    </div>
+
+                    {/* Import Theme */}
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                    >
+                        <Upload size={18} />
+                        <span className="hidden sm:inline">Import</span>
+                    </button>
+
+                    {/* Create Custom Theme */}
+                    <button
+                        onClick={() => setShowCustomThemeModal(true)}
+                        className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/30"
+                    >
+                        <Plus size={18} />
+                        <span className="hidden sm:inline">Create Theme</span>
+                    </button>
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        onChange={handleImport}
+                        className="hidden"
+                    />
+                </div>
+            }
+        >
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <StatCard icon={Palette} label="Total Themes" value={stats.total} color="cyan" />
+                    <StatCard icon={Moon} label="Dark Themes" value={stats.dark} color="blue" />
+                    <StatCard icon={Sun} label="Light Themes" value={stats.light} color="yellow" />
+                    <StatCard icon={Heart} label="Favorites" value={stats.favorites} color="pink" />
+                </div>
+
+                {/* Current Theme Preview */}
+                <CurrentThemePreview
+                    theme={allThemes.find(t => t.id === currentTheme)}
+                    onExport={() => handleExport(currentTheme)}
+                    isFavorite={favorites.includes(currentTheme)}
+                    onToggleFavorite={() => toggleFavorite(currentTheme)}
+                />
+
+                {/* Search and Filters */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Search */}
+                    <div className="flex-1 relative">
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search themes..."
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                        />
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
+                        {categories.map((category) => (
+                            <button
+                                key={category.id}
+                                onClick={() => setSelectedCategory(category.id)}
+                                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all flex items-center gap-2 ${
+                                    selectedCategory === category.id
+                                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30'
+                                        : 'bg-slate-800/50 text-slate-400 border border-slate-700/30 hover:border-cyan-500/30'
+                                }`}
+                            >
+                                <category.icon size={16} />
+                                <span className="text-sm font-medium">{category.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Themes Grid/List */}
+                {filteredThemes.length > 0 ? (
+                    viewMode === 'grid' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {filteredThemes.map((themeOption) => (
+                                <ThemeCard
+                                    key={themeOption.id}
+                                    theme={themeOption}
+                                    isActive={currentTheme === themeOption.id}
+                                    isFavorite={favorites.includes(themeOption.id)}
+                                    onSelect={() => handleThemeChange(themeOption.id)}
+                                    onToggleFavorite={() => toggleFavorite(themeOption.id)}
+                                    onExport={() => handleExport(themeOption.id)}
+                                    onDelete={themeOption.custom ? () => deleteCustomTheme(themeOption.id) : null}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredThemes.map((themeOption) => (
+                                <ThemeListItem
+                                    key={themeOption.id}
+                                    theme={themeOption}
+                                    isActive={currentTheme === themeOption.id}
+                                    isFavorite={favorites.includes(themeOption.id)}
+                                    onSelect={() => handleThemeChange(themeOption.id)}
+                                    onToggleFavorite={() => toggleFavorite(themeOption.id)}
+                                    onExport={() => handleExport(themeOption.id)}
+                                />
+                            ))}
+                        </div>
+                    )
+                ) : (
+                    <div className="text-center py-20">
+                        <Palette size={64} className="text-slate-600 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-slate-300 mb-2">No themes found</h3>
+                        <p className="text-slate-500">Try adjusting your search or filters</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Custom Theme Modal */}
+            <CustomThemeModal
+                isOpen={showCustomThemeModal}
+                onClose={() => setShowCustomThemeModal(false)}
+                onSave={(newTheme) => {
+                    addCustomTheme(newTheme);
+                    success('Custom theme created successfully');
+                    setShowCustomThemeModal(false);
+                }}
+            />
+        </DashboardLayout>
+    );
+};
+
+// Stat Card Component
+const StatCard = ({ icon: Icon, label, value, color }) => {
+    const colorClasses = {
+        cyan: 'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30',
+        blue: 'from-blue-500/20 to-blue-600/20 border-blue-500/30',
+        yellow: 'from-yellow-500/20 to-yellow-600/20 border-yellow-500/30',
+        pink: 'from-pink-500/20 to-pink-600/20 border-pink-500/30'
+    };
+
+    const iconColors = {
+        cyan: 'text-cyan-400',
+        blue: 'text-blue-400',
+        yellow: 'text-yellow-400',
+        pink: 'text-pink-400'
     };
 
     return (
-        <ThemeContext.Provider value={value}>
-            {children}
-        </ThemeContext.Provider>
+        <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-xl p-4`}>
+            <div className="flex items-center justify-between mb-2">
+                <Icon size={20} className={iconColors[color]} />
+            </div>
+            <p className="text-2xl font-bold text-white mb-1">{value}</p>
+            <p className="text-sm text-slate-400">{label}</p>
+        </div>
     );
 };
+
+// Current Theme Preview Component
+const CurrentThemePreview = ({ theme, onExport, isFavorite, onToggleFavorite }) => {
+    if (!theme) return null;
+
+    return (
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white">Current Theme</h3>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onToggleFavorite}
+                        className={`p-2 rounded-lg transition-all ${
+                            isFavorite
+                                ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                        }`}
+                    >
+                        <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
+                    </button>
+                    <button
+                        onClick={onExport}
+                        className="p-2 rounded-lg bg-slate-700 text-slate-400 hover:bg-slate-600 transition-colors"
+                    >
+                        <Download size={18} />
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Theme Preview */}
+                <div className="space-y-4">
+                    <div
+                        className="h-40 rounded-xl flex items-center justify-center shadow-2xl"
+                        style={{ background: theme.gradient }}
+                    >
+                        <Palette size={48} className="text-white opacity-80" />
+                    </div>
+                    
+                    {/* Color Palette */}
+                    <div className="grid grid-cols-4 gap-2">
+                        <ColorSwatch color={theme.colors.primary} label="Primary" />
+                        <ColorSwatch color={theme.colors.secondary} label="Secondary" />
+                        <ColorSwatch color={theme.colors.accent} label="Accent" />
+                        <ColorSwatch color={theme.colors.background} label="Background" />
+                    </div>
+                </div>
+
+                {/* Theme Info */}
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-2xl font-bold text-white mb-2">{theme.name}</h4>
+                        <div className="flex items-center gap-3 text-sm">
+                            <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-full font-medium border border-cyan-500/30">
+                                {theme.category}
+                            </span>
+                            <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full font-medium border border-blue-500/30">
+                                {theme.type}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Font Info */}
+                    <div className="space-y-2">
+                        <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+                            <p className="text-xs text-slate-500 mb-1">Heading Font</p>
+                            <p className="text-sm text-slate-200 font-medium">{theme.fonts?.heading || 'Inter'}</p>
+                        </div>
+                        <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+                            <p className="text-xs text-slate-500 mb-1">Body Font</p>
+                            <p className="text-sm text-slate-200 font-medium">{theme.fonts?.body || 'Inter'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Color Swatch Component
+const ColorSwatch = ({ color, label }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(color);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className="group relative"
+            title={`${label}: ${color}`}
+        >
+            <div
+                className="h-16 rounded-lg border-2 border-slate-700 group-hover:border-cyan-500 transition-all group-hover:scale-105"
+                style={{ backgroundColor: color }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {copied ? (
+                    <Check size={16} className="text-white drop-shadow-lg" />
+                ) : (
+                    <Copy size={16} className="text-white drop-shadow-lg" />
+                )}
+            </div>
+            <p className="text-xs text-slate-400 mt-1 truncate">{label}</p>
+        </button>
+    );
+};
+
+// Theme Card Component
+const ThemeCard = ({ theme, isActive, isFavorite, onSelect, onToggleFavorite, onExport, onDelete }) => {
+    return (
+        <motion.div
+            whileHover={{ y: -4, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`group relative bg-slate-800/50 backdrop-blur-sm rounded-xl border-2 transition-all cursor-pointer overflow-hidden ${
+                isActive
+                    ? 'border-cyan-500 shadow-2xl shadow-cyan-500/20'
+                    : 'border-slate-700/50 hover:border-cyan-500/50'
+            }`}
+        >
+            {/* Active Badge */}
+            {isActive && (
+                <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/50">
+                    <Check size={16} className="text-white" />
+                </div>
+            )}
+
+            {/* Favorite Button */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite();
+                }}
+                className="absolute top-3 left-3 z-10 p-2 rounded-lg bg-slate-900/50 backdrop-blur-sm hover:bg-slate-800 transition-colors"
+            >
+                <Heart size={16} className={isFavorite ? 'text-pink-400 fill-pink-400' : 'text-slate-400'} />
+            </button>
+
+            {/* Theme Preview */}
+            <div onClick={onSelect} className="p-6">
+                <div
+                    className="h-32 rounded-lg flex items-center justify-center shadow-lg mb-4"
+                    style={{ background: theme.gradient }}
+                >
+                    <Palette size={40} className="text-white opacity-80" />
+                </div>
+
+                {/* Color Swatches */}
+                <div className="flex gap-2 mb-4">
+                    {[theme.colors.primary, theme.colors.secondary, theme.colors.accent].map((color, idx) => (
+                        <div
+                            key={idx}
+                            className="flex-1 h-8 rounded border-2 border-slate-700"
+                            style={{ backgroundColor: color }}
+                        />
+                    ))}
+                </div>
+
+                {/* Theme Info */}
+                <div className="mb-4">
+                    <h4 className="text-white font-semibold text-lg mb-2">{theme.name}</h4>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-1 bg-slate-700 text-slate-300 rounded-full">
+                            {theme.category}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                            theme.type === 'dark'
+                                ? 'bg-slate-700 text-slate-300'
+                                : 'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                            {theme.type === 'dark' ? <Moon size={12} className="inline mr-1" /> : <Sun size={12} className="inline mr-1" />}
+                            {theme.type}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="border-t border-slate-700/50 p-3 flex items-center gap-2">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onExport();
+                    }}
+                    className="flex-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                    <Download size={14} />
+                    Export
+                </button>
+                {onDelete && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete();
+                        }}
+                        className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
+// Theme List Item Component
+const ThemeListItem = ({ theme, isActive, isFavorite, onSelect, onToggleFavorite, onExport }) => {
+    return (
+        <motion.div
+            whileHover={{ x: 4 }}
+            onClick={onSelect}
+            className={`flex items-center gap-4 p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl border-2 transition-all cursor-pointer ${
+                isActive
+                    ? 'border-cyan-500 shadow-lg shadow-cyan-500/20'
+                    : 'border-slate-700/50 hover:border-cyan-500/50'
+            }`}
+        >
+            {/* Theme Preview */}
+            <div
+                className="w-24 h-16 rounded-lg flex-shrink-0 shadow-lg"
+                style={{ background: theme.gradient }}
+            />
+
+            {/* Theme Info */}
+            <div className="flex-1 min-w-0">
+                <h4 className="text-white font-semibold mb-1">{theme.name}</h4>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-1 bg-slate-700 text-slate-300 rounded-full">
+                        {theme.category}
+                    </span>
+                    <span className="text-xs text-slate-500">{theme.type}</span>
+                </div>
+            </div>
+
+            {/* Color Swatches */}
+            <div className="hidden md:flex gap-2">
+                {[theme.colors.primary, theme.colors.secondary, theme.colors.accent].map((color, idx) => (
+                    <div
+                        key={idx}
+                        className="w-10 h-10 rounded border-2 border-slate-700"
+                        style={{ backgroundColor: color }}
+                    />
+                ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite();
+                    }}
+                    className={`p-2 rounded-lg transition-all ${
+                        isFavorite
+                            ? 'bg-pink-500/20 text-pink-400'
+                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                    }`}
+                >
+                    <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onExport();
+                    }}
+                    className="p-2 rounded-lg bg-slate-700 text-slate-400 hover:bg-slate-600 transition-colors"
+                >
+                    <Download size={16} />
+                </button>
+                {isActive && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                        <Check size={16} className="text-white" />
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
+// Custom Theme Modal Component (Placeholder - you can expand this)
+const CustomThemeModal = ({ isOpen, onClose, onSave }) => {
+    const [themeName, setThemeName] = useState('');
+    const [themeColors, setThemeColors] = useState({
+        primary: '#06b6d4',
+        secondary: '#0ea5e9',
+        accent: '#22d3ee',
+        background: '#0f172a',
+        surface: '#1e293b',
+        text: '#f1f5f9',
+        textSecondary: '#94a3b8',
+        border: '#334155'
+    });
+
+    const handleSave = () => {
+        const newTheme = {
+            id: `custom-${Date.now()}`,
+            name: themeName || 'Custom Theme',
+            category: 'custom',
+            type: 'dark',
+            colors: themeColors,
+            gradient: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.secondary} 100%)`,
+            fonts: {
+                heading: "'Inter', sans-serif",
+                body: "'Inter', sans-serif",
+                mono: "'Fira Code', monospace"
+            },
+            custom: true
+        };
+        onSave(newTheme);
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    >
+                        <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold text-white">Create Custom Theme</h2>
+                                <button
+                                    onClick={onClose}
+                                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                                >
+                                    <X size={20} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            {/* Theme Name */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Theme Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={themeName}
+                                    onChange={(e) => setThemeName(e.target.value)}
+                                    placeholder="My Custom Theme"
+                                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                />
+                            </div>
+
+                            {/* Color Pickers */}
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                {Object.entries(themeColors).map(([key, value]) => (
+                                    <div key={key}>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2 capitalize">
+                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="color"
+                                                value={value}
+                                                onChange={(e) => setThemeColors({ ...themeColors, [key]: e.target.value })}
+                                                className="w-14 h-10 rounded cursor-pointer"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={value}
+                                                onChange={(e) => setThemeColors({ ...themeColors, [key]: e.target.value })}
+                                                className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Preview */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Preview</label>
+                                <div
+                                    className="h-32 rounded-lg flex items-center justify-center"
+                                    style={{ background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.secondary} 100%)` }}
+                                >
+                                    <Palette size={48} className="text-white opacity-80" />
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={onClose}
+                                    className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    className="flex-1 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Save size={18} />
+                                    Save Theme
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+};
+
+export default ThemeManager;
