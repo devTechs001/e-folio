@@ -3,12 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Mail, Inbox, Star, Send, Edit3, Archive, Trash2, AlertTriangle,
     Search, Filter, Plus, Paperclip, X, Clock3, Zap, Save, Reply, 
-    Forward, Printer, Minimize2, Maximize2, Download, Flag
+    Forward, Printer, Minimize2, Maximize2, Download, Flag, 
+    Check, Tag, Eye, EyeOff, RefreshCw
 } from 'lucide-react';
 import DashboardLayout from './DashboardLayout';
 
 const EmailManagerEnhanced = () => {
     const [emails, setEmails] = useState([]);
+    const [drafts, setDrafts] = useState([]); // ✅ ADDED
     const [selectedEmail, setSelectedEmail] = useState(null);
     const [selectedEmails, setSelectedEmails] = useState([]);
     const [composing, setComposing] = useState(false);
@@ -33,6 +35,8 @@ const EmailManagerEnhanced = () => {
     const [showTemplates, setShowTemplates] = useState(false);
     const [showQuickResponses, setShowQuickResponses] = useState(false);
     const [showScheduler, setShowScheduler] = useState(false);
+    const [showFilters, setShowFilters] = useState(false); // ✅ ADDED
+    const [showLabels, setShowLabels] = useState(false); // ✅ ADDED
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [filters, setFilters] = useState({
         unread: false,
@@ -46,11 +50,11 @@ const EmailManagerEnhanced = () => {
     const editorRef = useRef(null);
 
     // Mock data
-    const stats = {
+    const [stats, setStats] = useState({
         unread: 5,
         sent: 12,
         drafts: 3
-    };
+    });
 
     const labels = [
         { id: 'work', name: 'Work', color: '#3B82F6' },
@@ -65,10 +69,24 @@ const EmailManagerEnhanced = () => {
             description: 'Template for responding to project inquiries',
             subject: 'Re: Project Inquiry',
             body: 'Thank you for your interest in working together...'
+        },
+        {
+            id: 2,
+            name: 'Meeting Follow-up',
+            description: 'Template for following up after meetings',
+            subject: 'Following up on our meeting',
+            body: 'It was great meeting with you today. Here are the key points we discussed...'
         }
     ];
 
-    // Seed some mock emails for local UI testing when none exist
+    // ✅ ADDED: Quick responses
+    const quickResponses = [
+        { id: 1, name: 'Thank You', body: 'Thank you for reaching out. I appreciate your message.' },
+        { id: 2, name: 'Will Reply Soon', body: 'Thank you for your email. I will get back to you shortly.' },
+        { id: 3, name: 'Received', body: 'I have received your email and will review it carefully.' }
+    ];
+
+    // Seed mock emails
     useEffect(() => {
         if (emails.length === 0) {
             setEmails([
@@ -83,7 +101,9 @@ const EmailManagerEnhanced = () => {
                     starred: false,
                     attachments: [],
                     priority: 'normal',
-                    labels: []
+                    labels: [],
+                    folder: 'inbox', // ✅ ADDED
+                    archived: false
                 },
                 {
                     id: 'e_2',
@@ -94,52 +114,199 @@ const EmailManagerEnhanced = () => {
                     timestamp: Date.now() - 1000 * 60 * 60 * 5,
                     unread: false,
                     starred: true,
-                    attachments: [],
+                    attachments: [{ name: 'brief.pdf', size: 245000, type: 'application/pdf' }],
                     priority: 'high',
-                    labels: ['work']
+                    labels: ['work'],
+                    folder: 'inbox',
+                    archived: false,
+                    hasAttachment: true
+                },
+                {
+                    id: 'e_3',
+                    subject: 'Newsletter: Design Trends 2024',
+                    from: { name: 'Design Weekly', email: 'news@designweekly.com' },
+                    preview: 'Check out the latest design trends for 2024...',
+                    body: 'Here are the top design trends to watch in 2024...',
+                    timestamp: Date.now() - 1000 * 60 * 60 * 48,
+                    unread: false,
+                    starred: false,
+                    attachments: [],
+                    priority: 'low',
+                    labels: ['personal'],
+                    folder: 'inbox',
+                    archived: false
                 }
             ]);
         }
     }, []);
 
-    // Mock function - replace with actual implementation
     const isOwner = () => true;
 
+    // ✅ UPDATED: Actual send functionality
     const handleSendEmail = () => {
-        // Simple local send - add to emails list and mark as selected
+        if (!composeData.to) {
+            alert('Please enter a recipient');
+            return;
+        }
+
         const newEmail = {
             id: `e_${Date.now()}`,
             subject: composeData.subject || '(no subject)',
             from: { name: 'You', email: 'me@local' },
+            to: composeData.to,
+            cc: composeData.cc,
+            bcc: composeData.bcc,
             preview: composeData.body?.substring(0, 100) || '',
             body: composeData.body,
-            timestamp: Date.now(),
+            timestamp: composeData.scheduledFor || Date.now(),
             unread: false,
             starred: false,
             attachments: composeData.attachments || [],
             priority: composeData.priority || 'normal',
-            labels: []
+            labels: [],
+            folder: 'sent',
+            archived: false
         };
 
         setEmails(prev => [newEmail, ...prev]);
-        setSelectedEmail(newEmail);
+        setStats(prev => ({ ...prev, sent: prev.sent + 1 }));
         resetCompose();
-        // feedback
-        console.log('Email sent (local):', newEmail);
+        
+        // Show success message
+        alert(composeData.scheduledFor ? 'Email scheduled!' : 'Email sent!');
     };
 
+    // ✅ UPDATED: Save draft functionality
     const saveDraft = () => {
-        // Save draft locally by creating/updating a draft entry
         const draft = {
             id: `d_${Date.now()}`,
-            subject: composeData.subject || '(draft)',
+            subject: composeData.subject || '(no subject)',
+            from: { name: 'You', email: 'me@local' },
+            to: composeData.to,
+            preview: composeData.body?.substring(0, 100) || '',
             body: composeData.body,
             timestamp: Date.now(),
-            attachments: composeData.attachments || []
+            attachments: composeData.attachments || [],
+            priority: composeData.priority,
+            folder: 'drafts',
+            unread: false,
+            starred: false,
+            labels: [],
+            archived: false
         };
 
-        setDrafts(prev => [draft, ...prev]);
-        console.log('Draft saved (local):', draft);
+        setEmails(prev => [draft, ...prev]);
+        setStats(prev => ({ ...prev, drafts: prev.drafts + 1 }));
+        resetCompose();
+        alert('Draft saved!');
+    };
+
+    // ✅ UPDATED: Toggle star functionality
+    const handleToggleStar = (emailId) => {
+        setEmails(prev => prev.map(email => 
+            email.id === emailId 
+                ? { ...email, starred: !email.starred }
+                : email
+        ));
+    };
+
+    // ✅ UPDATED: Archive functionality
+    const handleArchiveEmail = (emailId) => {
+        setEmails(prev => prev.map(email => 
+            email.id === emailId 
+                ? { ...email, archived: !email.archived, folder: email.archived ? 'inbox' : 'archived' }
+                : email
+        ));
+    };
+
+    // ✅ UPDATED: Delete functionality
+    const handleDeleteEmail = (emailId) => {
+        if (window.confirm('Move email to trash?')) {
+            setEmails(prev => prev.map(email => 
+                email.id === emailId 
+                    ? { ...email, folder: 'trash' }
+                    : email
+            ));
+            setSelectedEmail(null);
+        }
+    };
+
+    // ✅ ADDED: Mark as read/unread
+    const handleToggleRead = (emailId) => {
+        setEmails(prev => prev.map(email => {
+            if (email.id === emailId) {
+                const newUnread = !email.unread;
+                setStats(s => ({ 
+                    ...s, 
+                    unread: newUnread ? s.unread + 1 : Math.max(0, s.unread - 1)
+                }));
+                return { ...email, unread: newUnread };
+            }
+            return email;
+        }));
+    };
+
+    // ✅ ADDED: Add/remove labels
+    const handleToggleLabel = (emailId, labelId) => {
+        setEmails(prev => prev.map(email => {
+            if (email.id === emailId) {
+                const labels = email.labels || [];
+                const hasLabel = labels.includes(labelId);
+                return {
+                    ...email,
+                    labels: hasLabel 
+                        ? labels.filter(l => l !== labelId)
+                        : [...labels, labelId]
+                };
+            }
+            return email;
+        }));
+    };
+
+    // ✅ ADDED: Bulk actions
+    const handleBulkAction = (action) => {
+        if (selectedEmails.length === 0) return;
+
+        switch (action) {
+            case 'delete':
+                if (window.confirm(`Move ${selectedEmails.length} emails to trash?`)) {
+                    setEmails(prev => prev.map(email => 
+                        selectedEmails.includes(email.id) 
+                            ? { ...email, folder: 'trash' }
+                            : email
+                    ));
+                }
+                break;
+            case 'archive':
+                setEmails(prev => prev.map(email => 
+                    selectedEmails.includes(email.id) 
+                        ? { ...email, archived: true, folder: 'archived' }
+                        : email
+                ));
+                break;
+            case 'read':
+                setEmails(prev => prev.map(email => 
+                    selectedEmails.includes(email.id) 
+                        ? { ...email, unread: false }
+                        : email
+                ));
+                break;
+            case 'unread':
+                setEmails(prev => prev.map(email => 
+                    selectedEmails.includes(email.id) 
+                        ? { ...email, unread: true }
+                        : email
+                ));
+                break;
+            case 'star':
+                setEmails(prev => prev.map(email => 
+                    selectedEmails.includes(email.id) 
+                        ? { ...email, starred: true }
+                        : email
+                ));
+                break;
+        }
+        setSelectedEmails([]);
     };
 
     const handleFileUpload = (files) => {
@@ -170,6 +337,15 @@ const EmailManagerEnhanced = () => {
             templateId: template.id
         }));
         setShowTemplates(false);
+    };
+
+    // ✅ ADDED: Apply quick response
+    const applyQuickResponse = (response) => {
+        setComposeData(prev => ({
+            ...prev,
+            body: prev.body + '\n\n' + response.body
+        }));
+        setShowQuickResponses(false);
     };
 
     const handleReply = (email) => {
@@ -237,10 +413,11 @@ const EmailManagerEnhanced = () => {
     };
 
     const selectAllEmails = () => {
-        if (selectedEmails.length === emails.length) {
+        const visibleEmails = getFilteredEmails();
+        if (selectedEmails.length === visibleEmails.length) {
             setSelectedEmails([]);
         } else {
-            setSelectedEmails(emails.map(e => e.id));
+            setSelectedEmails(visibleEmails.map(e => e.id));
         }
     };
 
@@ -266,26 +443,42 @@ const EmailManagerEnhanced = () => {
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     };
 
-    const filteredEmails = emails.filter(email => {
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            if (
-                !email.subject?.toLowerCase().includes(query) &&
-                !email.from?.name.toLowerCase().includes(query) &&
-                !email.preview?.toLowerCase().includes(query)
-            ) {
-                return false;
+    // ✅ UPDATED: Filter emails by search, filters, and active tab
+    const getFilteredEmails = () => {
+        return emails.filter(email => {
+            // Tab filtering
+            if (activeTab === 'inbox' && email.folder !== 'inbox') return false;
+            if (activeTab === 'starred' && !email.starred) return false;
+            if (activeTab === 'sent' && email.folder !== 'sent') return false;
+            if (activeTab === 'drafts' && email.folder !== 'drafts') return false;
+            if (activeTab === 'archived' && email.folder !== 'archived') return false;
+            if (activeTab === 'trash' && email.folder !== 'trash') return false;
+            if (activeTab === 'spam' && email.folder !== 'spam') return false;
+
+            // Search query
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                if (
+                    !email.subject?.toLowerCase().includes(query) &&
+                    !email.from?.name.toLowerCase().includes(query) &&
+                    !email.preview?.toLowerCase().includes(query)
+                ) {
+                    return false;
+                }
             }
-        }
 
-        if (filters.unread && !email.unread) return false;
-        if (filters.starred && !email.starred) return false;
-        if (filters.hasAttachment && !email.hasAttachment) return false;
-        if (filters.priority !== 'all' && email.priority !== filters.priority) return false;
-        if (filters.label !== 'all' && !email.labels?.includes(filters.label)) return false;
+            // Filters
+            if (filters.unread && !email.unread) return false;
+            if (filters.starred && !email.starred) return false;
+            if (filters.hasAttachment && !email.hasAttachment) return false;
+            if (filters.priority !== 'all' && email.priority !== filters.priority) return false;
+            if (filters.label !== 'all' && !email.labels?.includes(filters.label)) return false;
 
-        return true;
-    });
+            return true;
+        });
+    };
+
+    const filteredEmails = getFilteredEmails();
 
     const tabs = [
         { id: 'inbox', label: 'Inbox', icon: Inbox, count: stats.unread },
@@ -297,12 +490,6 @@ const EmailManagerEnhanced = () => {
         { id: 'spam', label: 'Spam', icon: AlertTriangle }
     ];
 
-    // Mock functions - replace with actual implementations
-    const handleToggleStar = (emailId) => console.log('Toggle star:', emailId);
-    const handleArchiveEmail = (emailId) => console.log('Archive:', emailId);
-    const handleDeleteEmail = (emailId) => console.log('Delete:', emailId);
-
-    // Access check
     if (!isOwner()) {
         return (
             <DashboardLayout>
@@ -352,66 +539,311 @@ const EmailManagerEnhanced = () => {
                                 className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
                             />
                         </div>
-                        <button className="p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors">
-                            <Filter size={20} className="text-gray-600 dark:text-gray-400" />
+                        <button 
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`p-3 border rounded-lg transition-colors ${
+                                showFilters 
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500' 
+                                    : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700'
+                            }`}
+                        >
+                            <Filter size={20} className={showFilters ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'} />
                         </button>
                     </div>
+
+                    {/* ✅ ADDED: Filter Panel */}
+                    {showFilters && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={filters.unread}
+                                        onChange={(e) => setFilters({...filters, unread: e.target.checked})}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Unread</span>
+                                </label>
+                                
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={filters.starred}
+                                        onChange={(e) => setFilters({...filters, starred: e.target.checked})}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Starred</span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={filters.hasAttachment}
+                                        onChange={(e) => setFilters({...filters, hasAttachment: e.target.checked})}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Has Attachment</span>
+                                </label>
+
+                                <select
+                                    value={filters.priority}
+                                    onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                                    className="px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                >
+                                    <option value="all">All Priorities</option>
+                                    <option value="low">Low</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                </select>
+
+                                <select
+                                    value={filters.label}
+                                    onChange={(e) => setFilters({...filters, label: e.target.value})}
+                                    className="px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                >
+                                    <option value="all">All Labels</option>
+                                    {labels.map(label => (
+                                        <option key={label.id} value={label.id}>{label.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <button
+                                onClick={() => setFilters({ unread: false, starred: false, hasAttachment: false, priority: 'all', label: 'all' })}
+                                className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                                Clear all filters
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* ✅ ADDED: Bulk Actions Bar */}
+                    {selectedEmails.length > 0 && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center justify-between"
+                        >
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                {selectedEmails.length} email{selectedEmails.length > 1 ? 's' : ''} selected
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleBulkAction('read')}
+                                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors"
+                                    title="Mark as read"
+                                >
+                                    <Eye size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleBulkAction('unread')}
+                                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors"
+                                    title="Mark as unread"
+                                >
+                                    <EyeOff size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleBulkAction('star')}
+                                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors"
+                                    title="Star all"
+                                >
+                                    <Star size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleBulkAction('archive')}
+                                    className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors"
+                                    title="Archive all"
+                                >
+                                    <Archive size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleBulkAction('delete')}
+                                    className="px-3 py-1.5 text-sm bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg transition-colors"
+                                    title="Delete all"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setSelectedEmails([])}
+                                    className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 flex">
+                <div className="flex-1 flex overflow-hidden">
                     {/* Sidebar */}
-                    <div className="w-64 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <div className="w-64 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-y-auto">
                         <div className="p-4 space-y-1">
-                            {tabs.map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                                        activeTab === tab.id
-                                            ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
-                                            : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
-                                    }`}
-                                >
-                                    <tab.icon size={20} />
-                                    <span className="flex-1 text-left">{tab.label}</span>
-                                    {tab.count && (
-                                        <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">
-                                            {tab.count}
+                            {tabs.map(tab => {
+                                const tabCount = tab.id === 'inbox' ? stats.unread :
+                                               tab.id === 'sent' ? stats.sent :
+                                               tab.id === 'drafts' ? stats.drafts : null;
+                                
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                                            activeTab === tab.id
+                                                ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                                                : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        <tab.icon size={20} />
+                                        <span className="flex-1 text-left">{tab.label}</span>
+                                        {tabCount > 0 && (
+                                            <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">
+                                                {tabCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+
+                            <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                                <p className="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">
+                                    Labels
+                                </p>
+                                {labels.map(label => (
+                                    <button
+                                        key={label.id}
+                                        onClick={() => setFilters({...filters, label: label.id})}
+                                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                                            filters.label === label.id
+                                                ? 'bg-white dark:bg-gray-700 shadow-sm'
+                                                : 'hover:bg-white dark:hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        <div 
+                                            className="w-3 h-3 rounded-full" 
+                                            style={{ backgroundColor: label.color }}
+                                        />
+                                        <span className="flex-1 text-left text-sm text-gray-700 dark:text-gray-300">
+                                            {label.name}
                                         </span>
-                                    )}
-                                </button>
-                            ))}
-                            {/* Email list */}
-                            <div className="mt-4 overflow-y-auto h-[calc(100vh-260px)] p-2 space-y-2">
-                                {emails.length === 0 ? (
-                                    <div className="text-sm text-gray-500">No emails</div>
-                                ) : (
-                                    emails.map(email => (
-                                        <button
-                                            key={email.id}
-                                            onClick={() => { setSelectedEmail(email); setComposing(false); }}
-                                            className={`w-full text-left p-3 rounded-lg transition-colors flex items-start gap-3 ${selectedEmail?.id === email.id ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white dark:hover:bg-gray-800'}`}
-                                        >
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                                                {email.from?.name?.charAt(0) || 'U'}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between">
-                                                    <h4 className="font-semibold text-sm truncate">{email.subject}</h4>
-                                                    <span className="text-xs text-gray-400">{formatTime(email.timestamp)}</span>
-                                                </div>
-                                                <p className="text-xs text-gray-500 truncate mt-1">{email.preview}</p>
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
 
+                    {/* Email List */}
+                    <div className="w-96 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto">
+                        {/* ✅ ADDED: Select All Checkbox */}
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900 z-10">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedEmails.length === filteredEmails.length && filteredEmails.length > 0}
+                                    onChange={selectAllEmails}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                    Select all
+                                </span>
+                            </label>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {filteredEmails.length} email{filteredEmails.length !== 1 ? 's' : ''}
+                            </span>
+                        </div>
+
+                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {filteredEmails.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                                    <Mail size={48} className="mx-auto mb-4 opacity-30" />
+                                    <p>No emails found</p>
+                                </div>
+                            ) : (
+                                filteredEmails.map(email => (
+                                    <div
+                                        key={email.id}
+                                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors ${
+                                            selectedEmail?.id === email.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : ''
+                                        } ${
+                                            email.unread ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            {/* ✅ ADDED: Checkbox */}
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedEmails.includes(email.id)}
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelectEmail(email.id);
+                                                }}
+                                                className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            
+                                            <div 
+                                                className="flex-1 min-w-0"
+                                                onClick={() => {
+                                                    setSelectedEmail(email);
+                                                    setComposing(false);
+                                                    if (email.unread) {
+                                                        handleToggleRead(email.id);
+                                                    }
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h4 className={`text-sm truncate ${email.unread ? 'font-bold' : 'font-medium'} text-gray-900 dark:text-white`}>
+                                                        {email.from?.name || 'Unknown'}
+                                                    </h4>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                                        {formatTime(email.timestamp)}
+                                                    </span>
+                                                </div>
+                                                <p className={`text-sm truncate ${email.unread ? 'font-semibold' : ''} text-gray-700 dark:text-gray-300`}>
+                                                    {email.subject}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                                                    {email.preview}
+                                                </p>
+                                                
+                                                {/* Labels and indicators */}
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    {email.starred && (
+                                                        <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                                                    )}
+                                                    {email.hasAttachment && (
+                                                        <Paperclip size={12} className="text-gray-400" />
+                                                    )}
+                                                    {email.priority === 'high' && (
+                                                        <Flag size={12} className="text-red-500" />
+                                                    )}
+                                                    {email.labels?.map(labelId => {
+                                                        const label = labels.find(l => l.id === labelId);
+                                                        return label ? (
+                                                            <div
+                                                                key={labelId}
+                                                                className="w-2 h-2 rounded-full"
+                                                                style={{ backgroundColor: label.color }}
+                                                                title={label.name}
+                                                            />
+                                                        ) : null;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
                     {/* Email Content */}
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col overflow-hidden">
                         {composing ? (
                             /* Compose View */
                             <div className="flex flex-col h-full bg-white dark:bg-gray-900 shadow-lg">
@@ -419,12 +851,21 @@ const EmailManagerEnhanced = () => {
                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                         {replying ? 'Reply' : forwarding ? 'Forward' : 'New Message'}
                                     </h3>
-                                    <button
-                                        onClick={resetCompose}
-                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                                    >
-                                        <X size={20} className="text-gray-600 dark:text-gray-400" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setShowTemplates(true)}
+                                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                            title="Use template"
+                                        >
+                                            <Edit3 size={18} className="text-gray-600 dark:text-gray-400" />
+                                        </button>
+                                        <button
+                                            onClick={resetCompose}
+                                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                        >
+                                            <X size={20} className="text-gray-600 dark:text-gray-400" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -616,7 +1057,7 @@ const EmailManagerEnhanced = () => {
                             </div>
                         ) : selectedEmail ? (
                             /* Email View */
-                            <div className="flex flex-col h-full">
+                            <div className="flex flex-col h-full overflow-hidden">
                                 {/* Email Header */}
                                 <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                                     <div className="flex items-start justify-between mb-4">
@@ -624,6 +1065,19 @@ const EmailManagerEnhanced = () => {
                                             {selectedEmail.subject}
                                         </h2>
                                         <div className="flex items-center gap-2">
+                                            {/* ✅ ADDED: Mark as read/unread */}
+                                            <button
+                                                onClick={() => handleToggleRead(selectedEmail.id)}
+                                                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                title={selectedEmail.unread ? 'Mark as read' : 'Mark as unread'}
+                                            >
+                                                {selectedEmail.unread ? (
+                                                    <Eye size={20} className="text-gray-600 dark:text-gray-400" />
+                                                ) : (
+                                                    <EyeOff size={20} className="text-gray-600 dark:text-gray-400" />
+                                                )}
+                                            </button>
+
                                             <button
                                                 onClick={() => handleToggleStar(selectedEmail.id)}
                                                 className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -633,6 +1087,16 @@ const EmailManagerEnhanced = () => {
                                                     className={selectedEmail.starred ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600 dark:text-gray-400'} 
                                                 />
                                             </button>
+
+                                            {/* ✅ ADDED: Label button */}
+                                            <button
+                                                onClick={() => setShowLabels(!showLabels)}
+                                                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors relative"
+                                                title="Add label"
+                                            >
+                                                <Tag size={20} className="text-gray-600 dark:text-gray-400" />
+                                            </button>
+
                                             <button
                                                 onClick={() => handleArchiveEmail(selectedEmail.id)}
                                                 className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -666,6 +1130,37 @@ const EmailManagerEnhanced = () => {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* ✅ ADDED: Label dropdown */}
+                                    {showLabels && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="absolute right-6 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 z-20"
+                                        >
+                                            {labels.map(label => (
+                                                <button
+                                                    key={label.id}
+                                                    onClick={() => {
+                                                        handleToggleLabel(selectedEmail.id, label.id);
+                                                        setShowLabels(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors"
+                                                >
+                                                    <div 
+                                                        className="w-3 h-3 rounded-full" 
+                                                        style={{ backgroundColor: label.color }}
+                                                    />
+                                                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                        {label.name}
+                                                    </span>
+                                                    {selectedEmail.labels?.includes(label.id) && (
+                                                        <Check size={16} className="ml-auto text-blue-600" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    )}
 
                                     <div className="flex items-start gap-4">
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
@@ -748,7 +1243,7 @@ const EmailManagerEnhanced = () => {
                                                             </p>
                                                         </div>
                                                         <a
-                                                            href={file.url}
+                                                            href={file.url || '#'}
                                                             download
                                                             className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
                                                         >
@@ -781,16 +1276,144 @@ const EmailManagerEnhanced = () => {
                             </div>
                         ) : (
                             /* Empty State */
-                            <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                                <div className="text-center">
-                                    <Mail size={64} className="mx-auto mb-4 opacity-30" />
-                                    <p className="text-lg">Select an email to read</p>
+                            (
+                                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                                    <div className="text-center">
+                                        <Mail size={64} className="mx-auto mb-4 opacity-30" />
+                                        <p className="text-lg">Select an email to read</p>
+                                        <p className="text-sm mt-2">or</p>
+                                        <button
+                                            onClick={() => setComposing(true)}
+                                            className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
+                                        >
+                                            Compose new email
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* ✅ ADDED: Quick Responses Modal */}
+            <AnimatePresence>
+                {showQuickResponses && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowQuickResponses(false)}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full"
+                        >
+                            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                    Quick Responses
+                                </h3>
+                                <button
+                                    onClick={() => setShowQuickResponses(false)}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                >
+                                    <X size={20} className="text-gray-600 dark:text-gray-400" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-3">
+                                {quickResponses.map(response => (
+                                    <button
+                                        key={response.id}
+                                        onClick={() => applyQuickResponse(response)}
+                                        className="w-full p-4 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
+                                    >
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                                            {response.name}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            {response.body}
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ✅ ADDED: Scheduler Modal */}
+            <AnimatePresence>
+                {showScheduler && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowScheduler(false)}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full"
+                        >
+                            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                    Schedule Email
+                                </h3>
+                                <button
+                                    onClick={() => setShowScheduler(false)}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                >
+                                    <X size={20} className="text-gray-600 dark:text-gray-400" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Send at:
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={composeData.scheduledFor ? new Date(composeData.scheduledFor).toISOString().slice(0, 16) : ''}
+                                        onChange={(e) => setComposeData({
+                                            ...composeData, 
+                                            scheduledFor: new Date(e.target.value).getTime()
+                                        })}
+                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                    />
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setShowScheduler(false);
+                                            handleSendEmail();
+                                        }}
+                                        className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all"
+                                    >
+                                        Schedule
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setComposeData({...composeData, scheduledFor: null});
+                                            setShowScheduler(false);
+                                        }}
+                                        className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Templates Modal */}
             <AnimatePresence>
