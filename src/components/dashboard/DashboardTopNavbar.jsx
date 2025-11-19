@@ -174,22 +174,6 @@ const DashboardTopNavbar = ({
                     <div className="flex items-center justify-between h-full gap-4">
                         {/* Left Section */}
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {/* Mobile Menu Toggle */}
-                            <button
-                                onClick={onToggleMobileMenu}
-                                className="flex lg:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
-                            >
-                                <Menu size={24} className="text-slate-300 flex-shrink-0" />
-                            </button>
-
-                            {/* Desktop Sidebar Toggle */}
-                            <button
-                                onClick={onToggleSidebar}
-                                className="hidden lg:flex items-center justify-center p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all group"
-                                title="Toggle Sidebar"
-                            >
-                                <Menu size={20} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
-                            </button>
 
                             {/* Breadcrumbs - Desktop Only */}
                             {showBreadcrumbs && breadcrumbs.length > 0 && (
