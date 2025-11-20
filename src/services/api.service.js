@@ -529,6 +529,57 @@ class ApiService {
         return this.request(`/media/folders?${query}`);
     }
 
+    async uploadFile(formData, onUploadProgress = null) {
+        return this.request('/media/files/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {},
+            onUploadProgress // Note: This might need special handling for fetch API
+        });
+    }
+
+    async deleteFiles(fileIds) {
+        return this.request('/media/files', {
+            method: 'DELETE',
+            body: JSON.stringify({ fileIds })
+        });
+    }
+
+    async downloadFile(fileId) {
+        // For download, we may need to return the actual file blob rather than json
+        const response = await fetch(`${this.baseURL}/media/files/${fileId}/download`, {
+            headers: this.getHeaders()
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Download failed');
+        }
+        
+        return response.blob();
+    }
+
+    async createFolder(folderData) {
+        return this.request('/media/folders', {
+            method: 'POST',
+            body: JSON.stringify(folderData)
+        });
+    }
+
+    async renameFile(fileId, newName) {
+        return this.request(`/media/files/${fileId}/rename`, {
+            method: 'PUT',
+            body: JSON.stringify({ newName })
+        });
+    }
+
+    async shareFile(fileId, settings) {
+        return this.request(`/media/files/${fileId}/share`, {
+            method: 'POST',
+            body: JSON.stringify(settings)
+        });
+    }
+
     async uploadMediaFile(formData) {
         return this.request('/media/files/upload', {
             method: 'POST',
