@@ -32,6 +32,8 @@ const emailRoutes = require('./routes/email.routes');
 const reviewsRoutes = require('./routes/reviews.routes');
 const mediaRoutes = require('./routes/media.routes');
 const learningRoutes = require('./routes/learning.routes');
+const educationRoutes = require('./routes/education.routes');
+const interestsRoutes = require('./routes/interests.routes');
 const webhooksRoutes = require('./routes/webhooks.routes');
 
 // Create Express app and server
@@ -111,6 +113,8 @@ app.use('/api/email', emailRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/learning', learningRoutes);
+app.use('/api/education', educationRoutes);
+app.use('/api/interests', interestsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 
 

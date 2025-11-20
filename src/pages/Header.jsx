@@ -88,7 +88,10 @@ const Header = () => {
         if (!isMenuOpen) return;
 
         const handleClickOutside = (event) => {
-            if (!event.target.closest('.navbar') && !event.target.closest('.nav-toggle')) {
+            // Close when clicking outside the mobile nav or the toggle button
+            const clickedInsideNav = event.target.closest('.mobile-nav');
+            const clickedOnToggle = event.target.closest('.menu-toggle-btn') || event.target.closest('.hamburger');
+            if (!clickedInsideNav && !clickedOnToggle) {
                 setIsMenuOpen(false);
             }
         };
@@ -190,9 +193,11 @@ const Header = () => {
                                 to="/dashboard"
                                 className={`dashboard-btn ${isDashboardRoute ? 'active' : ''}`}
                                 aria-current={isDashboardRoute ? 'page' : undefined}
+                                aria-label="ThisButtonDoesThings"
+                                title="ThisButtonDoesThings"
                             >
                                 <i className="fas fa-grip-horizontal"></i>
-                                <span className="dashboard-tooltip">Dashboard</span>
+                                <span className="dashboard-tooltip">ThisButtonDoesThings</span>
                                 <div className="btn-shine-effect"></div>
                             </Link>
 
@@ -222,6 +227,7 @@ const Header = () => {
 
                         {/* Mobile Menu Button */}
                         <button
+                            type="button"
                             className="lg:hidden menu-toggle-btn"
                             onClick={toggleMenu}
                             aria-label="Toggle menu"
@@ -279,9 +285,11 @@ const Header = () => {
                                 to="/dashboard"
                                 className={`mobile-dashboard-btn ${isDashboardRoute ? 'active' : ''}`}
                                 onClick={closeMenu}
+                                aria-label="ThisButtonDoesThings"
+                                title="ThisButtonDoesThings"
                             >
                                 <i className="fas fa-grip-horizontal"></i>
-                                <span>Dashboard</span>
+                                <span>ThisButtonDoesThings</span>
                                 <i className="fas fa-arrow-right"></i>
                             </Link>
 

@@ -107,7 +107,7 @@ class TrackingService {
             const location = await this.getLocation();
             const referrer = this.getReferrer();
 
-            await apiService.request('/tracking/session/init', {
+            await apiService.request('/tracking/session', {
                 method: 'POST',
                 body: JSON.stringify({
                     sessionId: this.sessionId,
@@ -140,7 +140,7 @@ class TrackingService {
         this.pageStartTime = Date.now();
 
         try {
-            await apiService.request('/tracking/page', {
+            await apiService.request('/tracking/pageview', {
                 method: 'POST',
                 body: JSON.stringify({
                     sessionId: this.sessionId,

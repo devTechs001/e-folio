@@ -441,6 +441,65 @@ class ApiService {
         });
     }
 
+    // Education APIs
+    async getEducation() {
+        return this.request('/education');
+    }
+
+    async addEducation(educationData) {
+        return this.request('/education', {
+            method: 'POST',
+            body: JSON.stringify(educationData)
+        });
+    }
+
+    async updateEducation(id, educationData) {
+        return this.request(`/education/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(educationData)
+        });
+    }
+
+    async deleteEducation(id) {
+        return this.request(`/education/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Interests APIs
+    async getInterests() {
+        return this.request('/interests');
+    }
+
+    async addInterest(interestData) {
+        return this.request('/interests', {
+            method: 'POST',
+            body: JSON.stringify(interestData)
+        });
+    }
+
+    async updateInterest(id, interestData) {
+        return this.request(`/interests/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(interestData)
+        });
+    }
+
+    async deleteInterest(id) {
+        return this.request(`/interests/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Skill Analytics APIs
+    async getSkillAnalytics() {
+        return this.request('/skills/analytics');
+    }
+
+    async getSkillGroups() {
+        return this.request('/skills/groups');
+    }
+
     // Reviews APIs
     async getReviews() {
         return this.request('/reviews');
@@ -653,6 +712,17 @@ class ApiService {
 
     async getQuickResponses() {
         return this.request('/email/quick-responses/all');
+    }
+
+    // Learning Center APIs
+    async getTutorials(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/learning/tutorials?${query}`);
+    }
+
+    async getVideos(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/learning/videos?${query}`);
     }
 
     // Reviews Manager APIs (Note: These endpoints may not be fully implemented in backend)
