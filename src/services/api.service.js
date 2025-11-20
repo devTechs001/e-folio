@@ -524,6 +524,11 @@ class ApiService {
         return this.request(`/media/files?${query}`);
     }
 
+    async getFolders(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/media/folders?${query}`);
+    }
+
     async uploadMediaFile(formData) {
         return this.request('/media/files/upload', {
             method: 'POST',
