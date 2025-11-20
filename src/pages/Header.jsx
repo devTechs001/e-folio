@@ -23,32 +23,38 @@ const Header = () => {
     const [lastScrollY, setLastScrollY] = useState(0);
     const [isMobile, setIsMobile] = useState(getIsMobile);
     const [activeSection, setActiveSection] = useState(NAV_SECTIONS[0].id);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(getIsMobile());
+            if (!getIsMobile() && isMenuOpen) {
+                setIsMenuOpen(false);
+            }
         };
 
         const handleScroll = () => {
             if (typeof window === 'undefined') return;
             const currentScrollY = window.scrollY;
 
+            setIsScrolled(currentScrollY > 20);
+
             if (isMobile) {
-                setVisible(currentScrollY <= lastScrollY);
+                setVisible(currentScrollY <= lastScrollY || currentScrollY < 100);
             }
 
             setLastScrollY(currentScrollY);
             setScrollPosition(currentScrollY);
         };
 
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', handleResize);
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleResize);
         };
-    }, [isMobile, lastScrollY]);
+    }, [isMobile, lastScrollY, isMenuOpen]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -77,11 +83,34 @@ const Header = () => {
         return () => observer.disconnect();
     }, []);
 
+    // Close menu when clicking outside
+    useEffect(() => {
+        if (!isMenuOpen) return;
+
+        const handleClickOutside = (event) => {
+            if (!event.target.closest('.navbar') && !event.target.closest('.nav-toggle')) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [isMenuOpen]);
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (isMenuOpen && isMobile) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMenuOpen, isMobile]);
+
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
-        if (!isMobile) {
-            setVisible(true);
-        }
     };
 
     const closeMenu = () => {
@@ -92,7 +121,14 @@ const Header = () => {
         event.preventDefault();
         const element = document.getElementById(sectionId);
         if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const headerOffset = 80;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
         }
         setActiveSection(sectionId);
         closeMenu();
@@ -102,102 +138,174 @@ const Header = () => {
     const isCollaborateRoute = location.pathname === '/collaborate';
 
     return (
-        <header className={`header ${scrollPosition > 20 ? 'sticky' : ''}`}>
-            <div className="header-container">
-                <a href="#about" className="logo" style={{
-                    fontSize: '24px',
-                    fontWeight: '800',
-                    fontFamily: "'Orbitron', 'Poppins', sans-serif",
-                    letterSpacing: '1px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }}>
-                    <i className="fas fa-code" style={{ fontSize: '28px' }}></i> 
-                    Danie<span style={{ color: '#0ef' }}>Tech</span>
-                </a>
+        <>
+            {/* Mobile Menu Overlay */}
+            {isMenuOpen && isMobile && (
+                <div 
+                    className="menu-overlay"
+                    onClick={closeMenu}
+                ></div>
+            )}
 
-                <nav className={`navbar ${isMenuOpen ? 'active' : ''} ${isMobile && !visible ? 'hidden' : 'visible'}`}>
-                    {NAV_SECTIONS.map((section) => (
-                        <a
-                            key={section.id}
-                            href={`#${section.id}`}
-                            className={`nav-link ${activeSection === section.id ? 'active' : ''}`}
-                            onClick={(event) => handleSectionClick(event, section.id)}
-                            aria-current={activeSection === section.id ? 'true' : undefined}
-                            style={{ fontSize: '17px' }}
+            <header className={`
+                header-wrapper
+                ${isScrolled ? 'header-scrolled' : ''}
+                ${isMobile && !visible ? 'header-hidden' : ''}
+            `}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-20">
+                        {/* Logo */}
+                        <a 
+                            href="#about" 
+                            className="logo-link group"
+                            onClick={(e) => handleSectionClick(e, 'about')}
                         >
-                            <i className={section.icon} style={{ fontSize: '19px' }}></i>
-                            <span>{section.label}</span>
+                            <div className="logo-icon-wrapper">
+                                <i className="fas fa-code logo-icon"></i>
+                                <div className="logo-icon-glow"></div>
+                            </div>
+                            <span className="logo-text">
+                                Danie<span className="logo-highlight">Tech</span>
+                            </span>
                         </a>
-                    ))}
-                    <Link
-                        to="/dashboard"
-                        className={`nav-link nav-link-special dashboard-icon-btn ${isDashboardRoute ? 'active' : ''}`}
-                        onClick={closeMenu}
-                        aria-current={isDashboardRoute ? 'page' : undefined}
-                        style={{
-                        background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-                        color: '#ffffff',
-                        padding: '14px 14px',
-                        borderRadius: '12px',
-                        marginLeft: '20px',
-                        boxShadow: '0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(99, 102, 241, 0.3)',
-                        fontSize: '22px',
-                        fontWeight: '700',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '48px',
-                        height: '48px',
-                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        position: 'relative',
-                        overflow: 'hidden'
-                    }}
-                    >
-                        <i className="fas fa-grip-horizontal" style={{ 
-                            fontSize: '20px',
-                            filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-                        }}></i>
-                    </Link>
-                    <Link
-                        to="/collaborate"
-                        className={`nav-link nav-link-special collaborate-btn-header ${isCollaborateRoute ? 'active' : ''}`}
-                        onClick={closeMenu}
-                        aria-current={isCollaborateRoute ? 'page' : undefined}
-                        style={{
-                        background: 'linear-gradient(135deg, #00efff, #7c3aed, #00efff)',
-                        backgroundSize: '200% 200%',
-                        color: '#ffffff',
-                        padding: '14px 28px',
-                        borderRadius: '12px',
-                        marginLeft: '8px',
-                        boxShadow: '0 0 20px rgba(0, 239, 255, 0.6), 0 0 40px rgba(124, 58, 237, 0.4)',
-                        fontSize: '17px',
-                        fontWeight: '900',
-                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-                        border: '2px solid rgba(0, 239, 255, 0.5)',
-                        animation: 'gradientShift 3s ease infinite, pulse 2s ease-in-out infinite',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        transition: 'all 0.3s ease'
-                    }}
-                    >
-                        <i className="fas fa-handshake" style={{ fontSize: '20px', fontWeight: '900', marginRight: '8px' }}></i>
-                        <span style={{ position: 'relative', zIndex: 1 }}>Collaborate</span>
-                        <i className="fas fa-sparkles" style={{ fontSize: '14px', marginLeft: '6px' }}></i>
-                    </Link>
-                </nav>
 
-                <div className="nav-toggle" onClick={toggleMenu}>
-                    <div className={`hamburger ${isMenuOpen ? 'active' : ''}`}>
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                        {/* Desktop Navigation */}
+                        <nav className="hidden lg:flex items-center gap-2">
+                            {NAV_SECTIONS.map((section) => (
+                                <a
+                                    key={section.id}
+                                    href={`#${section.id}`}
+                                    className={`nav-link-desktop ${activeSection === section.id ? 'active' : ''}`}
+                                    onClick={(event) => handleSectionClick(event, section.id)}
+                                    aria-current={activeSection === section.id ? 'true' : undefined}
+                                >
+                                    <i className={section.icon}></i>
+                                    <span>{section.label}</span>
+                                    <div className="nav-link-indicator"></div>
+                                </a>
+                            ))}
+
+                            {/* Dashboard Button */}
+                            <Link
+                                to="/dashboard"
+                                className={`dashboard-btn ${isDashboardRoute ? 'active' : ''}`}
+                                aria-current={isDashboardRoute ? 'page' : undefined}
+                            >
+                                <i className="fas fa-grip-horizontal"></i>
+                                <span className="dashboard-tooltip">Dashboard</span>
+                                <div className="btn-shine-effect"></div>
+                            </Link>
+
+                            {/* Collaborate Button */}
+                            <Link
+                                to="/collaborate"
+                                className={`collaborate-btn ${isCollaborateRoute ? 'active' : ''}`}
+                                aria-current={isCollaborateRoute ? 'page' : undefined}
+                            >
+                                <i className="fas fa-handshake"></i>
+                                <span className="font-bold">Collaborate</span>
+                                <i className="fas fa-sparkles sparkle-icon"></i>
+                                <div className="collaborate-pulse"></div>
+                                <div className="btn-shine-effect"></div>
+                            </Link>
+
+                            {/* Theme Toggle */}
+                            <button
+                                onClick={toggleTheme}
+                                className="theme-toggle-btn"
+                                aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+                            >
+                                <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
+                                <div className="theme-toggle-glow"></div>
+                            </button>
+                        </nav>
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            className="lg:hidden menu-toggle-btn"
+                            onClick={toggleMenu}
+                            aria-label="Toggle menu"
+                            aria-expanded={isMenuOpen}
+                        >
+                            <div className={`hamburger ${isMenuOpen ? 'active' : ''}`}>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </button>
                     </div>
                 </div>
-            </div>
-        </header>
+
+                {/* Mobile Navigation */}
+                <nav className={`mobile-nav ${isMenuOpen ? 'open' : ''}`}>
+                    <div className="mobile-nav-content">
+                        {/* Mobile Theme Toggle */}
+                        <div className="mobile-theme-toggle">
+                            <button
+                                onClick={toggleTheme}
+                                className="mobile-theme-btn"
+                            >
+                                <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
+                                <span>{isDarkMode ? 'Light' : 'Dark'} Mode</span>
+                            </button>
+                        </div>
+
+                        {/* Navigation Links */}
+                        <div className="mobile-nav-links">
+                            {NAV_SECTIONS.map((section, index) => (
+                                <a
+                                    key={section.id}
+                                    href={`#${section.id}`}
+                                    className={`mobile-nav-link ${activeSection === section.id ? 'active' : ''}`}
+                                    onClick={(event) => handleSectionClick(event, section.id)}
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
+                                    <div className="mobile-link-icon">
+                                        <i className={section.icon}></i>
+                                    </div>
+                                    <span className="mobile-link-text">{section.label}</span>
+                                    {activeSection === section.id && (
+                                        <div className="mobile-link-active-indicator">
+                                            <i className="fas fa-circle"></i>
+                                        </div>
+                                    )}
+                                </a>
+                            ))}
+                        </div>
+
+                        {/* Special Links */}
+                        <div className="mobile-special-links">
+                            <Link
+                                to="/dashboard"
+                                className={`mobile-dashboard-btn ${isDashboardRoute ? 'active' : ''}`}
+                                onClick={closeMenu}
+                            >
+                                <i className="fas fa-grip-horizontal"></i>
+                                <span>Dashboard</span>
+                                <i className="fas fa-arrow-right"></i>
+                            </Link>
+
+                            <Link
+                                to="/collaborate"
+                                className={`mobile-collaborate-btn ${isCollaborateRoute ? 'active' : ''}`}
+                                onClick={closeMenu}
+                            >
+                                <i className="fas fa-handshake"></i>
+                                <span>Let's Collaborate</span>
+                                <i className="fas fa-sparkles"></i>
+                            </Link>
+                        </div>
+
+                        {/* Mobile Footer */}
+                        <div className="mobile-nav-footer">
+                            <p className="text-textColor/50 text-sm">
+                                © 2024 DanieTech. All rights reserved.
+                            </p>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+        </>
     );
 };
 

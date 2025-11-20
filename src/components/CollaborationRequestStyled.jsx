@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
 import apiService from '../services/api.service';
+import '../styles/CollaborationRequest.css'
 
 const CollaborationRequest = () => {
     const { theme } = useTheme();

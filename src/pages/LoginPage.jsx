@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
     User, Mail, Lock, Key, ArrowLeft, LogIn, Shield, Eye, EyeOff,
-    Sparkles, AlertCircle, CheckCircle, Loader2
+    Sparkles, AlertCircle, CheckCircle, Loader2, Github, Chrome, 
+    Facebook, Twitter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import '../styles/LoginPage.css';
 
 const LoginPage = ({ collaborator = false }) => {
     const { isDarkMode } = useTheme();
@@ -14,27 +16,49 @@ const LoginPage = ({ collaborator = false }) => {
         name: '',
         email: '',
         password: '',
-        accessCode: ''
+        accessCode: '',
+        rememberMe: false
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [focusedField, setFocusedField] = useState('');
+    const [passwordStrength, setPasswordStrength] = useState(0);
+    const [showAccessCodeHint, setShowAccessCodeHint] = useState(false);
     
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    // Calculate password strength
+    useEffect(() => {
+        if (formData.password) {
+            let strength = 0;
+            if (formData.password.length > 6) strength++;
+            if (formData.password.length > 10) strength++;
+            if (/[a-z]/.test(formData.password) && /[A-Z]/.test(formData.password)) strength++;
+            if (/\d/.test(formData.password)) strength++;
+            if (/[^a-zA-Z\d]/.test(formData.password)) strength++;
+            setPasswordStrength(Math.min(strength, 4));
+        } else {
+            setPasswordStrength(0);
+        }
+    }, [formData.password]);
+
     const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: type === 'checkbox' ? checked : value
         });
+        setError(''); // Clear error on input change
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setSuccess('');
 
         try {
             let role = 'visitor';
@@ -42,8 +66,8 @@ const LoginPage = ({ collaborator = false }) => {
             // Determine user role
             if (collaborator && formData.accessCode === 'COLLAB2024') {
                 role = 'collaborator';
-            } else if (collaborator) {
-                setError('Invalid collaboration access code');
+            } else if (collaborator && formData.accessCode) {
+                setError('Invalid collaboration access code. Please check and try again.');
                 setLoading(false);
                 return;
             }
@@ -52,13 +76,17 @@ const LoginPage = ({ collaborator = false }) => {
             const result = await login(formData, role);
             
             if (result.success) {
-                if (result.role === 'owner' || result.role === 'collaborator') {
-                    navigate('/dashboard');
-                } else {
-                    navigate('/');
-                }
+                setSuccess('Login successful! Redirecting...');
+                
+                setTimeout(() => {
+                    if (result.role === 'owner' || result.role === 'collaborator') {
+                        navigate('/dashboard');
+                    } else {
+                        navigate('/');
+                    }
+                }, 1500);
             } else {
-                setError(result.error || 'Login failed. Please check your credentials.');
+                setError(result.error || 'Login failed. Please check your credentials and try again.');
             }
         } catch (err) {
             setError(err.message || 'An error occurred during login. Please try again.');
@@ -67,187 +95,379 @@ const LoginPage = ({ collaborator = false }) => {
         }
     };
 
+    const handleSocialLogin = (provider) => {
+        setError('');
+        setSuccess(`Redirecting to ${provider} login...`);
+        // Implement social login logic here
+        setTimeout(() => {
+            setSuccess('');
+        }, 2000);
+    };
+
+    const getPasswordStrengthColor = () => {
+        switch (passwordStrength) {
+            case 1: return 'bg-red-500';
+            case 2: return 'bg-orange-500';
+            case 3: return 'bg-yellow-500';
+            case 4: return 'bg-green-500';
+            default: return 'bg-gray-500';
+        }
+    };
+
+    const getPasswordStrengthText = () => {
+        switch (passwordStrength) {
+            case 1: return 'Weak';
+            case 2: return 'Fair';
+            case 3: return 'Good';
+            case 4: return 'Strong';
+            default: return '';
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-md"
-            >
-                {/* Back Button */}
-                <Link 
-                    to="/"
-                    className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
-                >
-                    <ArrowLeft size={20} />
-                    Back to Home
-                </Link>
+        <div className="login-page-wrapper">
+            {/* Animated Background */}
+            <div className="login-bg-animation">
+                <div className="login-blob login-blob-1"></div>
+                <div className="login-blob login-blob-2"></div>
+                <div className="login-blob login-blob-3"></div>
+            </div>
 
-                {/* Login Card */}
+            {/* Floating Particles */}
+            <div className="login-particles">
+                {[...Array(20)].map((_, i) => (
+                    <div key={i} className="login-particle" style={{ '--i': i }}></div>
+                ))}
+            </div>
+
+            {/* Grid Pattern */}
+            <div className="login-grid-pattern"></div>
+
+            <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1, duration: 0.3 }}
-                    className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full max-w-md"
                 >
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                            className="inline-block mb-4"
-                        >
-                            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                                <Shield size={40} className="text-white" />
-                            </div>
-                        </motion.div>
-                        <h1 className="text-3xl font-bold text-white mb-2">
-                            Welcome Back
-                        </h1>
-                        <p className="text-gray-300">
-                            {collaborator ? 'Enter your collaboration credentials' : 'Sign in to your account'}
-                        </p>
-                    </div>
+                    {/* Back Button */}
+                    <Link 
+                        to="/"
+                        className="back-home-btn group mb-8"
+                    >
+                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-300" />
+                        <span>Back to Home</span>
+                    </Link>
 
-                    {/* Error Message */}
-                    <AnimatePresence>
-                        {error && (
+                    {/* Login Card */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.1, duration: 0.3 }}
+                        className="login-card"
+                    >
+                        {/* Card Glow Effect */}
+                        <div className="login-card-glow"></div>
+
+                        {/* Header */}
+                        <div className="text-center mb-8">
                             <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center gap-3"
+                                className="login-logo-wrapper"
+                                whileHover={{ scale: 1.05 }}
                             >
-                                <AlertCircle size={20} className="text-red-400" />
-                                <span className="text-red-300 text-sm">{error}</span>
+                                <div className="login-logo">
+                                    <Shield size={40} className="text-white relative z-10" />
+                                    <div className="login-logo-ring login-logo-ring-1"></div>
+                                    <div className="login-logo-ring login-logo-ring-2"></div>
+                                    <div className="login-logo-ring login-logo-ring-3"></div>
+                                </div>
                             </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Name Field */}
-                        <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                <User size={20} />
-                            </div>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                onFocus={() => setFocusedField('name')}
-                                onBlur={() => setFocusedField('')}
-                                required
-                                placeholder="Enter your full name"
-                                className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                                    focusedField === 'name' ? 'bg-white/10' : ''
-                                } ${error && formData.name === '' ? 'border-red-500/50' : 'border-white/20'}`}
-                            />
+                            
+                            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 mt-6">
+                                Welcome Back
+                            </h1>
+                            <p className="text-gray-300 text-sm md:text-base">
+                                {collaborator ? (
+                                    <>
+                                        <Sparkles size={16} className="inline-block mr-1" />
+                                        Enter your collaboration credentials
+                                    </>
+                                ) : (
+                                    'Sign in to access your account'
+                                )}
+                            </p>
                         </div>
 
-                        {/* Email Field */}
-                        <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                <Mail size={20} />
+                        {/* Status Messages */}
+                        <AnimatePresence mode="wait">
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10, height: 0 }}
+                                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                    exit={{ opacity: 0, y: -10, height: 0 }}
+                                    className="status-message status-error mb-6"
+                                >
+                                    <AlertCircle size={20} className="flex-shrink-0" />
+                                    <span className="text-sm">{error}</span>
+                                </motion.div>
+                            )}
+
+                            {success && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10, height: 0 }}
+                                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                    exit={{ opacity: 0, y: -10, height: 0 }}
+                                    className="status-message status-success mb-6"
+                                >
+                                    <CheckCircle size={20} className="flex-shrink-0" />
+                                    <span className="text-sm">{success}</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {/* Name Field */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    <User size={16} />
+                                    Full Name
+                                </label>
+                                <div className="relative">
+                                    <div className="form-icon">
+                                        <User size={20} />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('name')}
+                                        onBlur={() => setFocusedField('')}
+                                        required
+                                        placeholder="Enter your full name"
+                                        className={`form-input ${focusedField === 'name' ? 'form-input-focused' : ''}`}
+                                    />
+                                </div>
                             </div>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                onFocus={() => setFocusedField('email')}
-                                onBlur={() => setFocusedField('')}
-                                required
-                                placeholder="Enter your email"
-                                className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                                    focusedField === 'email' ? 'bg-white/10' : ''
-                                } ${error && formData.email === '' ? 'border-red-500/50' : 'border-white/20'}`}
-                            />
+
+                            {/* Email Field */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    <Mail size={16} />
+                                    Email Address
+                                </label>
+                                <div className="relative">
+                                    <div className="form-icon">
+                                        <Mail size={20} />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('email')}
+                                        onBlur={() => setFocusedField('')}
+                                        required
+                                        placeholder="Enter your email"
+                                        className={`form-input ${focusedField === 'email' ? 'form-input-focused' : ''}`}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Password Field */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    <Lock size={16} />
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <div className="form-icon">
+                                        <Lock size={20} />
+                                    </div>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('password')}
+                                        onBlur={() => setFocusedField('')}
+                                        required
+                                        placeholder="Enter your password"
+                                        className={`form-input pr-12 ${focusedField === 'password' ? 'form-input-focused' : ''}`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="password-toggle-btn"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                                
+                                {/* Password Strength Indicator */}
+                                {formData.password && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="mt-2"
+                                    >
+                                        <div className="password-strength-bar">
+                                            <div 
+                                                className={`password-strength-fill ${getPasswordStrengthColor()}`}
+                                                style={{ width: `${(passwordStrength / 4) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <p className="password-strength-text">
+                                            Password Strength: <span className={getPasswordStrengthColor().replace('bg-', 'text-')}>{getPasswordStrengthText()}</span>
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </div>
+
+                            {/* Access Code (Collaborator Only) */}
+                            {collaborator && (
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        <Key size={16} />
+                                        Access Code
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAccessCodeHint(!showAccessCodeHint)}
+                                            className="ml-2 text-purple-400 hover:text-purple-300 transition-colors"
+                                        >
+                                            <AlertCircle size={14} />
+                                        </button>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="form-icon">
+                                            <Key size={20} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            name="accessCode"
+                                            value={formData.accessCode}
+                                            onChange={handleChange}
+                                            onFocus={() => setFocusedField('accessCode')}
+                                            onBlur={() => setFocusedField('')}
+                                            placeholder="Enter collaboration code"
+                                            className={`form-input ${focusedField === 'accessCode' ? 'form-input-focused' : ''}`}
+                                        />
+                                    </div>
+                                    {showAccessCodeHint && (
+                                        <motion.p
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="mt-2 text-xs text-gray-400 bg-gray-800/50 p-2 rounded-lg"
+                                        >
+                                            💡 Contact the portfolio owner for your collaboration access code
+                                        </motion.p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Remember Me & Forgot Password */}
+                            <div className="flex items-center justify-between text-sm">
+                                <label className="remember-me-label">
+                                    <input
+                                        type="checkbox"
+                                        name="rememberMe"
+                                        checked={formData.rememberMe}
+                                        onChange={handleChange}
+                                        className="remember-me-checkbox"
+                                    />
+                                    <span className="ml-2 text-gray-300">Remember me</span>
+                                </label>
+                                <Link to="/forgot-password" className="forgot-password-link">
+                                    Forgot password?
+                                </Link>
+                            </div>
+
+                            {/* Submit Button */}
+                            <motion.button
+                                type="submit"
+                                disabled={loading}
+                                whileHover={{ scale: loading ? 1 : 1.02 }}
+                                whileTap={{ scale: loading ? 1 : 0.98 }}
+                                className="submit-btn group"
+                            >
+                                <div className="submit-btn-glow"></div>
+                                {loading ? (
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        <span>Signing in...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <LogIn size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+                                        <span>Sign In</span>
+                                    </>
+                                )}
+                                <div className="submit-btn-shine"></div>
+                            </motion.button>
+                        </form>
+
+                        {/* Divider */}
+                        <div className="login-divider">
+                            <div className="login-divider-line"></div>
+                            <span className="login-divider-text">Or continue with</span>
+                            <div className="login-divider-line"></div>
                         </div>
 
-                        {/* Password Field */}
-                        <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                <Lock size={20} />
-                            </div>
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                onFocus={() => setFocusedField('password')}
-                                onBlur={() => setFocusedField('')}
-                                required
-                                placeholder="Enter your password"
-                                className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                                    focusedField === 'password' ? 'bg-white/10' : ''
-                                } ${error && formData.password === '' ? 'border-red-500/50' : 'border-white/20'}`}
-                            />
+                        {/* Social Login */}
+                        <div className="social-login-grid">
                             <button
                                 type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                onClick={() => handleSocialLogin('Google')}
+                                className="social-login-btn social-login-google"
                             >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                <Chrome size={20} />
+                                <span className="hidden sm:inline">Google</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSocialLogin('GitHub')}
+                                className="social-login-btn social-login-github"
+                            >
+                                <Github size={20} />
+                                <span className="hidden sm:inline">GitHub</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSocialLogin('Facebook')}
+                                className="social-login-btn social-login-facebook"
+                            >
+                                <Facebook size={20} />
+                                <span className="hidden sm:inline">Facebook</span>
                             </button>
                         </div>
 
-                        {/* Access Code (Collaborator Only) */}
-                        {collaborator && (
-                            <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                    <Key size={20} />
-                                </div>
-                                <input
-                                    type="text"
-                                    name="accessCode"
-                                    value={formData.accessCode}
-                                    onChange={handleChange}
-                                    onFocus={() => setFocusedField('accessCode')}
-                                    onBlur={() => setFocusedField('')}
-                                    placeholder="Enter collaboration access code"
-                                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                                        focusedField === 'accessCode' ? 'bg-white/10' : ''
-                                    } ${error && formData.accessCode === '' ? 'border-red-500/50' : 'border-white/20'}`}
-                                />
-                            </div>
-                        )}
-
-                        {/* Submit Button */}
-                        <motion.button
-                            type="submit"
-                            disabled={loading}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 size={20} className="animate-spin" />
-                                    Signing in...
-                                </>
-                            ) : (
-                                <>
-                                    <LogIn size={20} />
-                                    Sign In
-                                </>
+                        {/* Footer */}
+                        <div className="mt-8 text-center">
+                            <p className="text-gray-400 text-sm">
+                                Don't have an account?{' '}
+                                <Link to="/register" className="signup-link">
+                                    Sign up now
+                                </Link>
+                            </p>
+                            {collaborator && (
+                                <p className="text-gray-500 text-xs mt-2">
+                                    <Shield size={12} className="inline-block mr-1" />
+                                    Collaboration access is invite-only
+                                </p>
                             )}
-                        </motion.button>
-                    </form>
+                        </div>
+                    </motion.div>
 
-                    {/* Footer */}
-                    <div className="mt-8 text-center">
-                        <p className="text-gray-400 text-sm">
-                            Don't have an account?{' '}
-                            <Link to="/register" className="text-purple-400 hover:text-purple-300 transition-colors">
-                                Sign up
-                            </Link>
-                        </p>
+                    {/* Security Badge */}
+                    <div className="security-badge">
+                        <Shield size={14} />
+                        <span>Secure & Encrypted Connection</span>
                     </div>
                 </motion.div>
-            </motion.div>
+            </div>
         </div>
     );
 };

@@ -27,6 +27,7 @@ import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
 import QRCode from 'qrcode';
+import '../../styles/ActionButtons.css';
 import {
     LineChart, Line, AreaChart, Area, BarChart, Bar, RadarChart, Radar,
     PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
@@ -1780,16 +1781,16 @@ const Profile = () => {
                                         { format: 'json', label: 'JSON Data', icon: Code, color: '#3b82f6' },
                                         { format: 'html', label: 'HTML Portfolio', icon: Globe, color: '#10b981' },
                                         { format: 'markdown', label: 'Markdown', icon: FileTextIcon, color: '#f59e0b' }
-                                    ].map((option) => (
+                                        ].map((option) => (
                                         <button
                                             key={option.format}
                                             onClick={() => {
                                                 exportResume(option.format);
                                                 setShowExportModal(false);
                                             }}
-                                            className="w-full flex items-center gap-4 p-4 bg-slate-900/50 hover:bg-slate-900 rounded-xl border border-slate-700 hover:border-slate-600 transition-all group"
+                                            className="w-full flex items-center gap-4 p-4 bg-slate-900/50 hover:bg-slate-900 rounded-xl border border-slate-700 hover:border-slate-600 transition-all group btn-cv"
                                         >
-                                            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${option.color}20` }}>
+                                            <div className="w-12 h-12 rounded-lg flex items-center justify-center icon" style={{ backgroundColor: `${option.color}20` }}>
                                                 <option.icon size={24} style={{ color: option.color }} />
                                             </div>
                                             <span className="flex-1 text-left text-white font-medium group-hover:text-cyan-400 transition-colors">{option.label}</span>

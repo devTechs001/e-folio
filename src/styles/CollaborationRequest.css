@@ -1,0 +1,1015 @@
+/* ==================== COLLABORATION REQUEST PAGE ==================== */
+
+/* ==================== BACKGROUND ANIMATIONS ==================== */
+
+.collaboration-bg-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.collaboration-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(150px);
+  opacity: 0.15;
+  animation: collaborationBlobFloat 25s ease-in-out infinite;
+}
+
+.collaboration-bg-blob-1 {
+  width: 700px;
+  height: 700px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  top: -250px;
+  right: -250px;
+}
+
+.collaboration-bg-blob-2 {
+  width: 600px;
+  height: 600px;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  bottom: -200px;
+  left: -200px;
+  animation-delay: 8s;
+}
+
+.collaboration-bg-blob-3 {
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 16s;
+}
+
+@keyframes collaborationBlobFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(60px, -60px) scale(1.15);
+  }
+  50% {
+    transform: translate(-40px, 80px) scale(0.95);
+  }
+  75% {
+    transform: translate(80px, 40px) scale(1.05);
+  }
+}
+
+/* ==================== PROGRESS STEP ANIMATIONS ==================== */
+
+.step-indicator {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-indicator.active {
+  animation: stepPulse 2s ease-in-out infinite;
+}
+
+@keyframes stepPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+  }
+}
+
+.step-indicator.completed {
+  animation: stepCheckmark 0.5s ease-out;
+}
+
+@keyframes stepCheckmark {
+  0% {
+    transform: scale(0) rotate(-45deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* ==================== FORM CARD ANIMATIONS ==================== */
+
+.form-card-enter {
+  animation: formCardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes formCardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.form-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  transition: left 0.8s ease;
+}
+
+.form-card:hover::before {
+  left: 100%;
+}
+
+/* ==================== INPUT FIELD ENHANCEMENTS ==================== */
+
+.form-input-wrapper {
+  position: relative;
+}
+
+.form-input-wrapper .input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.form-input-wrapper input:focus + .input-icon,
+.form-input-wrapper textarea:focus + .input-icon,
+.form-input-wrapper select:focus + .input-icon {
+  color: #3b82f6;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.form-input-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+}
+
+.form-input-wrapper input:focus ~ .form-input-glow,
+.form-input-wrapper textarea:focus ~ .form-input-glow,
+.form-input-wrapper select:focus ~ .form-input-glow {
+  opacity: 1;
+}
+
+/* ==================== SKILL PILL ANIMATIONS ==================== */
+
+.skill-pill {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.skill-pill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.skill-pill:hover::before {
+  left: 100%;
+}
+
+.skill-pill.selected {
+  animation: skillPillPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes skillPillPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ==================== FILE UPLOAD ZONE ==================== */
+
+.file-upload-zone {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.file-upload-zone:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.file-upload-zone.drag-active {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+  transform: scale(1.02);
+}
+
+.upload-icon-bounce {
+  animation: uploadBounce 2s ease-in-out infinite;
+}
+
+@keyframes uploadBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ==================== PROGRESS BAR ANIMATIONS ==================== */
+
+.upload-progress-bar {
+  position: relative;
+  overflow: hidden;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 9999px;
+}
+
+.upload-progress-fill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  background-size: 200% 100%;
+  border-radius: 9999px;
+  animation: progressShimmer 2s linear infinite;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@keyframes progressShimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+.upload-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: progressGlint 1.5s ease-in-out infinite;
+}
+
+@keyframes progressGlint {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ==================== ATTACHMENT CARD ==================== */
+
+.attachment-card {
+  position: relative;
+  transition: all 0.3s ease;
+  animation: attachmentSlideIn 0.3s ease-out;
+}
+
+@keyframes attachmentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.attachment-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-remove-btn {
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.attachment-card:hover .attachment-remove-btn {
+  opacity: 1;
+}
+
+/* ==================== REFERENCE CARD ==================== */
+
+.reference-card {
+  position: relative;
+  animation: referenceSlideDown 0.3s ease-out;
+}
+
+@keyframes referenceSlideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== BUTTON ANIMATIONS ==================== */
+
+.btn-next,
+.btn-submit {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-next::before,
+.btn-submit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.btn-next:hover::before,
+.btn-submit:hover::before {
+  left: 100%;
+}
+
+.btn-submit {
+  animation: submitPulse 2s ease-in-out infinite;
+}
+
+@keyframes submitPulse {
+  0%, 100% {
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 15px 40px rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* ==================== SUCCESS SCREEN ANIMATIONS ==================== */
+
+.success-checkmark {
+  animation: successCheckmarkAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes successCheckmarkAnimation {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.success-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  animation: confettiFall 3s linear;
+  opacity: 0;
+}
+
+@keyframes confettiFall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}
+
+.success-badge {
+  animation: badgeFloat 3s ease-in-out infinite;
+}
+
+@keyframes badgeFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ==================== PREVIEW MODAL ANIMATIONS ==================== */
+
+.preview-modal-overlay {
+  backdrop-filter: blur(8px);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.preview-modal-content {
+  animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.preview-section {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.preview-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+}
+
+/* ==================== ERROR SHAKE ANIMATION ==================== */
+
+.error-shake {
+  animation: errorShake 0.5s ease-in-out;
+}
+
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-10px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(10px);
+  }
+}
+
+/* ==================== VALIDATION ANIMATIONS ==================== */
+
+.input-error {
+  animation: inputErrorShake 0.4s ease-in-out;
+}
+
+@keyframes inputErrorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.input-success {
+  animation: inputSuccessPulse 0.6s ease-out;
+}
+
+@keyframes inputSuccessPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* ==================== TOOLTIP ANIMATIONS ==================== */
+
+.form-tooltip {
+  position: relative;
+}
+
+.form-tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.form-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.form-tooltip:hover .form-tooltip-content {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+/* ==================== CHECKBOX & RADIO ANIMATIONS ==================== */
+
+.custom-checkbox,
+.custom-radio {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.custom-radio {
+  border-radius: 50%;
+}
+
+.custom-checkbox:checked,
+.custom-radio:checked {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-color: #3b82f6;
+  animation: checkboxPop 0.3s ease-out;
+}
+
+@keyframes checkboxPop {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.custom-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.custom-radio:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* ==================== LOADING SPINNER ==================== */
+
+.form-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(59, 130, 246, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: formSpinnerRotate 0.8s linear infinite;
+}
+
+@keyframes formSpinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== SKELETON LOADING ==================== */
+
+.skeleton-loader {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.4) 25%,
+    rgba(229, 231, 235, 0.6) 50%,
+    rgba(229, 231, 235, 0.4) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes skeletonLoading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==================== CHARACTER COUNTER ==================== */
+
+.char-counter {
+  position: relative;
+}
+
+.char-counter.warning {
+  color: #f59e0b;
+  animation: counterPulse 1s ease-in-out infinite;
+}
+
+.char-counter.danger {
+  color: #ef4444;
+  animation: counterShake 0.5s ease-in-out infinite;
+}
+
+@keyframes counterPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes counterShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* ==================== RESPONSIVE ENHANCEMENTS ==================== */
+
+@media (max-width: 768px) {
+  .collaboration-bg-blob {
+    filter: blur(100px);
+  }
+
+  .collaboration-bg-blob-1 {
+    width: 400px;
+    height: 400px;
+  }
+
+  .collaboration-bg-blob-2 {
+    width: 350px;
+    height: 350px;
+  }
+
+  .collaboration-bg-blob-3 {
+    width: 300px;
+    height: 300px;
+  }
+
+  .step-indicator {
+    width: 40px;
+    height: 40px;
+  }
+
+  .preview-modal-content {
+    margin: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .skill-pill {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .btn-next,
+  .btn-submit {
+    font-size: 0.875rem;
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+
+@media print {
+  .collaboration-bg-wrapper,
+  .btn-next,
+  .btn-submit,
+  .file-upload-zone,
+  .attachment-remove-btn {
+    display: none !important;
+  }
+
+  .form-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb;
+  }
+
+  .preview-section {
+    page-break-inside: avoid;
+  }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Visible States */
+.custom-checkbox:focus-visible,
+.custom-radio:focus-visible,
+.skill-pill:focus-visible,
+.btn-next:focus-visible,
+.btn-submit:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .form-card {
+    border: 2px solid currentColor;
+  }
+
+  .skill-pill.selected {
+    background: #000;
+    color: #fff;
+  }
+
+  .btn-next,
+  .btn-submit {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Dark Mode Adjustments */
+@media (prefers-color-scheme: dark) {
+  .skeleton-loader {
+    background: linear-gradient(
+      90deg,
+      rgba(55, 65, 81, 0.4) 25%,
+      rgba(55, 65, 81, 0.6) 50%,
+      rgba(55, 65, 81, 0.4) 75%
+    );
+  }
+
+  .custom-checkbox,
+  .custom-radio {
+    background: #1f2937;
+    border-color: #4b5563;
+  }
+
+  .form-tooltip-content {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1f2937;
+  }
+
+  .form-tooltip-content::after {
+    border-top-color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+/* ==================== ADVANCED INTERACTIONS ==================== */
+
+/* Drag and Drop Visual Feedback */
+.drag-over {
+  border-color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.05) !important;
+  transform: scale(1.02);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1),
+              inset 0 0 20px rgba(59, 130, 246, 0.05);
+}
+
+/* Auto-save Indicator */
+.auto-save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #16a34a;
+  animation: autoSaveFadeIn 0.3s ease-out;
+}
+
+@keyframes autoSaveFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auto-save-indicator::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #16a34a;
+  border-radius: 50%;
+  animation: autoSavePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes autoSavePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Form Field Highlight on Validation */
+.field-highlight {
+  position: relative;
+}
+
+.field-highlight::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #3b82f6;
+  border-radius: 0.75rem;
+  opacity: 0;
+  animation: fieldHighlightPulse 2s ease-in-out;
+}
+
+@keyframes fieldHighlightPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ==================== SCROLL ANIMATIONS ==================== */
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==================== PREMIUM EFFECTS ==================== */
+
+/* Glassmorphism Effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+/* Gradient Border Animation */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899) border-box;
+  border: 2px solid transparent;
+  border-radius: 1rem;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  border-radius: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  filter: blur(8px);
+}
+
+.gradient-border:hover::before {
+  opacity: 0.5;
+}
+
+/* Neon Glow Effect */
+.neon-glow {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5),
+                0 0 20px rgba(59, 130, 246, 0.3),
+                0 0 30px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+                0 0 30px rgba(59, 130, 246, 0.6),
+                0 0 40px rgba(59, 130, 246, 0.4);
+  }
+}
