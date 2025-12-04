@@ -1,6 +1,6 @@
 [build]
-  # Build command
-  command = "npm install && npm run build"
+  # Build command with --legacy-peer-deps to handle React 19 compatibility
+  command = "npm install --legacy-peer-deps && npm run build"
   
   # Directory that contains the deploy-ready HTML files and assets
   publish = "dist"
@@ -12,6 +12,7 @@
   [build.environment]
     NODE_VERSION = "18"
     GITHUB_PAGES = "false"
+    NPM_FLAGS = "--legacy-peer-deps"
 
 # Redirects for SPA routing
 [[redirects]]
