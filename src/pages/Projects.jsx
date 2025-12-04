@@ -298,7 +298,7 @@ const Projects = () => {
                     Want to see more of my work?
                 </p>
                 <a
-                    href="https://github.com/yourusername"
+                    href="https://github.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-mainColor to-mainColor/80 text-bgColor font-semibold rounded-full hover-lift shadow-glow transition-all duration-300"

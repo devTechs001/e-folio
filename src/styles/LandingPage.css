@@ -1,75 +1,191 @@
-/* ==================== LANDING PAGE - CONSOLIDATED STYLES ==================== */
+/* ==================== LANDING PAGE - TYPOGRAPHY ENHANCEMENTS ==================== */
 
-/* ==================== GLOBAL OVERRIDES ==================== */
-
-/* Remove excessive min-heights */
+/* Section Spacing */
 .about,
 .skills,
 .education,
 .interests,
 .projects,
 .contact {
-  min-height: auto !important;
+  min-height: auto;
+  padding: 6rem 5%;
+  position: relative;
 }
 
-/* Optimize section padding */
-.about {
-  padding: 8rem 9% 6rem !important;
+/* Section Headings */
+.section-heading {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--mainColor);
+  margin-bottom: 3rem;
+  text-align: center;
+  position: relative;
+  padding-bottom: 1rem;
 }
 
-.skills,
-.education,
-.interests,
-.projects,
-.contact {
-  padding: 5rem 9% 4rem !important;
+.section-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: var(--mainColor);
+  border-radius: 2px;
 }
 
-/* Bold all headings */
-.about h1,
-.about h2,
-.about h3,
-.about h4,
-.skills h1,
-.skills h2,
-.skills h3,
-.skills h4,
-.education h1,
-.education h2,
-.education h3,
-.education h4,
-.interests h1,
-.interests h2,
-.interests h3,
-.interests h4,
-.projects h1,
-.projects h2,
-.projects h3,
-.projects h4,
-.contact h1,
-.contact h2,
-.contact h3,
-.contact h4 {
-  font-weight: 700 !important;
-}
-
-/* Enhanced heading sizes */
+/* About Section */
 .about-content h1 {
-  font-size: 7rem !important;
-  line-height: 1.12 !important;
+  font-size: var(--text-5xl);
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  color: var(--textColor);
 }
 
 .about-content h3 {
-  font-size: 4.6rem !important;
-  line-height: 1.2 !important;
+  font-size: var(--text-3xl);
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: var(--mainColor);
 }
 
-.heading {
-  font-size: 6rem !important;
+.about-content p {
+  font-size: var(--text-lg);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.sub-heading {
-  font-size: 3.4rem !important;
+/* Card Headings */
+.card h3 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--textColor);
+}
+
+.card p {
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Button Text */
+.btn {
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .about-content h1 {
+    font-size: var(--text-4xl);
+  }
+  
+  .about-content h3 {
+    font-size: var(--text-2xl);
+  }
+  
+  .section-heading {
+    font-size: var(--text-3xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .about,
+  .skills,
+  .education,
+  .interests,
+  .projects,
+  .contact {
+    padding: 4rem 5%;
+  }
+  
+  .about-content h1 {
+    font-size: var(--text-3xl);
+  }
+  
+  .about-content h3 {
+    font-size: var(--text-xl);
+  }
+  
+  .section-heading {
+    font-size: var(--text-2xl);
+    margin-bottom: 2rem;
+  }
+  
+  .card h3 {
+    font-size: var(--text-lg);
+  }
+  
+  .card p {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Hero Section */
+.hero-content h1 {
+  font-size: var(--text-6xl);
+  line-height: 1.1;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, #fff, var(--mainColor));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-content p {
+  font-size: var(--text-xl);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Testimonial Text */
+.testimonial-text {
+  font-size: var(--text-lg);
+  line-height: 1.7;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1.5rem;
+}
+
+.testimonial-author {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--mainColor);
+}
+
+/* Form Text */
+.form-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.form-input {
+  font-size: var(--text-base);
+  padding: 0.75rem 1rem;
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: var(--mainColor);
+  box-shadow: 0 0 0 3px rgba(0, 238, 255, 0.2);
+  outline: none;
 }
 
 /* ==================== SCROLL PROGRESS BAR ==================== */

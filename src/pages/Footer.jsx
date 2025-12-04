@@ -121,8 +121,8 @@ const Footer = () => {
     const contactInfo = [
         { 
             icon: 'fas fa-envelope', 
-            text: 'danielmukula8@gmail.com',
-            href: 'mailto:danielmukula8@gmail.com'
+            text: 'devtechs842@gmail.com',
+            href: 'mailto:devtechs842@gmail.com'
         },
         { 
             icon: 'fas fa-phone', 
@@ -286,7 +286,7 @@ const Footer = () => {
                             <p className="text-textColor/60 text-xs flex items-center justify-center md:justify-start gap-2">
                                 Crafted with 
                                 <span className="heart-beat">❤️</span> 
-                                by Daniel Mukula
+                                by Danie Tech
                             </p>
                         </div>
 

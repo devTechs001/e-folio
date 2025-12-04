@@ -640,7 +640,7 @@ const DashboardFooter = () => {
             <div className="px-4 sm:px-6 lg:px-8 py-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm">
                     <div className="flex items-center gap-2 text-slate-500">
-                        <span>© 2024 Portfolio Dashboard</span>
+                        <span>© 2025 Portfolio Dashboard</span>
                         <span className="hidden sm:inline">•</span>
                         <span className="hidden sm:inline">All rights reserved</span>
                     </div>

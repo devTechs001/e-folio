@@ -26,8 +26,8 @@ const Contact = () => {
         {
             icon: 'fas fa-envelope',
             title: 'Email',
-            value: 'danielmukula8@gmail.com',
-            link: 'mailto:danielmukula8@gmail.com',
+            value: 'devtechs842@gmail.com',
+            link: 'mailto:devtechs842@gmail.com',
             color: 'blue',
             description: 'Best for detailed inquiries'
         },
@@ -117,7 +117,7 @@ const Contact = () => {
             console.error('Error sending message:', error);
             
             // Fallback to mailto
-            const mailtoLink = `mailto:danielmukula8@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
+            const mailtoLink = `mailto:devtechs842@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
                 `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nMessage:\n${formData.message}`
             )}`;
             

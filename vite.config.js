@@ -2,6 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// List of dependencies to externalize
+const externalDeps = [
+  'emoji-picker-react',
+  'remark-math',
+  'rehype-katex',
+  'katex',
+  'react-markdown',
+  'react-syntax-highlighter'
+]
+
 export default defineConfig({
   plugins: [
     react({
@@ -16,6 +26,11 @@ export default defineConfig({
   build: {
     assetsDir: 'assets',
     rollupOptions: {
+      external: (id) => {
+        // Externalize node_modules and the listed dependencies
+        return externalDeps.some(dep => id === dep || id.startsWith(`${dep}/`)) ||
+               /^[^./]/.test(id) && !id.startsWith('@/');
+      },
       output: {
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name.split('.')

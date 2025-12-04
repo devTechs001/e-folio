@@ -1665,7 +1665,26 @@ const PortfolioEditor = () => {
 
           {/* Quick Actions */}
           <div className="flex items-center gap-2">
-            {quickActions.map((action) => (
+            {[
+              {
+                id: 'optimize',
+                label: 'Optimize All',
+                icon: Zap,
+                action: () => success('Portfolio optimized!')
+              },
+              {
+                id: 'backup',
+                label: 'Create Backup',
+                icon: Cloud,
+                action: exportAsTemplate
+              },
+              {
+                id: 'validate',
+                label: 'Validate',
+                icon: Shield,
+                action: () => warning('Validation complete. 2 suggestions found.')
+              }
+            ].map((action) => (
               <button
                 key={action.id}
                 onClick={action.action}
@@ -3367,7 +3386,26 @@ const PortfolioEditor = () => {
         <div className="flex items-center gap-3">
           {/* Quick Actions */}
           <div className="flex items-center gap-2">
-            {quickActions.map((action) => (
+            {[
+              {
+                id: 'optimize',
+                label: 'Optimize All',
+                icon: Zap,
+                action: () => success('Portfolio optimized!')
+              },
+              {
+                id: 'backup',
+                label: 'Create Backup',
+                icon: Cloud,
+                action: exportAsTemplate
+              },
+              {
+                id: 'validate',
+                label: 'Validate',
+                icon: Shield,
+                action: () => warning('Validation complete. 2 suggestions found.')
+              }
+            ].map((action) => (
               <button
                 key={action.id}
                 onClick={action.action}
