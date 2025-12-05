@@ -679,6 +679,21 @@
 }
 
 /* Override / enlarge main heading for About section (more prominent) */
+
+/* Welcome badge text */
+.about-section .welcome-badge-text {
+  display: inline-block;
+  position: relative;
+  color: var(--mainColor);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  padding: 0.2em 0.4em;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(14,239,239,0.6);
+}
+
 .about-section .main-heading {
   /* use clamp to keep it responsive */
   font-size: clamp(3.5rem, 9vw, 8rem);
@@ -689,6 +704,19 @@
 .about-section .multiple-text {
   font-weight: 700;
   font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+}
+
+.about-section .welcome-badge-text::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.7s;
+}
+
+.about-section .welcome-badge-text:hover::after {
+  transform: translateX(100%);
 }
 
 /* ==================== ACCESSIBILITY ==================== */

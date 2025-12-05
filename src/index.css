@@ -72,6 +72,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
 }
 
 /* Text Sizes */

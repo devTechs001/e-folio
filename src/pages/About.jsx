@@ -91,7 +91,7 @@ const About = () => {
                         {/* Welcome Badge */}
                         <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-gradient-to-r from-mainColor/10 to-mainColor/5 border border-mainColor/30 rounded-full backdrop-blur-sm">
                             <span className="w-2 h-2 bg-mainColor rounded-full animate-pulse"></span>
-                            <span className="text-mainColor text-lg md:text-base font-large tracking-wide">
+                            <span className="welcome-badge-text gradient-text-animated">
                                 WELCOME TO MY PORTFOLIO
                             </span>
                         </div>

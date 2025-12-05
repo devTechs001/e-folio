@@ -277,13 +277,13 @@ const Footer = () => {
 
                 {/* Bottom Footer */}
                 <div className="py-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-6">
                         {/* Copyright */}
-                        <div className="text-center md:text-left" data-aos="fade-right">
-                            <p className="text-textColor/70 text-sm mb-2">
+                        <div className="text-center md:text-left">
+                            <p className="text-textColor/80 text-sm md:text-base lg:text-lg mb-2">
                                 &copy; {currentYear} DanieTech. All rights reserved.
                             </p>
-                            <p className="text-textColor/60 text-xs flex items-center justify-center md:justify-start gap-2">
+                            <p className="text-textColor/70 text-xs md:text-sm lg:text-base flex items-center justify-center md:justify-start gap-2">
                                 Crafted with 
                                 <span className="heart-beat">❤️</span> 
                                 by Danie Tech
@@ -291,7 +291,7 @@ const Footer = () => {
                         </div>
 
                         {/* Social Links */}
-                        <div className="flex items-center gap-3" data-aos="fade-up">
+                        <div className="flex items-center gap-3">
                             {socialLinks.map((social, index) => (
                                 <a
                                     key={index}
@@ -301,8 +301,6 @@ const Footer = () => {
                                     className={`footer-social-icon footer-social-${social.color}`}
                                     style={{ background: social.gradient }}
                                     aria-label={social.name}
-                                    data-aos="zoom-in"
-                                    data-aos-delay={index * 50}
                                 >
                                     <i className={social.icon}></i>
                                     <span className="footer-social-tooltip">{social.name}</span>
@@ -311,7 +309,7 @@ const Footer = () => {
                         </div>
 
                         {/* Legal Links */}
-                        <div className="flex items-center gap-4 text-xs" data-aos="fade-left">
+                        <div className="flex items-center gap-4 text-xs md:text-sm lg:text-base">
                             <a href="#privacy" className="footer-legal-link">Privacy Policy</a>
                             <span className="text-textColor/30">•</span>
                             <a href="#terms" className="footer-legal-link">Terms of Service</a>
@@ -322,7 +320,7 @@ const Footer = () => {
                 </div>
 
                 {/* Made With Badge */}
-                <div className="text-center py-4" data-aos="fade-up">
+                <div className="text-center py-4">
                     <div className="made-with-badge">
                         <i className="fas fa-code mr-2"></i>
                         Made with React, Tailwind & lots of ☕
@@ -336,7 +334,6 @@ const Footer = () => {
                     onClick={scrollToTop}
                     className="scroll-to-top-btn"
                     aria-label="Scroll to top"
-                    data-aos="zoom-in"
                 >
                     <div className="scroll-arrow-wrapper">
                         <i className="fas fa-arrow-up scroll-arrow"></i>

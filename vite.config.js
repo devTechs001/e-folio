@@ -33,28 +33,29 @@ export default defineConfig(({ command, mode }) => {
     build: {
       modulePreload: { polyfill: false },
       target: 'esnext',
-      minify: mode === 'production' ? 'terser' : false,
-      sourcemap: mode !== 'production',
+      minify: 'terser',  // Always use terser for better minification
+      terserOptions: {
+        compress: {
+          drop_console: true,  // Remove console logs
+          drop_debugger: true,  // Remove debugger statements
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']  // Remove specific console calls
+        },
+        mangle: {
+          toplevel: true,  // Mangle top-level names
+          keep_classnames: false,  // Don't preserve class names
+          keep_fnames: false  // Don't preserve function names
+        },
+        format: {
+          comments: false,  // Remove comments
+          ascii_only: true  // Use only ASCII characters
+        }
+      },
+      sourcemap: false,  // Disable source maps in production for security
       assetsDir: 'assets',
       rollupOptions: {
-        // REMOVE or FIX the external function - it's breaking your build
-        // external: (id) => {
-        //   // This is externalizing ALL node_modules
-        //   return externalDeps.some(dep => id === dep || id.startsWith(`${dep}/`)) ||
-        //         (/^[^./]/.test(id) && !id.startsWith('@/'));
-        // },
         output: {
-          manualChunks: (id) => {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'react-vendor'
-              }
-              if (id.includes('axios') || id.includes('date-fns') || id.includes('framer-motion')) {
-                return 'utility-vendor'
-              }
-              return 'other-vendor'
-            }
-          },
+          manualChunks: undefined,  // Single bundle is harder to analyze
+          inlineDynamicImports: true,  // Inline all imports
           assetFileNames: (assetInfo) => {
             const info = assetInfo.name.split('.')
             const extType = info[info.length - 1].toLowerCase()
