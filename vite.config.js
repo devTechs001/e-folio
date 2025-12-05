@@ -31,6 +31,7 @@ export default defineConfig(({ command, mode }) => {
     
     // Build configuration
     build: {
+      modulePreload: { polyfill: false },
       target: 'esnext',
       minify: mode === 'production' ? 'terser' : false,
       sourcemap: mode !== 'production',
