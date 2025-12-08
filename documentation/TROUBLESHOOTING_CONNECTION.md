@@ -298,7 +298,7 @@ When everything is working, you should see:
 
 **Render Logs:**
 ```
-✅ MongoDB Connected: cluster1.1frrfrb.mongodb.net
+✅ MongoDB Connected: cluster0.kparor6.mongodb.net
 📁 Database: e-folio
 🚀 E-Folio Server Running
 📡 Port: 10000

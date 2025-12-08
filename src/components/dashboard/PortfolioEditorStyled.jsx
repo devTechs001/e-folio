@@ -10,9 +10,9 @@ import {
   Bold, Italic, Underline, List, FileCode, Sparkles, Wand2, RefreshCw,
   ExternalLink, Video, Users, DollarSign, MessageSquare, Star, Award, Trophy,
   TrendingUp, Zap, Box, Sliders, Paintbrush, Camera, Play, Music,
-  ShoppingCart, Heart, BookOpen, Briefcase, Code2, Database, CloudUpload,
+  ShoppingCart, Heart, BookOpen, Briefcase, Code2, Database, CloudUpload, Cloud,
   Search, Filter, Tag, Hash, AtSign, Phone, MapPin, Clock, Calendar,
-  BarChart, PieChart, Activity, Target, Cpu, Layers as Layers2, Package,
+  BarChart, BarChart3, PieChart, Activity, Target, Cpu, Layers as Layers2, Package,
   Tv, Radio, Mic, Headphones, Film, Image as GalleryIcon, Scissors,
   Crop, Maximize, Minimize, Sun, Moon, Droplet, Wind, Feather,
   Anchor, Coffee, Gift, Flame, ThumbsUp, MessageCircle, Send, Bell,
@@ -1247,7 +1247,29 @@ const PortfolioEditor = () => {
       }
     } catch (err) {
       console.error('Failed to load custom templates:', err);
+      setCustomTemplates([]);
     }
+  };
+
+  const exportAsTemplate = () => {
+    const template = {
+      ...portfolioConfig,
+      metadata: {
+        name: `${user?.username}'s Portfolio Template`,
+        created: new Date().toISOString(),
+        sections: sections.length,
+        author: user?.username
+      }
+    };
+    
+    const dataStr = JSON.stringify(template, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', `portfolio-template-${Date.now()}.json`);
+    linkElement.click();
+    
+    success('Template exported successfully!');
   };
 
   const savePortfolioConfig = async (autoSave = false) => {
@@ -3318,27 +3340,6 @@ const PortfolioEditor = () => {
         break;
     }
     success(`Applied: ${suggestion.message}`);
-  };
-
-  const exportAsTemplate = () => {
-    const template = {
-      ...portfolioConfig,
-      metadata: {
-        name: `${user?.username}'s Portfolio Template`,
-        created: new Date().toISOString(),
-        sections: sections.length,
-        author: user?.username
-      }
-    };
-    
-    const dataStr = JSON.stringify(template, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', `portfolio-template-${Date.now()}.json`);
-    linkElement.click();
-    
-    success('Template exported successfully!');
   };
 
   const quickActions = [

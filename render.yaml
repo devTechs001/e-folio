@@ -5,8 +5,8 @@ services:
     env: node
     plan: free
     region: oregon
-    buildCommand: cd server && npm install --legacy-peer-deps
-    startCommand: cd server && node server.js
+    buildCommand: cd server && corepack enable && pnpm install
+    startCommand: cd server && pnpm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -33,7 +33,7 @@ services:
 # Backend: https://e-folio-backend-server.onrender.com (Render) ✅
 #
 # ⚠️ REQUIRED: Add these in Render Dashboard → Environment tab:
-# 1. MONGODB_URI = mongodb+srv://danielmk:PASSWORD@cluster1.1frrfrb.mongodb.net/e-folio?retryWrites=true&w=majority
+# 1. MONGODB_URI = mongodb+srv://devtechs842_db_user:YOUR_PASSWORD@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
 # 2. JWT_SECRET = (generate a secure random string)
 # 3. OWNER_PASSWORD = pass1234 (or your preferred password)
 #
@@ -42,6 +42,7 @@ services:
 # - Add: 0.0.0.0/0 (Allow from anywhere) OR Render's static IPs
 #
 # 📋 Full deployment guide: See DEPLOYMENT_GUIDE.md
+# 📦 Using pnpm for dependency management to match project setup
 #
 # 🚀 Deploy Command:
 # git add . && git commit -m "Deploy" && git push origin main

@@ -578,7 +578,7 @@ const CollaborationRequest = () => {
                                                 value={formData.name}
                                                 onChange={(e) => handleFieldChange('name', e.target.value)}
                                                 onBlur={() => handleBlur('name')}
-                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all ${
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
                                                     errors.name && touched.name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                                 }`}
                                                 placeholder="John Doe"
@@ -602,7 +602,7 @@ const CollaborationRequest = () => {
                                                 value={formData.email}
                                                 onChange={(e) => handleFieldChange('email', e.target.value)}
                                                 onBlur={() => handleBlur('email')}
-                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all ${
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
                                                     errors.email && touched.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                                 }`}
                                                 placeholder="john@example.com"
@@ -626,7 +626,7 @@ const CollaborationRequest = () => {
                                                 value={formData.phone}
                                                 onChange={(e) => handleFieldChange('phone', e.target.value)}
                                                 onBlur={() => handleBlur('phone')}
-                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all ${
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
                                                     errors.phone && touched.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                                 }`}
                                                 placeholder="+1 (555) 123-4567"
@@ -649,9 +649,18 @@ const CollaborationRequest = () => {
                                                 type="text"
                                                 value={formData.location}
                                                 onChange={(e) => handleFieldChange('location', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('location')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.location && touched.location ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                                 placeholder="City, Country"
                                             />
+                                            {errors.location && touched.location && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {errors.location}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -664,7 +673,10 @@ const CollaborationRequest = () => {
                                         <select
                                             value={formData.timezone}
                                             onChange={(e) => handleFieldChange('timezone', e.target.value)}
-                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                            onBlur={() => handleBlur('timezone')}
+                                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                errors.timezone && touched.timezone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                            }`}
                                         >
                                             <option value="">Select timezone</option>
                                             <option value="America/New_York">Eastern Time (ET)</option>
@@ -677,6 +689,12 @@ const CollaborationRequest = () => {
                                             <option value="Asia/Tokyo">Tokyo (JST)</option>
                                             <option value="Australia/Sydney">Sydney (AEDT)</option>
                                         </select>
+                                        {errors.timezone && touched.timezone && (
+                                            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle size={14} />
+                                                {errors.timezone}
+                                            </p>
+                                        )}
                                     </div>
                                 </motion.div>
                             )}
@@ -704,13 +722,22 @@ const CollaborationRequest = () => {
                                             <select
                                                 value={formData.role}
                                                 onChange={(e) => handleFieldChange('role', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('role')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.role && touched.role ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                             >
                                                 <option value="">Select your role</option>
                                                 {roleOptions.map(role => (
                                                     <option key={role} value={role}>{role}</option>
                                                 ))}
                                             </select>
+                                            {errors.role && touched.role && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {errors.role}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Company */}
@@ -723,9 +750,18 @@ const CollaborationRequest = () => {
                                                 type="text"
                                                 value={formData.company}
                                                 onChange={(e) => handleFieldChange('company', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('company')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.company && touched.company ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                                 placeholder="Company name"
                                             />
+                                            {errors.company && touched.company && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {errors.company}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -738,13 +774,22 @@ const CollaborationRequest = () => {
                                         <select
                                             value={formData.experience}
                                             onChange={(e) => handleFieldChange('experience', e.target.value)}
-                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                            onBlur={() => handleBlur('experience')}
+                                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                errors.experience && touched.experience ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                            }`}
                                         >
                                             <option value="">Select experience level</option>
                                             {experienceLevels.map(level => (
                                                 <option key={level} value={level}>{level}</option>
                                             ))}
                                         </select>
+                                        {errors.experience && touched.experience && (
+                                            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle size={14} />
+                                                {errors.experience}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Skills */}
@@ -884,7 +929,7 @@ const CollaborationRequest = () => {
                                                 value={formData.portfolio}
                                                 onChange={(e) => handleFieldChange('portfolio', e.target.value)}
                                                 onBlur={() => handleBlur('portfolio')}
-                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white ${
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
                                                     errors.portfolio && touched.portfolio ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                                 }`}
                                                 placeholder="https://yourportfolio.com"
@@ -905,9 +950,18 @@ const CollaborationRequest = () => {
                                                     type="url"
                                                     value={formData.github}
                                                     onChange={(e) => handleFieldChange('github', e.target.value)}
-                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                    onBlur={() => handleBlur('github')}
+                                                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                        errors.github && touched.github ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                    }`}
                                                     placeholder="https://github.com/username"
                                                 />
+                                                {errors.github && touched.github && (
+                                                    <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={14} />
+                                                        {errors.github}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div>
@@ -919,9 +973,18 @@ const CollaborationRequest = () => {
                                                     type="url"
                                                     value={formData.linkedin}
                                                     onChange={(e) => handleFieldChange('linkedin', e.target.value)}
-                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                    onBlur={() => handleBlur('linkedin')}
+                                                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                        errors.linkedin && touched.linkedin ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                    }`}
                                                     placeholder="https://linkedin.com/in/username"
                                                 />
+                                                {errors.linkedin && touched.linkedin && (
+                                                    <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={14} />
+                                                        {errors.linkedin}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div>
@@ -933,9 +996,18 @@ const CollaborationRequest = () => {
                                                     type="url"
                                                     value={formData.twitter}
                                                     onChange={(e) => handleFieldChange('twitter', e.target.value)}
-                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                    onBlur={() => handleBlur('twitter')}
+                                                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                        errors.twitter && touched.twitter ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                    }`}
                                                     placeholder="https://twitter.com/username"
                                                 />
+                                                {errors.twitter && touched.twitter && (
+                                                    <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={14} />
+                                                        {errors.twitter}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div>
@@ -947,9 +1019,18 @@ const CollaborationRequest = () => {
                                                     type="url"
                                                     value={formData.website}
                                                     onChange={(e) => handleFieldChange('website', e.target.value)}
-                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                    onBlur={() => handleBlur('website')}
+                                                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                        errors.website && touched.website ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                    }`}
                                                     placeholder="https://yourwebsite.com"
                                                 />
+                                                {errors.website && touched.website && (
+                                                    <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={14} />
+                                                        {errors.website}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -1011,13 +1092,22 @@ const CollaborationRequest = () => {
                                             <select
                                                 value={formData.budget}
                                                 onChange={(e) => handleFieldChange('budget', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('budget')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.budget && touched.budget ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                             >
                                                 <option value="">Select budget range</option>
                                                 {budgetRanges.map(range => (
                                                     <option key={range} value={range}>{range}</option>
                                                 ))}
                                             </select>
+                                            {errors.budget && touched.budget && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {errors.budget}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Timeline */}
@@ -1029,13 +1119,22 @@ const CollaborationRequest = () => {
                                             <select
                                                 value={formData.timeline}
                                                 onChange={(e) => handleFieldChange('timeline', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('timeline')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.timeline && touched.timeline ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                             >
                                                 <option value="">Select timeline</option>
                                                 {timelineOptions.map(option => (
                                                     <option key={option} value={option}>{option}</option>
                                                 ))}
                                             </select>
+                                            {errors.timeline && touched.timeline && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {errors.timeline}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Availability */}
@@ -1047,13 +1146,22 @@ const CollaborationRequest = () => {
                                             <select
                                                 value={formData.availability}
                                                 onChange={(e) => handleFieldChange('availability', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('availability')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.availability && touched.availability ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                             >
                                                 <option value="">Select availability</option>
                                                 {availabilityOptions.map(option => (
                                                     <option key={option} value={option}>{option}</option>
                                                 ))}
                                             </select>
+                                            {errors.availability && touched.availability && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {errors.availability}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Preferred Contact */}
@@ -1065,7 +1173,10 @@ const CollaborationRequest = () => {
                                             <select
                                                 value={formData.preferredContact}
                                                 onChange={(e) => handleFieldChange('preferredContact', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                                onBlur={() => handleBlur('preferredContact')}
+                                                className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
+                                                    errors.preferredContact && touched.preferredContact ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                }`}
                                             >
                                                 <option value="email">Email</option>
                                                 <option value="phone">Phone</option>
@@ -1085,18 +1196,18 @@ const CollaborationRequest = () => {
                                                 type="checkbox"
                                                 checked={formData.remoteWork}
                                                 onChange={(e) => handleFieldChange('remoteWork', e.target.checked)}
-                                                className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                className="w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
                                             />
-                                            <span className="text-gray-700 dark:text-gray-300">Open to remote work</span>
+                                            <span className="text-gray-700 dark:text-gray-300 select-none">Open to remote work</span>
                                         </label>
                                         <label className="flex items-center gap-3 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={formData.willingToRelocate}
                                                 onChange={(e) => handleFieldChange('willingToRelocate', e.target.checked)}
-                                                className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                className="w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
                                             />
-                                            <span className="text-gray-700 dark:text-gray-300">Willing to relocate</span>
+                                            <span className="text-gray-700 dark:text-gray-300 select-none">Willing to relocate</span>
                                         </label>
                                     </div>
                                 </motion.div>
@@ -1126,7 +1237,7 @@ const CollaborationRequest = () => {
                                             onChange={(e) => handleFieldChange('message', e.target.value)}
                                             onBlur={() => handleBlur('message')}
                                             rows={6}
-                                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white resize-none ${
+                                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white resize-none ${
                                                 errors.message && touched.message ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                             }`}
                                             placeholder="Describe your project, goals, and what you're looking for in a collaboration..."
@@ -1259,21 +1370,24 @@ const CollaborationRequest = () => {
                                                                 type="text"
                                                                 value={ref.name}
                                                                 onChange={(e) => updateReference(index, 'name', e.target.value)}
-                                                                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm"
+                                                                onBlur={() => handleBlur(`references.${index}.name`)}
+                                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white text-sm transition-all"
                                                                 placeholder="Name"
                                                             />
                                                             <input
                                                                 type="email"
                                                                 value={ref.email}
                                                                 onChange={(e) => updateReference(index, 'email', e.target.value)}
-                                                                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm"
+                                                                onBlur={() => handleBlur(`references.${index}.email`)}
+                                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white text-sm transition-all"
                                                                 placeholder="Email"
                                                             />
                                                             <input
                                                                 type="text"
                                                                 value={ref.relationship}
                                                                 onChange={(e) => updateReference(index, 'relationship', e.target.value)}
-                                                                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm"
+                                                                onBlur={() => handleBlur(`references.${index}.relationship`)}
+                                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white text-sm transition-all"
                                                                 placeholder="Relationship"
                                                             />
                                                         </div>
@@ -1290,9 +1404,9 @@ const CollaborationRequest = () => {
                                                 type="checkbox"
                                                 checked={formData.newsletter}
                                                 onChange={(e) => handleFieldChange('newsletter', e.target.checked)}
-                                                className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                                                className="w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-0.5 transition-all"
                                             />
-                                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                                            <span className="text-sm text-gray-700 dark:text-gray-300 select-none">
                                                 Send me updates about new projects and opportunities
                                             </span>
                                         </label>
@@ -1302,9 +1416,9 @@ const CollaborationRequest = () => {
                                                 type="checkbox"
                                                 checked={formData.terms}
                                                 onChange={(e) => handleFieldChange('terms', e.target.checked)}
-                                                className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                                                className="w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-0.5 transition-all"
                                             />
-                                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                                            <span className="text-sm text-gray-700 dark:text-gray-300 select-none">
                                                 I agree to the{' '}
                                                 <a href="/terms" className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank">
                                                     terms and conditions

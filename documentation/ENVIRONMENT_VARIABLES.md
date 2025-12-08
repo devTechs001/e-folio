@@ -19,7 +19,7 @@
 
 ```bash
 # Database
-MONGODB_URI=mongodb+srv://danielmk:20051117dan@cluster1.1frrfrb.mongodb.net/e-folio?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://devtechs842_db_user:20051117dan@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
 
 # Client
 CLIENT_URL=https://e-folio-pro.netlify.app

@@ -388,10 +388,34 @@ const ProjectManagerEnhanced = () => {
                 {/* Stats Dashboard */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Projects', value: projects.length, icon: FileText, color: 'blue', change: '+12%' },
-                        { label: 'In Progress', value: projects.filter(p => p.status === 'in-progress').length, icon: Clock, color: 'amber', change: '+5%' },
-                        { label: 'Completed', value: projects.filter(p => p.status === 'completed').length, icon: Check, color: 'green', change: '+23%' },
-                        { label: 'Featured', value: projects.filter(p => p.featured).length, icon: Star, color: 'purple', change: '+8%' }
+                        { 
+                            label: 'Total Projects', 
+                            value: projects.length, 
+                            icon: FileText, 
+                            color: 'blue', 
+                            change: analytics?.totalGrowth || '+0%'
+                        },
+                        { 
+                            label: 'In Progress', 
+                            value: projects.filter(p => p.status === 'in-progress').length, 
+                            icon: Clock, 
+                            color: 'amber', 
+                            change: analytics?.inProgressGrowth || '+0%'
+                        },
+                        { 
+                            label: 'Completed', 
+                            value: projects.filter(p => p.status === 'completed').length, 
+                            icon: Check, 
+                            color: 'green', 
+                            change: analytics?.completedGrowth || '+0%'
+                        },
+                        { 
+                            label: 'Featured', 
+                            value: projects.filter(p => p.featured).length, 
+                            icon: Star, 
+                            color: 'purple', 
+                            change: analytics?.featuredGrowth || '+0%'
+                        }
                     ].map((stat, i) => (
                         <motion.div
                             key={i}
@@ -1039,27 +1063,60 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div className="bg-slate-700 p-4 rounded-lg">
                         <p className="text-slate-400 text-sm">Total Projects</p>
-                        <p className="text-3xl font-bold text-white">{projects.length}</p>
+                        <p className="text-3xl font-bold text-white">
+                            {analytics?.totalProjects || projects.length}
+                        </p>
                     </div>
                     <div className="bg-slate-700 p-4 rounded-lg">
                         <p className="text-slate-400 text-sm">Published</p>
                         <p className="text-3xl font-bold text-green-400">
-                            {projects.filter(p => p.status === 'published').length}
+                            {analytics?.publishedProjects || projects.filter(p => p.status === 'published').length}
                         </p>
                     </div>
                     <div className="bg-slate-700 p-4 rounded-lg">
                         <p className="text-slate-400 text-sm">In Progress</p>
                         <p className="text-3xl font-bold text-yellow-400">
-                            {projects.filter(p => p.status === 'in-progress').length}
+                            {analytics?.inProgressProjects || projects.filter(p => p.status === 'in-progress').length}
                         </p>
                     </div>
                     <div className="bg-slate-700 p-4 rounded-lg">
                         <p className="text-slate-400 text-sm">Total Views</p>
                         <p className="text-3xl font-bold text-cyan-400">
-                            {projects.reduce((acc, p) => acc + (p.views || 0), 0)}
+                            {analytics?.totalViews || projects.reduce((acc, p) => acc + (p.views || 0), 0)}
                         </p>
                     </div>
                 </div>
+                
+                {/* Additional Analytics */}
+                {analytics && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div className="bg-slate-700 p-4 rounded-lg">
+                            <p className="text-slate-400 text-sm mb-2">Average Views per Project</p>
+                            <p className="text-2xl font-bold text-cyan-400">
+                                {analytics?.averageViews || Math.round(projects.reduce((acc, p) => acc + (p.views || 0), 0) / projects.length) || 0}
+                            </p>
+                        </div>
+                        <div className="bg-slate-700 p-4 rounded-lg">
+                            <p className="text-slate-400 text-sm mb-2">Most Popular Project</p>
+                            <p className="text-xl font-bold text-green-400 truncate">
+                                {analytics?.mostPopularProject || projects.reduce((max, p) => (p.views || 0) > (max.views || 0) ? p : max, projects[0])?.title || 'N/A'}
+                            </p>
+                        </div>
+                        <div className="bg-slate-700 p-4 rounded-lg">
+                            <p className="text-slate-400 text-sm mb-2">Completion Rate</p>
+                            <p className="text-2xl font-bold text-purple-400">
+                                {analytics?.completionRate || Math.round((projects.filter(p => p.status === 'completed').length / projects.length) * 100) || 0}%
+                            </p>
+                        </div>
+                        <div className="bg-slate-700 p-4 rounded-lg">
+                            <p className="text-slate-400 text-sm mb-2">Featured Projects</p>
+                            <p className="text-2xl font-bold text-yellow-400">
+                                {analytics?.featuredProjects || projects.filter(p => p.featured).length}
+                            </p>
+                        </div>
+                    </div>
+                )}
+                
                 <button
                     onClick={onClose}
                     className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg"

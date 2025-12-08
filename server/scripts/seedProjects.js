@@ -5,12 +5,43 @@ require('dotenv').config();
 
 const seedProjects = async () => {
     try {
-        // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-        console.log('✅ MongoDB Connected');
+        // Define connection URIs
+        const atlasURI = process.env.MONGODB_URI;  // Atlas connection string from environment
+        const localURI = 'mongodb://localhost:27017/efolio';  // Local fallback
+        
+        // Connection options
+        const options = {
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+            maxPoolSize: 10,
+        };
+
+        // Try Atlas connection first (if URI is provided)
+        if (atlasURI) {
+            try {
+                console.log('📡 Attempting connection to MongoDB Atlas for projects seeding...');
+                await mongoose.connect(atlasURI, options);
+                console.log('✅ MongoDB Atlas Connected for projects seeding');
+            } catch (atlasError) {
+                console.error('❌ MongoDB Atlas connection failed:', atlasError.message);
+                console.log('⚠️  Attempting fallback to local MongoDB for projects seeding...');
+                
+                // If Atlas fails, try local connection
+                await mongoose.connect(localURI, { 
+                    serverSelectionTimeoutMS: 5000,
+                    socketTimeoutMS: 45000 
+                });
+                console.log('✅ Local MongoDB Connected for projects seeding');
+            }
+        } else {
+            // If no Atlas URI provided, connect to local
+            console.log('📡 No Atlas URI provided, attempting local MongoDB connection for projects seeding...');
+            await mongoose.connect(localURI, { 
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000 
+            });
+            console.log('✅ Local MongoDB Connected for projects seeding');
+        }
 
         // Find the owner user
         const owner = await User.findOne({ role: 'owner' });

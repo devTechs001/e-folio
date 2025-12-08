@@ -1,4 +1,5 @@
 // controllers/reviews.controller.js
+const mongoose = require('mongoose');
 const Review = require('../models/Review.model');
 const User = require('../models/User.model');
 const ActivityLog = require('../models/ActivityLog');
@@ -152,9 +153,9 @@ exports.createReview = async (req, res) => {
 // Get reviews with filtering (Owner only)
 exports.getReviews = async (req, res) => {
     try {
-        // Check if we're in memory mode (MongoDB not available)
-        if (process.env.NODE_ENV === 'development' && !process.env.MONGODB_URI) {
-            // Return mock data in development mode
+        // Check if MongoDB connection is available
+        if (mongoose.connection.readyState !== 1) { // 1 means connected
+            // Return mock data when database is not available
             const mockReviews = [
                 {
                     _id: 'review_001',
@@ -382,9 +383,9 @@ exports.getPublicReviews = async (req, res) => {
 // Get featured reviews
 exports.getFeaturedReviews = async (req, res) => {
     try {
-        // Check if we're in memory mode (MongoDB not available)
-        if (process.env.NODE_ENV === 'development' && !process.env.MONGODB_URI) {
-            // Return mock data in development mode
+        // Check if MongoDB connection is available
+        if (mongoose.connection.readyState !== 1) { // 1 means connected
+            // Return mock data when database is not available
             const mockReviews = [
                 {
                     _id: 'review_001',
@@ -775,9 +776,9 @@ exports.getReviewStats = async (req, res) => {
 // Get review analytics
 exports.getReviewAnalytics = async (req, res) => {
     try {
-        // Check if we're in memory mode (MongoDB not available)
-        if (process.env.NODE_ENV === 'development' && !process.env.MONGODB_URI) {
-            // Return mock data in development mode
+        // Check if MongoDB connection is available
+        if (mongoose.connection.readyState !== 1) { // 1 means connected
+            // Return mock data when database is not available
             const mockAnalytics = {
                 ratingDistribution: {
                     5: 8,

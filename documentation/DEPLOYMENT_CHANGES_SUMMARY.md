@@ -140,7 +140,7 @@ Created three new documentation files:
 
 **Expected Result**: Backend logs will show:
 ```
-✅ MongoDB Connected: cluster1.1frrfrb.mongodb.net
+✅ MongoDB Connected: cluster0.kparor6.mongodb.net
 📁 Database: e-folio
 ```
 
@@ -156,7 +156,7 @@ Created three new documentation files:
 4. Verify these exist:
 
 ```
-MONGODB_URI=mongodb+srv://danielmk:20051117dan@cluster1.1frrfrb.mongodb.net/e-folio?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://devtechs842_db_user:20051117dan@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
 CLIENT_URL=https://e-folio-pro.netlify.app
 JWT_SECRET=(should exist)
 OWNER_PASSWORD=pass1234
@@ -217,7 +217,7 @@ curl https://e-folio-backend-server.onrender.com/health
 
 **Render Logs**: Should show:
 ```
-✅ MongoDB Connected: cluster1.1frrfrb.mongodb.net
+✅ MongoDB Connected: cluster0.kparor6.mongodb.net
 📁 Database: e-folio
 🚀 E-Folio Server Running
 📡 Port: 10000

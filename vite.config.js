@@ -17,15 +17,12 @@ export default defineConfig(({ command, mode }) => {
     ],
     
     // Base URL configuration
-    base: mode === 'development' ? '/' : (env.GITHUB_PAGES === 'true' ? '/e-folio/' : '/'),
+    base: mode === 'development' ? '/' : (env.VITE_GITHUB_PAGES === 'true' ? '/e-folio/' : '/'),
   
     // Resolve configuration
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src')
-        // Remove these - they cause issues:
-        // react: path.resolve(__dirname, 'node_modules/react'),
-        // 'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
       }
     },
     
@@ -38,7 +35,7 @@ export default defineConfig(({ command, mode }) => {
         compress: {
           drop_console: true,  // Remove console logs
           drop_debugger: true,  // Remove debugger statements
-          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']  // Remove specific console calls
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn', 'console.error', 'console.trace']  // Remove specific console calls
         },
         mangle: {
           toplevel: true,  // Mangle top-level names
@@ -82,7 +79,13 @@ export default defineConfig(({ command, mode }) => {
       strictPort: true,
       open: true,
       host: true,
-      cors: true
+      cors: true,
+      proxy: {
+        '/api': {
+          target: env.VITE_API_URL || 'http://localhost:5000',
+          changeOrigin: true
+        }
+      }
     },
     
     publicDir: 'public',

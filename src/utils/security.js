@@ -1,8 +1,5 @@
-// Security utilities for E-Folio Pro
-// Implements various protection measures against source code access and debugging
-
-// Anti-debugging measures
-export function setupAntiDebug() {
+// Anti-debugging and security measures
+export function setupSecurity() {
   if (process.env.NODE_ENV === 'production') {
     // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
     document.addEventListener('keydown', (e) => {
@@ -16,138 +13,105 @@ export function setupAntiDebug() {
         return false;
       }
     });
-
+    
     // Disable right-click
     document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       return false;
     });
-
+    
     // Clear console periodically
     setInterval(() => {
-      console.clear();
+      if (window.console && window.console.clear) {
+        console.clear();
+      }
     }, 1000);
-
-    // Detect developer tools (heuristic approach)
-    let devtools = {
-      open: false,
-      orientation: null
-    };
-
+    
+    // Detect devtools
+    let devtools = { open: false };
     const threshold = 160;
 
-    setInterval(() => {
-      if (
-        window.outerHeight - window.innerHeight > threshold ||
-        window.outerWidth - window.innerWidth > threshold
-      ) {
-        if (!devtools.open) {
-          devtools.open = true;
-          // Optionally redirect or show warning
-          // window.location.href = 'https://yourdomain.com/invalid';
+    const checkDevTools = () => {
+      if (devtools.open) {
+        // DevTools were open, redirect or take action
+        // For now we'll just log, but in production you might want to take stronger action
+        console.log('DevTools detected');
+        devtools.open = false;
+      }
+    };
+
+    Object.defineProperty(devtools, 'open', {
+      set: (value) => {
+        devtools._open = value;
+        if (value && window.location.hostname !== 'localhost') {
+          // DevTools detected in production
+          console.log('Development tools detected in production');
         }
+      },
+      get: () => {
+        return devtools._open;
+      },
+    });
+
+    setInterval(() => {
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      if (heightThreshold || widthThreshold) {
+        devtools.open = true;
       } else {
         devtools.open = false;
       }
+      checkDevTools();
     }, 500);
-
-    // Override console methods to prevent debugging
-    if (window.console) {
-      console.log = () => {};
-      console.info = () => {};
-      console.warn = () => {};
-      console.error = () => {};
-      console.debug = () => {};
+    
+    // Domain locking
+    const allowedDomains = [
+      'localhost',
+      '127.0.0.1',
+      'devtechs001.github.io',
+      'e-folio-pro.netlify.app',
+      'e-folio-pro.vercel.app',
+      process.env.VITE_ALLOWED_DOMAIN
+    ].filter(Boolean);
+    
+    const currentDomain = window.location.hostname;
+    if (!allowedDomains.includes(currentDomain) && !currentDomain.endsWith('.onrender.com')) {
+      // Redirect to a warning page or show an error
+      console.log('Unauthorized domain access attempt');
     }
   }
 }
 
-// Domain locking
-export function checkDomainAccess() {
-  const allowedDomains = [
-    'localhost',
-    '127.0.0.1',
-    'devtechs001.github.io',
-    'e-folio.netlify.app',  // If deployed to Netlify
-    // Add your production domains here
-  ];
-
-  const currentDomain = window.location.hostname;
-
-  if (!allowedDomains.includes(currentDomain)) {
-    // Redirect to a safe page or show error
-    console.warn('Access from unauthorized domain');
-    // In production, uncomment the next line:
-    // window.location.href = 'https://devtechs001.github.io/e-folio/';
-  }
-}
-
-// Code integrity check
-export function setupCodeIntegrityCheck() {
-  // Create a checksum of critical functions
-  const criticalFunctions = {
-    // Add checksums for critical functions here
-    checkDomainAccess: 'function_exists',
-    setupAntiDebug: 'function_exists'
-  };
-
-  // Verify integrity periodically
-  setInterval(() => {
-    if (!criticalFunctions.checkDomainAccess) {
-      console.error('Code integrity violation detected');
-      // Handle integrity violation
-    }
-  }, 30000); // Check every 30 seconds
-}
-
-// Track access patterns
-export function logAccess() {
-  if (process.env.NODE_ENV === 'production') {
-    // Send access logs to backend (if available)
-    // This is just a placeholder function
-    fetch('/api/log-access', {
+// Function to validate license key (example)
+export async function validateLicense(key) {
+  try {
+    const response = await fetch('/api/validate-license', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        page: window.location.pathname,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now(),
-        referer: document.referrer
-      })
-    }).catch(err => {
-      // Ignore errors to prevent detection
+      body: JSON.stringify({ key }),
+      headers: { 'Content-Type': 'application/json' }
     });
+    return response.ok;
+  } catch (error) {
+    console.error('License validation error:', error);
+    return false;
   }
 }
 
-// Initialize security measures
-export function initializeSecurity() {
-  setupAntiDebug();
-  checkDomainAccess();
-  setupCodeIntegrityCheck();
-  logAccess();
-}
-
-// Watermarking function (adds invisible watermark to UI)
+// Add watermark to the page content
 export function addWatermark() {
   if (process.env.NODE_ENV === 'production') {
-    // Create an invisible watermark element
+    // Create a subtle watermark
     const watermark = document.createElement('div');
-    watermark.id = 'efolio-watermark';
+    watermark.innerHTML = 'E-Folio Pro ⓒ';
     watermark.style.position = 'fixed';
-    watermark.style.top = '0';
-    watermark.style.left = '0';
-    watermark.style.width = '100%';
-    watermark.style.height = '100%';
-    watermark.style.pointerEvents = 'none';
+    watermark.style.bottom = '10px';
+    watermark.style.right = '10px';
+    watermark.style.opacity = '0.3';
+    watermark.style.fontSize = '12px';
     watermark.style.zIndex = '9999';
-    watermark.style.backgroundImage = 'repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,.05) 50px, rgba(255,255,255,.05) 52px)';
-    watermark.style.opacity = '0.05';
-    watermark.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:50px;opacity:0.05;pointer-events:none;">E-Folio Pro</div>';
+    watermark.style.pointerEvents = 'none';
+    watermark.style.color = '#666';
     
-    // Add to body but make it invisible
     document.body.appendChild(watermark);
   }
 }

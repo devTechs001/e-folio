@@ -896,12 +896,144 @@ class ApiService {
         }
     }
 
+    async savePortfolioConfig(data) {
+        try {
+            return await this.request('/portfolio/config', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+        } catch (error) {
+            console.warn('Portfolio save unavailable');
+            return { success: false, error: error.message };
+        }
+    }
+
     async getPortfolioVersions() {
         try {
             return await this.request('/portfolio/versions');
         } catch (error) {
             console.warn('Portfolio versions unavailable');
             return { success: true, data: [] };
+        }
+    }
+
+    async getCustomTemplates() {
+        try {
+            return await this.request('/portfolio/templates');
+        } catch (error) {
+            console.warn('Custom templates unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Analytics APIs
+    async getAnalyticsOverview() {
+        try {
+            return await this.request('/analytics/overview');
+        } catch (error) {
+            console.warn('Analytics overview unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getBookmarks() {
+        try {
+            return await this.request('/learning/bookmarks');
+        } catch (error) {
+            console.warn('Bookmarks unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Learning Center APIs
+    async getCommunities() {
+        try {
+            return await this.request('/learning/communities');
+        } catch (error) {
+            console.warn('Communities unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getLearningResources() {
+        try {
+            return await this.request('/learning/resources');
+        } catch (error) {
+            console.warn('Learning resources unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Collaboration Requests APIs
+    async getCollaborationStats() {
+        try {
+            return await this.request('/collaboration/stats');
+        } catch (error) {
+            console.warn('Collaboration stats unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getCollaborationRequests() {
+        try {
+            return await this.request('/collaboration/requests');
+        } catch (error) {
+            console.warn('Collaboration requests unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Project Management APIs
+    async getProjectAnalytics() {
+        try {
+            return await this.request('/projects/analytics');
+        } catch (error) {
+            console.warn('Project analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getProjects() {
+        try {
+            return await this.request('/projects');
+        } catch (error) {
+            console.warn('Projects unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async createProject(projectData) {
+        try {
+            return await this.request('/projects', {
+                method: 'POST',
+                body: JSON.stringify(projectData)
+            });
+        } catch (error) {
+            console.warn('Create project unavailable');
+            return { success: false, error: error.message };
+        }
+    }
+
+    async updateProject(id, projectData) {
+        try {
+            return await this.request(`/projects/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(projectData)
+            });
+        } catch (error) {
+            console.warn('Update project unavailable');
+            return { success: false, error: error.message };
+        }
+    }
+
+    async deleteProject(id) {
+        try {
+            return await this.request(`/projects/${id}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.warn('Delete project unavailable');
+            return { success: false, error: error.message };
         }
     }
 
@@ -932,6 +1064,164 @@ class ApiService {
         } catch (error) {
             console.warn('Featured reviews unavailable');
             return { success: true, data: [] };
+        }
+    }
+
+    // Analytics APIs
+    async getAnalyticsOverview(timeRange = '7d', filters = {}) {
+        try {
+            const query = new URLSearchParams({ timeRange, ...filters });
+            return await this.request(`/analytics/overview?${query}`);
+        } catch (error) {
+            console.warn('Analytics overview unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getTrafficAnalytics(timeRange = '7d', filters = {}) {
+        try {
+            const query = new URLSearchParams({ timeRange, ...filters });
+            return await this.request(`/analytics/traffic?${query}`);
+        } catch (error) {
+            console.warn('Traffic analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getBehaviorAnalytics(timeRange = '7d', filters = {}) {
+        try {
+            const query = new URLSearchParams({ timeRange, ...filters });
+            return await this.request(`/analytics/behavior?${query}`);
+        } catch (error) {
+            console.warn('Behavior analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getConversionAnalytics(timeRange = '7d', filters = {}) {
+        try {
+            const query = new URLSearchParams({ timeRange, ...filters });
+            return await this.request(`/analytics/conversion?${query}`);
+        } catch (error) {
+            console.warn('Conversion analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getTechnicalAnalytics(timeRange = '7d', filters = {}) {
+        try {
+            const query = new URLSearchParams({ timeRange, ...filters });
+            return await this.request(`/analytics/technical?${query}`);
+        } catch (error) {
+            console.warn('Technical analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getSocialMediaAnalytics(timeRange = '7d') {
+        try {
+            const query = new URLSearchParams({ timeRange });
+            return await this.request(`/analytics/social?${query}`);
+        } catch (error) {
+            console.warn('Social media analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getSEOAnalytics(timeRange = '7d') {
+        try {
+            const query = new URLSearchParams({ timeRange });
+            return await this.request(`/analytics/seo?${query}`);
+        } catch (error) {
+            console.warn('SEO analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getCompetitorAnalytics(timeRange = '7d') {
+        try {
+            const query = new URLSearchParams({ timeRange });
+            return await this.request(`/analytics/competitor?${query}`);
+        } catch (error) {
+            console.warn('Competitor analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getGoalsProgress() {
+        try {
+            return await this.request('/analytics/goals');
+        } catch (error) {
+            console.warn('Goals progress unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getCustomEvents(timeRange = '7d', filters = {}) {
+        try {
+            const query = new URLSearchParams({ timeRange, ...filters });
+            return await this.request(`/analytics/events?${query}`);
+        } catch (error) {
+            console.warn('Custom events unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getHeatmapData(page) {
+        try {
+            const query = new URLSearchParams({ page });
+            return await this.request(`/analytics/heatmap?${query}`);
+        } catch (error) {
+            console.warn('Heatmap data unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getABTestResults() {
+        try {
+            return await this.request('/analytics/ab-tests');
+        } catch (error) {
+            console.warn('A/B test results unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getUserRetention(timeRange = '7d') {
+        try {
+            const query = new URLSearchParams({ timeRange });
+            return await this.request(`/analytics/retention?${query}`);
+        } catch (error) {
+            console.warn('User retention data unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getConversionFunnel(timeRange = '7d') {
+        try {
+            const query = new URLSearchParams({ timeRange });
+            return await this.request(`/analytics/funnel?${query}`);
+        } catch (error) {
+            console.warn('Conversion funnel unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAnalyticsAlerts() {
+        try {
+            return await this.request('/analytics/alerts');
+        } catch (error) {
+            console.warn('Analytics alerts unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async exportAnalytics(params) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/analytics/export?${query}`);
+        } catch (error) {
+            console.warn('Analytics export unavailable');
+            return { success: true, data: {} };
         }
     }
 }

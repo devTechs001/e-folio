@@ -83,9 +83,43 @@ const skills = [
 
 async function seedSkills() {
     try {
-        // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/e-folio');
-        console.log('✅ Connected to MongoDB');
+        // Define connection URIs
+        const atlasURI = process.env.MONGODB_URI;  // Atlas connection string from environment
+        const localURI = 'mongodb://localhost:27017/e-folio';  // Local fallback
+        
+        // Connection options
+        const options = {
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+            maxPoolSize: 10,
+        };
+
+        // Try Atlas connection first (if URI is provided)
+        if (atlasURI) {
+            try {
+                console.log('📡 Attempting connection to MongoDB Atlas for skills seeding...');
+                await mongoose.connect(atlasURI, options);
+                console.log('✅ MongoDB Atlas Connected for skills seeding');
+            } catch (atlasError) {
+                console.error('❌ MongoDB Atlas connection failed:', atlasError.message);
+                console.log('⚠️  Attempting fallback to local MongoDB for skills seeding...');
+                
+                // If Atlas fails, try local connection
+                await mongoose.connect(localURI, { 
+                    serverSelectionTimeoutMS: 5000,
+                    socketTimeoutMS: 45000 
+                });
+                console.log('✅ Local MongoDB Connected for skills seeding');
+            }
+        } else {
+            // If no Atlas URI provided, connect to local
+            console.log('📡 No Atlas URI provided, attempting local MongoDB connection for skills seeding...');
+            await mongoose.connect(localURI, { 
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000 
+            });
+            console.log('✅ Local MongoDB Connected for skills seeding');
+        }
 
         // Clear existing skills
         await Skill.deleteMany({});

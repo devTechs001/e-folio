@@ -129,6 +129,10 @@ app.get('/health', (req, res) => {
     });
 });
 
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'healthy', timestamp: new Date() });
+});
+
 
 // Initialize Socket.io handlers
 chatHandler(io);
@@ -150,7 +154,7 @@ connectDB().then(() => {
         console.log(`✅ E-Folio Server Running`);
         console.log(`📡 Port: ${PORT}`);
         console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-        console.log(`💾 Database: ${process.env.MONGODB_URI ? 'Connected' : 'In-Memory Mode'}`);
+        console.log(`💾 Database: ${process.env.MONGODB_URI ? 'Atlas/Local (with fallback)' : 'Local Only'}`);
         console.log(`🔌 Socket.io: Ready`);
         console.log('=====================================\n');
     });
