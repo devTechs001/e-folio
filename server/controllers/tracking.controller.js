@@ -27,11 +27,16 @@ exports.initSession = asyncHandler(async (req, res) => {
     // Get device info from user agent
     const deviceInfo = parseUserAgent(req.headers['user-agent']);
     
-    // Format device info according to model - keeping it as a simple string
-    const device = deviceInfo.device.type || 'Unknown';
-    
     // Get location from IP
     const location = await GeoLocationService.getLocationFromIP(req.ip);
+    
+    // Format referrer to be string only (extract the URL if it's an object)
+    let referrerString = referrer;
+    if (typeof referrer === 'object' && referrer.url) {
+        referrerString = referrer.url;
+    } else if (typeof referrer === 'object') {
+        referrerString = referrer.source || 'direct';
+    }
     
     // Create session
     const session = await TrackingSession.create({
@@ -42,7 +47,7 @@ exports.initSession = asyncHandler(async (req, res) => {
         device: deviceInfo.device,
         location,
         source: {
-            referrer,
+            referrer: referrerString,
             campaign,
             medium,
             source
@@ -86,8 +91,10 @@ exports.trackPageView = asyncHandler(async (req, res) => {
     session.pagesViewed += 1;
     if (scrollDepth) session.scrollDepth = Math.max(session.scrollDepth, scrollDepth);
 
-    // Update AI insights
-    session.aiInsights = await AIAnalysisService.analyzeSession(session);
+    // Update AI insights - skip if service is disabled
+    if (typeof AIAnalysisService !== 'undefined' && AIAnalysisService.analyzeSession) {
+        session.aiInsights = await AIAnalysisService.analyzeSession(session);
+    }
 
     await session.save();
 
@@ -95,7 +102,7 @@ exports.trackPageView = asyncHandler(async (req, res) => {
     await updatePageAnalytics(page, title, timeSpent, scrollDepth);
 
     // Broadcast to WebSocket if high engagement
-    if (session.aiInsights.engagementLevel === 'very_high' || session.aiInsights.engagementLevel === 'high') {
+    if (session.aiInsights && (session.aiInsights.engagementLevel === 'very_high' || session.aiInsights.engagementLevel === 'high')) {
         broadcastHighEngagement(session);
     }
 
@@ -137,8 +144,10 @@ exports.trackEvent = asyncHandler(async (req, res) => {
         session.conversionValue = eventData.value;
     }
 
-    // Re-analyze with new event
-    session.aiInsights = await AIAnalysisService.analyzeSession(session);
+    // Re-analyze with new event - skip if service is disabled
+    if (typeof AIAnalysisService !== 'undefined' && AIAnalysisService.analyzeSession) {
+        session.aiInsights = await AIAnalysisService.analyzeSession(session);
+    }
 
     await session.save();
 
@@ -165,8 +174,10 @@ exports.endSession = asyncHandler(async (req, res) => {
     session.isActive = false;
     session.duration = session.endTime - session.startTime;
 
-    // Final AI analysis
-    session.aiInsights = await AIAnalysisService.analyzeSession(session);
+    // Final AI analysis - skip if service is disabled
+    if (typeof AIAnalysisService !== 'undefined' && AIAnalysisService.analyzeSession) {
+        session.aiInsights = await AIAnalysisService.analyzeSession(session);
+    }
 
     await session.save();
 
@@ -410,7 +421,9 @@ exports.getBehaviorPatterns = asyncHandler(async (req, res) => {
 // @route   GET /api/tracking/predictive
 // @access  Private
 exports.getPredictiveAnalytics = asyncHandler(async (req, res) => {
-    const predictions = await AIAnalysisService.generatePredictions();
+    const predictions = typeof AIAnalysisService !== 'undefined' && AIAnalysisService.generatePredictions 
+        ? await AIAnalysisService.generatePredictions()
+        : { message: 'AI Analysis service is currently disabled', status: 'service_disabled' };
 
     res.json({
         success: true,

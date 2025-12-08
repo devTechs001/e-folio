@@ -1,0 +1,43 @@
+name: Deployment Status Monitor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  check-deployments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GitHub Pages
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" https://devtechs001.github.io/e-folio/)
+          echo "GitHub Pages Status: $status"
+          if [ "$status" -ne 200 ]; then
+            echo "❌ GitHub Pages is down"
+            exit 1
+          else
+            echo "✅ GitHub Pages is up"
+          fi
+          
+      - name: Check Netlify
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" https://e-folio-pro.netlify.app/)
+          echo "Netlify Status: $status"
+          if [ "$status" -ne 200 ]; then
+            echo "❌ Netlify is down"
+            exit 1
+          else
+            echo "✅ Netlify is up"
+          fi
+          
+      - name: Check Backend API
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" https://e-folio-backend-server.onrender.com/health)
+          echo "Backend API Status: $status"
+          if [ "$status" -ne 200 ]; then
+            echo "❌ Backend API is down"
+            exit 1
+          else
+            echo "✅ Backend API is up"
+          fi

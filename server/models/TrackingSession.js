@@ -17,10 +17,10 @@ const trackingSessionSchema = new mongoose.Schema({
     userAgent: String,
     browser: String,
     device: {
-        type: String,
-        isMobile: Boolean,
-        isTablet: Boolean,
-        os: String
+        type: { type: String },
+        isMobile: { type: Boolean },
+        isTablet: { type: Boolean },
+        os: { type: String }
     },
     location: {
         country: String,

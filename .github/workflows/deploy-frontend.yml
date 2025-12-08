@@ -1,0 +1,102 @@
+name: Deploy Frontend to Multiple Platforms
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!server/**'
+      - '!*.md'
+      - '!.gitignore'
+      - '!.env*'
+  workflow_dispatch:
+
+env:
+  VITE_API_URL: ${{ secrets.VITE_API_URL }}
+  VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './package-lock.json'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Build for GitHub Pages
+        run: |
+          npm run build
+          mv dist dist-gh-pages
+          
+      - name: Build for Netlify/Vercel
+        run: |
+          npm run build
+          mv dist dist-netlify
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: builds
+          path: |
+            dist-gh-pages
+            dist-netlify
+            
+  deploy-gh-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
+      
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: builds
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist-gh-pages'
+          
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        
+  deploy-netlify:
+    name: Deploy to Netlify
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: builds
+          
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: './dist-netlify'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
