@@ -17,6 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Sitemap from './pages/Sitemap';
+import CVPage from './pages/CVPage';
 import './index.css';
 
 // Component to handle hash navigation
@@ -104,6 +105,7 @@ const App = () => {
                                 <Route path="/terms" element={<TermsAndConditions />} />
                                 <Route path="/privacy" element={<PrivacyPolicy />} />
                                 <Route path="/sitemap" element={<Sitemap />} />
+                                <Route path="/cv" element={<CVPage />} />
                                     <Route 
                                         path="/dashboard/*" 
                                         element={
