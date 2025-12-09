@@ -572,6 +572,14 @@ class ApiService {
         });
     }
 
+    // Contact Form API
+    async sendContactMessage(formData) {
+        return this.request('/contact/send', {
+            method: 'POST',
+            body: JSON.stringify(formData)
+        });
+    }
+
     // Email APIs
     async getEmails(filters = {}) {
         const query = new URLSearchParams(filters);

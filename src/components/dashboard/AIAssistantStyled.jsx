@@ -90,9 +90,9 @@ const AIAssistant = () => {
     const [sortBy, setSortBy] = useState('recent');
     const [viewMode, setViewMode] = useState('comfortable'); // compact, comfortable, spacious
 
-    // AI Settings
-    const [aiModel, setAiModel] = useState('gpt-4-turbo');
-    const [aiProvider, setAiProvider] = useState('openai');
+    // AI Settings - Using a free model as default
+    const [aiModel, setAiModel] = useState('gpt-3.5-turbo'); // Changed to a potentially free model as default
+    const [aiProvider, setAiProvider] = useState('openai'); // Using OpenAI as it often has free tier
     const [temperature, setTemperature] = useState(0.7);
     const [maxTokens, setMaxTokens] = useState(2000);
     const [topP, setTopP] = useState(1);
@@ -479,7 +479,8 @@ const AIAssistant = () => {
             
             const prefs = response.data;
             if (prefs) {
-                setAiModel(prefs.aiModel || 'gpt-4-turbo');
+                // Default to free model (gpt-3.5-turbo) when possible
+                setAiModel(prefs.aiModel || 'gpt-3.5-turbo');
                 setAiProvider(prefs.aiProvider || 'openai');
                 setTemperature(prefs.temperature || 0.7);
                 setMaxTokens(prefs.maxTokens || 2000);
@@ -2002,9 +2003,12 @@ const SettingsPanel = ({
     const [activeTab, setActiveTab] = useState('model');
 
     const models = [
-        { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai' },
-        { id: 'gpt-4', name: 'GPT-4', provider: 'openai' },
-        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai' },
+        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo (Free Tier)', provider: 'openai' },
+        { id: 'llama3-8b', name: 'Llama 3 8B (Free on Groq)', provider: 'groq' },
+        { id: 'gemma-7b', name: 'Gemma 7B (Free)', provider: 'google' },
+        { id: 'mistral-7b', name: 'Mistral 7B (Free)', provider: 'openrouter' },
+        { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google' },
+        { id: 'llama3-70b', name: 'Llama 3 70B', provider: 'groq' },
         { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'anthropic' },
         { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'anthropic' },
         { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google' },

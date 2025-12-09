@@ -164,9 +164,7 @@ const CollaborationRequest = () => {
                 }
                 break;
             case 'phone':
-                if (!value || value.trim().length === 0) {
-                    error = 'Phone is required - Please enter your phone number';
-                } else {
+                if (value && value.trim().length > 0) {
                     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
                     if (!phoneRegex.test(value)) {
                         error = 'Invalid phone format - Only numbers, spaces, +, -, and () allowed';
@@ -178,37 +176,25 @@ const CollaborationRequest = () => {
                 }
                 break;
             case 'location':
-                if (!value || value.trim().length === 0) {
-                    error = 'Location is required - Please enter your city and country';
-                } else if (value.trim().length < 3) {
-                    error = 'Location too short - Must be at least 3 characters (currently: ' + value.trim().length + ')';
-                } else if (!/,/.test(value)) {
-                    error = 'Invalid location format - Please include both city and country separated by comma (e.g., "New York, USA")';
+                if (value && value.trim().length > 0) {
+                    if (value.trim().length < 3) {
+                        error = 'Location too short - Must be at least 3 characters (currently: ' + value.trim().length + ')';
+                    } else if (!/,/.test(value)) {
+                        error = 'Invalid location format - Please include both city and country separated by comma (e.g., "New York, USA")';
+                    }
                 }
                 break;
             case 'timezone':
-                if (!value || value.trim().length === 0) {
-                    error = 'Timezone is required - Please select your timezone from the dropdown';
-                }
+                // Optional field
                 break;
             case 'role':
-                if (!value || value.trim().length === 0) {
-                    error = 'Role is required - Please select your professional role';
-                }
+                // Optional field
                 break;
             case 'experience':
-                if (!value || value.trim().length === 0) {
-                    error = 'Experience is required - Please select your years of experience';
-                }
+                // Optional field
                 break;
             case 'skills':
-                if (!value || value.length === 0) {
-                    error = 'Skills are required - Please select at least 3 skills from the list';
-                } else if (value.length < 3) {
-                    error = 'Not enough skills - Minimum 3 skills required (currently: ' + value.length + ')';
-                } else if (value.length > 10) {
-                    error = 'Too many skills - Maximum 10 skills allowed (currently: ' + value.length + ')';
-                }
+                // Optional field
                 break;
             case 'portfolio':
             case 'github':
@@ -233,14 +219,10 @@ const CollaborationRequest = () => {
                 }
                 break;
             case 'projectType':
-                if (!value || value.length === 0) {
-                    error = 'Project type is required - Please select at least one project type';
-                }
+                // Optional field
                 break;
             case 'availability':
-                if (!value || value.trim().length === 0) {
-                    error = 'Availability is required - Please select when you can start';
-                }
+                // Optional field
                 break;
             case 'terms':
                 if (!value) {
@@ -395,7 +377,29 @@ const CollaborationRequest = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate all steps
+        // Collect all missing required fields
+        const missingFields = [];
+        
+        if (!formData.name || formData.name.trim().length === 0) {
+            missingFields.push('Name');
+        }
+        if (!formData.email || formData.email.trim().length === 0) {
+            missingFields.push('Email');
+        }
+        if (!formData.message || formData.message.trim().length === 0) {
+            missingFields.push('Message');
+        }
+        if (!formData.terms) {
+            missingFields.push('Terms & Conditions');
+        }
+
+        // Show specific missing fields error
+        if (missingFields.length > 0) {
+            error(`Missing required fields: ${missingFields.join(', ')}`);
+            return;
+        }
+
+        // Validate all steps for optional fields
         let allValid = true;
         for (let i = 1; i <= steps.length; i++) {
             if (!validateStep(i)) {
@@ -406,12 +410,7 @@ const CollaborationRequest = () => {
         }
 
         if (!allValid) {
-            error('Please complete all required fields');
-            return;
-        }
-
-        if (!formData.terms) {
-            error('Please accept the terms and conditions');
+            error('Please fix validation errors in the form');
             return;
         }
 
@@ -573,6 +572,21 @@ const CollaborationRequest = () => {
                     <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">
                         Fill out this form to request collaboration access. I'll review your request and get back to you soon.
                     </p>
+
+                    {/* Required Fields Notice */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <span className="text-white text-xs font-bold">i</span>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Required Fields</h4>
+                                <p className="text-sm text-blue-800 dark:text-blue-200">
+                                    Only <span className="font-semibold">Name, Email, Message, and Terms acceptance</span> are required to submit. All other fields are optional but help us better understand your collaboration needs.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </motion.div>
 
                 {/* Progress Bar */}

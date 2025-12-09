@@ -13,6 +13,7 @@ import Contact from './Contact';
 import Footer from './Footer';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import ReviewFloatingButton from '../components/ReviewFloatingButton';
+import AIChatbot from '../components/AIChatbot';
 import '../styles/LandingPage.css';
 
 const LandingPage = () => {
@@ -268,6 +269,7 @@ const LandingPage = () => {
             {/* Floating Elements */}
             <ReviewFloatingButton />
             <ThemeSwitcher />
+            <AIChatbot />
 
             {/* Back to Top - Quick Access */}
             <div className="quick-access-menu">

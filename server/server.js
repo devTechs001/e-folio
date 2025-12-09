@@ -38,6 +38,8 @@ const interestsRoutes = require('./routes/interests.routes');
 const webhooksRoutes = require('./routes/webhooks.routes');
 const portfolioRoutes = require('./routes/portfolio.routes');
 const testimonialsRoutes = require('./routes/testimonials.routes');
+const chatbotRoutes = require('./routes/chatbot.routes');
+const contactRoutes = require('./routes/contact.routes');
 
 // Create Express app and server
 const app = express();
@@ -124,6 +126,8 @@ app.use('/api/interests', interestsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/testimonials', testimonialsRoutes);
+app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/contact', contactRoutes);
 
 
 // API Routes

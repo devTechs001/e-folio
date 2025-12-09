@@ -45,4 +45,27 @@ router.get('/stats', getStats);
 router.get('/conversations/:id/export', exportConversation);
 router.post('/generate-markdown', generateMarkdown);
 
+// Chat endpoints
+router.post('/chat', sendMessage); // Direct chat endpoint
+router.post('/chat/stream', sendMessage); // For streaming
+
+// Preferences
+router.get('/preferences', getPreferences);
+router.post('/preferences', savePreferences);
+
+// Embeddings
+router.post('/embeddings', getEmbeddings);
+
+// Moderation
+router.post('/moderate', moderateContent);
+
+// Usage stats
+router.get('/usage-stats', getStats);
+
+// Images - for vision models
+router.post('/images/generate', generateImage);
+
+// Transcription
+router.post('/transcribe', transcribeAudio);
+
 module.exports = router;

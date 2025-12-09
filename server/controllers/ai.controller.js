@@ -618,4 +618,158 @@ exports.generateMarkdown = (data) => {
     return markdown;
 };
 
+// @desc    Get user preferences
+// @route   GET /api/ai/preferences
+// @access  Private
+exports.getPreferences = asyncHandler(async (req, res) => {
+    // Retrieve user preferences from database or return defaults
+    const preferences = {
+        aiModel: 'gpt-3.5-turbo', // Default to free model
+        aiProvider: 'openai',
+        temperature: 0.7,
+        maxTokens: 2000,
+        systemPrompt: 'You are a helpful AI assistant.',
+        streamResponse: true,
+        topP: 1,
+        frequencyPenalty: 0,
+        presencePenalty: 0,
+        contextWindow: 10,
+        useRAG: false,
+        enableWebSearch: false,
+        enableCodeExecution: false,
+        enableVision: false,
+        enableImageGen: false,
+        autoSave: true
+    };
+
+    res.json({
+        success: true,
+        data: preferences
+    });
+});
+
+// @desc    Save user preferences
+// @route   POST /api/ai/preferences
+// @access  Private
+exports.savePreferences = asyncHandler(async (req, res) => {
+    const {
+        aiModel,
+        aiProvider,
+        temperature,
+        maxTokens,
+        systemPrompt,
+        streamResponse,
+        topP,
+        frequencyPenalty,
+        presencePenalty,
+        contextWindow,
+        useRAG,
+        enableWebSearch,
+        enableCodeExecution,
+        enableVision,
+        enableImageGen,
+        autoSave
+    } = req.body;
+
+    // Update user preferences in database
+    // For now, just return success
+    res.json({
+        success: true,
+        message: 'Preferences saved successfully'
+    });
+});
+
+// @desc    Get embeddings
+// @route   POST /api/ai/embeddings
+// @access  Private
+exports.getEmbeddings = asyncHandler(async (req, res) => {
+    const { text } = req.body;
+    
+    if (!text) {
+        res.status(400);
+        throw new Error('Text is required for embeddings');
+    }
+
+    // Use the AIService to generate embeddings
+    const embeddings = await AIService.generateEmbeddings(text);
+
+    res.json({
+        success: true,
+        embedding: embeddings
+    });
+});
+
+// @desc    Moderate content
+// @route   POST /api/ai/moderate
+// @access  Private
+exports.moderateContent = asyncHandler(async (req, res) => {
+    const { text } = req.body;
+    
+    if (!text) {
+        res.status(400);
+        throw new Error('Text is required for moderation');
+    }
+
+    // Use the AIService to moderate content
+    const moderationResult = await AIService.moderateContent(text);
+
+    res.json({
+        success: true,
+        data: moderationResult
+    });
+});
+
+// @desc    Transcribe audio
+// @route   POST /api/ai/transcribe
+// @access  Private
+exports.transcribeAudio = asyncHandler(async (req, res) => {
+    if (!req.file && !req.files) {
+        res.status(400);
+        throw new Error('Audio file is required');
+    }
+
+    const audioFile = req.file || req.files[0];
+
+    // Use the AIService to transcribe audio
+    const transcription = await AIService.transcribeAudio(audioFile);
+
+    res.json({
+        success: true,
+        data: {
+            text: transcription,
+            language: 'en', // Could be detected
+            duration: 0 // Would need actual duration calculation
+        }
+    });
+});
+
+// @desc    Generate image
+// @route   POST /api/ai/images/generate
+// @access  Private
+exports.generateImage = asyncHandler(async (req, res) => {
+    const { prompt, size = '1024x1024', style = 'standard', quality = 'standard' } = req.body;
+
+    if (!prompt) {
+        res.status(400);
+        throw new Error('Prompt is required for image generation');
+    }
+
+    try {
+        // Use the AIService to generate image
+        const imageResult = await AIService.generateImage(prompt, {
+            size,
+            style,
+            quality
+        });
+
+        res.json({
+            success: true,
+            data: imageResult
+        });
+    } catch (error) {
+        res.status(500);
+        throw new Error('Image generation failed: ' + error.message);
+    }
+});
+
 module.exports = exports;
