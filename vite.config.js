@@ -17,7 +17,7 @@ export default defineConfig(({ command, mode }) => {
     ],
     
     // Base URL configuration
-    base: '/e-folio/',
+    base: mode === 'production' ? '/e-folio/' : '/',
   
     // Resolve configuration
     resolve: {
