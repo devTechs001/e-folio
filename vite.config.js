@@ -17,7 +17,7 @@ export default defineConfig(({ command, mode }) => {
     ],
     
     // Base URL configuration
-    base: mode === 'development' ? '/' : (env.VITE_GITHUB_PAGES === 'true' ? '/e-folio/' : '/'),
+    base: '/e-folio/',
   
     // Resolve configuration
     resolve: {
