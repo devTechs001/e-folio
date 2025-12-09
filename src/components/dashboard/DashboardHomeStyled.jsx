@@ -32,6 +32,7 @@ import {
     Globe,
     Smartphone,
     Monitor,
+    Tablet,
     Video,
     FileText,
     Code,
@@ -769,22 +770,7 @@ const DashboardHome = () => {
                 )}
             </div>
 
-            <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(100, 116, 139, 0.1);
-                    border-radius: 3px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(6, 182, 212, 0.5);
-                    border-radius: 3px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(6, 182, 212, 0.7);
-                }
-            `}</style>
+
         </DashboardLayout>
     );
 };

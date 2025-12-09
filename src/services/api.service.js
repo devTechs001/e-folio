@@ -9,11 +9,16 @@ class ApiService {
 
     // Helper method to get auth headers
     getHeaders() {
-        const token = localStorage.getItem('token');
+        const token = this.getToken();
         return {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` })
         };
+    }
+
+    // Helper method to get token
+    getToken() {
+        return localStorage.getItem('token');
     }
 
     // Generic request method
@@ -27,10 +32,18 @@ class ApiService {
                 }
             });
 
+            // Check if response is HTML (indicates error page)
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {
+                console.warn(`Server returned HTML for ${endpoint}, likely an error page`);
+                throw new Error(`Server error: ${response.status} for ${endpoint}`);
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Request failed');
+                console.warn(`API request failed: ${response.status} for ${endpoint}`);
+                throw new Error(data.message || `Request failed with status ${response.status}`);
             }
 
             return data;
@@ -38,7 +51,7 @@ class ApiService {
             console.error('API Error:', error);
             
             // Provide more specific error messages
-            if (error.message === 'Failed to fetch') {
+            if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
                 throw new Error('Unable to connect to the server. Please ensure the backend is running.');
             }
             
@@ -85,12 +98,113 @@ class ApiService {
 
     // Projects APIs
     async getProjects() {
-        return this.request('/projects');
+        try {
+            const response = await this.request('/projects');
+            if (response.success && Array.isArray(response.data)) {
+                // Process images for all projects
+                response.data = response.data.map(project => this.processProjectImages(project));
+            }
+            return response;
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            // Return mock project data if backend is unavailable
+            return {
+                success: true,
+                data: [
+                    {
+                        id: 1,
+                        name: 'Sample Project',
+                        description: 'This is a sample project',
+                        thumbnail: '/placeholder-project.jpg',
+                        images: ['/placeholder-project.jpg'],
+                        views: 0,
+                        likes: 0
+                    }
+                ]
+            };
+        }
     }
 
     async getProject(id) {
-        return this.request(`/projects/${id}`);
+        try {
+            const response = await this.request(`/projects/${id}`);
+            if (response.success && response.data) {
+                response.data = this.processProjectImages(response.data);
+            }
+            return response;
+        } catch (error) {
+            console.error('Error fetching project:', error);
+            // Return mock project data if backend is unavailable
+            return {
+                success: true,
+                data: {
+                    id: id,
+                    name: 'Project Unavailable',
+                    description: 'Project details are temporarily unavailable',
+                    thumbnail: '/placeholder-project.jpg',
+                    images: ['/placeholder-project.jpg']
+                }
+            };
+        }
     }
+
+    // Helper method to process project images consistently
+    processProjectImages = (project) => {
+        // Handle various image field names - according to component expectations
+        // The component looks for imageUrl and images[0].url
+        
+        if (project.imageUrl) {
+            // If it's just an image URL string, process it
+            project.imageUrl = this.processImageUrl(project.imageUrl, '/placeholder-project.jpg');
+        } else if (project.thumbnail) {
+            project.imageUrl = this.processImageUrl(project.thumbnail, '/placeholder-project.jpg');
+        } else if (project.image) {
+            project.imageUrl = this.processImageUrl(project.image, '/placeholder-project.jpg');
+        } else if (project.images && project.images.length > 0) {
+            // If images exists as array, use first one for imageUrl
+            project.imageUrl = this.processImageUrl(
+                project.images[0].url || project.images[0], 
+                '/placeholder-project.jpg'
+            );
+        } else {
+            project.imageUrl = '/placeholder-project.jpg';
+        }
+        
+        // Process gallery images array for multiple images
+        if (project.images && Array.isArray(project.images)) {
+            if (typeof project.images[0] === 'string' || typeof project.images[0] === 'object') {
+                project.images = project.images.map(img => {
+                    if (typeof img === 'string') {
+                        // If image is just a URL string
+                        return { url: this.processImageUrl(img, '/placeholder-project.jpg') };
+                    } else if (typeof img === 'object' && img.url) {
+                        // If image is an object with url property
+                        return { ...img, url: this.processImageUrl(img.url, '/placeholder-project.jpg') };
+                    } else {
+                        // Fallback
+                        return { url: '/placeholder-project.jpg' };
+                    }
+                });
+            }
+        } else if (project.imageUrl) {
+            // If there's no images array but there is an imageUrl, create one
+            project.images = [{ url: project.imageUrl }];
+        } else {
+            project.images = [{ url: '/placeholder-project.jpg' }];
+        }
+        
+        // Handle other potential image fields
+        if (project.coverImage) {
+            project.coverImage = this.processImageUrl(project.coverImage, '/placeholder-project.jpg');
+        }
+        if (project.gallery && Array.isArray(project.gallery)) {
+            project.gallery = project.gallery.map(img => 
+                this.processImageUrl(img, '/placeholder-project.jpg')
+            );
+        }
+        
+        return project;
+    };
 
     async createProject(projectData) {
         return this.request('/projects', {
@@ -145,7 +259,7 @@ class ApiService {
 
     // Collaboration APIs
     async submitCollaborationRequest(requestData) {
-        return this.request('/collaboration/request', {
+        return this.request('/collaboration-requests/submit', {
             method: 'POST',
             body: JSON.stringify(requestData)
         });
@@ -155,28 +269,69 @@ class ApiService {
         return this.request('/collaboration-requests/requests');
     }
 
-    async approveRequest(requestId) {
-        return this.request(`/collaboration/approve/${requestId}`, {
+    async approveRequest(requestId, data = {}) {
+        return this.request(`/collaboration-requests/requests/${requestId}/approve`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async rejectRequest(requestId, data = {}) {
+        return this.request(`/collaboration-requests/requests/${requestId}/reject`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async getCollaborationStats() {
+        return this.request('/collaboration-requests/stats');
+    }
+
+    async getRequestDetails(requestId) {
+        return this.request(`/collaboration-requests/requests/${requestId}`);
+    }
+
+    async addRequestNote(requestId, note) {
+        return this.request(`/collaboration-requests/requests/${requestId}/notes`, {
+            method: 'POST',
+            body: JSON.stringify({ note })
+        });
+    }
+
+    async archiveRequest(requestId) {
+        return this.request(`/collaboration-requests/requests/${requestId}/archive`, {
             method: 'POST'
         });
     }
 
-    async rejectRequest(requestId) {
-        return this.request(`/collaboration/reject/${requestId}`, {
-            method: 'POST'
+    async bulkApproveRequests(requestIds) {
+        return this.request('/collaboration-requests/bulk/approve', {
+            method: 'POST',
+            body: JSON.stringify({ requestIds })
         });
+    }
+
+    async bulkRejectRequests(requestIds) {
+        return this.request('/collaboration-requests/bulk/reject', {
+            method: 'POST',
+            body: JSON.stringify({ requestIds })
+        });
+    }
+
+    async exportRequests(filters = {}) {
+        return this.request('/collaboration-requests/export?' + new URLSearchParams(filters));
     }
 
     async getCollaborators() {
-        return this.request('/collaboration/collaborators');
+        return this.request('/collaboration-requests/collaborators');
     }
 
     async getPendingInvites() {
-        return this.request('/collaboration/invites/pending');
+        return this.request('/collaboration-requests/invites/pending');
     }
 
     async getCollaboratorActivity() {
-        return this.request('/collaboration/activity');
+        return this.request('/collaboration-requests/activity');
     }
 
     // Analytics APIs
@@ -264,7 +419,7 @@ class ApiService {
             return await this.request(`/profile/activity?limit=${limit}`);
         } catch (error) {
             console.warn('Recent activity unavailable');
-            return { success: true, data: [] };
+            return { success: false, message: 'Failed to fetch recent activity' };
         }
     }
 
@@ -298,21 +453,10 @@ class ApiService {
         try {
             return await this.request('/dashboard/stats');
         } catch (error) {
-            console.warn('Dashboard stats unavailable, using mock data');
+            console.warn('Dashboard stats unavailable');
             return {
-                success: true,
-                data: {
-                    totalProjects: 12,
-                    totalVisitors: 1543,
-                    collaborators: 5,
-                    messages: 23,
-                    growth: {
-                        projects: 15.3,
-                        visitors: 23.5,
-                        collaborators: 8.2,
-                        messages: 12.1
-                    }
-                }
+                success: false,
+                message: 'Failed to fetch dashboard stats'
             };
         }
     }
@@ -322,7 +466,7 @@ class ApiService {
             return await this.request(`/dashboard/projects/recent?limit=${limit}`);
         } catch (error) {
             console.warn('Recent projects unavailable');
-            return { success: true, data: [] };
+            return { success: false, message: 'Failed to fetch recent projects' };
         }
     }
 
@@ -331,7 +475,7 @@ class ApiService {
             return await this.request(`/dashboard/performance?period=${period}`);
         } catch (error) {
             console.warn('Performance data unavailable');
-            return { success: true, data: [] };
+            return { success: false, message: 'Failed to fetch performance data' };
         }
     }
 
@@ -339,7 +483,8 @@ class ApiService {
         try {
             return await this.request('/dashboard/quick-stats');
         } catch (error) {
-            return { success: true, data: {} };
+            console.warn('Quick stats unavailable');
+            return { success: false, message: 'Failed to fetch quick stats' };
         }
     }
 
@@ -347,7 +492,8 @@ class ApiService {
         try {
             return await this.request('/dashboard/events/upcoming');
         } catch (error) {
-            return { success: true, data: [] };
+            console.warn('Upcoming events unavailable');
+            return { success: false, message: 'Failed to fetch upcoming events' };
         }
     }
 
@@ -355,7 +501,8 @@ class ApiService {
         try {
             return await this.request('/dashboard/tasks');
         } catch (error) {
-            return { success: true, data: [] };
+            console.warn('Tasks unavailable');
+            return { success: false, message: 'Failed to fetch tasks' };
         }
     }
 
@@ -363,7 +510,8 @@ class ApiService {
         try {
             return await this.request(`/dashboard/notifications?limit=${limit}`);
         } catch (error) {
-            return { success: true, data: [] };
+            console.warn('Notifications unavailable');
+            return { success: false, message: 'Failed to fetch notifications' };
         }
     }
 
@@ -371,7 +519,8 @@ class ApiService {
         try {
             return await this.request(`/dashboard/skills/top?limit=${limit}`);
         } catch (error) {
-            return { success: true, data: [] };
+            console.warn('Top skills unavailable');
+            return { success: false, message: 'Failed to fetch top skills' };
         }
     }
 
@@ -379,7 +528,8 @@ class ApiService {
         try {
             return await this.request('/dashboard/devices');
         } catch (error) {
-            return { success: true, data: [] };
+            console.warn('Device stats unavailable');
+            return { success: false, message: 'Failed to fetch device stats' };
         }
     }
 
@@ -666,7 +816,22 @@ class ApiService {
     }
 
     async getStorageInfo() {
-        return this.request('/media/storage');
+        try {
+            return await this.request('/media/storage');
+        } catch (error) {
+            console.warn('Media storage API unavailable, using mock data');
+            // Return mock storage data when backend is unavailable
+            return {
+                success: true,
+                data: {
+                    total: 1073741824, // 1GB in bytes
+                    used: 268435456,   // 256MB in bytes
+                    available: 805306368, // Remaining space
+                    files: 24,
+                    folders: 5
+                }
+            };
+        }
     }
 
     // Email Manager APIs
@@ -734,11 +899,25 @@ class ApiService {
 
     async createReview(reviewData) {
         // Use public endpoint for unauthenticated users
-        const endpoint = this.getToken() ? '/reviews' : '/reviews/submit';
+        const endpoint = '/reviews/submit';
         return this.request(endpoint, {
             method: 'POST',
             body: JSON.stringify(reviewData)
         });
+    }
+
+    async getPublicReviews(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/reviews/public?${query}`);
+    }
+
+    async getFeaturedReviews() {
+        try {
+            return await this.request('/reviews/featured');
+        } catch (error) {
+            console.warn('Featured reviews unavailable');
+            return { success: true, data: [] };
+        }
     }
 
     async uploadReviewAttachment(file) {
@@ -767,6 +946,18 @@ class ApiService {
         return this.request(`/reviews/${id}/moderate`, {
             method: 'PATCH',
             body: JSON.stringify({ status })
+        });
+    }
+
+    async likeReview(id) {
+        return this.request(`/reviews/${id}/like`, {
+            method: 'POST'
+        });
+    }
+
+    async unlikeReview(id) {
+        return this.request(`/reviews/${id}/like`, {
+            method: 'DELETE'
         });
     }
 
@@ -889,10 +1080,43 @@ class ApiService {
     // Portfolio Editor APIs
     async getPortfolioConfig() {
         try {
-            return await this.request('/portfolio/config');
+            const response = await this.request('/portfolio/config');
+            if (response && typeof response === 'object') {
+                return response;
+            } else {
+                console.warn('Portfolio config returned unexpected data, using mock data');
+                return {
+                    success: true,
+                    data: {
+                        enabled: true,
+                        themes: ['light', 'dark', 'professional', 'modern'],
+                        sections: ['about', 'projects', 'skills', 'contact', 'testimonials'],
+                        settings: {
+                            analytics: true,
+                            seo: true,
+                            socialLinks: true,
+                            contactForm: true
+                        }
+                    }
+                };
+            }
         } catch (error) {
-            console.warn('Portfolio config unavailable');
-            return { success: true, data: {} };
+            console.warn('Portfolio config API unavailable, using mock data');
+            // Return mock configuration when backend is unavailable
+            return {
+                success: true,
+                data: {
+                    enabled: true,
+                    themes: ['light', 'dark', 'professional', 'modern'],
+                    sections: ['about', 'projects', 'skills', 'contact', 'testimonials'],
+                    settings: {
+                        analytics: true,
+                        seo: true,
+                        socialLinks: true,
+                        contactForm: true
+                    }
+                }
+            };
         }
     }
 
@@ -913,16 +1137,37 @@ class ApiService {
             return await this.request('/portfolio/versions');
         } catch (error) {
             console.warn('Portfolio versions unavailable');
-            return { success: true, data: [] };
+            return { success: false, message: 'Failed to fetch portfolio versions' };
         }
     }
 
     async getCustomTemplates() {
         try {
-            return await this.request('/portfolio/templates');
+            const response = await this.request('/portfolio/templates/custom');
+            if (response && typeof response === 'object') {
+                return response;
+            } else {
+                console.warn('Custom templates returned unexpected data, using mock data');
+                return {
+                    success: true,
+                    data: [
+                        { id: 1, name: 'Modern Portfolio', category: 'professional', preview: '/placeholder-template1.jpg' },
+                        { id: 2, name: 'Creative Showcase', category: 'design', preview: '/placeholder-template2.jpg' },
+                        { id: 3, name: 'Minimal Resume', category: 'simple', preview: '/placeholder-template3.jpg' }
+                    ]
+                };
+            }
         } catch (error) {
-            console.warn('Custom templates unavailable');
-            return { success: true, data: [] };
+            console.warn('Custom templates API unavailable, using mock data');
+            // Return mock templates when backend is unavailable
+            return {
+                success: true,
+                data: [
+                    { id: 1, name: 'Modern Portfolio', category: 'professional', preview: '/placeholder-template1.jpg' },
+                    { id: 2, name: 'Creative Showcase', category: 'design', preview: '/placeholder-template2.jpg' },
+                    { id: 3, name: 'Minimal Resume', category: 'simple', preview: '/placeholder-template3.jpg' }
+                ]
+            };
         }
     }
 
@@ -932,7 +1177,7 @@ class ApiService {
             return await this.request('/analytics/overview');
         } catch (error) {
             console.warn('Analytics overview unavailable');
-            return { success: true, data: {} };
+            return { success: false, message: 'Failed to fetch analytics overview' };
         }
     }
 
@@ -970,7 +1215,7 @@ class ApiService {
             return await this.request('/collaboration/stats');
         } catch (error) {
             console.warn('Collaboration stats unavailable');
-            return { success: true, data: {} };
+            return { success: false, message: 'Failed to fetch collaboration stats' };
         }
     }
 
@@ -983,60 +1228,6 @@ class ApiService {
         }
     }
 
-    // Project Management APIs
-    async getProjectAnalytics() {
-        try {
-            return await this.request('/projects/analytics');
-        } catch (error) {
-            console.warn('Project analytics unavailable');
-            return { success: true, data: {} };
-        }
-    }
-
-    async getProjects() {
-        try {
-            return await this.request('/projects');
-        } catch (error) {
-            console.warn('Projects unavailable');
-            return { success: true, data: [] };
-        }
-    }
-
-    async createProject(projectData) {
-        try {
-            return await this.request('/projects', {
-                method: 'POST',
-                body: JSON.stringify(projectData)
-            });
-        } catch (error) {
-            console.warn('Create project unavailable');
-            return { success: false, error: error.message };
-        }
-    }
-
-    async updateProject(id, projectData) {
-        try {
-            return await this.request(`/projects/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify(projectData)
-            });
-        } catch (error) {
-            console.warn('Update project unavailable');
-            return { success: false, error: error.message };
-        }
-    }
-
-    async deleteProject(id) {
-        try {
-            return await this.request(`/projects/${id}`, {
-                method: 'DELETE'
-            });
-        } catch (error) {
-            console.warn('Delete project unavailable');
-            return { success: false, error: error.message };
-        }
-    }
-
     // Export Analytics API
     async exportAnalytics(params) {
         try {
@@ -1044,7 +1235,7 @@ class ApiService {
             return await this.request(`/tracking/analytics/export?${query}`);
         } catch (error) {
             console.warn('Analytics export unavailable');
-            return { success: true, data: {} };
+            return { success: false, message: 'Failed to export analytics' };
         }
     }
 
@@ -1186,6 +1377,179 @@ class ApiService {
         }
     }
 
+    // ========== TESTIMONIALS ==========
+
+    async getTestimonials(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/testimonials?${query}`);
+        } catch (error) {
+            console.error('Error fetching testimonials:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async createTestimonial(testimonialData) {
+        try {
+            return await this.request('/testimonials', {
+                method: 'POST',
+                body: JSON.stringify(testimonialData)
+            });
+        } catch (error) {
+            console.error('Error creating testimonial:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async updateTestimonial(id, testimonialData) {
+        try {
+            return await this.request(`/testimonials/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(testimonialData)
+            });
+        } catch (error) {
+            console.error('Error updating testimonial:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async deleteTestimonial(id) {
+        try {
+            return await this.request(`/testimonials/${id}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.error('Error deleting testimonial:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async toggleTestimonialVisibility(id) {
+        try {
+            return await this.request(`/testimonials/${id}/toggle-visibility`, {
+                method: 'PATCH'
+            });
+        } catch (error) {
+            console.error('Error toggling testimonial visibility:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async toggleTestimonialFeatured(id) {
+        try {
+            return await this.request(`/testimonials/${id}/toggle-featured`, {
+                method: 'PATCH'
+            });
+        } catch (error) {
+            console.error('Error toggling testimonial featured:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async reorderTestimonials(testimonials) {
+        try {
+            return await this.request('/testimonials/reorder', {
+                method: 'PUT',
+                body: JSON.stringify({ testimonials })
+            });
+        } catch (error) {
+            console.error('Error reordering testimonials:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getTestimonialStats() {
+        try {
+            return await this.request('/testimonials/stats');
+        } catch (error) {
+            console.error('Error fetching testimonial stats:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getTestimonialPublicStats() {
+        try {
+            return await this.request('/public/testimonials/stats');
+        } catch (error) {
+            console.error('Error fetching public testimonial stats:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async submitTestimonial(testimonialData) {
+        try {
+            return await this.request('/public/testimonials/submit', {
+                method: 'POST',
+                body: JSON.stringify(testimonialData)
+            });
+        } catch (error) {
+            console.error('Error submitting testimonial:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async exportTestimonialsJSON() {
+        try {
+            return await this.request('/testimonials/export/json');
+        } catch (error) {
+            console.error('Error exporting testimonials:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async exportTestimonialsCSV() {
+        try {
+            const response = await fetch(`${this.baseURL}/testimonials/export/csv`, {
+                headers: this.getHeaders()
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Export failed');
+            }
+            
+            return response.blob();
+        } catch (error) {
+            console.error('Error exporting testimonials as CSV:', error);
+            throw error;
+        }
+    }
+
+    async bulkDeleteTestimonials(ids) {
+        try {
+            return await this.request('/testimonials/bulk-delete', {
+                method: 'POST',
+                body: JSON.stringify({ ids })
+            });
+        } catch (error) {
+            console.error('Error bulk deleting testimonials:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async bulkUpdateTestimonials(ids, updates) {
+        try {
+            return await this.request('/testimonials/bulk-update', {
+                method: 'POST',
+                body: JSON.stringify({ ids, updates })
+            });
+        } catch (error) {
+            console.error('Error bulk updating testimonials:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async toggleTestimonialVerified(id) {
+        try {
+            return await this.request(`/testimonials/${id}/toggle-verified`, {
+                method: 'PATCH'
+            });
+        } catch (error) {
+            console.error('Error toggling testimonial verified:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
     async getUserRetention(timeRange = '7d') {
         try {
             const query = new URLSearchParams({ timeRange });
@@ -1205,6 +1569,183 @@ class ApiService {
             return { success: true, data: [] };
         }
     }
+
+    // Project Analytics API
+    async getProjectAnalytics(projectId, timeframe = '30d') {
+        try {
+            const query = new URLSearchParams({ timeframe });
+            return await this.request(`/projects/${projectId}/analytics?${query}`);
+        } catch (error) {
+            console.error('Error fetching project analytics:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Image handling methods
+    async getProjectImage(projectId, imagePath) {
+        try {
+            // Try to construct image URL from relative path
+            if (imagePath && typeof imagePath === 'string') {
+                if (imagePath.startsWith('http')) {
+                    return imagePath; // Already absolute URL
+                } else if (imagePath.startsWith('/')) {
+                    // Add base URL to absolute path
+                    return `${this.baseURL}${imagePath}`;
+                } else {
+                    // Add base URL to relative path
+                    return `${this.baseURL}/${imagePath}`;
+                }
+            }
+            // Return placeholder if no image path
+            return '/placeholder-project.jpg';
+        } catch (error) {
+            console.warn('Error processing project image path:', error);
+            return '/placeholder-project.jpg';
+        }
+    }
+
+    // Utility method to ensure image URLs are valid
+    ensureValidImageUrl = (url, fallback = '/placeholder-image.jpg') => {
+        if (!url) return fallback;
+        
+        // If it's already a full URL, return as is
+        try {
+            new URL(url);
+            return url;
+        } catch {
+            // If it's a relative path, construct with base URL
+            if (url.startsWith('/')) {
+                return `${this.baseURL}${url}`;
+            }
+            return `${this.baseURL}/${url}`;
+        }
+    };
+
+    // Media upload methods for projects
+    async uploadProjectImage(projectId, imageData) {
+        try {
+            return await this.request(`/projects/${projectId}/upload-image`, {
+                method: 'POST',
+                body: imageData,
+                headers: {} // Don't set Content-Type so browser sets it with boundary
+            });
+        } catch (error) {
+            console.error('Error uploading project image:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getProjectMedia(projectId, filters = {}) {
+        try {
+            const query = new URLSearchParams(filters);
+            return await this.request(`/projects/${projectId}/media?${query}`);
+        } catch (error) {
+            console.error('Error fetching project media:', error);
+            return { success: false, data: [] };
+        }
+    }
+
+    // Method to handle project images with fallback - enhanced to properly handle different image formats
+    async getProjectWithImages(projectId) {
+        try {
+            const projectResponse = await this.getProject(projectId);
+            
+            if (projectResponse.success && projectResponse.data) {
+                const project = projectResponse.data;
+                
+                // Process image URLs to ensure they're valid with multiple fallback options
+                if (project.thumbnail) {
+                    project.thumbnail = this.processImageUrl(project.thumbnail, '/placeholder-project.jpg');
+                } else if (project.image) {
+                    project.thumbnail = this.processImageUrl(project.image, '/placeholder-project.jpg');
+                } else if (project.images && project.images.length > 0) {
+                    project.thumbnail = this.processImageUrl(project.images[0], '/placeholder-project.jpg');
+                } else {
+                    project.thumbnail = '/placeholder-project.jpg';
+                }
+                
+                // Process gallery images if they exist
+                if (project.images && Array.isArray(project.images)) {
+                    project.images = project.images.map(img => 
+                        this.processImageUrl(img, '/placeholder-image.jpg')
+                    );
+                } else {
+                    project.images = [project.thumbnail];
+                }
+                
+                // Also handle other image fields that might exist
+                if (project.coverImage) {
+                    project.coverImage = this.processImageUrl(project.coverImage, '/placeholder-project.jpg');
+                }
+                if (project.gallery && Array.isArray(project.gallery)) {
+                    project.gallery = project.gallery.map(img => 
+                        this.processImageUrl(img, '/placeholder-image.jpg')
+                    );
+                }
+                
+                return { success: true, data: project };
+            } else {
+                // If the project data is not valid, return with placeholders
+                return {
+                    success: true,
+                    data: {
+                        ...projectResponse.data,
+                        thumbnail: '/placeholder-project.jpg',
+                        images: ['/placeholder-project.jpg'],
+                        name: 'Project Name',
+                        description: 'Project Description'
+                    }
+                };
+            }
+        } catch (error) {
+            console.error('Error fetching project with images:', error);
+            // Return project data with placeholder images
+            return {
+                success: true,
+                data: {
+                    thumbnail: '/placeholder-project.jpg',
+                    images: ['/placeholder-project.jpg'],
+                    name: 'Project Name',
+                    description: 'Project data unavailable',
+                    id: projectId
+                }
+            };
+        }
+    }
+    
+    // Helper method to process image URLs with various formats
+    processImageUrl = (url, fallback = '/placeholder-image.jpg') => {
+        if (!url) return fallback;
+        
+        // Handle various URL formats
+        if (typeof url !== 'string') return fallback;
+        
+        // If it's already a complete URL
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        
+        // If it's a data URL (base64 image)
+        if (url.startsWith('data:image/')) {
+            return url;
+        }
+        
+        // If it's a relative path starting with /
+        if (url.startsWith('/')) {
+            // Avoid double slashes
+            if (this.baseURL.endsWith('/') && url.startsWith('/')) {
+                return this.baseURL.slice(0, -1) + url;
+            }
+            return this.baseURL + url;
+        }
+        
+        // If it's a relative path (not starting with /)
+        if (!url.startsWith('/')) {
+            return this.baseURL + '/' + url;
+        }
+        
+        return fallback;
+    };
 
     async getAnalyticsAlerts() {
         try {

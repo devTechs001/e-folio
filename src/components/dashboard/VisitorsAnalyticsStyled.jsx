@@ -29,7 +29,8 @@ import {
     ArrowDownRight,
     MoreVertical,
     Share2,
-    Mail
+    Mail,
+    AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -76,7 +77,22 @@ const VisitorsAnalytics = () => {
         return `${mins}m ${secs}s`;
     };
 
-    // Move getCountryFlag function to the top to avoid initialization errors
+    // Define getCountryFlag function before it's used to avoid initialization errors
+    const getCountryFlag = (country) => {
+        const flags = {
+            'United States': '🇺🇸',
+            'United Kingdom': '🇬🇧',
+            'Germany': '🇩🇪',
+            'Canada': '🇨🇦',
+            'Australia': '🇦🇺',
+            'France': '🇫🇷',
+            'India': '🇮🇳',
+            'Japan': '🇯🇵',
+            'Brazil': '🇧🇷',
+            'China': '🇨🇳'
+        };
+        return flags[country] || '🌍';
+    };
 
     useEffect(() => {
         if (isOwner()) {
@@ -105,76 +121,43 @@ const VisitorsAnalytics = () => {
                 setAnalytics(response.analytics);
                 setRealtimeData(response.realtimeVisitors || []);
                 setVisitorFlow(response.visitorFlow || []);
+            } else {
+                throw new Error(response.message || 'Failed to fetch analytics');
             }
         } catch (error) {
             console.error('Error fetching analytics:', error);
-            // Fallback to demo data
-            setAnalytics(generateDemoData());
+            // Set error state instead of fallback to demo data
+            setAnalytics(null);
+            setRealtimeData([]);
+            setVisitorFlow([]);
+            if (!silent) {
+                // Show error notification to user
+                console.warn('Analytics data unavailable. Please check your connection.');
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     };
 
-    const generateDemoData = () => ({
-        activeNow: 23,
-        todayTotal: 456,
-        weekTotal: 3421,
-        monthTotal: 12456,
-        avgDuration: 245,
-        bounceRate: 32.5,
-        conversionRate: 4.2,
-        topPages: [
-            { _id: '/projects', count: 234, avgDuration: 320 },
-            { _id: '/about', count: 189, avgDuration: 180 },
-            { _id: '/contact', count: 98, avgDuration: 150 }
-        ],
-        locations: [
-            { _id: 'United States', count: 156, percentage: 34.2 },
-            { _id: 'United Kingdom', count: 89, percentage: 19.5 },
-            { _id: 'Germany', count: 67, percentage: 14.7 },
-            { _id: 'Canada', count: 54, percentage: 11.8 },
-            { _id: 'Australia', count: 43, percentage: 9.4 }
-        ],
-        devices: {
-            desktop: 267,
-            mobile: 156,
-            tablet: 33
-        },
-        browsers: [
-            { name: 'Chrome', count: 234, percentage: 51.3 },
-            { name: 'Safari', count: 123, percentage: 27.0 },
-            { name: 'Firefox', count: 67, percentage: 14.7 },
-            { name: 'Edge', count: 32, percentage: 7.0 }
-        ],
-        hourlyData: Array.from({ length: 24 }, (_, i) => ({
-            hour: `${i}:00`,
-            visitors: Math.floor(Math.random() * 50) + 10,
-            pageViews: Math.floor(Math.random() * 100) + 30
-        })),
-        weeklyData: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => ({
-            day,
-            visitors: Math.floor(Math.random() * 200) + 100,
-            pageViews: Math.floor(Math.random() * 400) + 200,
-            newVisitors: Math.floor(Math.random() * 100) + 50,
-            returningVisitors: Math.floor(Math.random() * 100) + 50
-        })),
-        referrers: [
-            { source: 'Direct', count: 189, percentage: 41.4 },
-            { source: 'Google', count: 123, percentage: 27.0 },
-            { source: 'LinkedIn', count: 78, percentage: 17.1 },
-            { source: 'GitHub', count: 45, percentage: 9.9 },
-            { source: 'Twitter', count: 21, percentage: 4.6 }
-        ],
-        engagement: {
-            totalClicks: 1234,
-            avgClicksPerVisitor: 2.7,
-            totalScrollDepth: 67.5,
-            avgTimeOnPage: 185
-        }
-    });
+    // Error state handling
+    const renderErrorState = () => (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+            <AlertCircle className="w-12 h-12 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Analytics Data Unavailable</h3>
+            <p className="text-center max-w-md">
+                Unable to load analytics data. Please check your connection and try again.
+            </p>
+            <button
+                onClick={() => fetchAnalytics()}
+                className="mt-4 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors"
+            >
+                Retry
+            </button>
+        </div>
+    );
 
-    // Move formatDuration function to the top to avoid initialization errors
+    // Loading state handling
 
 
     const CustomTooltip = ({ active, payload, label }) => {
@@ -274,22 +257,6 @@ const VisitorsAnalytics = () => {
         }));
     }, [analytics]);
 
-    const getCountryFlag = (country) => {
-        const flags = {
-            'United States': '🇺🇸',
-            'United Kingdom': '🇬🇧',
-            'Germany': '🇩🇪',
-            'Canada': '🇨🇦',
-            'Australia': '🇦🇺',
-            'France': '🇫🇷',
-            'India': '🇮🇳',
-            'Japan': '🇯🇵',
-            'Brazil': '🇧🇷',
-            'China': '🇨🇳'
-        };
-        return flags[country] || '🌍';
-    };
-
     const devices = useMemo(() => {
         const total = (analytics?.devices?.desktop || 0) +
                      (analytics?.devices?.mobile || 0) +
@@ -379,6 +346,14 @@ const VisitorsAnalytics = () => {
                         <p className="text-slate-400 text-lg">Loading analytics...</p>
                     </div>
                 </div>
+            </DashboardLayout>
+        );
+    }
+
+    if (!analytics) {
+        return (
+            <DashboardLayout>
+                {renderErrorState()}
             </DashboardLayout>
         );
     }

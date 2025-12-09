@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useSettingsListener } from '../hooks/useSettingsListener';
 import apiService from '../services/api.service';
 import '../styles/Contact.css';
 
 const Contact = () => {
+    const { user } = useAuth();
+    const settings = useSettingsListener();
+    
+    // Use profile data from settings if available, otherwise fallback to user data
+    const profileData = settings?.profile || user || {};
+    
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -22,27 +30,28 @@ const Contact = () => {
     const [focusedField, setFocusedField] = useState(null);
     const maxChars = 500;
 
+    // Dynamic contact methods based on profile data (keep existing as fallbacks)
     const contactMethods = [
         {
             icon: 'fas fa-envelope',
             title: 'Email',
-            value: 'devtechs842@gmail.com',
-            link: 'mailto:devtechs842@gmail.com',
+            value: profileData.email || 'devtechs842@gmail.com',
+            link: `mailto:${profileData.email || 'devtechs842@gmail.com'}`,
             color: 'blue',
             description: 'Best for detailed inquiries'
         },
         {
             icon: 'fas fa-phone',
             title: 'Phone',
-            value: '+254 758 175 275',
-            link: 'tel:+254758175275',
+            value: profileData.phone || '+254 758 175 275',
+            link: `tel:${profileData.phone || '+254758175275'}`,
             color: 'green',
             description: 'Available Mon-Fri, 9AM-6PM EAT'
         },
         {
             icon: 'fas fa-map-marker-alt',
             title: 'Location',
-            value: 'Nairobi, Kenya',
+            value: profileData.location || 'Nairobi, Kenya',
             link: null,
             color: 'purple',
             description: 'East Africa Time Zone (EAT)'
@@ -51,20 +60,22 @@ const Contact = () => {
             icon: 'fab fa-whatsapp',
             title: 'WhatsApp',
             value: 'Chat on WhatsApp',
-            link: 'https://wa.me/254758175275',
+            link: profileData.whatsapp || 'https://wa.me/254758175275',
             color: 'emerald',
             description: 'Quick responses guaranteed'
         }
-    ];
+    ]; // Keep all methods, don't filter out
 
+    // Dynamic social links based on profile data (keep existing as fallbacks)
     const socialLinks = [
-        { name: 'GitHub', icon: 'fab fa-github', url: 'https://github.com/devTechs001', color: 'gray' },
-        { name: 'LinkedIn', icon: 'fab fa-linkedin-in', url: 'https://www.linkedin.com/in/daniel-mukula', color: 'blue' },
-        { name: 'Facebook', icon: 'fab fa-facebook-f', url: 'https://www.facebook.com/profile.php?id=100089960419104', color: 'blue' },
-        { name: 'Instagram', icon: 'fab fa-instagram', url: 'https://www.instagram.com/king_wisdom_ndk/', color: 'pink' },
-        { name: 'Telegram', icon: 'fab fa-telegram-plane', url: 'https://t.me/+254758175275', color: 'cyan' },
-        { name: 'WhatsApp', icon: 'fab fa-whatsapp', url: 'https://wa.me/254758175275', color: 'green' }
-    ];
+        { name: 'GitHub', icon: 'fab fa-github', url: profileData.github || 'https://github.com/devTechs001', color: 'gray' },
+        { name: 'LinkedIn', icon: 'fab fa-linkedin-in', url: profileData.linkedin || 'https://www.linkedin.com/in/daniel-mukula', color: 'blue' },
+        { name: 'Facebook', icon: 'fab fa-facebook-f', url: profileData.facebook || 'https://www.facebook.com/profile.php?id=100089960419104', color: 'blue' },
+        { name: 'Instagram', icon: 'fab fa-instagram', url: profileData.instagram || 'https://www.instagram.com/king_wisdom_ndk/', color: 'pink' },
+        { name: 'Telegram', icon: 'fab fa-telegram-plane', url: profileData.telegram || 'https://t.me/+254758175275', color: 'cyan' },
+        { name: 'WhatsApp', icon: 'fab fa-whatsapp', url: profileData.whatsapp || 'https://wa.me/254758175275', color: 'green' },
+        { name: 'Website', icon: 'fas fa-globe', url: profileData.website, color: 'indigo' }
+    ]; // Keep all links, don't filter out
 
     const quickMessages = [
         "I'd like to discuss a project",

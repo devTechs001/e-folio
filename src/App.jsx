@@ -14,6 +14,9 @@ import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import CollaborationRequest from './components/CollaborationRequestStyled';
 import ProtectedRoute from './components/ProtectedRoute';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Sitemap from './pages/Sitemap';
 import './index.css';
 
 // Component to handle hash navigation
@@ -39,6 +42,45 @@ const App = () => {
             duration: 1000,
             once: true
         });
+        
+        // Global settings listener for real-time updates
+        const handleSettingsChange = (event) => {
+            const settings = event.detail;
+            console.log('Global settings change:', settings);
+            
+            // Apply global settings
+            if (settings.appearance?.fontSize) {
+                const root = document.documentElement;
+                const fontSizes = {
+                    small: '14px',
+                    medium: '16px',
+                    large: '18px',
+                    xlarge: '20px'
+                };
+                root.style.setProperty('--base-font-size', fontSizes[settings.appearance.fontSize] || '16px');
+            }
+            
+            // Apply theme changes
+            if (settings.appearance?.theme) {
+                document.body.className = `theme-${settings.appearance.theme}`;
+            }
+            
+            // Apply language
+            if (settings.appearance?.language) {
+                document.documentElement.lang = settings.appearance.language;
+            }
+            
+            // Update page title with user name if available
+            if (settings.profile?.name) {
+                document.title = `${settings.profile.name} - E-Folio`;
+            }
+        };
+        
+        window.addEventListener('settingsChanged', handleSettingsChange);
+        
+        return () => {
+            window.removeEventListener('settingsChanged', handleSettingsChange);
+        };
     }, []);
 
     return (
@@ -59,6 +101,9 @@ const App = () => {
                                 <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
                                 <Route path="/collaborate" element={<CollaborationRequest />} />
                                 <Route path="/reviews" element={<PublicReviews />} />
+                                <Route path="/terms" element={<TermsAndConditions />} />
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
+                                <Route path="/sitemap" element={<Sitemap />} />
                                     <Route 
                                         path="/dashboard/*" 
                                         element={

@@ -19,7 +19,10 @@ const {
     addRequestNote,
     updateRequestStatus,
     resendInvite,
-    getRequestActivity
+    getRequestActivity,
+    getCollaborators,
+    getPendingInvites,
+    getCollaboratorActivity
 } = require('../controllers/collaboration.controller');
 
 // File upload configuration
@@ -72,5 +75,10 @@ router.post('/bulk/reject', auth, isOwner, bulkRejectRequests);
 
 // Export
 router.get('/export', auth, isOwner, exportRequests);
+
+// Collaborators endpoints (for CollaboratorsStyled component)
+router.get('/collaborators', auth, getCollaborators);
+router.get('/invites/pending', auth, getPendingInvites);
+router.get('/activity', auth, getCollaboratorActivity);
 
 module.exports = router;

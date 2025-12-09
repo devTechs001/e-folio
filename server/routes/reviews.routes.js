@@ -40,6 +40,9 @@ router.route('/')
 // Public review submission (no auth required)
 router.post('/submit', reviewsController.createReview);
 
+// Public reviews endpoint (no auth required)
+router.get('/public', reviewsController.getPublicReviews);
+
 router.route('/featured')
     .get(reviewsController.getFeaturedReviews);
 
@@ -56,6 +59,10 @@ router.route('/:id/approve')
 
 router.route('/:id/moderate')
     .patch(auth, reviewsController.moderateReview);
+
+// Like/unlike review endpoints
+router.post('/:id/like', reviewsController.likeReview);
+router.delete('/:id/like', reviewsController.unlikeReview);
 
 // Upload attachment endpoint
 router.post('/upload-attachment', upload.single('file'), (req, res) => {

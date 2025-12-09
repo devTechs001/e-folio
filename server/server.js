@@ -22,6 +22,7 @@ const collaboratorsRoutes = require('./routes/collaborators.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const skillsRoutes = require('./routes/skills.routes');
 const projectsRoutes = require('./routes/projects.routes');
+const publicRoutes = require('./routes/public.routes');
 const chatRoutes = require('./routes/chat.routes');
 const aiRoutes = require('./routes/ai.routes');
 const trackingRoutes = require('./routes/tracking.routes');
@@ -35,6 +36,8 @@ const learningRoutes = require('./routes/learning.routes');
 const educationRoutes = require('./routes/education.routes');
 const interestsRoutes = require('./routes/interests.routes');
 const webhooksRoutes = require('./routes/webhooks.routes');
+const portfolioRoutes = require('./routes/portfolio.routes');
+const testimonialsRoutes = require('./routes/testimonials.routes');
 
 // Create Express app and server
 const app = express();
@@ -45,6 +48,7 @@ const socketAllowedOrigins = [
     process.env.CLIENT_URL,
     process.env.CLIENT_URL?.replace(/\/$/, ''),
     process.env.CLIENT_URL?.concat('/'),
+    'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:5174',
     'https://e-folio-pro.netlify.app',
@@ -66,6 +70,7 @@ const allowedOrigins = [
     process.env.CLIENT_URL,
     process.env.CLIENT_URL?.replace(/\/$/, ''), // Remove trailing slash
     process.env.CLIENT_URL?.concat('/'),         // Add trailing slash
+    'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:5174',
     'https://e-folio-pro.netlify.app',
@@ -103,6 +108,7 @@ app.use('/api/collaborators', collaboratorsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/projects', projectsRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/tracking', trackingRoutes);
@@ -116,6 +122,8 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/education', educationRoutes);
 app.use('/api/interests', interestsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/testimonials', testimonialsRoutes);
 
 
 // API Routes

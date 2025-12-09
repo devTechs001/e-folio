@@ -84,6 +84,10 @@ const Profile = () => {
             github: user?.socialLinks?.github || '',
             linkedin: user?.socialLinks?.linkedin || '',
             twitter: user?.socialLinks?.twitter || '',
+            facebook: user?.socialLinks?.facebook || '',
+            instagram: user?.socialLinks?.instagram || '',
+            telegram: user?.socialLinks?.telegram || '',
+            whatsapp: user?.socialLinks?.whatsapp || '',
             dribbble: user?.socialLinks?.dribbble || '',
             behance: user?.socialLinks?.behance || '',
             medium: user?.socialLinks?.medium || '',
@@ -109,6 +113,41 @@ const Profile = () => {
 
     useEffect(() => {
         loadProfileData();
+        
+        // Listen for settings changes
+        const handleSettingsChange = (event) => {
+            const newSettings = event.detail;
+            console.log('Settings changed in Profile:', newSettings);
+            
+            // Apply appearance changes
+            if (newSettings.appearance?.fontSize) {
+                const root = document.documentElement;
+                const fontSizes = {
+                    small: '14px',
+                    medium: '16px',
+                    large: '18px',
+                    xlarge: '20px'
+                };
+                root.style.setProperty('--base-font-size', fontSizes[newSettings.appearance.fontSize] || '16px');
+            }
+            
+            // Update profile data if changed
+            if (newSettings.profile) {
+                setProfile(prev => ({
+                    ...prev,
+                    ...newSettings.profile
+                }));
+            }
+        };
+        
+        window.addEventListener('settingsChanged', handleSettingsChange);
+        
+        return () => {
+            window.removeEventListener('settingsChanged', handleSettingsChange);
+        };
+    }, []);
+
+    useEffect(() => {
         generateQRCode();
     }, []);
 
@@ -212,6 +251,15 @@ const Profile = () => {
                     coverImage: response.user.coverImage
                 }));
                 setAvatarPreview(response.user.avatar);
+                setCoverPreview(response.user.coverImage);
+                
+                // Emit settings change event for other components
+                window.dispatchEvent(new CustomEvent('settingsChanged', { 
+                    detail: { 
+                        profile: profile,
+                        user: response.user 
+                    } 
+                }));
                 setCoverPreview(response.user.coverImage);
                 setIsEditing(false);
                 setAvatarFile(null);
@@ -419,6 +467,10 @@ const Profile = () => {
         { key: 'github', label: 'GitHub', icon: Github, placeholder: 'https://github.com/username', color: '#333' },
         { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/username', color: '#0077b5' },
         { key: 'twitter', label: 'Twitter', icon: Twitter, placeholder: 'https://twitter.com/username', color: '#1da1f2' },
+        { key: 'facebook', label: 'Facebook', icon: Users, placeholder: 'https://facebook.com/profile', color: '#1877f2' },
+        { key: 'instagram', label: 'Instagram', icon: Camera, placeholder: 'https://instagram.com/username', color: '#e4405f' },
+        { key: 'telegram', label: 'Telegram', icon: Send, placeholder: 'https://t.me/username', color: '#0088cc' },
+        { key: 'whatsapp', label: 'WhatsApp', icon: Phone, placeholder: 'https://wa.me/phonenumber', color: '#25d366' },
         { key: 'dribbble', label: 'Dribbble', icon: Target, placeholder: 'https://dribbble.com/username', color: '#ea4c89' },
         { key: 'behance', label: 'Behance', icon: Layers, placeholder: 'https://behance.net/username', color: '#1769ff' },
         { key: 'medium', label: 'Medium', icon: BookOpen, placeholder: 'https://medium.com/@username', color: '#00ab6c' },
@@ -430,6 +482,7 @@ const Profile = () => {
 
     const sections = [
         { id: 'profile', label: 'Profile', icon: User },
+        { id: 'about', label: 'About', icon: FileText },
         { id: 'analytics', label: 'Analytics', icon: BarChart2 },
         { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
         { id: 'experience', label: 'Experience', icon: Building },
@@ -832,7 +885,6 @@ const Profile = () => {
                                                                     value={profile.email}
                                                                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                                                                     className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                                                    placeholder="john@example.com"
                                                                 />
                                                             </div>
                                                         </div>
@@ -845,7 +897,6 @@ const Profile = () => {
                                                                     value={profile.phone}
                                                                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                                                                     className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                                                    placeholder="+1 234 567 8900"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1098,6 +1149,209 @@ const Profile = () => {
                                                             <p className="text-lg font-semibold text-white">{profile.timezone.split('/')[1]}</p>
                                                         </div>
                                                     )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {/* ABOUT SECTION */}
+                                {activeSection === 'about' && (
+                                    <motion.div
+                                        key="about"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        {/* Detailed About Information */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                                            <h3 className="text-xl font-semibold text-white mb-4">About Me</h3>
+                                            {isEditing ? (
+                                                <textarea
+                                                    value={profile.bio}
+                                                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                                                    rows={8}
+                                                    maxLength={1000}
+                                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+                                                    placeholder="Tell us about yourself, your experience, your passions, and what drives you..."
+                                                />
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    <p className="text-slate-300 text-lg leading-relaxed">
+                                                        {profile.bio || 'No detailed bio added yet. Share your story and experience with visitors.'}
+                                                    </p>
+                                                    
+                                                    {/* Professional Summary */}
+                                                    <div className="border-l-4 border-cyan-500 pl-4">
+                                                        <h4 className="text-cyan-400 font-semibold mb-2">Professional Summary</h4>
+                                                        <p className="text-slate-300">
+                                                            {profile.tagline || 'Add a professional tagline to highlight your expertise.'}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Key Stats */}
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                                                        <div className="text-center p-4 bg-slate-900/50 rounded-lg">
+                                                            <div className="text-2xl font-bold text-cyan-400">{profile.yearsOfExperience || '0+'}</div>
+                                                            <div className="text-slate-400 text-sm">Years Experience</div>
+                                                        </div>
+                                                        <div className="text-center p-4 bg-slate-900/50 rounded-lg">
+                                                            <div className="text-2xl font-bold text-cyan-400">{skills.length || '0'}</div>
+                                                            <div className="text-slate-400 text-sm">Skills</div>
+                                                        </div>
+                                                        <div className="text-center p-4 bg-slate-900/50 rounded-lg">
+                                                            <div className="text-2xl font-bold text-cyan-400">{topProjects.length || '0'}</div>
+                                                            <div className="text-slate-400 text-sm">Projects</div>
+                                                        </div>
+                                                        <div className="text-center p-4 bg-slate-900/50 rounded-lg">
+                                                            <div className="text-2xl font-bold text-cyan-400">{achievements.length || '0'}</div>
+                                                            <div className="text-slate-400 text-sm">Achievements</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {isEditing && (
+                                                <p className="text-slate-500 text-sm mt-2">
+                                                    {profile.bio?.length || 0}/1000 characters
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Personal Information */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                                            <h3 className="text-xl font-semibold text-white mb-4">Personal Information</h3>
+                                            {isEditing ? (
+                                                <div className="space-y-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-slate-400 text-sm font-medium mb-2">Location</label>
+                                                            <div className="relative">
+                                                                <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={profile.location}
+                                                                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                                                                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                                    placeholder="City, Country"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-slate-400 text-sm font-medium mb-2">Role</label>
+                                                            <div className="relative">
+                                                                <Briefcase size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={profile.role}
+                                                                    onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                                                                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                                    placeholder="e.g. Full Stack Developer"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-slate-400 text-sm font-medium mb-2">Company</label>
+                                                            <div className="relative">
+                                                                <Building size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={profile.company}
+                                                                    onChange={(e) => setProfile({ ...profile, company: e.target.value })}
+                                                                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                                    placeholder="Company Name"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-slate-400 text-sm font-medium mb-2">Website</label>
+                                                            <div className="relative">
+                                                                <Globe size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                                <input
+                                                                    type="url"
+                                                                    value={profile.website}
+                                                                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                                                                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                                    placeholder="https://yourwebsite.com"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <MapPin size={18} className="text-cyan-400" />
+                                                        <span className="text-slate-300">{profile.location || 'Location not set'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <Briefcase size={18} className="text-cyan-400" />
+                                                        <span className="text-slate-300">{profile.role || 'Role not specified'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <Building size={18} className="text-cyan-400" />
+                                                        <span className="text-slate-300">{profile.company || 'Company not specified'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <Globe size={18} className="text-cyan-400" />
+                                                        <span className="text-slate-300">
+                                                            {profile.website ? (
+                                                                <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                                                                    {profile.website}
+                                                                </a>
+                                                            ) : 'Website not set'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Social Links */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                                            <h3 className="text-xl font-semibold text-white mb-4">Social Links</h3>
+                                            {isEditing ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {socialPlatforms.map(platform => (
+                                                        <div key={platform.key}>
+                                                            <label className="block text-slate-400 text-sm font-medium mb-2">{platform.label}</label>
+                                                            <div className="relative">
+                                                                <platform.icon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                                <input
+                                                                    type="url"
+                                                                    value={profile.socialLinks[platform.key]}
+                                                                    onChange={(e) => setProfile(prev => ({
+                                                                        ...prev,
+                                                                        socialLinks: {
+                                                                            ...prev.socialLinks,
+                                                                            [platform.key]: e.target.value
+                                                                        }
+                                                                    }))}
+                                                                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                                    placeholder={platform.placeholder}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    {socialPlatforms.map(platform => (
+                                                        profile.socialLinks[platform.key] && (
+                                                            <a
+                                                                key={platform.key}
+                                                                href={profile.socialLinks[platform.key]}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-2 p-3 bg-slate-900/50 rounded-lg hover:bg-slate-900/70 transition-colors group"
+                                                                style={{ borderColor: platform.color + '30', borderWidth: '1px' }}
+                                                            >
+                                                                <platform.icon size={18} style={{ color: platform.color }} />
+                                                                <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
+                                                                    {platform.label}
+                                                                </span>
+                                                            </a>
+                                                        )
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>

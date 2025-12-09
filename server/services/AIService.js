@@ -5,15 +5,23 @@ const { Readable } = require('stream');
 
 class AIService {
     constructor() {
-        // Initialize OpenAI
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY
-        });
+        // Initialize OpenAI only if API key is provided
+        if (process.env.OPENAI_API_KEY) {
+            this.openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY
+            });
+        } else {
+            console.warn('OpenAI API key not provided. AI features will be limited.');
+        }
 
-        // Initialize Anthropic
-        this.anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY
-        });
+        // Initialize Anthropic only if API key is provided
+        if (process.env.ANTHROPIC_API_KEY) {
+            this.anthropic = new Anthropic({
+                apiKey: process.env.ANTHROPIC_API_KEY
+            });
+        } else {
+            console.warn('Anthropic API key not provided. Claude features will be limited.');
+        }
 
         // Token pricing (per 1K tokens)
         this.pricing = {
@@ -83,6 +91,10 @@ class AIService {
             startTime
         } = options;
 
+        if (!this.openai) {
+            throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+        }
+
         // Prepare messages
         const formattedMessages = [
             ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
@@ -132,6 +144,10 @@ class AIService {
      */
     async streamOpenAI(options) {
         const { model, messages, temperature, maxTokens } = options;
+
+        if (!this.openai) {
+            throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+        }
 
         const stream = await this.openai.chat.completions.create({
             model,
@@ -285,6 +301,10 @@ class AIService {
      * Generate embeddings for semantic search
      */
     async generateEmbeddings(text) {
+        if (!this.openai) {
+            throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+        }
+        
         try {
             const response = await this.openai.embeddings.create({
                 model: 'text-embedding-ada-002',
@@ -302,6 +322,10 @@ class AIService {
      * Analyze image with vision model
      */
     async analyzeImage(imageUrl, prompt = 'What is in this image?') {
+        if (!this.openai) {
+            throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+        }
+        
         try {
             const response = await this.openai.chat.completions.create({
                 model: 'gpt-4-vision-preview',
@@ -333,6 +357,10 @@ class AIService {
      * Generate code completion
      */
     async generateCode(prompt, language = 'javascript') {
+        if (!this.openai) {
+            throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+        }
+        
         try {
             const response = await this.openai.chat.completions.create({
                 model: 'gpt-4',
@@ -361,6 +389,10 @@ class AIService {
      * Moderate content
      */
     async moderateContent(text) {
+        if (!this.openai) {
+            throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+        }
+        
         try {
             const response = await this.openai.moderations.create({
                 input: text

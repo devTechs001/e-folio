@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const Review = require('../models/Review.model');
 const User = require('../models/User.model');
 const ActivityLog = require('../models/ActivityLog');
-// const { sendEmail } = require('../utils/email'); // TODO: Create util
-const { sendEmail } = { sendEmail: () => {} }; // Mock sendEmail to prevent errors
+const emailService = require('../services/email.service');
 const { Parser } = require('json2csv');
 
 // Create review (Public)
@@ -76,16 +75,27 @@ exports.createReview = async (req, res) => {
         // Notify owner
         const owner = await User.findOne({ role: 'owner' });
         if (owner) {
-            await sendEmail({
-                to: owner.email,
-                subject: 'New Review Received',
-                html: getNewReviewEmailTemplate({
-                    name,
-                    rating,
-                    comment,
-                    reviewId: review._id
-                })
-            });
+            try {
+                await emailService.send({
+                    to: owner.email,
+                    subject: 'New Review Received',
+                    template: 'new-testimonial', // Using testimonial template for consistency
+                    data: {
+                        name,
+                        rating,
+                        content: comment,
+                        email: email || 'Not provided',
+                        website: 'N/A',
+                        linkedin: 'N/A',
+                        project: title || 'N/A',
+                        tags: Object.keys(categories).join(', ') || 'N/A',
+                        date: new Date().toLocaleString(),
+                        year: new Date().getFullYear()
+                    }
+                });
+            } catch (emailError) {
+                console.error('Failed to send review notification email:', emailError);
+            }
 
             // Socket notification
             if (req.app.get('io')) {
@@ -101,11 +111,22 @@ exports.createReview = async (req, res) => {
 
         // Send confirmation to reviewer
         if (email) {
-            await sendEmail({
-                to: email,
-                subject: 'Thank You for Your Review',
-                html: getReviewConfirmationTemplate(name)
-            });
+            try {
+                await emailService.send({
+                    to: email,
+                    subject: 'Thank You for Your Review',
+                    template: 'testimonial-approved', // Using testimonial template for consistency
+                    data: {
+                        name,
+                        content: comment,
+                        rating,
+                        portfolioUrl: process.env.CLIENT_URL || 'https://yourportfolio.com',
+                        year: new Date().getFullYear()
+                    }
+                });
+            } catch (emailError) {
+                console.error('Failed to send review confirmation email:', emailError);
+            }
         }
 
         // Log activity (only if user is authenticated)
@@ -474,15 +495,22 @@ exports.moderateReview = async (req, res) => {
 
         // Send notification to reviewer
         if (review.email && status === 'approved') {
-            await sendEmail({
-                to: review.email,
-                subject: 'Your Review Has Been Approved',
-                html: getReviewApprovedTemplate({
-                    name: review.name,
-                    comment: review.comment,
-                    response
-                })
-            });
+            try {
+                await emailService.send({
+                    to: review.email,
+                    subject: '🎉 Your Review Has Been Approved!',
+                    template: 'testimonial-approved',
+                    data: {
+                        name: review.name,
+                        content: review.comment,
+                        rating: review.rating,
+                        portfolioUrl: process.env.CLIENT_URL || 'https://yourportfolio.com',
+                        year: new Date().getFullYear()
+                    }
+                });
+            } catch (emailError) {
+                console.error('Failed to send review approval email:', emailError);
+            }
         }
 
         // Log activity
@@ -539,15 +567,23 @@ exports.replyToReview = async (req, res) => {
 
         // Send email to reviewer
         if (review.email) {
-            await sendEmail({
-                to: review.email,
-                subject: 'Response to Your Review',
-                html: getReviewResponseTemplate({
-                    name: review.name,
-                    comment: review.comment,
-                    response
-                })
-            });
+            try {
+                // Create a custom email template for review responses
+                await emailService.send({
+                    to: review.email,
+                    subject: '💬 Response to Your Review',
+                    template: 'review-response',
+                    data: {
+                        name: review.name,
+                        originalComment: review.comment,
+                        response,
+                        portfolioUrl: process.env.CLIENT_URL || 'https://yourportfolio.com',
+                        year: new Date().getFullYear()
+                    }
+                });
+            } catch (emailError) {
+                console.error('Failed to send review response email:', emailError);
+            }
         }
 
         // Log activity
@@ -1183,3 +1219,92 @@ function getReviewResponseTemplate({ name, comment, response }) {
         </html>
     `;
 }
+
+// Like review
+exports.likeReview = async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: 'Review not found'
+            });
+        }
+
+        // Get client IP for simple tracking (in production, use user auth)
+        const clientIp = req.ip || req.connection.remoteAddress;
+        
+        // Initialize likes array if it doesn't exist
+        if (!review.likes) {
+            review.likes = [];
+        }
+
+        // Check if already liked
+        if (review.likes.includes(clientIp)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Review already liked'
+            });
+        }
+
+        // Add like
+        review.likes.push(clientIp);
+        await review.save();
+
+        res.json({
+            success: true,
+            message: 'Review liked successfully',
+            likes: review.likes.length
+        });
+    } catch (error) {
+        console.error('Like review error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to like review',
+            error: error.message
+        });
+    }
+};
+
+// Unlike review
+exports.unlikeReview = async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: 'Review not found'
+            });
+        }
+
+        // Get client IP for simple tracking
+        const clientIp = req.ip || req.connection.remoteAddress;
+        
+        // Check if liked
+        if (!review.likes || !review.likes.includes(clientIp)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Review not liked yet'
+            });
+        }
+
+        // Remove like
+        review.likes = review.likes.filter(ip => ip !== clientIp);
+        await review.save();
+
+        res.json({
+            success: true,
+            message: 'Review unliked successfully',
+            likes: review.likes.length
+        });
+    } catch (error) {
+        console.error('Unlike review error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to unlike review',
+            error: error.message
+        });
+    }
+};

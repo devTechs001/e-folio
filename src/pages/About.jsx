@@ -1,10 +1,126 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Typed from 'typed.js';
+import { useAuth } from '../contexts/AuthContext';
+import { useSettingsListener } from '../hooks/useSettingsListener';
 import '../styles/About.css';
 
 const About = () => {
     const typedRef = useRef(null);
+    const { user } = useAuth();
+    const settings = useSettingsListener();
+    
+    // Use profile data from settings if available, otherwise fallback to user data
+    const profileData = settings?.profile || user || {};
+    const [socialLinks, setSocialLinks] = useState([
+        {
+            name: 'Facebook',
+            icon: 'fab fa-facebook-f',
+            url: profileData.facebook || 'https://www.facebook.com/profile.php?id=100089960419104',
+            color: 'facebook'
+        },
+        {
+            name: 'Instagram',
+            icon: 'fab fa-instagram',
+            url: profileData.instagram || 'https://www.instagram.com/king_wisdom_ndk/',
+            color: 'instagram'
+        },
+        {
+            name: 'GitHub',
+            icon: 'fab fa-github',
+            url: profileData.github || 'https://github.com/devTechs001',
+            color: 'github'
+        },
+        {
+            name: 'Telegram',
+            icon: 'fab fa-telegram-plane',
+            url: profileData.telegram || 'https://t.me/+254758175275',
+            color: 'telegram'
+        },
+        {
+            name: 'WhatsApp',
+            icon: 'fab fa-whatsapp',
+            url: profileData.whatsapp || 'https://wa.me/254758175275',
+            color: 'whatsapp'
+        },
+        {
+            name: 'LinkedIn',
+            icon: 'fab fa-linkedin-in',
+            url: profileData.linkedin || '',
+            color: 'linkedin'
+        },
+        {
+            name: 'Twitter',
+            icon: 'fab fa-twitter',
+            url: profileData.twitter || '',
+            color: 'twitter'
+        },
+        {
+            name: 'Website',
+            icon: 'fas fa-globe',
+            url: profileData.website || '',
+            color: 'website'
+        }
+    ].filter(link => link.url)); // Filter out empty URLs
 
+    // Update social links when profile data changes
+    useEffect(() => {
+        if (settings?.profile) {
+            const updatedLinks = [
+                {
+                    name: 'Facebook',
+                    icon: 'fab fa-facebook-f',
+                    url: settings.profile.facebook || 'https://www.facebook.com/profile.php?id=100089960419104',
+                    color: 'facebook'
+                },
+                {
+                    name: 'Instagram',
+                    icon: 'fab fa-instagram',
+                    url: settings.profile.instagram || 'https://www.instagram.com/king_wisdom_ndk/',
+                    color: 'instagram'
+                },
+                {
+                    name: 'GitHub',
+                    icon: 'fab fa-github',
+                    url: settings.profile.github || 'https://github.com/devTechs001',
+                    color: 'github'
+                },
+                {
+                    name: 'Telegram',
+                    icon: 'fab fa-telegram-plane',
+                    url: settings.profile.telegram || 'https://t.me/+254758175275',
+                    color: 'telegram'
+                },
+                {
+                    name: 'WhatsApp',
+                    icon: 'fab fa-whatsapp',
+                    url: settings.profile.whatsapp || 'https://wa.me/254758175275',
+                    color: 'whatsapp'
+                },
+                {
+                    name: 'LinkedIn',
+                    icon: 'fab fa-linkedin-in',
+                    url: settings.profile.linkedin || '',
+                    color: 'linkedin'
+                },
+                {
+                    name: 'Twitter',
+                    icon: 'fab fa-twitter',
+                    url: settings.profile.twitter || '',
+                    color: 'twitter'
+                },
+                {
+                    name: 'Website',
+                    icon: 'fas fa-globe',
+                    url: settings.profile.website || '',
+                    color: 'website'
+                }
+            ].filter(link => link.url);
+            
+            setSocialLinks(updatedLinks);
+        }
+    }, [settings?.profile]);
+
+    // Initialize Typed.js
     useEffect(() => {
         const options = {
             strings: [
@@ -23,7 +139,6 @@ const About = () => {
             cursorChar: '|',
         };
 
-        // Initialize Typed on the DOM node (safer than selector strings)
         let typedInstance = null;
         if (typedRef.current) {
             typedInstance = new Typed(typedRef.current, options);
@@ -35,39 +150,6 @@ const About = () => {
             }
         };
     }, []);
-
-    const socialLinks = [
-        {
-            name: 'Facebook',
-            icon: 'fab fa-facebook-f',
-            url: 'https://www.facebook.com/profile.php?id=100089960419104',
-            color: 'facebook'
-        },
-        {
-            name: 'Instagram',
-            icon: 'fab fa-instagram',
-            url: 'https://www.instagram.com/king_wisdom_ndk/',
-            color: 'instagram'
-        },
-        {
-            name: 'GitHub',
-            icon: 'fab fa-github',
-            url: 'https://github.com/devTechs001',
-            color: 'github'
-        },
-        {
-            name: 'Telegram',
-            icon: 'fab fa-telegram-plane',
-            url: 'https://t.me/+254758175275',
-            color: 'telegram'
-        },
-        {
-            name: 'WhatsApp',
-            icon: 'fab fa-whatsapp',
-            url: 'https://wa.me/254758175275',
-            color: 'whatsapp'
-        }
-    ];
 
     const stats = [
         { number: '5+', label: 'Years Experience' },
@@ -98,7 +180,7 @@ const About = () => {
 
                         {/* Main Heading */}
                         <h1 className="main-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-textColor mb-4 leading-tight">
-                            Danie <span className="gradient-text-animated">Tech</span>
+                            {profileData.name ? profileData.name.split(' ')[0] : 'Danie'} <span className="gradient-text-animated">{profileData.name ? profileData.name.split(' ')[1] || 'Tech' : 'Tech'}</span>
                         </h1>
 
                         {/* Typed Text */}
@@ -111,9 +193,10 @@ const About = () => {
                         {/* Description */}
                         <div className="space-y-4 mb-8">
                             <p className="text-base md:text-lg text-textColor/80 leading-relaxed">
-                                I am a passionate and creative developer with a strong foundation in web development 
+                                {profileData.bio || 
+                                `I am a passionate and creative developer with a strong foundation in web development 
                                 and software engineering. I specialize in creating responsive and user-friendly web 
-                                applications using modern technologies and best practices.
+                                applications using modern technologies and best practices.`}
                             </p>
                             <p className="text-base md:text-lg text-textColor/80 leading-relaxed">
                                 My approach combines technical excellence with creative problem-solving, ensuring 
@@ -200,11 +283,21 @@ const About = () => {
                             
                             {/* Main Image Wrapper */}
                             <div className="relative w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96">
+                                {/* Additional Spinning Rings */}
+                                <div className="circle-spin-3"></div>
+                                <div className="circle-spin-2"></div>
                                 {/* Spinning Border */}
                                 <div className="circle-spin"></div>
                                 
                                 {/* Glow Effect */}
                                 <div className="image-glow"></div>
+                                
+                                {/* Particle Effects */}
+                                <div className="image-particle particle-1"></div>
+                                <div className="image-particle particle-2"></div>
+                                <div className="image-particle particle-3"></div>
+                                <div className="image-particle particle-4"></div>
+                                <div className="image-particle particle-5"></div>
                                 
                                 {/* Profile Image */}
                                 <div className="image-wrapper">

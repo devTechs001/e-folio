@@ -66,6 +66,10 @@ const Settings = () => {
             github: user?.github || '',
             linkedin: user?.linkedin || '',
             twitter: user?.twitter || '',
+            facebook: user?.facebook || '',
+            instagram: user?.instagram || '',
+            telegram: user?.telegram || '',
+            whatsapp: user?.whatsapp || '',
             phone: user?.phone || ''
         },
         notifications: {
@@ -185,7 +189,18 @@ const Settings = () => {
 
             if (response.success) {
                 success('Settings saved successfully!');
+                
+                // Apply theme change immediately if appearance settings changed
+                if (settings.appearance.theme && settings.appearance.theme !== currentTheme) {
+                    changeTheme(settings.appearance.theme);
+                }
+                
+                // Update user context with new data
                 updateUser(response.user);
+                
+                // Apply real-time settings changes
+                applyRealtimeSettings(settings);
+                
             } else {
                 showError(response.message || 'Failed to save settings');
             }
@@ -195,6 +210,41 @@ const Settings = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const applyRealtimeSettings = (newSettings) => {
+        // Apply font size changes immediately
+        if (newSettings.appearance.fontSize) {
+            const root = document.documentElement;
+            const fontSizes = {
+                small: '14px',
+                medium: '16px',
+                large: '18px',
+                xlarge: '20px'
+            };
+            root.style.setProperty('--base-font-size', fontSizes[newSettings.appearance.fontSize] || '16px');
+        }
+        
+        // Apply language/date format changes
+        if (newSettings.appearance.language) {
+            document.documentElement.lang = newSettings.appearance.language;
+        }
+        
+        // Apply privacy settings to meta tags
+        if (newSettings.privacy.indexProfile === false) {
+            const metaRobots = document.querySelector('meta[name="robots"]');
+            if (metaRobots) {
+                metaRobots.content = 'noindex, nofollow';
+            }
+        } else {
+            const metaRobots = document.querySelector('meta[name="robots"]');
+            if (metaRobots) {
+                metaRobots.content = 'index, follow';
+            }
+        }
+        
+        // Emit settings change event for other components
+        window.dispatchEvent(new CustomEvent('settingsChanged', { detail: newSettings }));
     };
 
     const handleImageChange = (e) => {
@@ -662,6 +712,91 @@ const Settings = () => {
                                                 }))}
                                                 className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
                                                 placeholder="https://twitter.com/username"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                                                <LinkIcon size={16} />
+                                                Facebook
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={settings.profile.facebook}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    profile: { ...prev.profile, facebook: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                placeholder="https://facebook.com/profile"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                                                <LinkIcon size={16} />
+                                                Instagram
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={settings.profile.instagram}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    profile: { ...prev.profile, instagram: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                placeholder="https://instagram.com/username"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                                                <LinkIcon size={16} />
+                                                Telegram
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={settings.profile.telegram}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    profile: { ...prev.profile, telegram: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                placeholder="https://t.me/username"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                                                <LinkIcon size={16} />
+                                                WhatsApp
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={settings.profile.whatsapp}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    profile: { ...prev.profile, whatsapp: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                placeholder="https://wa.me/phonenumber"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                                                <Globe size={16} />
+                                                Website
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={settings.profile.website}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    profile: { ...prev.profile, website: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                placeholder="https://yourwebsite.com"
                                             />
                                         </div>
                                     </div>

@@ -1,6 +1,8 @@
 // controllers/collaboration.controller.js
 const CollaborationRequest = require('../models/CollaborationRequest');
 const User = require('../models/User.model');
+const Invite = require('../models/Invite.model');
+const ActivityLog = require('../models/ActivityLog');
 const { generateInviteToken, sendEmail } = require('../utils');
 const { Parser } = require('@json2csv/plainjs');
 
@@ -446,17 +448,64 @@ function getRejectionEmailTemplate(name, reason) {
 // Submit collaboration request (public endpoint)
 exports.submitCollaborationRequest = async (req, res) => {
     try {
-        const { name, email, company, role, message, portfolio, linkedin } = req.body;
+        const {
+            name, email, phone, location, timezone, role, company, experience,
+            skills, skillLevels, portfolio, github, linkedin, twitter, instagram,
+            website, projectType, budget, timeline, availability, preferredContact,
+            message, references, attachments, interests, languages, remoteWork,
+            willingToRelocate, newsletter, terms
+        } = req.body;
+
+        // Validate required fields
+        if (!name || !email || !message || !terms) {
+            return res.status(400).json({
+                success: false,
+                message: 'Required fields missing: name, email, message, and terms acceptance'
+            });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format'
+            });
+        }
 
         const request = new CollaborationRequest({
             name,
             email,
-            company,
+            phone,
+            location,
+            timezone,
             role,
-            message,
+            company,
+            experience,
+            skills: skills || [],
+            skillLevels: skillLevels || {},
             portfolio,
+            github,
             linkedin,
-            status: 'pending'
+            twitter,
+            instagram,
+            website,
+            projectType: projectType || [],
+            budget,
+            timeline,
+            availability,
+            preferredContact,
+            message,
+            references: references || [],
+            attachments: attachments || [],
+            interests: interests || [],
+            languages: languages || [],
+            remoteWork: remoteWork !== false,
+            willingToRelocate: willingToRelocate || false,
+            newsletter: newsletter !== false,
+            terms: terms === true,
+            status: 'pending',
+            submittedAt: new Date()
         });
 
         await request.save();
@@ -470,7 +519,7 @@ exports.submitCollaborationRequest = async (req, res) => {
         console.error('Submit collaboration request error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to submit request'
+            message: error.message || 'Failed to submit request'
         });
     }
 };
@@ -619,72 +668,138 @@ exports.getRequestActivity = async (req, res) => {
     }
 };
 
-// Get collaborators
+// Get collaborators (for CollaboratorsStyled component)
 const getCollaborators = async (req, res) => {
     try {
-        const collaborators = await CollaborationRequest.find({ 
-            status: 'approved',
-            archived: false 
-        })
-        .populate('userId', 'name email avatar')
-        .sort({ createdAt: -1 });
+        const { search, role, status, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+        let query = { 
+            _id: { $ne: req.user.id } // Exclude current user
+        };
+
+        // Search
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Filter by role
+        if (role && role !== 'all') {
+            query.role = role;
+        }
+
+        // Filter by status
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        const sortOrder = order === 'desc' ? -1 : 1;
+        const collaborators = await User.find(query)
+            .select('-password -resetPasswordToken -resetPasswordExpire')
+            .sort({ [sortBy]: sortOrder })
+            .populate('invitedBy', 'name email');
+
+        const formattedCollaborators = collaborators.map(collab => ({
+            id: collab._id,
+            name: collab.name,
+            email: collab.email,
+            avatar: collab.avatar || collab.name.charAt(0).toUpperCase(),
+            role: collab.role,
+            status: collab.status || 'active',
+            permissions: collab.permissions || [],
+            joinedDate: collab.createdAt.toLocaleDateString(),
+            lastActive: collab.lastActive 
+                ? new Date(collab.lastActive).toLocaleDateString() 
+                : 'Never',
+            invitedBy: collab.invitedBy,
+            totalProjects: collab.projects?.length || 0,
+            totalTasks: collab.tasks?.length || 0
+        }));
 
         res.json({
             success: true,
-            collaborators: collaborators || []
+            collaborators: formattedCollaborators
         });
     } catch (error) {
         console.error('Get collaborators error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get collaborators'
+            message: 'Server error',
+            error: error.message
         });
     }
 };
 
-// Get pending invites
+// Get pending invites (for CollaboratorsStyled component)
 const getPendingInvites = async (req, res) => {
     try {
-        const invites = await CollaborationRequest.find({ 
+        const invites = await Invite.find({
             status: 'pending',
-            archived: false 
+            expiresAt: { $gt: new Date() }
         })
-        .populate('userId', 'name email avatar')
+        .populate('invitedBy', 'name email')
         .sort({ createdAt: -1 });
+
+        const formattedInvites = invites.map(invite => ({
+            id: invite._id,
+            email: invite.email,
+            role: invite.role,
+            sentAt: invite.createdAt,
+            expiresAt: invite.expiresAt,
+            invitedBy: invite.invitedBy,
+            type: invite.type || 'email',
+            uses: invite.uses || 0,
+            maxUses: invite.maxUses
+        }));
 
         res.json({
             success: true,
-            invites: invites || []
+            invites: formattedInvites
         });
     } catch (error) {
         console.error('Get pending invites error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get pending invites'
+            message: 'Server error',
+            error: error.message
         });
     }
 };
 
-// Get collaborator activity
+// Get collaborator activity (for CollaboratorsStyled component)
 const getCollaboratorActivity = async (req, res) => {
     try {
-        const activities = await CollaborationRequest.find({ 
-            status: 'approved',
-            archived: false 
+        const { limit = 50 } = req.query;
+
+        const logs = await ActivityLog.find({
+            action: {
+                $in: [
+                    'invite_sent',
+                    'collaborator_added',
+                    'role_updated',
+                    'permissions_updated',
+                    'collaborator_removed',
+                    'collaborator_suspended',
+                    'collaborator_reactivated'
+                ]
+            }
         })
-        .populate('userId', 'name email avatar')
-        .select('activity userId createdAt')
-        .sort({ createdAt: -1 });
+        .populate('user', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit));
 
         res.json({
             success: true,
-            activities: activities || []
+            logs
         });
     } catch (error) {
-        console.error('Get collaborator activity error:', error);
+        console.error('Get activity error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get collaborator activity'
+            message: 'Server error',
+            error: error.message
         });
     }
 };

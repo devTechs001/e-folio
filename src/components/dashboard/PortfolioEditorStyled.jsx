@@ -705,6 +705,16 @@ const PortfolioEditor = () => {
 
   const sections = Array.isArray(portfolioConfig?.sections) ? portfolioConfig.sections : [];
 
+  // Enhanced panel tabs definition
+  const enhancedPanelTabs = [
+    { id: 'sections', label: 'Sections', icon: Layers, count: sections.length },
+    { id: 'design', label: 'Design', icon: Palette },
+    { id: 'content', label: 'Content', icon: FileText },
+    { id: 'seo', label: 'SEO', icon: TrendingUp },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
   // Extended Section Templates
   const [sectionTemplates] = useState([
     {
@@ -3367,16 +3377,6 @@ const PortfolioEditor = () => {
         warning('Validation complete. 2 suggestions found.');
       }
     }
-  ];
-
-  // Enhanced panel tabs with new features
-  const enhancedPanelTabs = [
-    { id: 'sections', label: 'Sections', icon: Layers, count: sections.length },
-    { id: 'design', label: 'Design', icon: Palette },
-    { id: 'content', label: 'Content', icon: FileText },
-    { id: 'seo', label: 'SEO', icon: TrendingUp },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
   return (

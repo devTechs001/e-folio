@@ -166,15 +166,15 @@ class TrackingService {
 
     // Track event
     async trackEvent(type, element, data = {}) {
-        if (!this.isTracking) return;
+        if (!this.isTracking || !this.sessionId) return;
 
         try {
             await apiService.request('/tracking/event', {
                 method: 'POST',
                 body: JSON.stringify({
                     sessionId: this.sessionId,
-                    event: {
-                        type,
+                    eventType: type,
+                    eventData: {
                         element,
                         elementId: data.id || '',
                         elementClass: data.className || '',

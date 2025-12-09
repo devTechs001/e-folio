@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Testimonial Received</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+        }
+        .testimonial-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .rating {
+            color: #ffc107;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 New Testimonial Received!</h1>
+        <p>You have received a new testimonial from a client</p>
+    </div>
+    
+    <div class="content">
+        <h2>New Testimonial Details</h2>
+        
+        <div class="testimonial-card">
+            <p><strong>Name:</strong> {{name}}</p>
+            <p><strong>Position:</strong> {{position}}</p>
+            <p><strong>Company:</strong> {{company}}</p>
+            <p><strong>Rating:</strong> <span class="rating">{{rating}}/5</span></p>
+            <p><strong>Email:</strong> {{email}}</p>
+            <p><strong>Website:</strong> {{website}}</p>
+            <p><strong>LinkedIn:</strong> {{linkedin}}</p>
+            <p><strong>Project:</strong> {{project}}</p>
+            <p><strong>Tags:</strong> {{tags}}</p>
+            
+            <h3>Content:</h3>
+            <p style="font-style: italic;">"{{content}}"</p>
+        </div>
+        
+        <p>You can review and manage this testimonial in your dashboard.</p>
+        
+        <p><strong>Submitted on:</strong> {{date}}</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated notification from your portfolio website.</p>
+        <p>© {{year}} Your Portfolio. All rights reserved.</p>
+    </div>
+</body>
+</html>

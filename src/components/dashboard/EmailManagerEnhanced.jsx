@@ -4,7 +4,10 @@ import {
     Mail, Inbox, Star, Send, Edit3, Archive, Trash2, AlertTriangle,
     Search, Filter, Plus, Paperclip, X, Clock3, Zap, Save, Reply, 
     Forward, Printer, Minimize2, Maximize2, Download, Flag, 
-    Check, Tag, Eye, EyeOff, RefreshCw
+    Check, Tag, Eye, EyeOff, RefreshCw, BarChart, TrendingUp,
+    Calendar, Users, Target, Sparkles, Brain, Bot, Settings,
+    Bell, Shield, Award, Globe, Headphones, MessageCircle,
+    FileText, Database, Activity, PieChart, LineChart
 } from 'lucide-react';
 import DashboardLayout from './DashboardLayout';
 

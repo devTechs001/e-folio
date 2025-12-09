@@ -8,7 +8,7 @@ import {
     Eye, ChevronRight, ChevronLeft, AlertCircle, Check, Plus,
     Trash2, Download, ExternalLink, Instagram, Facebook, Youtube,
     Smartphone, Monitor, Server, Database, Cloud, Cpu, Layout,
-    PenTool, Film, Music, BookOpen, Bookmark, Hash, AtSign
+    PenTool, Film, Music, BookOpen, Bookmark, Hash, AtSign, Building
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
@@ -19,11 +19,17 @@ import '../styles/CollaborationRequest.css'
 const CollaborationRequest = () => {
     const { theme } = useTheme();
     const { success, error, info } = useNotifications();
+    const fileInputRef = useRef(null);
+
+    // Store current page when component mounts
+    useEffect(() => {
+        sessionStorage.setItem('lastVisitedPage', '/collaborate');
+    }, []);
+
     const [currentStep, setCurrentStep] = useState(1);
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
-    const fileInputRef = useRef(null);
     const [uploadProgress, setUploadProgress] = useState({});
     
     const [formData, setFormData] = useState({
@@ -135,39 +141,110 @@ const CollaborationRequest = () => {
 
         switch (name) {
             case 'name':
-                if (!value || value.trim().length < 2) {
-                    error = 'Name must be at least 2 characters';
+                if (!value || value.trim().length === 0) {
+                    error = 'Name is required - Please enter your full name';
+                } else if (value.trim().length < 2) {
+                    error = 'Name too short - Must be at least 2 characters (currently: ' + value.trim().length + ')';
+                } else if (value.trim().length > 50) {
+                    error = 'Name too long - Maximum 50 characters allowed (currently: ' + value.trim().length + ')';
+                } else if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+                    error = 'Invalid name format - Only letters, spaces, hyphens and apostrophes allowed';
                 }
                 break;
             case 'email':
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!value || !emailRegex.test(value)) {
-                    error = 'Please enter a valid email address';
+                if (!value || value.trim().length === 0) {
+                    error = 'Email is required - Please enter your email address';
+                } else {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        error = 'Invalid email format - Example: john@example.com';
+                    } else if (value.length > 100) {
+                        error = 'Email too long - Maximum 100 characters allowed';
+                    }
                 }
                 break;
             case 'phone':
-                const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-                if (value && !phoneRegex.test(value)) {
-                    error = 'Please enter a valid phone number';
+                if (!value || value.trim().length === 0) {
+                    error = 'Phone is required - Please enter your phone number';
+                } else {
+                    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+                    if (!phoneRegex.test(value)) {
+                        error = 'Invalid phone format - Only numbers, spaces, +, -, and () allowed';
+                    } else if (value.replace(/\D/g, '').length < 10) {
+                        error = 'Phone too short - At least 10 digits required (currently: ' + value.replace(/\D/g, '').length + ')';
+                    } else if (value.replace(/\D/g, '').length > 15) {
+                        error = 'Phone too long - Maximum 15 digits allowed (currently: ' + value.replace(/\D/g, '').length + ')';
+                    }
+                }
+                break;
+            case 'location':
+                if (!value || value.trim().length === 0) {
+                    error = 'Location is required - Please enter your city and country';
+                } else if (value.trim().length < 3) {
+                    error = 'Location too short - Must be at least 3 characters (currently: ' + value.trim().length + ')';
+                } else if (!/,/.test(value)) {
+                    error = 'Invalid location format - Please include both city and country separated by comma (e.g., "New York, USA")';
+                }
+                break;
+            case 'timezone':
+                if (!value || value.trim().length === 0) {
+                    error = 'Timezone is required - Please select your timezone from the dropdown';
+                }
+                break;
+            case 'role':
+                if (!value || value.trim().length === 0) {
+                    error = 'Role is required - Please select your professional role';
+                }
+                break;
+            case 'experience':
+                if (!value || value.trim().length === 0) {
+                    error = 'Experience is required - Please select your years of experience';
+                }
+                break;
+            case 'skills':
+                if (!value || value.length === 0) {
+                    error = 'Skills are required - Please select at least 3 skills from the list';
+                } else if (value.length < 3) {
+                    error = 'Not enough skills - Minimum 3 skills required (currently: ' + value.length + ')';
+                } else if (value.length > 10) {
+                    error = 'Too many skills - Maximum 10 skills allowed (currently: ' + value.length + ')';
                 }
                 break;
             case 'portfolio':
             case 'github':
             case 'linkedin':
             case 'website':
-                const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-                if (value && !urlRegex.test(value)) {
-                    error = 'Please enter a valid URL';
+                if (value && value.trim().length > 0) {
+                    const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+                    if (!urlRegex.test(value)) {
+                        error = 'Invalid URL format - Must start with http:// or https:// (e.g., https://github.com/username)';
+                    } else if (value.length > 200) {
+                        error = 'URL too long - Maximum 200 characters allowed';
+                    }
                 }
                 break;
             case 'message':
-                if (!value || value.trim().length < 20) {
-                    error = 'Message must be at least 20 characters';
+                if (!value || value.trim().length === 0) {
+                    error = 'Message is required - Please tell us about your collaboration interest';
+                } else if (value.trim().length < 20) {
+                    error = 'Message too short - Minimum 20 characters required (currently: ' + value.trim().length + ')';
+                } else if (value.trim().length > 1000) {
+                    error = 'Message too long - Maximum 1000 characters allowed (currently: ' + value.trim().length + ')';
+                }
+                break;
+            case 'projectType':
+                if (!value || value.length === 0) {
+                    error = 'Project type is required - Please select at least one project type';
+                }
+                break;
+            case 'availability':
+                if (!value || value.trim().length === 0) {
+                    error = 'Availability is required - Please select when you can start';
                 }
                 break;
             case 'terms':
                 if (!value) {
-                    error = 'You must accept the terms and conditions';
+                    error = 'Terms acceptance is required - You must accept the terms and conditions to continue';
                 }
                 break;
             default:
@@ -619,7 +696,7 @@ const CollaborationRequest = () => {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <Phone size={16} className="inline mr-2" />
-                                                Phone Number
+                                                Phone Number *
                                             </label>
                                             <input
                                                 type="tel"
@@ -643,7 +720,7 @@ const CollaborationRequest = () => {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <MapPin size={16} className="inline mr-2" />
-                                                Location
+                                                Location *
                                             </label>
                                             <input
                                                 type="text"
@@ -668,7 +745,7 @@ const CollaborationRequest = () => {
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                             <Clock size={16} className="inline mr-2" />
-                                            Timezone
+                                            Timezone *
                                         </label>
                                         <select
                                             value={formData.timezone}
@@ -717,7 +794,7 @@ const CollaborationRequest = () => {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <Briefcase size={16} className="inline mr-2" />
-                                                Your Role
+                                                Your Role *
                                             </label>
                                             <select
                                                 value={formData.role}
@@ -769,7 +846,7 @@ const CollaborationRequest = () => {
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                             <Award size={16} className="inline mr-2" />
-                                            Years of Experience
+                                            Years of Experience *
                                         </label>
                                         <select
                                             value={formData.experience}
@@ -796,7 +873,7 @@ const CollaborationRequest = () => {
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                                             <Code size={16} className="inline mr-2" />
-                                            Skills & Technologies
+                                            Skills & Technologies *
                                         </label>
                                         
                                         {Object.entries(skillOptions).map(([category, skills]) => (
@@ -1054,7 +1131,7 @@ const CollaborationRequest = () => {
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                                             <Target size={16} className="inline mr-2" />
-                                            Project Type (Select all that apply)
+                                            Project Type (Select all that apply) *
                                         </label>
                                         <div className="flex flex-wrap gap-2">
                                             {projectTypeOptions.map(type => {
@@ -1141,7 +1218,7 @@ const CollaborationRequest = () => {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <Clock size={16} className="inline mr-2" />
-                                                When can you start?
+                                                When can you start? *
                                             </label>
                                             <select
                                                 value={formData.availability}
@@ -1420,13 +1497,13 @@ const CollaborationRequest = () => {
                                             />
                                             <span className="text-sm text-gray-700 dark:text-gray-300 select-none">
                                                 I agree to the{' '}
-                                                <a href="/terms" className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank">
+                                                <Link to="/terms" state={{ from: '/collaborate' }} className="text-blue-600 dark:text-blue-400 hover:underline">
                                                     terms and conditions
-                                                </a>
+                                                </Link>
                                                 {' '}and{' '}
-                                                <a href="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank">
+                                                <Link to="/privacy" state={{ from: '/collaborate' }} className="text-blue-600 dark:text-blue-400 hover:underline">
                                                     privacy policy
-                                                </a>
+                                                </Link>
                                                 {' '}*
                                             </span>
                                         </label>

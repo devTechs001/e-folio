@@ -8,6 +8,7 @@ import Skills from './Skills';
 import Education from './Education';
 import Interests from './Interests';
 import Projects from './Projects';
+import Testimonials from './Testimonials';
 import Contact from './Contact';
 import Footer from './Footer';
 import ThemeSwitcher from '../components/ThemeSwitcher';
@@ -245,6 +246,13 @@ const LandingPage = () => {
                 </div>
 
                 <Projects />
+                
+                <div className="section-divider">
+                    <div className="divider-line"></div>
+                    <div className="divider-dot"></div>
+                </div>
+
+                <Testimonials />
                 
                 <div className="section-divider">
                     <div className="divider-line"></div>

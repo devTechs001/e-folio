@@ -1,0 +1,230 @@
+/* ==================== PROJECT SHARE STYLES ==================== */
+
+.project-share {
+  position: relative;
+  display: inline-block;
+}
+
+.share-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(14, 239, 239, 0.1);
+  border: 1px solid rgba(14, 239, 239, 0.3);
+  border-radius: var(--border-radius-xl);
+  color: var(--mainColor);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.share-trigger-btn:hover {
+  background: rgba(14, 239, 239, 0.2);
+  border-color: var(--mainColor);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(14, 239, 239, 0.3);
+}
+
+.share-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.share-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  background: rgba(26, 26, 46, 0.98);
+  backdrop-filter: blur(var(--blur-md));
+  border: 2px solid rgba(14, 239, 239, 0.3);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  z-index: 1000;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5),
+              0 0 30px rgba(14, 239, 239, 0.2);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.share-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(14, 239, 239, 0.2);
+}
+
+.share-menu-header h4 {
+  color: var(--textColor);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.share-close-btn {
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  color: var(--textColorMuted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-close-btn:hover {
+  color: var(--accentColor);
+  background: rgba(255, 0, 110, 0.1);
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-md);
+  color: var(--textColor);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.share-option i {
+  font-size: 1.5rem;
+  transition: transform var(--transition-fast);
+}
+
+.share-option:hover {
+  transform: translateY(-3px);
+}
+
+.share-option:hover i {
+  transform: scale(1.2);
+}
+
+/* Platform Colors */
+.share-twitter:hover {
+  background: rgba(29, 161, 242, 0.2);
+  border-color: #1DA1F2;
+  color: #1DA1F2;
+}
+
+.share-facebook:hover {
+  background: rgba(24, 119, 242, 0.2);
+  border-color: #1877F2;
+  color: #1877F2;
+}
+
+.share-linkedin:hover {
+  background: rgba(0, 119, 181, 0.2);
+  border-color: #0077B5;
+  color: #0077B5;
+}
+
+.share-reddit:hover {
+  background: rgba(255, 69, 0, 0.2);
+  border-color: #FF4500;
+  color: #FF4500;
+}
+
+.share-whatsapp:hover {
+  background: rgba(37, 211, 102, 0.2);
+  border-color: #25D366;
+  color: #25D366;
+}
+
+.share-telegram:hover {
+  background: rgba(0, 136, 204, 0.2);
+  border-color: #0088CC;
+  color: #0088CC;
+}
+
+.share-native:hover {
+  background: var(--gradientPrimary);
+  border-color: var(--mainColor);
+  color: var(--bgColor);
+}
+
+.share-copy {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(14, 239, 239, 0.2);
+}
+
+.share-url-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(14, 239, 239, 0.2);
+  border-radius: var(--border-radius-md);
+  color: var(--textColorMuted);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.share-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(14, 239, 239, 0.1);
+  border: 1px solid rgba(14, 239, 239, 0.3);
+  border-radius: var(--border-radius-md);
+  color: var(--mainColor);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.share-copy-btn:hover {
+  background: rgba(14, 239, 239, 0.2);
+  border-color: var(--mainColor);
+}
+
+.share-copy-btn.copied {
+  background: var(--gradientSuccess);
+  border-color: var(--successColor);
+  color: var(--bgColor);
+}
+
+@media (max-width: 768px) {
+  .share-menu {
+    width: 280px;
+  }
+
+  .share-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -70,6 +70,10 @@ const ReviewsManager = lazy(() => import('../components/dashboard/ReviewsManager
     console.error('Failed to load ReviewsManager:', err);
     return { default: () => <div>Error loading Reviews Manager</div> };
 }));
+const TestimonialManager = lazy(() => import('../components/dashboard/TestimonialManager').catch(err => {
+    console.error('Failed to load TestimonialManager:', err);
+    return { default: () => <div>Error loading Testimonial Manager</div> };
+}));
 const EmailManager = lazy(() => import('../components/dashboard/EmailManagerEnhanced').catch(err => {
     console.error('Failed to load EmailManager:', err);
     return { default: () => <div>Error loading Email Manager</div> };
@@ -89,148 +93,175 @@ const Profile = lazy(() => import('../components/dashboard/Profile').catch(err =
 
 // Wrapper components to avoid primitive value error
 const LazyDashboardHome = () => {
-    try {
-        return <DashboardHome />;
-    } catch (error) {
-        console.error('Error rendering DashboardHome:', error);
-        return <div>Error loading Dashboard Home</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <DashboardHome />
+        </Suspense>
+    );
 };
 const LazyProjectManager = () => {
-    try {
-        return <ProjectManager />;
-    } catch (error) {
-        console.error('Error rendering ProjectManager:', error);
-        return <div>Error loading Project Manager</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <ProjectManager />
+        </Suspense>
+    );
 };
 const LazySkillsEditor = () => {
-    try {
-        return <SkillsEditor />;
-    } catch (error) {
-        console.error('Error rendering SkillsEditor:', error);
-        return <div>Error loading Skills Editor</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <SkillsEditor />
+        </Suspense>
+    );
 };
 const LazyThemeManager = () => {
-    try {
-        return <ThemeManager />;
-    } catch (error) {
-        console.error('Error rendering ThemeManager:', error);
-        return <div>Error loading Theme Manager</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <ThemeManager />
+        </Suspense>
+    );
 };
 const LazyAnalytics = () => {
-    try {
-        return <Analytics />;
-    } catch (error) {
-        console.error('Error rendering Analytics:', error);
-        return <div>Error loading Analytics</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <Analytics />
+        </Suspense>
+    );
 };
 const LazySettings = () => {
-    try {
-        return <Settings />;
-    } catch (error) {
-        console.error('Error rendering Settings:', error);
-        return <div>Error loading Settings</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <Settings />
+        </Suspense>
+    );
 };
 const LazyChatSystem = () => {
-    try {
-        return <ChatSystem />;
-    } catch (error) {
-        console.error('Error rendering ChatSystem:', error);
-        return <div>Error loading Chat System</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <ChatSystem />
+        </Suspense>
+    );
 };
 const LazyAIAssistant = () => {
-    try {
-        return <AIAssistant />;
-    } catch (error) {
-        console.error('Error rendering AIAssistant:', error);
-        return <div>Error loading AI Assistant</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <AIAssistant />
+        </Suspense>
+    );
 };
 const LazyPortfolioEditor = () => {
-    try {
-        return <PortfolioEditor />;
-    } catch (error) {
-        console.error('Error rendering PortfolioEditor:', error);
-        return <div>Error loading Portfolio Editor</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <PortfolioEditor />
+        </Suspense>
+    );
 };
 const LazyCollaborators = () => {
-    try {
-        return <Collaborators />;
-    } catch (error) {
-        console.error('Error rendering Collaborators:', error);
-        return <div>Error loading Collaborators</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <Collaborators />
+        </Suspense>
+    );
 };
 const LazyMediaManager = () => {
-    try {
-        return <MediaManager />;
-    } catch (error) {
-        console.error('Error rendering MediaManager:', error);
-        return <div>Error loading Media Manager</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <MediaManager />
+        </Suspense>
+    );
 };
 const LazyVisitorsAnalytics = () => {
-    try {
-        return <VisitorsAnalytics />;
-    } catch (error) {
-        console.error('Error rendering VisitorsAnalytics:', error);
-        return <div>Error loading Visitors Analytics</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <VisitorsAnalytics />
+        </Suspense>
+    );
 };
 const LazyAITrackingSystem = () => {
-    try {
-        return <AITrackingSystem />;
-    } catch (error) {
-        console.error('Error rendering AITrackingSystem:', error);
-        return <div>Error loading AI Tracking System</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <AITrackingSystem />
+        </Suspense>
+    );
 };
 const LazyReviewsManager = () => {
-    try {
-        return <ReviewsManager />;
-    } catch (error) {
-        console.error('Error rendering ReviewsManager:', error);
-        return <div>Error loading Reviews Manager</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <ReviewsManager />
+        </Suspense>
+    );
+};
+const LazyTestimonialManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+        </div>}>
+            <TestimonialManager />
+        </Suspense>
+    );
 };
 const LazyEmailManager = () => {
-    try {
-        return <EmailManager />;
-    } catch (error) {
-        console.error('Error rendering EmailManager:', error);
-        return <div>Error loading Email Manager</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <EmailManager />
+        </Suspense>
+    );
 };
 const LazyCollaborationRequests = () => {
-    try {
-        return <CollaborationRequests />;
-    } catch (error) {
-        console.error('Error rendering CollaborationRequests:', error);
-        return <div>Error loading Collaboration Requests</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <CollaborationRequests />
+        </Suspense>
+    );
 };
 const LazyLearningCenter = () => {
-    try {
-        return <LearningCenter />;
-    } catch (error) {
-        console.error('Error rendering LearningCenter:', error);
-        return <div>Error loading Learning Center</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <LearningCenter />
+        </Suspense>
+    );
 };
 const LazyProfile = () => {
-    try {
-        return <Profile />;
-    } catch (error) {
-        console.error('Error rendering Profile:', error);
-        return <div>Error loading Profile</div>;
-    }
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <Profile />
+        </Suspense>
+    );
 };
 
 const Dashboard = () => {
@@ -340,7 +371,17 @@ const DashboardContent = () => {
             roles: ['owner'],
             badge: '3',
             category: 'Content',
-            description: 'Manage testimonials and reviews'
+            description: 'Manage user reviews'
+        },
+        {
+            path: '/dashboard/testimonials',
+            icon: 'fas fa-comments',
+            label: 'Testimonials',
+            component: LazyTestimonialManager,
+            roles: ['owner'],
+            badge: 'New',
+            category: 'Content',
+            description: 'Manage client testimonials'
         },
         {
             path: '/dashboard/emails',

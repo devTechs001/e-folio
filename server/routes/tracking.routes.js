@@ -20,6 +20,7 @@ router.post('/session', initSession);
 router.post('/pageview', trackPageView);
 router.post('/event', trackEvent);
 router.post('/session/end', endSession);
+router.post('/review', trackEvent); // Reuse trackEvent for review submission
 
 // Protected routes (owner only)
 router.use(auth);

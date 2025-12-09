@@ -14,7 +14,7 @@ const Skills = () => {
     const loadSkills = async () => {
         try {
             console.log('Fetching skills from API...');
-            const response = await apiService.getSkills();
+            const response = await apiService.request('/public/skills');
             console.log('Skills API response:', response);
             
             if (response.success && response.skills && response.skills.length > 0) {
@@ -22,7 +22,6 @@ const Skills = () => {
                 const technical = response.skills.filter(s => s.type === 'technical');
                 const professional = response.skills.filter(s => s.type === 'professional');
                 
-                // No limit - display all skills from backend
                 setTechnicalSkills(technical);
                 setProfessionalSkills(professional);
             } else {

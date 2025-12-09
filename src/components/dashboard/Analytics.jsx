@@ -774,39 +774,39 @@ const Analytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <MetricCard
                 title="Total Views"
-                value={data.overview.summary.totalViews.toLocaleString()}
-                change={data.overview.trends.viewsChange}
+                value={data.overview?.summary?.totalViews?.toLocaleString() || '0'}
+                change={data.overview?.trends?.viewsChange || 0}
                 icon={FiEye}
                 color="cyan"
                 description="Portfolio page views"
-                trend={`+${Math.abs(data.overview.trends.viewsChange * 100)} views`}
+                trend={`+${Math.abs(data.overview?.trends?.viewsChange * 100 || 0)} views`}
               />
               <MetricCard
                 title="Unique Visitors"
-                value={data.overview.summary.uniqueVisitors.toLocaleString()}
-                change={data.overview.trends.visitorsChange}
+                value={data.overview?.summary?.uniqueVisitors?.toLocaleString() || '0'}
+                change={data.overview?.trends?.visitorsChange || 0}
                 icon={FiUsers}
                 color="blue"
                 description="Individual visitors"
-                trend={`${data.overview.summary.newVsReturning.returning}% returning`}
+                trend={`${data.overview?.summary?.newVsReturning?.returning || 0}% returning`}
               />
               <MetricCard
                 title="Avg. Session"
-                value={`${Math.floor(data.overview.summary.avgSessionDuration / 60)}m ${data.overview.summary.avgSessionDuration % 60}s`}
-                change={data.overview.trends.engagementChange}
+                value={`${Math.floor(data.overview?.summary?.avgSessionDuration / 60) || 0}m ${(data.overview?.summary?.avgSessionDuration || 0) % 60}s`}
+                change={data.overview?.trends?.engagementChange || 0}
                 icon={FiClock}
                 color="purple"
                 description="Average session duration"
-                trend={`${data.overview.summary.bounceRate}% bounce rate`}
+                trend={`${data.overview?.summary?.bounceRate || 0}% bounce rate`}
               />
               <MetricCard
                 title="Conversion Rate"
-                value={`${data.overview.summary.conversionRate}%`}
-                change={data.overview.trends.conversionChange}
+                value={`${data.overview?.summary?.conversionRate || 0}%`}
+                change={data.overview?.trends?.conversionChange || 0}
                 icon={FiZap}
                 color="pink"
                 description="Goal completion rate"
-                trend={`${data.overview.summary.goalCompletions} completions`}
+                trend={`${data.overview?.summary?.goalCompletions || 0} completions`}
               />
             </div>
 
@@ -814,7 +814,7 @@ const Analytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <MetricCard
                 title="Pages/Session"
-                value={data.overview.summary.pageviewsPerSession.toFixed(1)}
+                value={data.overview?.summary?.pageviewsPerSession?.toFixed(1) || '0.0'}
                 change={8.5}
                 icon={FiActivity}
                 color="cyan"
@@ -822,15 +822,15 @@ const Analytics = () => {
               />
               <MetricCard
                 title="Total Revenue"
-                value={`$${data.overview.summary.totalRevenue.toLocaleString()}`}
-                change={data.overview.trends.revenueChange}
+                value={`$${data.overview?.summary?.totalRevenue?.toLocaleString() || '0'}`}
+                change={data.overview?.trends?.revenueChange || 0}
                 icon={FiDollarSign}
                 color="green"
                 description="Generated revenue"
               />
               <MetricCard
                 title="Online Now"
-                value={data.overview.summary.realtimeUsers}
+                value={data.overview?.summary?.realtimeUsers || 0}
                 change={15.3}
                 icon={FiActivity}
                 color="green"
@@ -866,7 +866,7 @@ const Analytics = () => {
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={data.overview.chartData}>
+                  <ComposedChart data={data.overview?.chartData || []}>
                     <defs>
                       <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
@@ -923,7 +923,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-4">Hourly Activity Pattern</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={data.overview.hourlyData}>
+                  <ComposedChart data={data.overview?.hourlyData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                     <XAxis dataKey="hour" stroke="#64748b" />
                     <YAxis stroke="#64748b" />
@@ -960,7 +960,7 @@ const Analytics = () => {
                   </div>
                 </div>
                 <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
-                  {data.behavior.pageViews
+                  {(data.behavior?.pageViews || [])
                     .filter(page => page.page.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((page, index) => (
                     <div key={index} className="group">
@@ -974,7 +974,7 @@ const Analytics = () => {
                       <div className="relative h-2 bg-slate-700/50 rounded-full overflow-hidden">
                         <div
                           className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500 group-hover:shadow-lg group-hover:shadow-cyan-500/50"
-                          style={{ width: `${(page.views / data.behavior.pageViews[0].views) * 100}%` }}
+                          style={{ width: `${(page.views / (data.behavior?.pageViews?.[0]?.views || 1)) * 100}%` }}
                         ></div>
                       </div>
                       <div className="flex items-center justify-between mt-2 text-xs text-slate-500">
@@ -1379,7 +1379,7 @@ const Analytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <MetricCard
                 title="Avg. Pages/Session"
-                value={data.overview.summary.pageviewsPerSession.toFixed(1)}
+                value={data.overview?.summary?.pageviewsPerSession?.toFixed(1) || '0.0'}
                 change={8.5}
                 icon={FiActivity}
                 color="cyan"
@@ -1395,7 +1395,7 @@ const Analytics = () => {
               />
               <MetricCard
                 title="Bounce Rate"
-                value={`${data.overview.summary.bounceRate}%`}
+                value={`${data.overview?.summary?.bounceRate || 0}%`}
                 change={-5.2}
                 icon={FiTrendingUp}
                 color="purple"
@@ -1506,15 +1506,15 @@ const Analytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <MetricCard
                 title="Overall Conversion"
-                value={`${data.overview.summary.conversionRate}%`}
-                change={data.overview.trends.conversionChange}
+                value={`${data.overview?.summary?.conversionRate || 0}%`}
+                change={data.overview?.trends?.conversionChange || 0}
                 icon={FiTarget}
                 color="green"
                 description="Overall conversion rate"
               />
               <MetricCard
                 title="Goal Completions"
-                value={data.overview.summary.goalCompletions}
+                value={data.overview?.summary?.goalCompletions || 0}
                 change={15.7}
                 icon={FiCheckCircle}
                 color="cyan"
@@ -1522,8 +1522,8 @@ const Analytics = () => {
               />
               <MetricCard
                 title="Total Revenue"
-                value={`$${data.overview.summary.totalRevenue.toLocaleString()}`}
-                change={data.overview.trends.revenueChange}
+                value={`$${data.overview?.summary?.totalRevenue?.toLocaleString() || '0'}`}
+                change={data.overview?.trends?.revenueChange || 0}
                 icon={FiDollarSign}
                 color="green"
                 description="Generated revenue"
@@ -1660,7 +1660,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-cyan-400 mb-4">Page Views (1h)</h3>
                 <p className="text-4xl font-bold text-cyan-400">
-                  {data.overview.chartData.slice(-6).reduce((sum, d) => sum + d.views, 0)}
+                  {(data.overview?.chartData || []).slice(-6).reduce((sum, d) => sum + (d.views || 0), 0)}
                 </p>
                 <p className="text-slate-500 text-sm mt-2">Last hour</p>
               </div>

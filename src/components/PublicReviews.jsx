@@ -14,6 +14,7 @@ const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
     const [totalReviews, setTotalReviews] = useState(0);
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
+    const [likedReviews, setLikedReviews] = useState(new Set());
     const reviewsPerPage = 3;
 
     useEffect(() => {
@@ -28,11 +29,60 @@ const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
                 setReviews(response.reviews || []);
                 setAvgRating(response.avgRating || 0);
                 setTotalReviews(response.totalReviews || 0);
+                
+                // Initialize liked reviews from localStorage
+                const savedLikes = localStorage.getItem('likedReviews');
+                if (savedLikes) {
+                    setLikedReviews(new Set(JSON.parse(savedLikes)));
+                }
             }
         } catch (error) {
             console.error('Failed to load reviews:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleLike = async (reviewId) => {
+        try {
+            if (likedReviews.has(reviewId)) {
+                // Unlike
+                await apiService.unlikeReview(reviewId);
+                setLikedReviews(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(reviewId);
+                    return newSet;
+                });
+                
+                // Update review likes count
+                setReviews(prev => prev.map(review => 
+                    review._id === reviewId 
+                        ? { ...review, likes: Math.max(0, (review.likes || 0) - 1) }
+                        : review
+                ));
+            } else {
+                // Like
+                await apiService.likeReview(reviewId);
+                setLikedReviews(prev => new Set([...prev, reviewId]));
+                
+                // Update review likes count
+                setReviews(prev => prev.map(review => 
+                    review._id === reviewId 
+                        ? { ...review, likes: (review.likes || 0) + 1 }
+                        : review
+                ));
+            }
+            
+            // Save to localStorage
+            const newLikedReviews = new Set(likedReviews);
+            if (likedReviews.has(reviewId)) {
+                newLikedReviews.delete(reviewId);
+            } else {
+                newLikedReviews.add(reviewId);
+            }
+            localStorage.setItem('likedReviews', JSON.stringify([...newLikedReviews]));
+        } catch (error) {
+            console.error('Failed to toggle like:', error);
         }
     };
 
@@ -143,7 +193,7 @@ const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                                             {review.name.charAt(0).toUpperCase()}
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <p className="font-semibold text-gray-900 dark:text-white text-sm">
                                                 {review.name}
                                             </p>
@@ -151,6 +201,17 @@ const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
                                                 {new Date(review.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
+                                        <button
+                                            onClick={() => handleLike(review._id)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
+                                                likedReviews.has(review._id)
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                            }`}
+                                        >
+                                            <ThumbsUp size={16} className={likedReviews.has(review._id) ? 'fill-current' : ''} />
+                                            <span className="text-sm font-medium">{review.likes || 0}</span>
+                                        </button>
                                     </div>
                                 </motion.div>
                             ))}

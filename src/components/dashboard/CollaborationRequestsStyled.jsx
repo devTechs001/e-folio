@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     UserPlus, Check, X, Mail, Clock, Search, Filter, MoreVertical,
     Download, Eye, AlertCircle, CheckCircle, XCircle, TrendingUp,
     Calendar, Users, MessageSquare, FileText, Star, Archive,
     RefreshCw, Send, Edit, Trash2, ChevronDown, ChevronUp,
-    ExternalLink, Copy, CheckCheck, User, Building, Briefcase
+    ExternalLink, Copy, CheckCheck, User, Building, Briefcase,
+    Shield, Award, Globe, MapPin, Phone, Video, MessageCircle,
+    Settings, BarChart, Activity, Zap, Target, Crown, Code, Palette
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -20,33 +22,55 @@ const CollaborationRequests = () => {
     const { on, off } = useSocket();
     const { success, error, info } = useNotifications();
 
-    // State Management
+    // Enhanced State Management
     const [requests, setRequests] = useState([]);
     const [filteredRequests, setFilteredRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterStatus, setFilterStatus] = useState('pending'); // pending, approved, rejected, all
-    const [sortBy, setSortBy] = useState('date'); // date, name, email
+    const [filterStatus, setFilterStatus] = useState('pending');
+    const [filterRole, setFilterRole] = useState('all');
+    const [filterExperience, setFilterExperience] = useState('all');
+    const [sortBy, setSortBy] = useState('date');
     const [sortOrder, setSortOrder] = useState('desc');
     const [selectedRequests, setSelectedRequests] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showBulkActions, setShowBulkActions] = useState(false);
+    const [viewMode, setViewMode] = useState('grid'); // grid, list, kanban
+    const [showAnalytics, setShowAnalytics] = useState(false);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [showTeamBuilder, setShowTeamBuilder] = useState(false);
+    const [collaborationHistory, setCollaborationHistory] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
     const [stats, setStats] = useState({
         total: 0,
         pending: 0,
         approved: 0,
         rejected: 0,
-        thisMonth: 0
+        thisMonth: 0,
+        responseRate: 0,
+        avgResponseTime: 0,
+        topRoles: [],
+        topSkills: [],
+        geographicalDistribution: []
     });
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState(12);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [notes, setNotes] = useState({});
     const [emailTemplate, setEmailTemplate] = useState('default');
     const [showEmailPreview, setShowEmailPreview] = useState(false);
     const [processingIds, setProcessingIds] = useState([]);
+    const [showRoleModal, setShowRoleModal] = useState(false);
+    const [customRoles, setCustomRoles] = useState([]);
+    const [collaborationTypes] = useState([
+        'Development', 'Design', 'Marketing', 'Content', 'Research',
+        'Consulting', 'Partnership', 'Investment', 'Mentorship'
+    ]);
+    const [experienceLevels] = useState([
+        'Entry Level', 'Mid Level', 'Senior Level', 'Expert', 'Leadership'
+    ]);
 
     // Load requests on mount
     useEffect(() => {
@@ -78,51 +102,54 @@ const CollaborationRequests = () => {
 
     // Filter and search
     useEffect(() => {
-        let filtered = [...requests];
+        let filtered = Array.isArray(requests) ? [...requests] : [];
 
         // Filter by status
         if (filterStatus !== 'all') {
-            filtered = filtered.filter(r => r.status === filterStatus);
+            filtered = filtered.filter(r => r && r.status === filterStatus);
         }
 
-        // Search
+        // Search query
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(r =>
-                r.name.toLowerCase().includes(query) ||
-                r.email.toLowerCase().includes(query) ||
-                r.message.toLowerCase().includes(query) ||
-                r.company?.toLowerCase().includes(query)
+            filtered = filtered.filter(r => 
+                r && (
+                    (r.name && r.name.toLowerCase().includes(query)) ||
+                    (r.email && r.email.toLowerCase().includes(query)) ||
+                    (r.company && r.company.toLowerCase().includes(query)) ||
+                    (r.role && r.role.toLowerCase().includes(query)) ||
+                    (r.message && r.message.toLowerCase().includes(query))
+                )
             );
         }
 
         // Date range filter
-        if (dateRange.start) {
-            filtered = filtered.filter(r => 
-                new Date(r.submittedAt) >= new Date(dateRange.start)
-            );
-        }
-        if (dateRange.end) {
-            filtered = filtered.filter(r => 
-                new Date(r.submittedAt) <= new Date(dateRange.end)
-            );
+        if (dateRange.start && dateRange.end) {
+            filtered = filtered.filter(r => {
+                if (!r || !r.submittedAt) return false;
+                const requestDate = new Date(r.submittedAt);
+                return requestDate >= new Date(dateRange.start) && requestDate <= new Date(dateRange.end);
+            });
         }
 
         // Sort
         filtered.sort((a, b) => {
+            if (!a || !b) return 0;
+            
             let comparison = 0;
             switch (sortBy) {
-                case 'date':
-                    comparison = new Date(a.submittedAt) - new Date(b.submittedAt);
-                    break;
                 case 'name':
-                    comparison = a.name.localeCompare(b.name);
+                    comparison = (a.name || '').localeCompare(b.name || '');
                     break;
                 case 'email':
-                    comparison = a.email.localeCompare(b.email);
+                    comparison = (a.email || '').localeCompare(b.email || '');
                     break;
+                case 'date':
                 default:
-                    comparison = 0;
+                    const dateA = new Date(a.submittedAt || 0);
+                    const dateB = new Date(b.submittedAt || 0);
+                    comparison = dateA - dateB;
+                    break;
             }
             return sortOrder === 'desc' ? -comparison : comparison;
         });
@@ -135,7 +162,8 @@ const CollaborationRequests = () => {
         try {
             setLoading(true);
             const response = await apiService.getCollaborationRequests();
-            setRequests(response.requests || []);
+            const requestsData = response?.requests || [];
+            setRequests(Array.isArray(requestsData) ? requestsData : []);
         } catch (err) {
             console.error('Error loading requests:', err);
             error('Failed to load requests');
@@ -327,75 +355,149 @@ const CollaborationRequests = () => {
             title="Collaboration Requests" 
             subtitle="Review and manage collaboration requests"
         >
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            {/* Enhanced Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-8">
+                {/* Total Requests */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg shadow-blue-500/25 border border-blue-400/20 overflow-hidden"
                 >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Total</span>
-                        <Users className="text-blue-500" size={20} />
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-400/20 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-blue-100 text-sm font-medium">Total Requests</span>
+                            <div className="bg-blue-400/20 p-2 rounded-lg backdrop-blur-sm">
+                                <Users className="text-white" size={18} />
+                            </div>
+                        </div>
+                        <p className="text-4xl font-bold text-white mb-1">{stats.total}</p>
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="text-blue-200" size={14} />
+                            <p className="text-xs text-blue-100">All collaboration requests</p>
+                        </div>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All requests</p>
                 </motion.div>
 
+                {/* Pending */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="relative bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-lg shadow-amber-500/25 border border-amber-400/20 overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-amber-400/20 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-amber-100 text-sm font-medium">Pending</span>
+                            <div className="bg-amber-400/20 p-2 rounded-lg backdrop-blur-sm">
+                                <Clock className="text-white" size={18} />
+                            </div>
+                        </div>
+                        <p className="text-4xl font-bold text-white mb-1">{stats.pending}</p>
+                        <div className="flex items-center gap-2">
+                            <Activity className="text-amber-200" size={14} />
+                            <p className="text-xs text-amber-100">Awaiting review</p>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Approved */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-6 border border-yellow-200 dark:border-yellow-800"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="relative bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-lg shadow-emerald-500/25 border border-emerald-400/20 overflow-hidden"
                 >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-yellow-700 dark:text-yellow-300">Pending</span>
-                        <Clock className="text-yellow-600 dark:text-yellow-400" size={20} />
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-400/20 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-emerald-100 text-sm font-medium">Approved</span>
+                            <div className="bg-emerald-400/20 p-2 rounded-lg backdrop-blur-sm">
+                                <CheckCircle className="text-white" size={18} />
+                            </div>
+                        </div>
+                        <p className="text-4xl font-bold text-white mb-1">{stats.approved}</p>
+                        <div className="flex items-center gap-2">
+                            <Zap className="text-emerald-200" size={14} />
+                            <p className="text-xs text-emerald-100">Active collaborations</p>
+                        </div>
                     </div>
-                    <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">{stats.pending}</p>
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Awaiting review</p>
                 </motion.div>
 
+                {/* Response Rate */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="relative bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl p-6 shadow-lg shadow-purple-500/25 border border-purple-400/20 overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-purple-400/20 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-purple-100 text-sm font-medium">Response Rate</span>
+                            <div className="bg-purple-400/20 p-2 rounded-lg backdrop-blur-sm">
+                                <Target className="text-white" size={18} />
+                            </div>
+                        </div>
+                        <p className="text-4xl font-bold text-white mb-1">{stats.responseRate}%</p>
+                        <div className="flex items-center gap-2">
+                            <BarChart className="text-purple-200" size={14} />
+                            <p className="text-xs text-purple-100">Engagement rate</p>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Avg Response Time */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-800"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="relative bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-6 shadow-lg shadow-rose-500/25 border border-rose-400/20 overflow-hidden"
                 >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-green-700 dark:text-green-300">Approved</span>
-                        <CheckCircle className="text-green-600 dark:text-green-400" size={20} />
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-rose-400/20 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-rose-100 text-sm font-medium">Avg Response</span>
+                            <div className="bg-rose-400/20 p-2 rounded-lg backdrop-blur-sm">
+                                <Clock className="text-white" size={18} />
+                            </div>
+                        </div>
+                        <p className="text-4xl font-bold text-white mb-1">{stats.avgResponseTime}h</p>
+                        <div className="flex items-center gap-2">
+                            <Activity className="text-rose-200" size={14} />
+                            <p className="text-xs text-rose-100">Response time</p>
+                        </div>
                     </div>
-                    <p className="text-3xl font-bold text-green-900 dark:text-green-100">{stats.approved}</p>
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">Successfully approved</p>
                 </motion.div>
 
+                {/* This Month */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl p-6 border border-red-200 dark:border-red-800"
+                    transition={{ delay: 0.25 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="relative bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl p-6 shadow-lg shadow-cyan-500/25 border border-cyan-400/20 overflow-hidden"
                 >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-red-700 dark:text-red-300">Rejected</span>
-                        <XCircle className="text-red-600 dark:text-red-400" size={20} />
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-cyan-400/20 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-cyan-100 text-sm font-medium">This Month</span>
+                            <div className="bg-cyan-400/20 p-2 rounded-lg backdrop-blur-sm">
+                                <Calendar className="text-white" size={18} />
+                            </div>
+                        </div>
+                        <p className="text-4xl font-bold text-white mb-1">{stats.thisMonth}</p>
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="text-cyan-200" size={14} />
+                            <p className="text-xs text-cyan-100">Recent requests</p>
+                        </div>
                     </div>
-                    <p className="text-3xl font-bold text-red-900 dark:text-red-100">{stats.rejected}</p>
-                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">Not approved</p>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800"
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-purple-700 dark:text-purple-300">This Month</span>
-                        <TrendingUp className="text-purple-600 dark:text-purple-400" size={20} />
-                    </div>
-                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{stats.thisMonth}</p>
-                    <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Recent requests</p>
                 </motion.div>
             </div>
 
@@ -885,8 +987,57 @@ const CollaborationRequests = () => {
     );
 };
 
-// Request Details Modal Component
+// Enhanced Request Details Modal Component
 const RequestDetailsModal = ({ request, onClose, onApprove, onReject }) => {
+    const [showApprovalSettings, setShowApprovalSettings] = useState(false);
+    const [approvalConfig, setApprovalConfig] = useState({
+        role: 'collaborator',
+        accessLevel: 'limited',
+        engagementLimits: {
+            maxProjects: 5,
+            maxStorage: '1GB',
+            maxTeamMembers: 3,
+            apiAccess: false,
+            analyticsAccess: true,
+            contentCreation: true
+        },
+        permissions: {
+            canEditProjects: true,
+            canCreateContent: true,
+            canViewAnalytics: true,
+            canManageTeam: false,
+            canAccessSettings: false
+        },
+        collaborationType: 'development',
+        duration: '3_months',
+        autoRenew: false,
+        customPermissions: []
+    });
+
+    const accessLevels = [
+        { id: 'limited', name: 'Limited Access', description: 'Basic collaboration features' },
+        { id: 'standard', name: 'Standard Access', description: 'Full collaboration features' },
+        { id: 'advanced', name: 'Advanced Access', description: 'Enhanced features and analytics' },
+        { id: 'admin', name: 'Admin Access', description: 'Full administrative privileges' }
+    ];
+
+    const roles = [
+        { id: 'collaborator', name: 'Collaborator', icon: Users, color: '#3B82F6' },
+        { id: 'developer', name: 'Developer', icon: Code, color: '#10B981' },
+        { id: 'designer', name: 'Designer', icon: Palette, color: '#8B5CF6' },
+        { id: 'content_creator', name: 'Content Creator', icon: FileText, color: '#F59E0B' },
+        { id: 'project_manager', name: 'Project Manager', icon: Briefcase, color: '#EF4444' },
+        { id: 'analyst', name: 'Analyst', icon: BarChart, color: '#06B6D4' }
+    ];
+
+    const durations = [
+        { id: '1_month', name: '1 Month', days: 30 },
+        { id: '3_months', name: '3 Months', days: 90 },
+        { id: '6_months', name: '6 Months', days: 180 },
+        { id: '1_year', name: '1 Year', days: 365 },
+        { id: 'permanent', name: 'Permanent', days: null }
+    ];
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -900,13 +1051,23 @@ const RequestDetailsModal = ({ request, onClose, onApprove, onReject }) => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             >
                 {/* Header */}
                 <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Request Details
-                    </h3>
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                            {request.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                Collaboration Request
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Configure access and permissions for {request.name}
+                            </p>
+                        </div>
+                    </div>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -917,74 +1078,238 @@ const RequestDetailsModal = ({ request, onClose, onApprove, onReject }) => {
 
                 {/* Content */}
                 <div className="p-6 space-y-6">
-                    {/* User Info */}
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl shadow-lg">
-                            {request.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                                {request.name}
-                            </h4>
-                            <p className="text-gray-600 dark:text-gray-400">{request.email}</p>
-                            {request.company && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {request.role} at {request.company}
+                    {/* User Info Card */}
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                                    {request.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                                        {request.name}
+                                    </h4>
+                                    <p className="text-gray-600 dark:text-gray-400">{request.email}</p>
+                                    {request.company && (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            {request.role} at {request.company}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                                    request.status === 'approved'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                        : request.status === 'rejected'
+                                        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                }`}>
+                                    {request.status}
+                                </span>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    Submitted {new Date(request.submittedAt).toLocaleDateString()}
                                 </p>
-                            )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Message */}
+                    {/* Request Message */}
                     <div>
-                        <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Message
+                        <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                            <MessageCircle size={20} />
+                            Collaboration Message
                         </h5>
-                        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                                 {request.message}
                             </p>
                         </div>
                     </div>
 
-                    {/* Additional Info */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                Submitted
+                    {/* Approval Configuration */}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h5 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <Settings size={20} />
+                                Approval Configuration
                             </h5>
-                            <p className="text-gray-600 dark:text-gray-400">
-                                {new Date(request.submittedAt).toLocaleString()}
-                            </p>
+                            <button
+                                onClick={() => setShowApprovalSettings(!showApprovalSettings)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                <Settings size={16} />
+                                {showApprovalSettings ? 'Hide' : 'Show'} Settings
+                            </button>
                         </div>
-                        <div>
-                            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                Status
-                            </h5>
-                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                                request.status === 'approved'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                    : request.status === 'rejected'
-                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                            }`}>
-                                {request.status}
-                            </span>
-                        </div>
+
+                        {showApprovalSettings && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="space-y-6 p-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+                            >
+                                {/* Role Selection */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        Assign Role
+                                    </label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        {roles.map(role => {
+                                            const Icon = role.icon;
+                                            return (
+                                                <button
+                                                    key={role.id}
+                                                    onClick={() => setApprovalConfig(prev => ({ ...prev, role: role.id }))}
+                                                    className={`p-3 rounded-lg border-2 transition-all ${
+                                                        approvalConfig.role === role.id
+                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: role.color + '20', color: role.color }}>
+                                                            <Icon size={16} />
+                                                        </div>
+                                                        <span className="font-medium text-gray-900 dark:text-white text-sm">{role.name}</span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Access Level */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        Access Level
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {accessLevels.map(level => (
+                                            <button
+                                                key={level.id}
+                                                onClick={() => setApprovalConfig(prev => ({ ...prev, accessLevel: level.id }))}
+                                                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                                                    approvalConfig.accessLevel === level.id
+                                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                                }`}
+                                            >
+                                                <div className="font-medium text-gray-900 dark:text-white">{level.name}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{level.description}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Engagement Limits */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        Engagement Limits
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Max Projects</label>
+                                            <input
+                                                type="number"
+                                                value={approvalConfig.engagementLimits.maxProjects}
+                                                onChange={(e) => setApprovalConfig(prev => ({
+                                                    ...prev,
+                                                    engagementLimits: { ...prev.engagementLimits, maxProjects: parseInt(e.target.value) }
+                                                }))}
+                                                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
+                                                min="1"
+                                                max="50"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Storage Limit</label>
+                                            <select
+                                                value={approvalConfig.engagementLimits.maxStorage}
+                                                onChange={(e) => setApprovalConfig(prev => ({
+                                                    ...prev,
+                                                    engagementLimits: { ...prev.engagementLimits, maxStorage: e.target.value }
+                                                }))}
+                                                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
+                                            >
+                                                <option value="100MB">100 MB</option>
+                                                <option value="500MB">500 MB</option>
+                                                <option value="1GB">1 GB</option>
+                                                <option value="5GB">5 GB</option>
+                                                <option value="10GB">10 GB</option>
+                                                <option value="unlimited">Unlimited</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Max Team Members</label>
+                                            <input
+                                                type="number"
+                                                value={approvalConfig.engagementLimits.maxTeamMembers}
+                                                onChange={(e) => setApprovalConfig(prev => ({
+                                                    ...prev,
+                                                    engagementLimits: { ...prev.engagementLimits, maxTeamMembers: parseInt(e.target.value) }
+                                                }))}
+                                                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
+                                                min="1"
+                                                max="20"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Collaboration Duration</label>
+                                            <select
+                                                value={approvalConfig.duration}
+                                                onChange={(e) => setApprovalConfig(prev => ({ ...prev, duration: e.target.value }))}
+                                                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
+                                            >
+                                                {durations.map(duration => (
+                                                    <option key={duration.id} value={duration.id}>{duration.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Permissions */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        Permissions
+                                    </label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        {Object.entries(approvalConfig.permissions).map(([key, value]) => (
+                                            <label key={key} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={value}
+                                                    onChange={(e) => setApprovalConfig(prev => ({
+                                                        ...prev,
+                                                        permissions: { ...prev.permissions, [key]: e.target.checked }
+                                                    }))}
+                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                                                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
 
-                    {/* Actions */}
+                    {/* Approval Actions */}
                     {request.status === 'pending' && (
-                        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <button
                                 onClick={() => {
-                                    onApprove(request.id, request.name);
+                                    onApprove(request.id, request.name, approvalConfig);
                                     onClose();
                                 }}
                                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
                             >
                                 <Check size={20} />
-                                Approve Request
+                                Approve with Configuration
                             </button>
                             <button
                                 onClick={() => {

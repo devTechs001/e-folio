@@ -120,18 +120,51 @@ const SkillsEditorEnhanced = () => {
     const loadSkills = async () => {
         try {
             setLoading(true);
-            const response = await ApiService.getSkills();
-            const skills = response.skills || [];
+            // Use the same endpoint as the Skills page to get all existing skills
+            const response = await ApiService.request('/public/skills');
             
-            setTechnicalSkills(skills.filter(s => s.type === 'technical'));
-            setProfessionalSkills(skills.filter(s => s.type === 'professional'));
+            if (response.success && response.skills && response.skills.length > 0) {
+                const skills = response.skills;
+                setTechnicalSkills(skills.filter(s => s.type === 'technical'));
+                setProfessionalSkills(skills.filter(s => s.type === 'professional'));
+            } else {
+                // Use fallback skills if no skills from API
+                const fallbackTechnical = getFallbackTechnicalSkills();
+                const fallbackProfessional = getFallbackProfessionalSkills();
+                setTechnicalSkills(fallbackTechnical);
+                setProfessionalSkills(fallbackProfessional);
+            }
         } catch (err) {
-            error('Failed to load skills');
+            error('Failed to load skills, using fallback data');
             console.error(err);
+            const fallbackTechnical = getFallbackTechnicalSkills();
+            const fallbackProfessional = getFallbackProfessionalSkills();
+            setTechnicalSkills(fallbackTechnical);
+            setProfessionalSkills(fallbackProfessional);
         } finally {
             setLoading(false);
         }
     };
+
+    const getFallbackTechnicalSkills = () => [
+        { name: "HTML5", level: 90, icon: "fa-brands fa-html5", category: "Frontend", color: "#e34c26" },
+        { name: "CSS3", level: 85, icon: "fa-brands fa-css3-alt", category: "Frontend", color: "#1572b6" },
+        { name: "JavaScript", level: 80, icon: "fa-brands fa-js", category: "Frontend", color: "#f7df1e" },
+        { name: "React", level: 75, icon: "fa-brands fa-react", category: "Frontend", color: "#61dafb" },
+        { name: "Python", level: 70, icon: "fa-brands fa-python", category: "Backend", color: "#3776ab" },
+        { name: "Node.js", level: 65, icon: "fa-brands fa-node-js", category: "Backend", color: "#339933" },
+        { name: "Git", level: 85, icon: "fa-brands fa-git-alt", category: "Tools", color: "#f05032" },
+        { name: "Database", level: 60, icon: "fa-solid fa-database", category: "Backend", color: "#336791" }
+    ];
+
+    const getFallbackProfessionalSkills = () => [
+        { name: "Project Management", level: 85, icon: "fa-solid fa-tasks", category: "Management", color: "#ff6b6b" },
+        { name: "Communication", level: 90, icon: "fa-solid fa-comments", category: "Soft Skills", color: "#4ecdc4" },
+        { name: "Problem Solving", level: 88, icon: "fa-solid fa-lightbulb", category: "Soft Skills", color: "#ffe66d" },
+        { name: "Team Leadership", level: 75, icon: "fa-solid fa-users", category: "Management", color: "#a8e6cf" },
+        { name: "Time Management", level: 80, icon: "fa-solid fa-clock", category: "Soft Skills", color: "#ffd3b6" },
+        { name: "Critical Thinking", level: 82, icon: "fa-solid fa-brain", category: "Soft Skills", color: "#ffaaa5" }
+    ];
 
     const loadAnalytics = async () => {
         try {
@@ -160,12 +193,19 @@ const SkillsEditorEnhanced = () => {
 
         try {
             const skillData = { ...newSkill, type: activeTab };
+            console.log('Adding skill with data:', skillData);
+            
             const response = await ApiService.addSkill(skillData);
+            console.log('Add skill response:', response);
+            
+            // Handle different response structures
+            const addedSkill = response.skill || response.data || skillData;
+            console.log('Added skill:', addedSkill);
             
             if (activeTab === 'technical') {
-                setTechnicalSkills([...technicalSkills, response.skill]);
+                setTechnicalSkills([...technicalSkills, addedSkill]);
             } else {
-                setProfessionalSkills([...professionalSkills, response.skill]);
+                setProfessionalSkills([...professionalSkills, addedSkill]);
             }
             
             resetForm();
@@ -173,7 +213,8 @@ const SkillsEditorEnhanced = () => {
             success(`Added ${newSkill.name}`);
             loadAnalytics();
         } catch (err) {
-            error(err.response?.data?.message || 'Failed to add skill');
+            console.error('Add skill error:', err);
+            error(err.message || 'Failed to add skill');
         }
     };
 
@@ -243,15 +284,19 @@ const SkillsEditorEnhanced = () => {
             
             const response = await ApiService.addSkill(duplicated);
             
+            // Handle different response structures
+            const addedSkill = response.skill || response.data || duplicated;
+            
             if (activeTab === 'technical') {
-                setTechnicalSkills([...technicalSkills, response.skill]);
+                setTechnicalSkills([...technicalSkills, addedSkill]);
             } else {
-                setProfessionalSkills([...professionalSkills, response.skill]);
+                setProfessionalSkills([...professionalSkills, addedSkill]);
             }
             
             success('Skill duplicated');
         } catch (err) {
-            error('Failed to duplicate skill');
+            console.error('Duplicate skill error:', err);
+            error(err.message || 'Failed to duplicate skill');
         }
     };
 
@@ -1049,6 +1094,8 @@ const SkillCard = ({
 const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, categoryOptions }) => {
     if (!show) return null;
     
+    const currentCategoryOptions = categoryOptions[skill.type] || [];
+    
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div
@@ -1058,28 +1105,77 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
             >
                 <h3 className="text-2xl font-bold text-cyan-400 mb-4">Add New Skill</h3>
                 <div className="space-y-4">
-                    <input
-                        type="text"
-                        placeholder="Skill Name"
-                        value={skill.name}
-                        onChange={(e) => setSkill({ ...skill, name: e.target.value })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg"
-                    />
-                    <select
-                        value={skill.category}
-                        onChange={(e) => setSkill({ ...skill, category: e.target.value })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg"
-                    >
-                        <option value="">Select Category</option>
-                        {categoryOptions.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-                    <div className="flex gap-4">
-                        <button onClick={onSave} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg">
-                            Save
+                    <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">Skill Name</label>
+                        <input
+                            type="text"
+                            placeholder="Enter skill name"
+                            value={skill.name}
+                            onChange={(e) => setSkill({ ...skill, name: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">Category</label>
+                        <select
+                            value={skill.category}
+                            onChange={(e) => setSkill({ ...skill, category: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        >
+                            <option value="">Select Category</option>
+                            {currentCategoryOptions.map(cat => (
+                                <option key={cat.value} value={cat.value}>{cat.value}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">Skill Level: {skill.level}%</label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={skill.level}
+                            onChange={(e) => setSkill({ ...skill, level: parseInt(e.target.value) })}
+                            className="w-full"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">Icon</label>
+                        <select
+                            value={skill.icon}
+                            onChange={(e) => setSkill({ ...skill, icon: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        >
+                            {iconOptions.map(icon => (
+                                <option key={icon.value} value={icon.value}>{icon.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">Color</label>
+                        <input
+                            type="color"
+                            value={skill.color}
+                            onChange={(e) => setSkill({ ...skill, color: e.target.value })}
+                            className="w-full h-10 bg-slate-700 rounded-lg cursor-pointer"
+                        />
+                    </div>
+                    
+                    <div className="flex gap-4 pt-4">
+                        <button 
+                            onClick={onSave} 
+                            className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg transition-colors"
+                        >
+                            Save Skill
                         </button>
-                        <button onClick={onClose} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg">
+                        <button 
+                            onClick={onClose} 
+                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors"
+                        >
                             Cancel
                         </button>
                     </div>

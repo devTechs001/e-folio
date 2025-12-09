@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Response to Your Review</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 30px;
+            text-align: center;
+            border-radius: 5px;
+            color: white;
+        }
+        .content {
+            padding: 30px;
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .review-block {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .response-block {
+            background-color: #e6f4ea;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .rating {
+            color: #ffc107;
+            font-size: 1.2em;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💬 Response to Your Review</h1>
+        <p>We've responded to your feedback</p>
+    </div>
+    
+    <div class="content">
+        <h2>Hello {{name}},</h2>
+        
+        <p>Thank you for taking the time to share your thoughts with us. Your feedback is important to us and helps us improve our services.</p>
+        
+        <div class="review-block">
+            <h3>Your Review:</h3>
+            <p style="font-style: italic; font-size: 1.1em;">"{{originalComment}}"</p>
+        </div>
+        
+        <div class="response-block">
+            <h3>Our Response:</h3>
+            <p style="font-size: 1.1em;">{{response}}</p>
+        </div>
+        
+        <p>We appreciate your engagement and the time you spent sharing your experience with us.</p>
+        
+        <p>You can view all reviews on our website:</p>
+        
+        <p><a href="{{portfolioUrl}}">Visit Portfolio</a></p>
+        
+        <p>Best regards,<br>The Portfolio Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated response from your portfolio website.</p>
+        <p>© {{year}} Your Portfolio. All rights reserved.</p>
+    </div>
+</body>
+</html>

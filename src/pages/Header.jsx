@@ -9,6 +9,7 @@ const NAV_SECTIONS = [
     { id: 'education', label: 'Education', icon: 'fas fa-graduation-cap' },
     { id: 'interests', label: 'Interests', icon: 'fas fa-heart' },
     { id: 'projects', label: 'Projects', icon: 'fas fa-project-diagram' },
+    { id: 'testimonials', label: 'Testimonials', icon: 'fas fa-comments' },
     { id: 'contact', label: 'Contact', icon: 'fas fa-envelope' }
 ];
 
@@ -24,6 +25,43 @@ const Header = () => {
     const [isMobile, setIsMobile] = useState(getIsMobile);
     const [activeSection, setActiveSection] = useState(NAV_SECTIONS[0].id);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Fullscreen functionality
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().then(() => {
+                setIsFullscreen(true);
+            }).catch((err) => {
+                console.error(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen().then(() => {
+                setIsFullscreen(false);
+            }).catch((err) => {
+                console.error(`Error attempting to exit fullscreen: ${err.message}`);
+            });
+        }
+    };
+
+    // Listen for fullscreen changes
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+        };
+    }, []);
 
     useEffect(() => {
         const handleResize = () => {
@@ -223,6 +261,17 @@ const Header = () => {
                                 <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
                                 <div className="theme-toggle-glow"></div>
                             </button>
+
+                            {/* Fullscreen Toggle */}
+                            <button
+                                onClick={toggleFullscreen}
+                                className="fullscreen-toggle-btn"
+                                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                                title={isFullscreen ? 'Exit fullscreen (ESC)' : 'Enter fullscreen'}
+                            >
+                                <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
+                                <div className="fullscreen-toggle-glow"></div>
+                            </button>
                         </nav>
 
                         {/* Mobile Menu Button */}
@@ -253,6 +302,17 @@ const Header = () => {
                             >
                                 <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
                                 <span>{isDarkMode ? 'Light' : 'Dark'} Mode</span>
+                            </button>
+                        </div>
+
+                        {/* Mobile Fullscreen Toggle */}
+                        <div className="mobile-fullscreen-toggle">
+                            <button
+                                onClick={toggleFullscreen}
+                                className="mobile-fullscreen-btn"
+                            >
+                                <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
+                                <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}</span>
                             </button>
                         </div>
 

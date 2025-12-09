@@ -269,6 +269,18 @@ const DashboardTopNavbar = ({
 
                         {/* Right Section */}
                         <div className="flex items-center gap-2">
+                            {/* View Site Button */}
+                            <a
+                                href="/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg shadow-cyan-500/25"
+                                title="View Live Portfolio"
+                            >
+                                <Home size={16} />
+                                <span className="hidden lg:inline">View Site</span>
+                            </a>
+
                             {/* Search Icon - Mobile */}
                             {showSearch && (
                                 <button

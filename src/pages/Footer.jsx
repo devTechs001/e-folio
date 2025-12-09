@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useSettingsListener } from '../hooks/useSettingsListener';
 import '../styles/Footer.css';
 
 const Footer = () => {
+    const { user } = useAuth();
+    const settings = useSettingsListener();
+    
+    // Use profile data from settings if available, otherwise fallback to user data
+    const profileData = settings?.profile || user || {};
+    
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [email, setEmail] = useState('');
     const [subscribeStatus, setSubscribeStatus] = useState({ message: '', type: '' });
@@ -66,75 +74,78 @@ const Footer = () => {
         ]
     };
 
+    // Dynamic social links based on profile data (keep existing as fallbacks)
     const socialLinks = [
         { 
             name: 'GitHub', 
             icon: 'fab fa-github', 
-            url: 'https://github.com/devTechs001',
+            url: profileData.github || 'https://github.com/devTechs001',
             color: 'github',
             gradient: 'linear-gradient(135deg, #333, #000)'
         },
         { 
             name: 'LinkedIn', 
             icon: 'fab fa-linkedin-in', 
-            url: 'https://www.linkedin.com/in/daniel-mukula',
+            url: profileData.linkedin || 'https://www.linkedin.com/in/daniel-mukula',
             color: 'linkedin',
             gradient: 'linear-gradient(135deg, #0077b5, #005582)'
         },
         { 
             name: 'Facebook', 
             icon: 'fab fa-facebook-f', 
-            url: 'https://www.facebook.com/profile.php?id=100089960419104',
+            url: profileData.facebook || 'https://www.facebook.com/profile.php?id=100089960419104',
             color: 'facebook',
             gradient: 'linear-gradient(135deg, #1877f2, #0c63d4)'
         },
         { 
             name: 'Instagram', 
             icon: 'fab fa-instagram', 
-            url: 'https://www.instagram.com/king_wisdom_ndk/',
+            url: profileData.instagram || 'https://www.instagram.com/king_wisdom_ndk/',
             color: 'instagram',
             gradient: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)'
         },
         { 
             name: 'Telegram', 
             icon: 'fab fa-telegram-plane', 
-            url: 'https://t.me/+254758175275',
+            url: profileData.telegram || 'https://t.me/+254758175275',
             color: 'telegram',
             gradient: 'linear-gradient(135deg, #26A5E4, #0088cc)'
         },
         { 
             name: 'WhatsApp', 
             icon: 'fab fa-whatsapp', 
-            url: 'https://wa.me/254758175275',
+            url: profileData.whatsapp || 'https://wa.me/254758175275',
             color: 'whatsapp',
             gradient: 'linear-gradient(135deg, #25d366, #128c7e)'
         }
-    ];
+    ]; // Keep all links, don't filter out
 
+    // Dynamic stats based on profile data (keep existing as fallbacks)
     const stats = [
-        { value: '100+', label: 'Projects Completed', icon: 'fas fa-project-diagram' },
-        { value: '50+', label: 'Happy Clients', icon: 'fas fa-smile' },
-        { value: '5+', label: 'Years Experience', icon: 'fas fa-award' },
-        { value: '24/7', label: 'Support Available', icon: 'fas fa-headset' }
+        { value: profileData.completedProjects || '100+', label: 'Projects Completed', icon: 'fas fa-project-diagram' },
+        { value: profileData.happyClients || '50+', label: 'Happy Clients', icon: 'fas fa-smile' },
+        { value: profileData.yearsOfExperience ? `${profileData.yearsOfExperience}+` : '5+', label: 'Years Experience', icon: 'fas fa-award' },
+        { value: profileData.supportAvailability || '24/7', label: 'Support Available', icon: 'fas fa-headset' }
     ];
 
+    // Dynamic contact info based on profile data (keep existing as fallbacks)
     const contactInfo = [
         { 
             icon: 'fas fa-envelope', 
-            text: 'devtechs842@gmail.com',
-            href: 'mailto:devtechs842@gmail.com'
+            text: profileData.email || 'devtechs842@gmail.com',
+            href: `mailto:${profileData.email || 'devtechs842@gmail.com'}`
         },
         { 
             icon: 'fas fa-phone', 
-            text: '+254 758 175 275',
-            href: 'tel:+254758175275'
+            text: profileData.phone || '+254 758 175 275',
+            href: `tel:${profileData.phone || '+254758175275'}`
         },
         { 
             icon: 'fas fa-map-marker-alt', 
-            text: 'Nairobi, Kenya',
+            text: profileData.location || 'Nairobi, Kenya',
             href: null
         }
-    ];
+    ]; // Keep all contact info, don't filter out
 
     return (
         <footer className="footer-wrapper bg-bgColor border-t border-mainColor/10 relative overflow-hidden">
@@ -193,10 +204,17 @@ const Footer = () => {
                             <ul className="space-y-3">
                                 {footerLinks.quickLinks.map((link, index) => (
                                     <li key={index}>
-                                        <a href={link.href} className="footer-link">
-                                            <i className={link.icon}></i>
-                                            <span>{link.name}</span>
-                                        </a>
+                                        {link.href.startsWith('/') ? (
+                                            <Link to={link.href} className="footer-link">
+                                                <i className={link.icon}></i>
+                                                <span>{link.name}</span>
+                                            </Link>
+                                        ) : (
+                                            <a href={link.href} className="footer-link">
+                                                <i className={link.icon}></i>
+                                                <span>{link.name}</span>
+                                            </a>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -213,6 +231,40 @@ const Footer = () => {
                                     <li key={index} className="footer-service-item">
                                         <i className={service.icon}></i>
                                         <span>{service.name}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Resources */}
+                        <div data-aos="fade-up" data-aos-delay="250">
+                            <h3 className="footer-section-title">
+                                <i className="fas fa-compass mr-2"></i>
+                                Resources
+                            </h3>
+                            <ul className="space-y-3">
+                                {footerLinks.resources.map((resource, index) => (
+                                    <li key={index}>
+                                        {resource.download ? (
+                                            <a 
+                                                href={resource.href} 
+                                                download 
+                                                className="footer-link"
+                                            >
+                                                <i className={resource.icon}></i>
+                                                <span>{resource.name}</span>
+                                            </a>
+                                        ) : resource.href.startsWith('/') ? (
+                                            <Link to={resource.href} className="footer-link">
+                                                <i className={resource.icon}></i>
+                                                <span>{resource.name}</span>
+                                            </Link>
+                                        ) : (
+                                            <a href={resource.href} className="footer-link">
+                                                <i className={resource.icon}></i>
+                                                <span>{resource.name}</span>
+                                            </a>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -310,11 +362,11 @@ const Footer = () => {
 
                         {/* Legal Links */}
                         <div className="flex items-center gap-4 text-xs md:text-sm lg:text-base">
-                            <a href="#privacy" className="footer-legal-link">Privacy Policy</a>
+                            <Link to="/privacy" className="footer-legal-link">Privacy Policy</Link>
                             <span className="text-textColor/30">•</span>
-                            <a href="#terms" className="footer-legal-link">Terms of Service</a>
+                            <Link to="/terms" className="footer-legal-link">Terms of Service</Link>
                             <span className="text-textColor/30">•</span>
-                            <a href="#sitemap" className="footer-legal-link">Sitemap</a>
+                            <Link to="/sitemap" className="footer-legal-link">Sitemap</Link>
                         </div>
                     </div>
                 </div>

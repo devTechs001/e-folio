@@ -19,7 +19,9 @@ class SocketService {
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionDelay: 1000,
-            reconnectionAttempts: 5
+            reconnectionAttempts: 5,
+            timeout: 20000, // 20 seconds
+            autoConnect: true
         });
 
         this.socket.on('connect', () => {
@@ -32,13 +34,42 @@ class SocketService {
             }
         });
 
-        this.socket.on('disconnect', () => {
-            console.log('❌ Socket disconnected');
+        this.socket.on('disconnect', (reason) => {
+            console.log('❌ Socket disconnected:', reason);
             this.connected = false;
+            
+            // Try to reconnect on server disconnect
+            if (reason === 'io server disconnect') {
+                setTimeout(() => {
+                    this.connect(userData);
+                }, 1000);
+            }
         });
 
         this.socket.on('connect_error', (error) => {
             console.error('Socket connection error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                type: error.type,
+                description: error.description
+            });
+        });
+
+        this.socket.on('reconnect_attempt', (attemptNumber) => {
+            console.log(`🔄 Reconnection attempt #${attemptNumber}`);
+        });
+
+        this.socket.on('reconnect', (attemptNumber) => {
+            console.log(`🔄 Successful reconnection after ${attemptNumber} attempts`);
+            this.connected = true;
+        });
+
+        this.socket.on('reconnect_error', (error) => {
+            console.error('Reconnection error:', error);
+        });
+
+        this.socket.on('reconnect_failed', () => {
+            console.error('❌ Reconnection failed after max attempts');
         });
 
         return this.socket;

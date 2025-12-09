@@ -352,6 +352,83 @@
   opacity: 1;
 }
 
+/* ==================== FULLSCREEN TOGGLE ==================== */
+
+.fullscreen-toggle-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-left: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(14, 239, 239, 0.2);
+  border-radius: 12px;
+  color: var(--mainColor);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.fullscreen-toggle-btn:hover {
+  background: rgba(14, 239, 239, 0.1);
+  border-color: var(--mainColor);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(14, 239, 239, 0.3);
+}
+
+.fullscreen-toggle-btn i {
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.fullscreen-toggle-btn:hover i {
+  transform: scale(1.1);
+}
+
+.fullscreen-toggle-glow {
+  position: absolute;
+  inset: -10px;
+  background: radial-gradient(circle, rgba(14, 239, 239, 0.2), transparent);
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.fullscreen-toggle-btn:hover .fullscreen-toggle-glow {
+  opacity: 1;
+}
+
+/* Mobile Fullscreen Toggle */
+.mobile-fullscreen-toggle {
+  margin-bottom: 1rem;
+}
+
+.mobile-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: rgba(14, 239, 239, 0.05);
+  border: 2px solid rgba(14, 239, 239, 0.2);
+  border-radius: 12px;
+  color: var(--textColor);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-fullscreen-btn:hover {
+  background: rgba(14, 239, 239, 0.1);
+  border-color: var(--mainColor);
+  transform: translateX(5px);
+  box-shadow: 0 0 20px rgba(14, 239, 239, 0.2);
+}
+
 /* ==================== BUTTON SHINE EFFECT ==================== */
 
 .btn-shine-effect {
@@ -732,6 +809,7 @@
 .dashboard-btn:focus-visible,
 .collaborate-btn:focus-visible,
 .theme-toggle-btn:focus-visible,
+.fullscreen-toggle-btn:focus-visible,
 .menu-toggle-btn:focus-visible,
 .mobile-nav-link:focus-visible {
   outline: 3px solid var(--mainColor);

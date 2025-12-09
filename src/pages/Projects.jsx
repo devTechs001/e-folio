@@ -1,139 +1,350 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import apiService from '../services/api.service';
+import { useAuth } from '../contexts/AuthContext';
+import ProjectCard from './ProjectCard';
+import ProjectModal from './ProjectModal';
+import ProjectShare from './ProjectShare';
+import ImageLightbox from './ImageLightbox';
+import ProjectFilters from './ProjectFilters';
 import '../styles/Projects.css';
 
 const Projects = () => {
+    const { user } = useAuth();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('featured'); // featured, newest, popular, views
+    const [selectedProject, setSelectedProject] = useState(null);
+    const [lightboxImage, setLightboxImage] = useState(null);
+    const [viewMode, setViewMode] = useState('grid'); // grid, list, masonry
+    const [favorites, setFavorites] = useState([]);
+    const [selectedTechs, setSelectedTechs] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
+    const [projectLikes, setProjectLikes] = useState({});
 
     useEffect(() => {
         loadProjects();
+        loadFavorites();
     }, []);
 
     const loadProjects = async () => {
         try {
-            console.log('Fetching projects from API...');
-            const response = await apiService.getProjects();
-            console.log('Projects API response:', response);
+            setLoading(true);
+            const response = await apiService.request('/public/projects');
             
             if (response.success && response.projects && response.projects.length > 0) {
-                console.log(`Loaded ${response.projects.length} projects from database`);
                 setProjects(response.projects);
             } else {
-                console.log('No projects from API, using fallback data');
                 setProjects(getFallbackProjects());
             }
         } catch (error) {
             console.error('Error loading projects:', error);
-            console.log('Using fallback projects due to error');
             setProjects(getFallbackProjects());
         } finally {
             setLoading(false);
         }
     };
 
+    const loadFavorites = () => {
+        const saved = localStorage.getItem('favoriteProjects');
+        if (saved) {
+            setFavorites(JSON.parse(saved));
+        }
+    };
+
+    const toggleFavorite = useCallback((projectId) => {
+        setFavorites(prev => {
+            const newFavorites = prev.includes(projectId)
+                ? prev.filter(id => id !== projectId)
+                : [...prev, projectId];
+            localStorage.setItem('favoriteProjects', JSON.stringify(newFavorites));
+            return newFavorites;
+        });
+    }, []);
+
+    const incrementViews = useCallback(async (projectId) => {
+        try {
+            await apiService.request(`/public/projects/${projectId}/view`, {
+                method: 'POST'
+            });
+            setProjects(prev => prev.map(p => 
+                p.id === projectId ? { ...p, views: (p.views || 0) + 1 } : p
+            ));
+        } catch (error) {
+            console.error('Error incrementing views:', error);
+        }
+    }, []);
+
+    const incrementLikes = useCallback((projectId) => {
+        setProjectLikes(prev => ({
+            ...prev,
+            [projectId]: (prev[projectId] || 0) + 1
+        }));
+    }, []);
+
     const getFallbackProjects = () => [
         {
+            id: 1,
             title: "E-Commerce Platform",
             description: "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management.",
-            imageUrl: "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/ecommerce",
-            demoUrl: "https://demo-ecommerce.com",
-            technologies: ["React", "Node.js", "MongoDB", "Stripe"],
-            category: "fullstack"
+            fullDescription: "A comprehensive e-commerce platform built with modern web technologies. Features include real-time inventory tracking, secure payment processing through Stripe, user authentication with JWT, product recommendations using AI, advanced search with filters, shopping cart persistence, order tracking, and admin dashboard for managing products and orders.",
+            imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+            thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+            images: [
+                { url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d", caption: "Main E-commerce View" },
+                { url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3", caption: "Product Detail Page" },
+                { url: "https://images.unsplash.com/photo-1556740738-b6a82e8bfca5", caption: "Shopping Cart" },
+                { url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3", caption: "Checkout Process" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/ecommerce-platform",
+                live: "https://demo.devtechs001.com/ecommerce"
+            },
+            technologies: ["React", "Node.js", "MongoDB", "Stripe", "Express", "Redux", "JWT", "Socket.io"],
+            category: "Web",
+            tags: ["Full-Stack", "E-Commerce", "Real-time", "Payment Integration"],
+            views: 1245,
+            likes: 42,
+            featured: true,
+            status: "Live",
+            completionDate: "2024-01-15",
+            duration: "3 months",
+            teamSize: 1,
+            challenges: "Implementing real-time inventory updates, secure payment processing, and scalable architecture",
+            achievements: ["99.9% uptime", "Sub-second load times", "1000+ daily active users"]
         },
         {
+            id: 2,
             title: "Portfolio Website",
             description: "Modern portfolio website built with React, featuring smooth animations and responsive design.",
-            imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/portfolio",
-            demoUrl: "https://yourusername.github.io/portfolio",
-            technologies: ["React", "Tailwind CSS", "Framer Motion"],
-            category: "frontend"
+            fullDescription: "A stunning portfolio website showcasing projects and skills with beautiful animations, dark mode support, and optimal performance. Built with modern React practices and styled with Tailwind CSS for a sleek, professional appearance.",
+            imageUrl: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
+            thumbnail: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
+            images: [
+                { url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d", caption: "Portfolio Home" },
+                { url: "https://images.unsplash.com/photo-1522252234503-e356532cafd5", caption: "Projects Section" },
+                { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d", caption: "About Page" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/portfolio-website",
+                live: "https://devtechs001.github.io/portfolio"
+            },
+            technologies: ["React", "Tailwind CSS", "Framer Motion", "TypeScript"],
+            category: "Web",
+            tags: ["Portfolio", "Animation", "Responsive", "TypeScript"],
+            views: 892,
+            likes: 28,
+            featured: false,
+            status: "Live",
+            completionDate: "2023-12-20",
+            duration: "1 month",
+            teamSize: 1
         },
         {
+            id: 3,
             title: "Task Management App",
             description: "React-based task management application with real-time updates and collaborative features.",
-            imageUrl: "https://images.unsplash.com/photo-1540350394557-8d14678e7f91?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/taskmanager",
-            demoUrl: "https://yourusername.github.io/taskmanager",
-            technologies: ["React", "Firebase", "Redux"],
-            category: "fullstack"
+            fullDescription: "A powerful task management solution with real-time collaboration, drag-and-drop interface, team workspaces, and productivity analytics. Perfect for remote teams and project management.",
+            imageUrl: "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
+            thumbnail: "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
+            images: [
+                { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "Task Dashboard" },
+                { url: "https://images.unsplash.com/photo-1586880244406-5564e8cb497d", caption: "Kanban Board" },
+                { url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173", caption: "Analytics View" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/task-manager",
+                live: "https://devtechs001.github.io/task-manager"
+            },
+            technologies: ["React", "Firebase", "Redux", "Material-UI", "Chart.js"],
+            category: "Mobile",
+            tags: ["Productivity", "Real-time", "Collaboration", "PWA"],
+            views: 532,
+            likes: 17,
+            featured: false,
+            status: "Live",
+            completionDate: "2023-11-10",
+            duration: "2 months",
+            teamSize: 2
         },
         {
-            title: "Social Media Dashboard",
-            description: "Comprehensive dashboard for social media analytics with real-time data visualization.",
-            imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/dashboard",
-            demoUrl: "https://yourusername.github.io/dashboard",
-            technologies: ["React", "D3.js", "Chart.js"],
-            category: "frontend"
-        },
-        {
-            title: "Weather App",
-            description: "Dynamic weather application with location-based forecasts and interactive maps.",
-            imageUrl: "https://images.unsplash.com/photo-1592210454359-9043f067919b?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/weather-app",
-            demoUrl: "https://yourusername.github.io/weather-app",
-            technologies: ["React", "OpenWeatherMap API", "Leaflet"],
-            category: "frontend"
-        },
-        {
-            title: "Chat Application",
-            description: "Real-time chat application with WebSocket integration and file sharing capabilities.",
-            imageUrl: "https://images.unsplash.com/photo-1611746872915-64382b5c76da?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/chat-app",
-            demoUrl: "https://yourusername.github.io/chat-app",
-            technologies: ["React", "Socket.io", "Express", "MongoDB"],
-            category: "fullstack"
-        },
-        {
+            id: 4,
             title: "AI Image Generator",
             description: "Advanced AI-powered image generation platform using stable diffusion models and neural networks.",
-            imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/ai-image-generator",
-            demoUrl: "https://yourusername.github.io/ai-image-generator",
-            technologies: ["React", "TensorFlow.js", "Python", "FastAPI"],
-            category: "ai"
+            fullDescription: "Cutting-edge AI image generation platform utilizing stable diffusion technology. Features include text-to-image generation, image editing with AI, style transfer, upscaling, and custom model training capabilities.",
+            imageUrl: "https://picsum.photos/800/600?random=4",
+            thumbnail: "https://picsum.photos/400/300?random=4",
+            images: [
+                { url: "https://picsum.photos/800/600?random=4", caption: "AI Generated Art" },
+                { url: "https://picsum.photos/800/600?random=41", caption: "Style Transfer Interface" },
+                { url: "https://picsum.photos/800/600?random=42", caption: "Gallery View" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/ai-image-generator",
+                live: "https://devtechs001.github.io/ai-image-generator"
+            },
+            technologies: ["React", "TensorFlow.js", "Python", "FastAPI", "WebGL", "Docker"],
+            category: "AI/ML",
+            tags: ["AI", "Machine Learning", "Image Processing", "Deep Learning"],
+            views: 742,
+            likes: 31,
+            featured: true,
+            status: "Beta",
+            completionDate: "2024-02-01",
+            duration: "4 months",
+            teamSize: 3,
+            achievements: ["Featured on Product Hunt", "10k+ images generated", "AI Weekly mention"]
         },
         {
-            title: "Crypto Trading Bot",
-            description: "Automated cryptocurrency trading bot with technical analysis and risk management features.",
-            imageUrl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/crypto-bot",
-            demoUrl: "https://yourusername.github.io/crypto-bot",
-            technologies: ["Python", "TensorFlow", "Pandas", "Binance API"],
-            category: "ai"
+            id: 5,
+            title: "Social Media Dashboard",
+            description: "Comprehensive dashboard for social media analytics with real-time data visualization.",
+            fullDescription: "All-in-one social media analytics dashboard providing insights from multiple platforms. Features real-time metrics, engagement tracking, sentiment analysis, competitor analysis, and automated reporting.",
+            imageUrl: "https://picsum.photos/800/600?random=5",
+            thumbnail: "https://picsum.photos/400/300?random=5",
+            images: [
+                { url: "https://picsum.photos/800/600?random=5", caption: "Analytics Dashboard" },
+                { url: "https://picsum.photos/800/600?random=51", caption: "Engagement Metrics" },
+                { url: "https://picsum.photos/800/600?random=52", caption: "Report Generation" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/analytics-dashboard",
+                live: "https://devtechs001.github.io/analytics-dashboard"
+            },
+            technologies: ["React", "D3.js", "Chart.js", "Python", "Flask", "PostgreSQL", "Redis"],
+            category: "Web",
+            tags: ["Analytics", "Data Visualization", "Dashboard", "API Integration"],
+            views: 1103,
+            likes: 38,
+            featured: true,
+            status: "Live",
+            completionDate: "2023-10-25",
+            duration: "3 months",
+            teamSize: 2,
+            achievements: ["500+ active users", "99% customer satisfaction", "Featured on HackerNews"]
         },
         {
-            title: "Virtual Reality Game",
-            description: "Immersive VR game developed with Unity, featuring realistic physics and interactive environments.",
-            imageUrl: "https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?ixlib=rb-4.0.3",
-            githubUrl: "https://github.com/yourusername/vr-game",
-            demoUrl: "https://yourusername.github.io/vr-game",
-            technologies: ["Unity", "C#", "Oculus SDK"],
-            category: "gamedev"
+            id: 6,
+            title: "Blockchain Wallet",
+            description: "Secure cryptocurrency wallet with multi-chain support and DeFi integration.",
+            fullDescription: "Next-generation cryptocurrency wallet supporting multiple blockchains. Features include secure key management, token swaps, NFT gallery, staking, DeFi protocol integration, and portfolio tracking.",
+            imageUrl: "https://picsum.photos/800/600?random=6",
+            thumbnail: "https://picsum.photos/400/300?random=6",
+            images: [
+                { url: "https://picsum.photos/800/600?random=6", caption: "Wallet Dashboard" },
+                { url: "https://picsum.photos/800/600?random=61", caption: "Token Swap Interface" },
+                { url: "https://picsum.photos/800/600?random=62", caption: "NFT Gallery" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/blockchain-wallet",
+                live: "https://wallet.devtechs001.com"
+            },
+            technologies: ["React", "Web3.js", "Ethers.js", "Solidity", "IPFS", "TypeScript"],
+            category: "Blockchain",
+            tags: ["Web3", "Cryptocurrency", "DeFi", "NFT", "Security"],
+            views: 2341,
+            likes: 87,
+            featured: true,
+            status: "Live",
+            completionDate: "2024-03-05",
+            duration: "5 months",
+            teamSize: 4,
+            achievements: ["$1M+ in transactions", "Security audit passed", "20k+ wallet downloads"]
         }
     ];
 
-    // Get unique categories from projects
-    const categories = ['all', ...new Set(projects.map(p => p.category).filter(Boolean))];
+    // Enhanced filtering and sorting logic
+    const filteredAndSortedProjects = useMemo(() => {
+        let result = [...projects];
 
-    // Filter projects based on selected category
-    const filteredProjects = filter === 'all' 
-        ? projects 
-        : projects.filter(p => p.category === filter);
+        // Search filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(project =>
+                project.title.toLowerCase().includes(query) ||
+                project.description.toLowerCase().includes(query) ||
+                project.technologies?.some(tech => tech.toLowerCase().includes(query)) ||
+                project.tags?.some(tag => tag.toLowerCase().includes(query))
+            );
+        }
 
-    // Get all unique technologies
-    const allTechnologies = [...new Set(projects.flatMap(p => p.technologies || []))];
+        // Category filter
+        if (filter !== 'all') {
+            result = result.filter(p => p.category === filter);
+        }
+
+        // Technology filter
+        if (selectedTechs.length > 0) {
+            result = result.filter(p =>
+                selectedTechs.every(tech =>
+                    p.technologies?.some(t => t.toLowerCase() === tech.toLowerCase())
+                )
+            );
+        }
+
+        // Sorting
+        result.sort((a, b) => {
+            switch (sortBy) {
+                case 'featured':
+                    return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+                case 'newest':
+                    return new Date(b.completionDate || 0) - new Date(a.completionDate || 0);
+                case 'popular':
+                    return (b.likes || 0) - (a.likes || 0);
+                case 'views':
+                    return (b.views || 0) - (a.views || 0);
+                case 'alphabetical':
+                    return a.title.localeCompare(b.title);
+                default:
+                    return 0;
+            }
+        });
+
+        return result;
+    }, [projects, filter, searchQuery, sortBy, selectedTechs]);
+
+    const categories = useMemo(() => {
+        const allCategories = projects.map(p => p.category).filter(Boolean);
+        const uniqueCategories = [...new Set(allCategories)];
+        return ['all', ...uniqueCategories];
+    }, [projects]);
+
+    const allTechnologies = useMemo(() => {
+        const techs = projects.flatMap(p => p.technologies || []);
+        return [...new Set(techs)].sort();
+    }, [projects]);
+
+    const allTags = useMemo(() => {
+        const tags = projects.flatMap(p => p.tags || []);
+        return [...new Set(tags)].sort();
+    }, [projects]);
+
+    const projectStats = useMemo(() => ({
+        total: projects.length,
+        featured: projects.filter(p => p.featured).length,
+        totalViews: projects.reduce((sum, p) => sum + (p.views || 0), 0),
+        totalLikes: projects.reduce((sum, p) => sum + (p.likes || 0), 0)
+    }), [projects]);
 
     if (loading) {
         return (
             <section className="min-h-screen bg-bgColor flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="project-loader"></div>
-                    <p className="text-textColor text-lg animate-pulse">Loading amazing projects...</p>
+                <div className="flex flex-col items-center gap-6">
+                    <div className="relative">
+                        <div className="project-loader"></div>
+                        <div className="project-loader-inner"></div>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-textColor text-xl font-semibold mb-2 animate-pulse">
+                            Loading Amazing Projects...
+                        </p>
+                        <div className="flex gap-2 justify-center">
+                            <span className="loading-dot"></span>
+                            <span className="loading-dot" style={{ animationDelay: '0.2s' }}></span>
+                            <span className="loading-dot" style={{ animationDelay: '0.4s' }}></span>
+                        </div>
+                    </div>
                 </div>
             </section>
         );
@@ -141,53 +352,183 @@ const Projects = () => {
 
     return (
         <section className="projects-section bg-bgColor py-20 px-4 md:px-8 lg:px-16" id="projects">
-            {/* Header */}
+            {/* Enhanced Header with Stats */}
             <div className="max-w-7xl mx-auto mb-16">
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center text-textColor mb-4">
-                    Latest <span className="text-mainColor gradient-text">Projects</span>
-                </h2>
-                <p className="text-center text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mb-8">
-                    Explore my portfolio of innovative solutions and creative implementations
-                </p>
+                <div className="text-center mb-12">
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
+                        Latest <span className="text-mainColor gradient-text">Projects</span>
+                    </h2>
+                    <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mb-8">
+                        Explore my portfolio of innovative solutions and creative implementations
+                    </p>
 
-                {/* Category Filter */}
-                {categories.length > 1 && (
-                    <div className="flex flex-wrap justify-center gap-3 mb-8">
-                        {categories.map((category) => (
-                            <button
-                                key={category}
-                                onClick={() => setFilter(category)}
-                                className={`
-                                    px-6 py-2.5 rounded-full font-medium text-sm md:text-base
-                                    transition-all duration-300 transform hover:scale-105
-                                    ${filter === category 
-                                        ? 'filter-btn-active shadow-glow' 
-                                        : 'filter-btn-inactive hover:bg-mainColor/10'
-                                    }
-                                `}
-                            >
-                                {category.charAt(0).toUpperCase() + category.slice(1)}
-                            </button>
-                        ))}
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
+                        <div className="stat-card">
+                            <div className="stat-number gradient-text">{projectStats.total}</div>
+                            <div className="stat-label">Total Projects</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number gradient-text">{projectStats.featured}</div>
+                            <div className="stat-label">Featured</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number gradient-text">{(projectStats.totalViews / 1000).toFixed(1)}k</div>
+                            <div className="stat-label">Total Views</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number gradient-text">{projectStats.totalLikes}</div>
+                            <div className="stat-label">Total Likes</div>
+                        </div>
                     </div>
-                )}
+                </div>
 
-                {/* Tech Stack Overview */}
-                {allTechnologies.length > 0 && (
-                    <div className="mb-12">
-                        <h3 className="text-xl md:text-2xl font-semibold text-textColor text-center mb-6">
-                            Technologies I Work With
-                        </h3>
-                        <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
-                            {allTechnologies.map((tech, index) => (
-                                <span
-                                    key={index}
-                                    className="tech-badge"
-                                    style={{ animationDelay: `${index * 0.05}s` }}
+                {/* Search and Controls */}
+                <div className="mb-8">
+                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+                        {/* Search Bar */}
+                        <div className="search-container w-full md:w-96">
+                            <i className="fa-solid fa-search search-icon"></i>
+                            <input
+                                type="text"
+                                placeholder="Search projects, technologies, tags..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="search-clear"
                                 >
-                                    {tech}
+                                    <i className="fa-solid fa-times"></i>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* View Mode and Sort */}
+                        <div className="flex gap-4 items-center">
+                            {/* View Mode Toggles */}
+                            <div className="view-mode-container">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                                    title="Grid View"
+                                >
+                                    <i className="fa-solid fa-grip"></i>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
+                                    title="List View"
+                                >
+                                    <i className="fa-solid fa-list"></i>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('masonry')}
+                                    className={`view-mode-btn ${viewMode === 'masonry' ? 'active' : ''}`}
+                                    title="Masonry View"
+                                >
+                                    <i className="fa-solid fa-th"></i>
+                                </button>
+                            </div>
+
+                            {/* Sort Dropdown */}
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="sort-select"
+                            >
+                                <option value="featured">Featured First</option>
+                                <option value="newest">Newest First</option>
+                                <option value="popular">Most Popular</option>
+                                <option value="views">Most Viewed</option>
+                                <option value="alphabetical">A-Z</option>
+                            </select>
+
+                            {/* Advanced Filters Toggle */}
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
+                            >
+                                <i className="fa-solid fa-filter"></i>
+                                <span className="hidden md:inline">Filters</span>
+                                {(selectedTechs.length > 0 || filter !== 'all') && (
+                                    <span className="filter-badge">{selectedTechs.length + (filter !== 'all' ? 1 : 0)}</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Advanced Filters Panel */}
+                    {showFilters && (
+                        <ProjectFilters
+                            categories={categories}
+                            technologies={allTechnologies}
+                            tags={allTags}
+                            selectedCategory={filter}
+                            selectedTechs={selectedTechs}
+                            onCategoryChange={setFilter}
+                            onTechChange={setSelectedTechs}
+                        />
+                    )}
+
+                    {/* Category Pills */}
+                    {categories.length > 1 && (
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            {categories.map((category) => (
+                                <button
+                                    key={category}
+                                    onClick={() => setFilter(category)}
+                                    className={`category-pill ${filter === category ? 'active' : ''}`}
+                                >
+                                    <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                                    <span className="category-count">
+                                        {category === 'all' 
+                                            ? projects.length 
+                                            : projects.filter(p => p.category === category).length}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Active Filters Display */}
+                {(searchQuery || selectedTechs.length > 0 || filter !== 'all') && (
+                    <div className="active-filters">
+                        <span className="text-textColor/70 text-sm">Active Filters:</span>
+                        <div className="flex flex-wrap gap-2">
+                            {searchQuery && (
+                                <span className="filter-tag">
+                                    Search: "{searchQuery}"
+                                    <button onClick={() => setSearchQuery('')}>×</button>
+                                </span>
+                            )}
+                            {filter !== 'all' && (
+                                <span className="filter-tag">
+                                    Category: {filter}
+                                    <button onClick={() => setFilter('all')}>×</button>
+                                </span>
+                            )}
+                            {selectedTechs.map(tech => (
+                                <span key={tech} className="filter-tag">
+                                    Tech: {tech}
+                                    <button onClick={() => setSelectedTechs(prev => prev.filter(t => t !== tech))}>×</button>
                                 </span>
                             ))}
+                            {(searchQuery || selectedTechs.length > 0 || filter !== 'all') && (
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedTechs([]);
+                                        setFilter('all');
+                                    }}
+                                    className="clear-all-filters"
+                                >
+                                    Clear All
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -195,118 +536,144 @@ const Projects = () => {
 
             {/* Projects Grid */}
             <div className="max-w-7xl mx-auto">
-                {filteredProjects.length === 0 ? (
-                    <div className="text-center py-20">
-                        <p className="text-textColor/50 text-xl">No projects found in this category.</p>
+                {filteredAndSortedProjects.length === 0 ? (
+                    <div className="no-results">
+                        <i className="fa-solid fa-folder-open text-6xl text-mainColor/30 mb-4"></i>
+                        <h3 className="text-2xl font-bold text-textColor mb-2">No Projects Found</h3>
+                        <p className="text-textColor/60 mb-6">
+                            Try adjusting your filters or search query
+                        </p>
+                        <button
+                            onClick={() => {
+                                setSearchQuery('');
+                                setSelectedTechs([]);
+                                setFilter('all');
+                            }}
+                            className="reset-filters-btn"
+                        >
+                            <i className="fa-solid fa-refresh mr-2"></i>
+                            Reset Filters
+                        </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {filteredProjects.map((project, index) => (
-                            <div
-                                className="project-card group"
-                                key={index}
-                                data-aos="fade-up"
-                                data-aos-delay={index * 100}
-                            >
-                                {/* Project Image Container */}
-                                <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-mainColor/20 to-mainColor/5">
-                                    <img
-                                        src={project.images?.[0]?.url || project.imageUrl}
-                                        alt={project.title}
-                                        className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
-                                        loading="lazy"
-                                    />
-                                    
-                                    {/* Category Badge */}
-                                    {project.category && (
-                                        <div className="absolute top-4 right-4">
-                                            <span className="category-badge">
-                                                {project.category}
-                                            </span>
-                                        </div>
-                                    )}
+                    <>
+                        {/* Results Count */}
+                        <div className="results-count">
+                            Showing <span className="text-mainColor font-semibold">{filteredAndSortedProjects.length}</span> {filteredAndSortedProjects.length === 1 ? 'project' : 'projects'}
+                        </div>
 
-                                    {/* Overlay */}
-                                    <div className="project-overlay">
-                                        <div className="flex flex-col h-full justify-between p-6">
-                                            {/* Top Section */}
-                                            <div>
-                                                <h4 className="text-2xl md:text-3xl font-bold text-white mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                                    {project.title}
-                                                </h4>
-                                                <p className="text-white/90 text-sm md:text-base leading-relaxed transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
-                                                    {project.description}
-                                                </p>
-                                            </div>
-
-                                            {/* Bottom Section */}
-                                            <div className="space-y-4">
-                                                {/* Technologies */}
-                                                {project.technologies && project.technologies.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-100">
-                                                        {project.technologies.map((tech, techIndex) => (
-                                                            <span
-                                                                key={techIndex}
-                                                                className="tech-tag-overlay"
-                                                            >
-                                                                {tech}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {/* Action Buttons */}
-                                                <div className="flex flex-wrap gap-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-150">
-                                                    {(project.links?.github || project.githubUrl) && (
-                                                        <a
-                                                            href={project.links?.github || project.githubUrl}
-                                                            className="project-btn project-btn-github"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            aria-label="View source code on GitHub"
-                                                        >
-                                                            <i className="fa-brands fa-github text-lg"></i>
-                                                            <span>Source</span>
-                                                        </a>
-                                                    )}
-                                                    {(project.links?.live || project.links?.demo || project.demoUrl) && (
-                                                        <a
-                                                            href={project.links?.live || project.links?.demo || project.demoUrl}
-                                                            className="project-btn project-btn-demo"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            aria-label="View live demo"
-                                                        >
-                                                            <i className="fa-solid fa-arrow-up-right-from-square text-lg"></i>
-                                                            <span>Live Demo</span>
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                        <div className={`projects-grid view-mode-${viewMode}`}>
+                            {filteredAndSortedProjects.map((project, index) => (
+                                <ProjectCard
+                                    key={project.id}
+                                    project={project}
+                                    index={index}
+                                    isFavorite={favorites.includes(project.id)}
+                                    onToggleFavorite={() => toggleFavorite(project.id)}
+                                    onViewDetails={(proj) => {
+                                        setSelectedProject(proj);
+                                        incrementViews(proj.id);
+                                    }}
+                                    onImageClick={(img) => setLightboxImage(img)}
+                                    viewMode={viewMode}
+                                    likes={(projectLikes[project.id] || 0) + (project.likes || 0)}
+                                    onIncrementLikes={() => incrementLikes(project.id)}
+                                />
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 
-            {/* Bottom CTA */}
-            <div className="text-center mt-16">
-                <p className="text-textColor/70 text-lg mb-6">
-                    Want to see more of my work?
-                </p>
-                <a
-                    href="https://github.com/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-mainColor to-mainColor/80 text-bgColor font-semibold rounded-full hover-lift shadow-glow transition-all duration-300"
-                >
-                    <i className="fa-brands fa-github text-2xl"></i>
-                    <span>Visit My GitHub</span>
-                </a>
+            {/* Tech Stack Showcase */}
+            {allTechnologies.length > 0 && (
+                <div className="tech-showcase max-w-7xl mx-auto mt-20">
+                    <h3 className="text-3xl font-bold text-textColor text-center mb-8">
+                        Technologies I <span className="gradient-text">Master</span>
+                    </h3>
+                    <div className="tech-grid">
+                        {allTechnologies.map((tech, index) => {
+                            const projectCount = projects.filter(p => 
+                                p.technologies?.includes(tech)
+                            ).length;
+                            return (
+                                <div
+                                    key={index}
+                                    className="tech-item"
+                                    style={{ animationDelay: `${index * 0.05}s` }}
+                                    onClick={() => {
+                                        if (selectedTechs.includes(tech)) {
+                                            setSelectedTechs(prev => prev.filter(t => t !== tech));
+                                        } else {
+                                            setSelectedTechs(prev => [...prev, tech]);
+                                        }
+                                    }}
+                                >
+                                    <div className={`tech-icon ${selectedTechs.includes(tech) ? 'selected' : ''}`}>
+                                        {tech.charAt(0)}
+                                    </div>
+                                    <div className="tech-name">{tech}</div>
+                                    <div className="tech-count">{projectCount} {projectCount === 1 ? 'project' : 'projects'}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Call to Action */}
+            <div className="cta-section max-w-4xl mx-auto mt-20">
+                <div className="cta-card">
+                    <div className="cta-content">
+                        <h3 className="text-3xl md:text-4xl font-bold text-textColor mb-4">
+                            Have a Project in Mind?
+                        </h3>
+                        <p className="text-textColor/70 text-lg mb-8">
+                            Let's collaborate and bring your ideas to life with cutting-edge technology
+                        </p>
+                        <div className="flex flex-wrap gap-4 justify-center">
+                            <a
+                                href="#contact"
+                                className="cta-btn cta-btn-primary"
+                            >
+                                <i className="fa-solid fa-paper-plane mr-2"></i>
+                                Get In Touch
+                            </a>
+                            <a
+                                href="https://github.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="cta-btn cta-btn-secondary"
+                            >
+                                <i className="fa-brands fa-github mr-2"></i>
+                                View All Projects
+                            </a>
+                        </div>
+                    </div>
+                    <div className="cta-decoration">
+                        <div className="decoration-circle"></div>
+                        <div className="decoration-circle"></div>
+                        <div className="decoration-circle"></div>
+                    </div>
+                </div>
             </div>
+
+            {/* Modals */}
+            {selectedProject && (
+                <ProjectModal
+                    project={selectedProject}
+                    onClose={() => setSelectedProject(null)}
+                    onImageClick={setLightboxImage}
+                />
+            )}
+
+            {lightboxImage && (
+                <ImageLightbox
+                    image={lightboxImage}
+                    images={selectedProject?.images || []}
+                    onClose={() => setLightboxImage(null)}
+                />
+            )}
         </section>
     );
 };
