@@ -16,30 +16,13 @@ services:
       - key: CLIENT_URL
         value: https://e-folio-pro.netlify.app
       - key: MONGODB_URI
-        sync: false  # ⚠️ SECURITY: Add manually in Render dashboard
-      - key: JWT_SECRET
-        sync: false  # ⚠️ SECURITY: Add manually in Render dashboard
-      - key: OWNER_EMAIL
-        value: devtechs842@gmail.com
-      - key: OWNER_PASSWORD
-        sync: false  # ⚠️ SECURITY: Add manually in Render dashboard
-      - key: OWNER_NAME
-        value: Portfolio Owner
+        
 
 # ============================================
 # DEPLOYMENT NOTES
 # ============================================
 # Frontend: https://e-folio-pro.netlify.app (Netlify) ✅
 # Backend: https://e-folio-backend-server.onrender.com (Render) ✅
-#
-# ⚠️ REQUIRED: Add these in Render Dashboard → Environment tab:
-# 1. MONGODB_URI = mongodb+srv://devtechs842_db_user:YOUR_PASSWORD@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
-# 2. JWT_SECRET = (generate a secure random string)
-# 3. OWNER_PASSWORD = pass1234 (or your preferred password)
-#
-# ⚠️ MONGODB ATLAS: Whitelist Render IPs
-# - Go to: MongoDB Atlas → Network Access → IP Access List
-# - Add: 0.0.0.0/0 (Allow from anywhere) OR Render's static IPs
 #
 # 📋 Full deployment guide: See DEPLOYMENT_GUIDE.md
 # 📦 Using pnpm for dependency management to match project setup
