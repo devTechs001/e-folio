@@ -1,15 +1,15 @@
 /* AI Chatbot Styles */
 .chatbot-fab-container {
     position: fixed;
-    bottom: 30px;
-    right: 100px;
-    z-index: 10001;
+    bottom: 100px; /* Moved up to avoid blocking review button */
+    right: 20px;
+    z-index: 999; /* Lower than review button (z-1000) */
 }
 
 /* Mobile-specific positioning */
 @media (max-width: 768px) {
     .chatbot-fab-container {
-        bottom: 30px;
+        bottom: 90px; /* Adjusted for mobile */
         right: 20px;
     }
 }
@@ -90,12 +90,19 @@
 /* Mobile-specific container positioning */
 @media (max-width: 768px) {
     .chatbot-container {
-        width: calc(100vw - 40px);
-        height: 70vh;
-        max-height: 500px;
+        width: calc(100vw - 20px); /* More width on mobile */
+        height: calc(100vh - 100px); /* Full height minus safe areas */
+        max-height: none; /* Remove max-height restriction */
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        border-radius: 16px; /* Slightly smaller radius for mobile */
+    }
+
+    .chatbot-fab {
+        width: 56px; /* Slightly smaller on mobile */
+        height: 56px;
+        font-size: 22px;
     }
 }
 
