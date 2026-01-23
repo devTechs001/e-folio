@@ -17,7 +17,8 @@ export default defineConfig(({ command, mode }) => {
     ],
     
     // Base URL configuration
-    base: mode === 'production' ? '/e-folio/' : '/',
+    // Netlify serves from root, not a subdirectory
+    base: '/',
   
     // Resolve configuration
     resolve: {
