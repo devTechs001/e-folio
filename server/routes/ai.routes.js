@@ -15,7 +15,13 @@ const {
     searchMessages,
     getStats,
     exportConversation,
-    generateMarkdown
+    generateMarkdown,
+    getPreferences,
+    savePreferences,
+    getEmbeddings,
+    moderateContent,
+    generateImage,
+    transcribeAudio
 } = require('../controllers/ai.controller');
 
 // All routes require authentication

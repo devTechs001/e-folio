@@ -520,8 +520,6 @@ class AIService {
         }
     }
 
-    }
-
     /**
      * Calculate cost based on token usage
      */
