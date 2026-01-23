@@ -96,16 +96,100 @@ exports.getProfile = asyncHandler(async (req, res) => {
     const user = await User.findOne({ role: 'owner' })
         .select('name email bio avatar location website github linkedin twitter')
         .lean();
-    
+
     if (!user) {
         return res.status(404).json({
             success: false,
             message: 'Profile not found'
         });
     }
-    
+
     res.json({
         success: true,
         profile: user
+    });
+});
+
+// @desc    Increment project view count
+// @route   POST /api/public/projects/:id/view
+// @access  Public
+exports.incrementProjectView = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: 'Project not found'
+        });
+    }
+
+    // Increment views
+    project.views = (project.views || 0) + 1;
+    await project.save();
+
+    // Emit socket event for real-time update
+    if (req.app.get('io')) {
+        req.app.get('io').emit('project_view', {
+            projectId: project._id,
+            views: project.views
+        });
+    }
+
+    res.json({
+        success: true,
+        views: project.views
+    });
+});
+
+// @desc    Toggle project like
+// @route   POST /api/public/projects/:id/like
+// @access  Public
+exports.toggleProjectLike = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: 'Project not found'
+        });
+    }
+
+    // Get user IP or session ID for tracking unique likes
+    const identifier = req.ip || req.headers['x-forwarded-for'] || 'anonymous';
+    const likeKey = `project_like_${project._id}_${identifier}`;
+
+    // Check if already liked (using simple in-memory tracking)
+    // In production, you'd want to use Redis or database
+    const hasLiked = req.session?.likes?.includes(likeKey);
+
+    if (hasLiked) {
+        // Unlike
+        project.likes = Math.max((project.likes || 0) - 1, 0);
+        if (req.session?.likes) {
+            req.session.likes = req.session.likes.filter(k => k !== likeKey);
+        }
+    } else {
+        // Like
+        project.likes = (project.likes || 0) + 1;
+        if (!req.session) req.session = {};
+        if (!req.session.likes) req.session.likes = [];
+        req.session.likes.push(likeKey);
+    }
+
+    await project.save();
+
+    // Emit socket event for real-time update
+    if (req.app.get('io')) {
+        req.app.get('io').emit('project_like', {
+            projectId: project._id,
+            likes: project.likes,
+            action: hasLiked ? 'unlike' : 'like'
+        });
+    }
+
+    res.json({
+        success: true,
+        likes: project.likes,
+        liked: !hasLiked
     });
 });
