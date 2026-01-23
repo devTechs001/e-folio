@@ -170,8 +170,8 @@ const SortableSection = ({ section, onEdit, onToggle, onDelete, onDuplicate, onC
 
       {/* Section Performance Metrics */}
       <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
-        <span>ID: {section.id.slice(0, 8)}</span>
-        <span>Last modified: {new Date(section.updatedAt || Date.now()).toLocaleDateString()}</span>
+        <span>ID: {section?.id ? section.id.slice(0, 8) : 'N/A'}</span>
+        <span>Last modified: {new Date(section?.updatedAt || Date.now()).toLocaleDateString()}</span>
       </div>
     </div>
   );
