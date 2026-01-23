@@ -71,12 +71,21 @@ exports.trackPageView = asyncHandler(async (req, res) => {
         throw new Error('Session ID required');
     }
 
-    // Update session
-    const session = await TrackingSession.findOne({ sessionId });
-    
+    // Find or create session
+    let session = await TrackingSession.findOne({ sessionId });
+
     if (!session) {
-        res.status(404);
-        throw new Error('Session not found');
+        // Create new session if not found instead of throwing error
+        console.log(`Creating new session for sessionId: ${sessionId}`);
+        session = await TrackingSession.create({
+            sessionId,
+            startTime: new Date(),
+            lastActivity: new Date(),
+            pagesViewed: 0,
+            pageJourney: [],
+            scrollDepth: 0,
+            interactions: 0
+        });
     }
 
     // Add to page journey
@@ -89,6 +98,7 @@ exports.trackPageView = asyncHandler(async (req, res) => {
     });
 
     session.pagesViewed += 1;
+    session.lastActivity = new Date();
     if (scrollDepth) session.scrollDepth = Math.max(session.scrollDepth, scrollDepth);
 
     // Update AI insights - skip if service is disabled
