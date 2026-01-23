@@ -17,7 +17,9 @@ router.post('/versions/:versionId/restore', portfolioController.restorePortfolio
 
 // Portfolio templates routes
 router.get('/templates', portfolioController.getTemplates);
+router.get('/templates/custom', portfolioController.getCustomTemplates);
 router.post('/templates', portfolioController.applyTemplate);
+router.post('/templates/custom', portfolioController.saveCustomTemplate);
 
 // Portfolio publishing routes
 router.post('/publish', portfolioController.publishPortfolio);

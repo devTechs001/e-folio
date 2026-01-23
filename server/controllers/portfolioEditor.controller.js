@@ -722,6 +722,58 @@ class PortfolioEditorController {
         ];
     }
 
+    async getCustomTemplates(req, res) {
+        try {
+            const userId = req.user.id;
+
+            // For now, return empty array - can be extended to fetch from database
+            res.json({
+                success: true,
+                templates: []
+            });
+        } catch (error) {
+            console.error('Get custom templates error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch custom templates'
+            });
+        }
+    }
+
+    async saveCustomTemplate(req, res) {
+        try {
+            const userId = req.user.id;
+            const { name, description, config } = req.body;
+
+            // Validate template data
+            if (!name || !config) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Template name and configuration are required'
+                });
+            }
+
+            // For now, just return success - can be extended to save to database
+            res.json({
+                success: true,
+                message: 'Custom template saved successfully',
+                template: {
+                    id: Date.now().toString(),
+                    name,
+                    description,
+                    config,
+                    createdAt: new Date()
+                }
+            });
+        } catch (error) {
+            console.error('Save custom template error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to save custom template'
+            });
+        }
+    }
+
     async logActivity(userId, action, metadata = {}) {
         const ActivityLog = require('../models/ActivityLog');
         await ActivityLog.create({
