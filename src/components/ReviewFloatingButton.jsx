@@ -1,24 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, X, Send, ThumbsUp, Share2 } from 'lucide-react';
+import { Star, X, Send, ThumbsUp, Share2, CheckCircle, Heart } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
 import trackingService from '../services/tracking.service';
 
 const ReviewFloatingButton = () => {
     const { theme } = useTheme();
-    const { success, error } = useNotifications();
+    const { success, error, info } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [formData, setFormData] = useState({ name: '', email: '', comment: '' });
     const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+
+    // Load like status from localStorage
+    useEffect(() => {
+        const hasLiked = localStorage.getItem('portfolio_liked') === 'true';
+        const savedLikeCount = parseInt(localStorage.getItem('portfolio_like_count') || '0');
+        setLiked(hasLiked);
+        setLikeCount(savedLikeCount);
+    }, []);
+
+    const handleLike = () => {
+        if (!liked) {
+            setLiked(true);
+            const newCount = likeCount + 1;
+            setLikeCount(newCount);
+            localStorage.setItem('portfolio_liked', 'true');
+            localStorage.setItem('portfolio_like_count', newCount.toString());
+            success('❤️ Thanks for liking this portfolio!');
+        } else {
+            setLiked(false);
+            const newCount = Math.max(0, likeCount - 1);
+            setLikeCount(newCount);
+            localStorage.setItem('portfolio_liked', 'false');
+            localStorage.setItem('portfolio_like_count', newCount.toString());
+            info('Like removed');
+        }
+    };
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Check out this amazing portfolio!',
+                    text: 'I found this incredible developer portfolio. Take a look!',
+                    url: window.location.href
+                });
+                success('🎉 Thanks for sharing!');
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.log('Share cancelled or failed');
+                }
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                success('📋 Link copied to clipboard!');
+            } catch (err) {
+                error('Failed to copy link');
+            }
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!rating) {
-            error('Please select a rating');
+            error('⭐ Please select a rating');
+            return;
+        }
+
+        if (!formData.name.trim()) {
+            error('📝 Please enter your name');
+            return;
+        }
+
+        if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
+            error('📧 Please enter a valid email');
             return;
         }
 
@@ -32,16 +95,22 @@ const ReviewFloatingButton = () => {
             });
 
             if (response.success) {
-                success('Thank you for your review!');
-                setIsOpen(false);
-                setRating(0);
-                setFormData({ name: '', email: '', comment: '' });
+                setSubmitted(true);
+                success('✅ Thank you for your review!');
+
+                // Reset form after 3 seconds
+                setTimeout(() => {
+                    setIsOpen(false);
+                    setSubmitted(false);
+                    setRating(0);
+                    setFormData({ name: '', email: '', comment: '' });
+                }, 3000);
             } else {
-                error('Failed to submit review. Please try again.');
+                error('❌ Failed to submit review. Please try again.');
             }
         } catch (err) {
             console.error('Review submission error:', err);
-            error('Error submitting review. Please try again.');
+            error('⚠️ Error submitting review. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -245,52 +314,69 @@ const ReviewFloatingButton = () => {
                                     {submitting ? 'Submitting...' : 'Submit Review'}
                                 </motion.button>
 
+                                {/* Success Message */}
+                                <AnimatePresence>
+                                    {submitted && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.8 }}
+                                            className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg"
+                                            style={{
+                                                background: 'rgba(34, 197, 94, 0.1)',
+                                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                                color: '#22c55e'
+                                            }}
+                                        >
+                                            <CheckCircle size={20} />
+                                            <span className="font-semibold">Review submitted successfully!</span>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
                                 {/* Additional Actions */}
-                                <div 
+                                <div
                                     className="flex flex-col sm:flex-row gap-3 pt-4 mt-4 border-t"
                                     style={{ borderColor: theme.border || 'rgba(0, 239, 255, 0.2)' }}
                                 >
-                                    <motion.button 
-                                        type="button" 
-                                        onClick={() => success('Thanks for liking this portfolio!')}
+                                    <motion.button
+                                        type="button"
+                                        onClick={handleLike}
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
-                                        className="flex-1 py-2.5 rounded-lg border-none text-sm font-semibold 
-                                                 cursor-pointer flex items-center justify-center gap-2 
+                                        className="flex-1 py-2.5 rounded-lg border-none text-sm font-semibold
+                                                 cursor-pointer flex items-center justify-center gap-2
                                                  transition-all duration-300"
                                         style={{
-                                            background: `${theme.primary || '#00efff'}15`,
-                                            color: theme.primary || '#00efff'
+                                            background: liked
+                                                ? 'rgba(239, 68, 68, 0.2)'
+                                                : `${theme.primary || '#00efff'}15`,
+                                            color: liked ? '#ef4444' : theme.primary || '#00efff',
+                                            border: liked ? '1px solid rgba(239, 68, 68, 0.3)' : 'none'
                                         }}
                                         onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = `${theme.primary || '#00efff'}30`;
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = `${theme.primary || '#00efff'}15`;
-                                        }}
-                                    >
-                                        <ThumbsUp size={16} /> Like Portfolio
-                                    </motion.button>
-                                    
-                                    <motion.button 
-                                        type="button"
-                                        onClick={() => {
-                                            if (navigator.share) {
-                                                navigator.share({
-                                                    title: 'Check out this portfolio!',
-                                                    text: 'Amazing developer portfolio',
-                                                    url: window.location.href
-                                                }).then(() => success('Thanks for sharing!'))
-                                                .catch(err => console.log('Share cancelled'));
-                                            } else {
-                                                navigator.clipboard.writeText(window.location.href);
-                                                success('Link copied to clipboard!');
+                                            if (!liked) {
+                                                e.currentTarget.style.background = `${theme.primary || '#00efff'}30`;
                                             }
                                         }}
+                                        onMouseLeave={(e) => {
+                                            if (!liked) {
+                                                e.currentTarget.style.background = `${theme.primary || '#00efff'}15`;
+                                            }
+                                        }}
+                                    >
+                                        {liked ? <Heart size={16} fill="currentColor" /> : <ThumbsUp size={16} />}
+                                        {liked ? 'Liked' : 'Like Portfolio'}
+                                        {likeCount > 0 && <span className="ml-1">({likeCount})</span>}
+                                    </motion.button>
+
+                                    <motion.button
+                                        type="button"
+                                        onClick={handleShare}
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
-                                        className="flex-1 py-2.5 rounded-lg border-none text-sm font-semibold 
-                                                 cursor-pointer flex items-center justify-center gap-2 
+                                        className="flex-1 py-2.5 rounded-lg border-none text-sm font-semibold
+                                                 cursor-pointer flex items-center justify-center gap-2
                                                  transition-all duration-300"
                                         style={{
                                             background: `${theme.primary || '#00efff'}15`,

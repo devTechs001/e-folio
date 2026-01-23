@@ -177,12 +177,25 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cardSlideUp 0.6s ease-out;
+}
+
+@keyframes cardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
-  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6),
+              0 0 40px rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
 @media (min-width: 640px) {
@@ -384,16 +397,19 @@
 }
 
 .form-input:focus {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border-color: #8b5cf6;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), 0 4px 20px rgba(139, 92, 246, 0.15);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15),
+              0 4px 20px rgba(139, 92, 246, 0.2),
+              inset 0 1px 3px rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
 
 .form-input:hover:not(:focus) {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.4);
   transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.1);
 }
 
 .form-input:focus + .form-icon,
