@@ -20,8 +20,10 @@ const { upload } = require('../middleware/uploadMiddleware');
 const projectValidation = [
     body('title').trim().isLength({ min: 1, max: 100 }).withMessage('Title is required'),
     body('description').trim().isLength({ min: 1, max: 2000 }).withMessage('Description is required'),
-    body('category').isIn(['Web', 'Mobile', 'Desktop', 'AI/ML', 'Blockchain', 'DevOps', 'Other']),
-    body('status').optional().isIn(['planning', 'in-progress', 'completed', 'archived'])
+    body('category').optional().isIn(['Web', 'Mobile', 'Desktop', 'AI/ML', 'Blockchain', 'DevOps', 'Data', 'Game', 'IoT', 'Other']),
+    body('status').optional().isIn(['idea', 'planning', 'in-progress', 'testing', 'completed', 'on-hold', 'archived']),
+    body('priority').optional().isIn(['low', 'medium', 'high', 'urgent']),
+    body('visibility').optional().isIn(['public', 'private', 'unlisted'])
 ];
 
 // All routes require authentication

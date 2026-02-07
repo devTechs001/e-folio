@@ -139,47 +139,52 @@ const CollaborationRequest = () => {
     const validateField = (name, value) => {
         let error = '';
 
+        // Handle null/undefined values
+        if (value === null || value === undefined) {
+            value = '';
+        }
+
         switch (name) {
             case 'name':
-                if (!value || value.trim().length === 0) {
+                if (!value || value.toString().trim().length === 0) {
                     error = 'Name is required - Please enter your full name';
-                } else if (value.trim().length < 2) {
-                    error = 'Name too short - Must be at least 2 characters (currently: ' + value.trim().length + ')';
-                } else if (value.trim().length > 50) {
-                    error = 'Name too long - Maximum 50 characters allowed (currently: ' + value.trim().length + ')';
-                } else if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+                } else if (value.toString().trim().length < 2) {
+                    error = 'Name too short - Must be at least 2 characters (currently: ' + value.toString().trim().length + ')';
+                } else if (value.toString().trim().length > 50) {
+                    error = 'Name too long - Maximum 50 characters allowed (currently: ' + value.toString().trim().length + ')';
+                } else if (!/^[a-zA-Z\s\-']+$/.test(value.toString())) {
                     error = 'Invalid name format - Only letters, spaces, hyphens and apostrophes allowed';
                 }
                 break;
             case 'email':
-                if (!value || value.trim().length === 0) {
+                if (!value || value.toString().trim().length === 0) {
                     error = 'Email is required - Please enter your email address';
                 } else {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(value)) {
+                    if (!emailRegex.test(value.toString())) {
                         error = 'Invalid email format - Example: john@example.com';
-                    } else if (value.length > 100) {
+                    } else if (value.toString().length > 100) {
                         error = 'Email too long - Maximum 100 characters allowed';
                     }
                 }
                 break;
             case 'phone':
-                if (value && value.trim().length > 0) {
+                if (value && value.toString().trim().length > 0) {
                     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-                    if (!phoneRegex.test(value)) {
+                    if (!phoneRegex.test(value.toString())) {
                         error = 'Invalid phone format - Only numbers, spaces, +, -, and () allowed';
-                    } else if (value.replace(/\D/g, '').length < 10) {
-                        error = 'Phone too short - At least 10 digits required (currently: ' + value.replace(/\D/g, '').length + ')';
-                    } else if (value.replace(/\D/g, '').length > 15) {
-                        error = 'Phone too long - Maximum 15 digits allowed (currently: ' + value.replace(/\D/g, '').length + ')';
+                    } else if (value.toString().replace(/\D/g, '').length < 10) {
+                        error = 'Phone too short - At least 10 digits required (currently: ' + value.toString().replace(/\D/g, '').length + ')';
+                    } else if (value.toString().replace(/\D/g, '').length > 15) {
+                        error = 'Phone too long - Maximum 15 digits allowed (currently: ' + value.toString().replace(/\D/g, '').length + ')';
                     }
                 }
                 break;
             case 'location':
-                if (value && value.trim().length > 0) {
-                    if (value.trim().length < 3) {
-                        error = 'Location too short - Must be at least 3 characters (currently: ' + value.trim().length + ')';
-                    } else if (!/,/.test(value)) {
+                if (value && value.toString().trim().length > 0) {
+                    if (value.toString().trim().length < 3) {
+                        error = 'Location too short - Must be at least 3 characters (currently: ' + value.toString().trim().length + ')';
+                    } else if (!/,/.test(value.toString())) {
                         error = 'Invalid location format - Please include both city and country separated by comma (e.g., "New York, USA")';
                     }
                 }
@@ -200,22 +205,22 @@ const CollaborationRequest = () => {
             case 'github':
             case 'linkedin':
             case 'website':
-                if (value && value.trim().length > 0) {
+                if (value && value.toString().trim().length > 0) {
                     const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-                    if (!urlRegex.test(value)) {
+                    if (!urlRegex.test(value.toString())) {
                         error = 'Invalid URL format - Must start with http:// or https:// (e.g., https://github.com/username)';
-                    } else if (value.length > 200) {
+                    } else if (value.toString().length > 200) {
                         error = 'URL too long - Maximum 200 characters allowed';
                     }
                 }
                 break;
             case 'message':
-                if (!value || value.trim().length === 0) {
+                if (!value || value.toString().trim().length === 0) {
                     error = 'Message is required - Please tell us about your collaboration interest';
-                } else if (value.trim().length < 20) {
-                    error = 'Message too short - Minimum 20 characters required (currently: ' + value.trim().length + ')';
-                } else if (value.trim().length > 1000) {
-                    error = 'Message too long - Maximum 1000 characters allowed (currently: ' + value.trim().length + ')';
+                } else if (value.toString().trim().length < 20) {
+                    error = 'Message too short - Minimum 20 characters required (currently: ' + value.toString().trim().length + ')';
+                } else if (value.toString().trim().length > 1000) {
+                    error = 'Message too long - Maximum 1000 characters allowed (currently: ' + value.toString().trim().length + ')';
                 }
                 break;
             case 'projectType':
@@ -242,7 +247,8 @@ const CollaborationRequest = () => {
 
         const stepErrors = {};
         step.fields.forEach(field => {
-            const error = validateField(field, formData[field]);
+            const fieldValue = formData[field];
+            const error = validateField(field, fieldValue);
             if (error) {
                 stepErrors[field] = error;
             }
@@ -252,9 +258,49 @@ const CollaborationRequest = () => {
         return Object.keys(stepErrors).length === 0;
     };
 
+    // Enhanced validation for final submission that checks all required fields
+    const validateAllFields = () => {
+        const allErrors = {};
+
+        // Check required fields regardless of step
+        if (!formData.name || (typeof formData.name === 'string' && formData.name.trim().length === 0)) {
+            allErrors.name = 'Name is required - Please enter your full name';
+        } else {
+            const nameError = validateField('name', formData.name);
+            if (nameError) allErrors.name = nameError;
+        }
+
+        if (!formData.email || (typeof formData.email === 'string' && formData.email.trim().length === 0)) {
+            allErrors.email = 'Email is required - Please enter your email address';
+        } else {
+            const emailError = validateField('email', formData.email);
+            if (emailError) allErrors.email = emailError;
+        }
+
+        if (!formData.message || (typeof formData.message === 'string' && formData.message.trim().length === 0)) {
+            allErrors.message = 'Message is required - Please tell us about your collaboration interest';
+        } else {
+            const messageError = validateField('message', formData.message);
+            if (messageError) allErrors.message = messageError;
+        }
+
+        if (!formData.terms) {
+            allErrors.terms = 'Terms acceptance is required - You must accept the terms and conditions to continue';
+        }
+
+        setErrors(prev => ({ ...prev, ...allErrors }));
+        return Object.keys(allErrors).length === 0;
+    };
+
     const handleFieldChange = (name, value) => {
-        setFormData(prev => ({ ...prev, [name]: value }));
-        
+        // Normalize the value to handle different input types
+        let normalizedValue = value;
+        if (value === null || value === undefined) {
+            normalizedValue = '';
+        }
+
+        setFormData(prev => ({ ...prev, [name]: normalizedValue }));
+
         // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
@@ -377,39 +423,17 @@ const CollaborationRequest = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Collect all missing required fields
-        const missingFields = [];
-        
-        if (!formData.name || formData.name.trim().length === 0) {
-            missingFields.push('Name');
-        }
-        if (!formData.email || formData.email.trim().length === 0) {
-            missingFields.push('Email');
-        }
-        if (!formData.message || formData.message.trim().length === 0) {
-            missingFields.push('Message');
-        }
-        if (!formData.terms) {
-            missingFields.push('Terms & Conditions');
-        }
-
-        // Show specific missing fields error
-        if (missingFields.length > 0) {
-            error(`Missing required fields: ${missingFields.join(', ')}`);
-            return;
-        }
-
-        // Validate all steps for optional fields
-        let allValid = true;
-        for (let i = 1; i <= steps.length; i++) {
-            if (!validateStep(i)) {
-                allValid = false;
-                setCurrentStep(i);
-                break;
+        // Use enhanced validation for all required fields
+        if (!validateAllFields()) {
+            // Scroll to the first error field
+            const firstErrorField = Object.keys(errors).find(key => errors[key]);
+            if (firstErrorField) {
+                // Find which step contains the error field
+                const stepWithError = steps.find(step => step.fields.includes(firstErrorField));
+                if (stepWithError) {
+                    setCurrentStep(stepWithError.id);
+                }
             }
-        }
-
-        if (!allValid) {
             error('Please fix validation errors in the form');
             return;
         }
@@ -418,11 +442,11 @@ const CollaborationRequest = () => {
 
         try {
             const response = await apiService.submitCollaborationRequest(formData);
-            
+
             if (response.success) {
                 setSubmitted(true);
                 success('Request submitted successfully! We will review it and get back to you soon.');
-                
+
                 // Track submission analytics
                 if (window.gtag) {
                     window.gtag('event', 'collaboration_request_submit', {

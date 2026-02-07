@@ -180,60 +180,62 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
         // Frontend Frameworks
         'React', 'Vue.js', 'Angular', 'Next.js', 'Nuxt.js', 'Svelte', 'Solid.js', 'Qwik',
         'React Native', 'Flutter', 'SwiftUI', 'Jetpack Compose', 'Ionic', 'Expo',
-        
+
         // Backend Technologies
         'Node.js', 'Express', 'NestJS', 'Fastify', 'Koa', 'Django', 'Flask', 'FastAPI',
         'Spring Boot', 'Spring MVC', 'Laravel', 'Symfony', 'Rails', 'Phoenix', 'ASP.NET',
-        
+
         // Databases
         'MongoDB', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite', 'Redis', 'Elasticsearch',
         'Cassandra', 'DynamoDB', 'CouchDB', 'Neo4j', 'Supabase', 'Firebase', 'PlanetScale',
-        
+
         // Languages
         'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', '.NET', 'PHP', 'Ruby',
-        'Go', 'Rust', 'Swift', 'Kotlin', 'C++', 'Dart', 'Scala', 'Elixir',
-        
+        'Go', 'Rust', 'C++', 'Dart', 'Scala', 'Elixir',
+
+        // Mobile Specific Languages
+        'Swift', 'Kotlin',
+
         // Cloud & DevOps
         'AWS', 'Azure', 'Google Cloud', 'Vercel', 'Netlify', 'Heroku', 'DigitalOcean',
         'Docker', 'Kubernetes', 'Terraform', 'Ansible', 'Jenkins', 'GitHub Actions',
         'GitLab CI', 'CircleCI', 'Travis CI', 'Bamboo', 'Puppet', 'Chef',
-        
+
         // CSS & UI Frameworks
         'Tailwind CSS', 'Bootstrap', 'Material-UI', 'Chakra UI', 'Ant Design', 'Mantine',
         'Semantic UI', 'Bulma', 'Foundation', 'Styled Components', 'Emotion', 'CSS Modules',
         'Sass', 'Less', 'PostCSS', 'PurgeCSS', 'CSS-in-JS',
-        
+
         // State Management & Data Flow
         'Redux', 'Redux Toolkit', 'MobX', 'Zustand', 'Recoil', 'Vuex', 'Pinia', 'Apollo',
         'GraphQL', 'REST API', 'gRPC', 'WebSocket', 'Socket.io', 'SignalR', 'WebRTC',
-        
+
         // Testing & Quality
         'Jest', 'Vitest', 'Mocha', 'Chai', 'Cypress', 'Playwright', 'Selenium', 'Testing Library',
         'Storybook', 'ESLint', 'Prettier', 'Husky', 'Lint-staged', 'SonarQube',
-        
+
         // AI & Machine Learning
         'TensorFlow', 'PyTorch', 'Keras', 'Scikit-learn', 'Pandas', 'NumPy', 'Jupyter',
         'MLflow', 'Kubeflow', 'OpenAI', 'Hugging Face', 'LangChain', 'OpenCV',
-        
+
         // Tools & Misc
         'Git', 'GitHub', 'GitLab', 'Bitbucket', 'npm', 'Yarn', 'pnpm', 'Webpack',
         'Vite', 'Parcel', 'Rollup', 'Babel', 'ESBuild', 'SWC', 'Postman', 'Insomnia',
-        
+
         // Security & Authentication
         'JWT', 'OAuth 2.0', 'OpenID Connect', 'Passport.js', 'Auth0', 'Firebase Auth',
         'bcrypt', 'SSL/TLS', 'HTTPS', 'CORS', 'CSRF', 'XSS', 'SQL Injection',
-        
+
         // Performance & Monitoring
         'Lighthouse', 'Web Vitals', 'New Relic', 'Datadog', 'Sentry', 'LogRocket',
         'Google Analytics', 'Hotjar', 'Mixpanel', 'Segment', 'Amplitude',
-        
+
         // Blockchain & Web3
         'Ethereum', 'Solidity', 'Web3.js', 'Ethers.js', 'Hardhat', 'Truffle',
         'MetaMask', 'IPFS', 'Smart Contracts', 'DeFi', 'NFT', 'DAO',
-        
+
         // Mobile & IoT
-        'React Native', 'Flutter', 'Swift', 'Kotlin', 'Xamarin', 'Ionic',
-        'Arduino', 'Raspberry Pi', 'ESP32', 'MQTT', 'CoAP', 'LoRaWAN'
+        'Xamarin', 'Arduino', 'Raspberry Pi', 'ESP32', 'MQTT', 'CoAP', 'LoRaWAN'
     ];
     
     return (
@@ -407,8 +409,8 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                             Technologies
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 bg-slate-700 rounded-lg">
-                            {technologyOptions.map(tech => (
-                                <label key={tech} className="flex items-center space-x-2 text-sm">
+                            {technologyOptions.map((tech, index) => (
+                                <label key={`${tech}-${index}`} className="flex items-center space-x-2 text-sm">
                                     <input
                                         type="checkbox"
                                         checked={(project.technologies || []).includes(tech)}
@@ -607,16 +609,17 @@ const ProjectManagerEnhanced = () => {
         title: '',
         description: '',
         technologies: [],
-        currentStage: 'idea',
+        currentStage: 'planning',
         category: 'Web',
-        links: { 
-            github: '', 
-            live: '', 
-            demo: '', 
+        links: {
+            github: '',
+            live: '',
+            demo: '',
             documentation: '',
             staging: '',
             analytics: '',
-            monitoring: ''
+            monitoring: '',
+            api: ''
         },
         images: [],
         featured: false,
@@ -626,6 +629,8 @@ const ProjectManagerEnhanced = () => {
         endDate: '',
         priority: 'medium',
         visibility: 'public',
+        client: '',
+        budget: 0,
         stageHistory: [],
         milestones: [],
         team: [],
@@ -653,7 +658,16 @@ const ProjectManagerEnhanced = () => {
             performance: 0,
             uptime: 0,
             errors: 0
-        }
+        },
+        challenges: '',
+        achievements: [],
+        fullDescription: '',
+        duration: '',
+        teamSize: 0,
+        completionDate: '',
+        hidden: false,
+        archived: false,
+        pinned: false
     });
 
     // Load Data
@@ -717,6 +731,7 @@ const ProjectManagerEnhanced = () => {
             id: 1,
             title: "E-Commerce Platform",
             description: "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management.",
+            fullDescription: "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management. Features include user accounts, shopping cart, payment processing, inventory management, and admin dashboard.",
             imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop",
             thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop",
             images: [
@@ -726,22 +741,95 @@ const ProjectManagerEnhanced = () => {
             ],
             links: {
                 github: "https://github.com/yourusername/ecommerce",
-                live: "https://demo-ecommerce.com"
+                live: "https://demo-ecommerce.com",
+                demo: "",
+                documentation: "",
+                staging: "",
+                analytics: "",
+                monitoring: "",
+                api: ""
             },
             technologies: ["React", "Node.js", "MongoDB", "Stripe", "Java", "Spring Boot"],
             category: "Web",
             status: "completed",
+            currentStage: "deployment",
             featured: true,
             tags: ["e-commerce", "fullstack", "payment"],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            collaborators: [
+                { name: "John Doe", role: "Backend Developer", github: "johndoe" },
+                { name: "Jane Smith", role: "Frontend Developer", github: "janesmith" }
+            ],
+            startDate: new Date(Date.now() - 86400000 * 90).toISOString(), // 3 months ago
+            endDate: new Date().toISOString(),
+            priority: "high",
+            visibility: "public",
             views: 1245,
-            likes: 42
+            likes: 42,
+            client: "ABC Company",
+            budget: 50000,
+            challenges: "Integrating multiple payment gateways and ensuring PCI compliance",
+            achievements: ["Processed $100K+ in transactions", "Achieved 99.9% uptime"],
+            duration: "3 months",
+            teamSize: 4,
+            completionDate: new Date().toISOString(),
+            hidden: false,
+            archived: false,
+            pinned: false,
+            stageHistory: [
+                { stage: "planning", date: new Date(Date.now() - 86400000 * 90).toISOString(), notes: "Initial planning and requirements gathering" },
+                { stage: "development", date: new Date(Date.now() - 86400000 * 60).toISOString(), notes: "Started development phase" },
+                { stage: "testing", date: new Date(Date.now() - 86400000 * 10).toISOString(), notes: "QA and testing phase" },
+                { stage: "deployment", date: new Date().toISOString(), notes: "Launched to production" }
+            ],
+            milestones: [
+                { name: "Design Phase", description: "Complete UI/UX design", dueDate: new Date(Date.now() - 86400000 * 70).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 70).toISOString() },
+                { name: "Backend API", description: "Develop core API endpoints", dueDate: new Date(Date.now() - 86400000 * 40).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 40).toISOString() },
+                { name: "Frontend Integration", description: "Connect frontend to backend", dueDate: new Date(Date.now() - 86400000 * 15).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 15).toISOString() },
+                { name: "Go Live", description: "Deploy to production", dueDate: new Date().toISOString(), completed: true, completedAt: new Date().toISOString() }
+            ],
+            team: [
+                { name: "Alice Johnson", role: "Project Manager", email: "alice@example.com" },
+                { name: "Bob Williams", role: "Lead Developer", email: "bob@example.com" }
+            ],
+            resources: {
+                budget: 50000,
+                timeline: "3 months",
+                tools: ["Figma", "VS Code", "Postman", "Jira"],
+                documentation: "https://docs.example.com/ecommerce"
+            },
+            deliverables: {
+                current: [],
+                completed: ["Design documents", "Backend API", "Frontend application", "Testing suite"],
+                pending: []
+            },
+            automation: {
+                autoDeploy: true,
+                ciCd: true,
+                testing: true,
+                monitoring: true,
+                notifications: true
+            },
+            analytics: {
+                views: 1245,
+                engagement: 85,
+                performance: 95,
+                uptime: 99.9,
+                errors: 0.1
+            },
+            metrics: {
+                stars: 120,
+                forks: 45,
+                commits: 234,
+                lastCommit: new Date().toISOString()
+            },
+            createdAt: new Date(Date.now() - 86400000 * 90).toISOString(),
+            updatedAt: new Date().toISOString()
         },
         {
             id: 2,
             title: "Portfolio Website",
             description: "Modern portfolio website built with React, featuring smooth animations and responsive design.",
+            fullDescription: "Modern portfolio website built with React, featuring smooth animations and responsive design. Showcases projects, skills, and contact information with a clean, professional interface.",
             imageUrl: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop",
             thumbnail: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400&h=300&fit=crop",
             images: [
@@ -751,22 +839,94 @@ const ProjectManagerEnhanced = () => {
             ],
             links: {
                 github: "https://github.com/yourusername/portfolio",
-                live: "https://yourportfolio.com"
+                live: "https://yourportfolio.com",
+                demo: "",
+                documentation: "",
+                staging: "",
+                analytics: "",
+                monitoring: "",
+                api: ""
             },
             technologies: ["React", "Tailwind CSS", "Framer Motion", "Next.js"],
             category: "Web",
             status: "completed",
-            featured: false,
-            tags: ["portfolio", "react", "animation"],
-            createdAt: new Date(Date.now() - 86400000).toISOString(), // yesterday
-            updatedAt: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
+            currentStage: "maintenance",
+            featured: true,
+            tags: ["portfolio", "frontend", "responsive"],
+            collaborators: [
+                { name: "Alex Johnson", role: "Designer", github: "alexjohnson" },
+                { name: "Sam Wilson", role: "Developer", github: "samwilson" }
+            ],
+            startDate: new Date(Date.now() - 86400000 * 30).toISOString(), // 1 month ago
+            endDate: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 days ago
+            priority: "medium",
+            visibility: "public",
             views: 892,
-            likes: 28
+            likes: 28,
+            client: "Self",
+            budget: 0,
+            challenges: "Creating smooth animations while maintaining performance",
+            achievements: ["Achieved 100 Lighthouse score", "Implemented dark/light mode"],
+            duration: "3 weeks",
+            teamSize: 2,
+            completionDate: new Date(Date.now() - 86400000 * 10).toISOString(),
+            hidden: false,
+            archived: false,
+            pinned: false,
+            stageHistory: [
+                { stage: "planning", date: new Date(Date.now() - 86400000 * 30).toISOString(), notes: "Initial planning and wireframes" },
+                { stage: "design", date: new Date(Date.now() - 86400000 * 20).toISOString(), notes: "UI/UX design phase" },
+                { stage: "development", date: new Date(Date.now() - 86400000 * 15).toISOString(), notes: "Started development" },
+                { stage: "testing", date: new Date(Date.now() - 86400000 * 12).toISOString(), notes: "Testing and refinement" },
+                { stage: "deployment", date: new Date(Date.now() - 86400000 * 10).toISOString(), notes: "Launched to production" }
+            ],
+            milestones: [
+                { name: "Design Complete", description: "Complete UI/UX design", dueDate: new Date(Date.now() - 86400000 * 20).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 20).toISOString() },
+                { name: "Development Phase", description: "Core functionality", dueDate: new Date(Date.now() - 86400000 * 10).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 10).toISOString() }
+            ],
+            team: [
+                { name: "Alex Johnson", role: "Designer", email: "alex@example.com" },
+                { name: "Sam Wilson", role: "Developer", email: "sam@example.com" }
+            ],
+            resources: {
+                budget: 0,
+                timeline: "3 weeks",
+                tools: ["Figma", "VS Code", "Photoshop"],
+                documentation: "https://docs.example.com/portfolio"
+            },
+            deliverables: {
+                current: [],
+                completed: ["Design", "Frontend", "Responsive layout", "Animations"],
+                pending: []
+            },
+            automation: {
+                autoDeploy: true,
+                ciCd: true,
+                testing: false,
+                monitoring: true,
+                notifications: true
+            },
+            analytics: {
+                views: 892,
+                engagement: 78,
+                performance: 98,
+                uptime: 100,
+                errors: 0
+            },
+            metrics: {
+                stars: 45,
+                forks: 12,
+                commits: 87,
+                lastCommit: new Date(Date.now() - 86400000 * 5).toISOString()
+            },
+            createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+            updatedAt: new Date().toISOString()
         },
         {
             id: 3,
             title: "Task Management App",
             description: "Collaborative task management application with real-time updates and team collaboration features.",
+            fullDescription: "Collaborative task management application with real-time updates and team collaboration features. Includes Kanban boards, team chat, file sharing, and progress tracking.",
             imageUrl: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop",
             thumbnail: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=300&fit=crop",
             images: [
@@ -776,46 +936,195 @@ const ProjectManagerEnhanced = () => {
             ],
             links: {
                 github: "https://github.com/yourusername/taskmanager",
-                live: "https://taskmanager-demo.com"
+                live: "https://taskmanager-demo.com",
+                demo: "",
+                documentation: "",
+                staging: "",
+                analytics: "",
+                monitoring: "",
+                api: ""
             },
             technologies: ["Vue.js", "Firebase", "Vuex", "Material Design"],
-            category: "Mobile",
+            category: "Web",
             status: "in-progress",
+            currentStage: "development",
             featured: false,
             tags: ["task management", "collaboration", "real-time"],
-            createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-            updatedAt: new Date().toISOString(),
-            views: 532,
-            likes: 17
-        },
-        {
-            id: 4,
-            title: "AI Dashboard",
-            description: "Advanced analytics dashboard with real-time data visualization and machine learning insights.",
-            imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-            images: [
-                { url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop", caption: "AI Dashboard" },
-                { url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop", caption: "Data Analysis" },
-                { url: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop", caption: "ML Visualization" }
+            collaborators: [
+                { name: "Mike Thompson", role: "Frontend Developer", github: "mikethompson" },
+                { name: "Sarah Davis", role: "Backend Developer", github: "sarahdavis" },
+                { name: "Tom Wilson", role: "UI/UX Designer", github: "tomwilson" }
             ],
-            links: {
-                github: "https://github.com/yourusername/ai-dashboard",
-                live: "https://ai-dashboard-demo.com"
+            startDate: new Date(Date.now() - 86400000 * 45).toISOString(), // 45 days ago
+            endDate: null,
+            priority: "high",
+            visibility: "public",
+            views: 543,
+            likes: 15,
+            client: "Internal",
+            budget: 25000,
+            challenges: "Implementing real-time synchronization across multiple clients",
+            achievements: ["Real-time updates working", "Cross-platform compatibility achieved"],
+            duration: "ongoing",
+            teamSize: 3,
+            completionDate: null,
+            hidden: false,
+            archived: false,
+            pinned: false,
+            stageHistory: [
+                { stage: "planning", date: new Date(Date.now() - 86400000 * 50).toISOString(), notes: "Requirements gathering" },
+                { stage: "design", date: new Date(Date.now() - 86400000 * 40).toISOString(), notes: "UI/UX design completed" },
+                { stage: "development", date: new Date(Date.now() - 86400000 * 30).toISOString(), notes: "Started development" }
+            ],
+            milestones: [
+                { name: "MVP Complete", description: "Basic functionality", dueDate: new Date(Date.now() - 86400000 * 10).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 10).toISOString() },
+                { name: "Real-time Sync", description: "Implement real-time updates", dueDate: new Date(Date.now() + 86400000 * 10).toISOString(), completed: false, completedAt: null }
+            ],
+            team: [
+                { name: "Mike Thompson", role: "Frontend Developer", email: "mike@example.com" },
+                { name: "Sarah Davis", role: "Backend Developer", email: "sarah@example.com" },
+                { name: "Tom Wilson", role: "UI/UX Designer", email: "tom@example.com" }
+            ],
+            resources: {
+                budget: 25000,
+                timeline: "ongoing",
+                tools: ["Vue.js", "Firebase", "Figma", "VS Code"],
+                documentation: "https://docs.example.com/taskmanager"
             },
-            technologies: ["React", "TensorFlow.js", "D3.js", "Python", "FastAPI"],
-            category: "AI/ML",
-            status: "in-progress",
-            featured: false,
-            tags: ["ai", "machine-learning", "analytics"],
-            createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-            updatedAt: new Date().toISOString(),
-            views: 445,
-            likes: 23
+            deliverables: {
+                current: ["Real-time sync", "Mobile responsiveness"],
+                completed: ["Authentication", "Task creation", "Kanban board"],
+                pending: ["Advanced reporting", "Mobile app"]
+            },
+            automation: {
+                autoDeploy: true,
+                ciCd: true,
+                testing: true,
+                monitoring: true,
+                notifications: true
+            },
+            analytics: {
+                views: 543,
+                engagement: 65,
+                performance: 88,
+                uptime: 99.5,
+                errors: 0.2
+            },
+            metrics: {
+                stars: 28,
+                forks: 7,
+                commits: 156,
+                lastCommit: new Date().toISOString()
+            },
+            createdAt: new Date(Date.now() - 86400000 * 45).toISOString(),
+            updatedAt: new Date().toISOString()
         },
         {
             id: 5,
+            title: "AI Analytics Dashboard",
+            description: "Advanced analytics dashboard powered by artificial intelligence to provide insights and predictions.",
+            fullDescription: "Advanced analytics dashboard powered by artificial intelligence to provide insights and predictions. Features include data visualization, predictive analytics, anomaly detection, and automated reporting.",
+            imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
+            thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop",
+            images: [
+                { url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop", caption: "Analytics Overview" },
+                { url: "https://images.unsplash.com/photo-1544256718-3bcf23cd33ff?w=800&h=600&fit=crop", caption: "Data Visualization" },
+                { url: "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&h=600&fit=crop", caption: "Predictive Models" }
+            ],
+            links: {
+                github: "https://github.com/yourusername/ai-analytics",
+                live: "https://ai-analytics-demo.com",
+                demo: "",
+                documentation: "",
+                staging: "",
+                analytics: "",
+                monitoring: "",
+                api: ""
+            },
+            technologies: ["Python", "TensorFlow", "React", "D3.js", "Node.js", "MongoDB"],
+            category: "AI/ML",
+            status: "completed",
+            currentStage: "maintenance",
+            featured: true,
+            tags: ["ai", "analytics", "machine learning", "data science"],
+            collaborators: [
+                { name: "Dr. Emily Chen", role: "Data Scientist", github: "emilychen" },
+                { name: "David Rodriguez", role: "ML Engineer", github: "davidrodriguez" },
+                { name: "Lisa Park", role: "Frontend Developer", github: "lisapark" }
+            ],
+            startDate: new Date(Date.now() - 86400000 * 120).toISOString(), // 4 months ago
+            endDate: new Date(Date.now() - 86400000 * 30).toISOString(), // 1 month ago
+            priority: "high",
+            visibility: "public",
+            views: 1205,
+            likes: 67,
+            client: "TechCorp Inc.",
+            budget: 120000,
+            challenges: "Processing large datasets in real-time and optimizing ML models for performance",
+            achievements: ["Reduced prediction latency by 60%", "Achieved 95% accuracy in forecasting"],
+            duration: "3 months",
+            teamSize: 5,
+            completionDate: new Date(Date.now() - 86400000 * 30).toISOString(),
+            hidden: false,
+            archived: false,
+            pinned: true,
+            stageHistory: [
+                { stage: "planning", date: new Date(Date.now() - 86400000 * 120).toISOString(), notes: "Requirements and feasibility study" },
+                { stage: "data prep", date: new Date(Date.now() - 86400000 * 100).toISOString(), notes: "Data collection and preprocessing" },
+                { stage: "modeling", date: new Date(Date.now() - 86400000 * 70).toISOString(), notes: "ML model development" },
+                { stage: "development", date: new Date(Date.now() - 86400000 * 45).toISOString(), notes: "Frontend and backend development" },
+                { stage: "testing", date: new Date(Date.now() - 86400000 * 35).toISOString(), notes: "Integration and performance testing" },
+                { stage: "deployment", date: new Date(Date.now() - 86400000 * 30).toISOString(), notes: "Production deployment" }
+            ],
+            milestones: [
+                { name: "Data Pipeline", description: "Establish data collection pipeline", dueDate: new Date(Date.now() - 86400000 * 90).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 90).toISOString() },
+                { name: "ML Model", description: "Train and validate ML models", dueDate: new Date(Date.now() - 86400000 * 60).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 60).toISOString() },
+                { name: "Dashboard", description: "Complete dashboard UI/UX", dueDate: new Date(Date.now() - 86400000 * 30).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 30).toISOString() }
+            ],
+            team: [
+                { name: "Dr. Emily Chen", role: "Data Scientist", email: "emily@techcorp.com" },
+                { name: "David Rodriguez", role: "ML Engineer", email: "david@techcorp.com" },
+                { name: "Lisa Park", role: "Frontend Developer", email: "lisa@techcorp.com" }
+            ],
+            resources: {
+                budget: 120000,
+                timeline: "4 months",
+                tools: ["Python", "TensorFlow", "React", "Docker", "AWS"],
+                documentation: "https://docs.example.com/ai-analytics"
+            },
+            deliverables: {
+                current: [],
+                completed: ["Data pipeline", "ML models", "Dashboard", "API", "Documentation"],
+                pending: []
+            },
+            automation: {
+                autoDeploy: true,
+                ciCd: true,
+                testing: true,
+                monitoring: true,
+                notifications: true
+            },
+            analytics: {
+                views: 1205,
+                engagement: 92,
+                performance: 96,
+                uptime: 99.8,
+                errors: 0.05
+            },
+            metrics: {
+                stars: 89,
+                forks: 34,
+                commits: 421,
+                lastCommit: new Date(Date.now() - 86400000 * 5).toISOString()
+            },
+            createdAt: new Date(Date.now() - 86400000 * 120).toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 6,
             title: "Social Media App",
             description: "Mobile-first social media platform with real-time messaging, stories, and content sharing.",
+            fullDescription: "Mobile-first social media platform with real-time messaging, stories, and content sharing. Features include user profiles, news feed, instant messaging, content creation tools, and social networking capabilities.",
             imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop",
             thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
             images: [
@@ -825,17 +1134,88 @@ const ProjectManagerEnhanced = () => {
             ],
             links: {
                 github: "https://github.com/yourusername/socialapp",
-                live: "https://socialapp-demo.com"
+                live: "https://socialapp-demo.com",
+                demo: "",
+                documentation: "",
+                staging: "",
+                analytics: "",
+                monitoring: "",
+                api: ""
             },
             technologies: ["React Native", "Firebase", "Redux", "WebRTC"],
             category: "Mobile",
             status: "in-progress",
+            currentStage: "development",
             featured: false,
             tags: ["social", "mobile", "messaging"],
-            createdAt: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
-            updatedAt: new Date().toISOString(),
+            collaborators: [
+                { name: "James Wilson", role: "Mobile Developer", github: "jameswilson" },
+                { name: "Sophia Garcia", role: "Backend Developer", github: "sophiagarcia" },
+                { name: "Michael Brown", role: "UI/UX Designer", github: "michaelbrown" }
+            ],
+            startDate: new Date(Date.now() - 86400000 * 60).toISOString(), // 2 months ago
+            endDate: null,
+            priority: "high",
+            visibility: "public",
             views: 678,
-            likes: 34
+            likes: 34,
+            client: "StartupXYZ",
+            budget: 75000,
+            challenges: "Implementing real-time messaging at scale and ensuring data privacy",
+            achievements: ["Achieved 10K beta users", "Implemented end-to-end encryption"],
+            duration: "ongoing",
+            teamSize: 4,
+            completionDate: null,
+            hidden: false,
+            archived: false,
+            pinned: false,
+            stageHistory: [
+                { stage: "planning", date: new Date(Date.now() - 86400000 * 65).toISOString(), notes: "Initial planning and market research" },
+                { stage: "design", date: new Date(Date.now() - 86400000 * 55).toISOString(), notes: "UI/UX design phase" },
+                { stage: "development", date: new Date(Date.now() - 86400000 * 45).toISOString(), notes: "Started development" }
+            ],
+            milestones: [
+                { name: "MVP", description: "Basic social features", dueDate: new Date(Date.now() - 86400000 * 20).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 20).toISOString() },
+                { name: "Beta Launch", description: "Release to beta users", dueDate: new Date(Date.now() - 86400000 * 10).toISOString(), completed: true, completedAt: new Date(Date.now() - 86400000 * 10).toISOString() }
+            ],
+            team: [
+                { name: "James Wilson", role: "Mobile Developer", email: "james@startupxyz.com" },
+                { name: "Sophia Garcia", role: "Backend Developer", email: "sophia@startupxyz.com" },
+                { name: "Michael Brown", role: "UI/UX Designer", email: "michael@startupxyz.com" }
+            ],
+            resources: {
+                budget: 75000,
+                timeline: "ongoing",
+                tools: ["React Native", "Firebase", "Figma", "Jira"],
+                documentation: "https://docs.example.com/socialapp"
+            },
+            deliverables: {
+                current: ["Push notifications", "Advanced privacy controls"],
+                completed: ["User authentication", "News feed", "Messaging", "Content sharing"],
+                pending: ["Video calling", "Monetization features"]
+            },
+            automation: {
+                autoDeploy: false,
+                ciCd: true,
+                testing: true,
+                monitoring: true,
+                notifications: true
+            },
+            analytics: {
+                views: 678,
+                engagement: 72,
+                performance: 85,
+                uptime: 98.5,
+                errors: 0.3
+            },
+            metrics: {
+                stars: 15,
+                forks: 3,
+                commits: 89,
+                lastCommit: new Date(Date.now() - 86400000 * 2).toISOString()
+            },
+            createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
+            updatedAt: new Date().toISOString()
         }
     ];
 
@@ -871,8 +1251,18 @@ const ProjectManagerEnhanced = () => {
         }
 
         try {
-            const response = await ApiService.createProject(newProject);
-            setProjects([response.project, ...projects]);
+            // Format project data according to backend schema
+            const projectData = {
+                ...newProject, // Spread all properties to allow for extended fields
+                userId: newProject.userId || undefined, // Exclude userId as it's set by backend
+                createdAt: newProject.createdAt || undefined, // Exclude timestamps as they're set by backend
+                updatedAt: newProject.updatedAt || undefined
+            };
+
+            const response = await ApiService.createProject(projectData);
+
+            // Add the new project to the beginning of the list
+            setProjects(prevProjects => [response.project, ...prevProjects]);
             resetForm();
             setShowAddModal(false);
             success('Project created successfully!');
@@ -884,7 +1274,8 @@ const ProjectManagerEnhanced = () => {
                 console.log('Cache refresh failed, but project was created');
             }
         } catch (err) {
-            error(err.response?.data?.message || 'Failed to create project');
+            console.error('Error creating project:', err);
+            error(err.response?.data?.message || err.message || 'Failed to create project');
         }
     };
 
@@ -892,13 +1283,22 @@ const ProjectManagerEnhanced = () => {
         if (!selectedProject?.id) return;
 
         try {
-            const response = await ApiService.updateProject(selectedProject.id, selectedProject);
+            // Format project data according to backend schema
+            const projectData = {
+                ...selectedProject, // Spread all properties to allow for extended fields
+                userId: selectedProject.userId || undefined, // Exclude userId as it's set by backend
+                createdAt: selectedProject.createdAt || undefined, // Exclude timestamps as they're set by backend
+                updatedAt: selectedProject.updatedAt || undefined
+            };
+
+            const response = await ApiService.updateProject(selectedProject.id, projectData);
             setProjects(projects.map(p => p.id === selectedProject.id ? response.project : p));
             setShowEditModal(false);
             setSelectedProject(null);
             success('Project updated successfully!');
         } catch (err) {
-            error('Failed to update project');
+            console.error('Error updating project:', err);
+            error(err.response?.data?.message || err.message || 'Failed to update project');
         }
     };
 
@@ -1107,10 +1507,69 @@ const ProjectManagerEnhanced = () => {
     // Helpers
     const resetForm = () => {
         setNewProject({
-            title: '', description: '', technologies: [], status: 'in-progress',
-            category: 'Web', links: { github: '', live: '', demo: '', documentation: '' },
-            images: [], featured: false, tags: [], collaborators: [],
-            startDate: '', endDate: '', priority: 'medium', visibility: 'public'
+            title: '',
+            description: '',
+            technologies: [],
+            status: 'in-progress',
+            category: 'Web',
+            links: {
+                github: '',
+                live: '',
+                demo: '',
+                documentation: '',
+                staging: '',
+                analytics: '',
+                monitoring: '',
+                api: ''
+            },
+            images: [],
+            featured: false,
+            tags: [],
+            collaborators: [],
+            startDate: '',
+            endDate: '',
+            priority: 'medium',
+            visibility: 'public',
+            client: '',
+            budget: 0,
+            currentStage: 'planning',
+            stageHistory: [],
+            milestones: [],
+            team: [],
+            resources: {
+                budget: 0,
+                timeline: '',
+                tools: [],
+                documentation: ''
+            },
+            deliverables: {
+                current: [],
+                completed: [],
+                pending: []
+            },
+            automation: {
+                autoDeploy: false,
+                ciCd: false,
+                testing: false,
+                monitoring: false,
+                notifications: true
+            },
+            analytics: {
+                views: 0,
+                engagement: 0,
+                performance: 0,
+                uptime: 0,
+                errors: 0
+            },
+            challenges: '',
+            achievements: [],
+            fullDescription: '',
+            duration: '',
+            teamSize: 0,
+            completionDate: '',
+            hidden: false,
+            archived: false,
+            pinned: false
         });
         setImageUrl('');
     };
@@ -1616,14 +2075,16 @@ const ProjectManagerEnhanced = () => {
                 />
 
                 {/* New Modals */}
-                <ProjectModal
-                    project={selectedProject}
-                    onClose={() => {
-                        setShowProjectModal(false);
-                        setSelectedProject(null);
-                    }}
-                    onImageClick={handleImageClick}
-                />
+                {showProjectModal && selectedProject && (
+                    <ProjectModal
+                        project={selectedProject}
+                        onClose={() => {
+                            setShowProjectModal(false);
+                            setSelectedProject(null);
+                        }}
+                        onImageClick={handleImageClick}
+                    />
+                )}
 
                 {/* Lightbox */}
                 {lightboxImage && (
@@ -1824,12 +2285,12 @@ const ProjectCard = ({
                     <div className="px-6 py-4 border-b border-white/10">
                         <div className="flex flex-wrap gap-2">
                             {project.technologies.slice(0, 5).map((tech, i) => (
-                                <span key={i} className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium">
+                                <span key={`${tech}-${i}`} className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium">
                                     {tech}
                                 </span>
                             ))}
                             {project.technologies.length > 5 && (
-                                <span className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-400">
+                                <span key="more-tech" className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-400">
                                     +{project.technologies.length - 5} more
                                 </span>
                             )}

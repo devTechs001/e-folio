@@ -1773,6 +1773,824 @@ class ApiService {
             return { success: true, data: {} };
         }
     }
+
+    // Additional Reviews and Visitors Analytics Endpoints
+
+    // Reviews Analytics
+    async getReviewsByRating(rating, params = {}) {
+        try {
+            const query = new URLSearchParams({ rating, ...params });
+            return await this.request(`/reviews/rating?${query}`);
+        } catch (error) {
+            console.warn('Reviews by rating unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getReviewsByDate(startDate, endDate, params = {}) {
+        try {
+            const query = new URLSearchParams({ startDate, endDate, ...params });
+            return await this.request(`/reviews/date-range?${query}`);
+        } catch (error) {
+            console.warn('Reviews by date range unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getReviewsCount() {
+        try {
+            return await this.request('/reviews/count');
+        } catch (error) {
+            console.warn('Reviews count unavailable');
+            return { success: true, data: { total: 0, approved: 0, pending: 0, rejected: 0 } };
+        }
+    }
+
+    async getAverageReviewRating() {
+        try {
+            return await this.request('/reviews/average-rating');
+        } catch (error) {
+            console.warn('Average review rating unavailable');
+            return { success: true, data: { average: 0, totalReviews: 0 } };
+        }
+    }
+
+    async getRecentReviews(limit = 5) {
+        try {
+            const query = new URLSearchParams({ limit });
+            return await this.request(`/reviews/recent?${query}`);
+        } catch (error) {
+            console.warn('Recent reviews unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Visitor Analytics
+    async getVisitorDemographics() {
+        try {
+            return await this.request('/analytics/visitors/demographics');
+        } catch (error) {
+            console.warn('Visitor demographics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getVisitorEngagement() {
+        try {
+            return await this.request('/analytics/visitors/engagement');
+        } catch (error) {
+            console.warn('Visitor engagement unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getVisitorFlow() {
+        try {
+            return await this.request('/analytics/visitors/flow');
+        } catch (error) {
+            console.warn('Visitor flow unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getVisitorSessions(timeRange = '7d') {
+        try {
+            const query = new URLSearchParams({ timeRange });
+            return await this.request(`/analytics/visitors/sessions?${query}`);
+        } catch (error) {
+            console.warn('Visitor sessions unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getVisitorDevices() {
+        try {
+            return await this.request('/analytics/visitors/devices');
+        } catch (error) {
+            console.warn('Visitor devices unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getVisitorCountries() {
+        try {
+            return await this.request('/analytics/visitors/countries');
+        } catch (error) {
+            console.warn('Visitor countries unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getVisitorPages() {
+        try {
+            return await this.request('/analytics/visitors/pages');
+        } catch (error) {
+            console.warn('Visitor pages unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getVisitorSources() {
+        try {
+            return await this.request('/analytics/visitors/sources');
+        } catch (error) {
+            console.warn('Visitor sources unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getPeakVisitingHours() {
+        try {
+            return await this.request('/analytics/visitors/hours');
+        } catch (error) {
+            console.warn('Peak visiting hours unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getReturningVisitors() {
+        try {
+            return await this.request('/analytics/visitors/returning');
+        } catch (error) {
+            console.warn('Returning visitors unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getVisitorRetention() {
+        try {
+            return await this.request('/analytics/visitors/retention');
+        } catch (error) {
+            console.warn('Visitor retention unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Combined Reviews and Visitors Analytics
+    async getCorrelationData() {
+        try {
+            return await this.request('/analytics/reviews-visitors/correlation');
+        } catch (error) {
+            console.warn('Reviews and visitors correlation unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    // Additional Learning Center Endpoints
+
+    // Bookmark Management
+    async addBookmark(bookmarkData) {
+        try {
+            return await this.request('/learning/bookmarks', {
+                method: 'POST',
+                body: JSON.stringify(bookmarkData)
+            });
+        } catch (error) {
+            console.warn('Add bookmark unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async removeBookmark(resourceId) {
+        try {
+            return await this.request(`/learning/bookmarks/${resourceId}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.warn('Remove bookmark unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Progress Management
+    async updateProgress(progressData) {
+        try {
+            return await this.request('/learning/progress/update', {
+                method: 'POST',
+                body: JSON.stringify(progressData)
+            });
+        } catch (error) {
+            console.warn('Update progress unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Comments System
+    async addComment(commentData) {
+        try {
+            return await this.request('/learning/comments', {
+                method: 'POST',
+                body: JSON.stringify(commentData)
+            });
+        } catch (error) {
+            console.warn('Add comment unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getComments(resourceId) {
+        try {
+            return await this.request(`/learning/comments/${resourceId}`);
+        } catch (error) {
+            console.warn('Get comments unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Rating System
+    async rateResource(ratingData) {
+        try {
+            return await this.request('/learning/ratings', {
+                method: 'POST',
+                body: JSON.stringify(ratingData)
+            });
+        } catch (error) {
+            console.warn('Rate resource unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Achievement System
+    async getAchievements() {
+        try {
+            return await this.request('/learning/achievements');
+        } catch (error) {
+            console.warn('Get achievements unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAchievementProgress() {
+        try {
+            return await this.request('/learning/achievements/progress');
+        } catch (error) {
+            console.warn('Get achievement progress unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    // Course/Tutorial Management
+    async getCourse(courseId) {
+        try {
+            return await this.request(`/learning/courses/${courseId}`);
+        } catch (error) {
+            console.warn('Get course unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async enrollInCourse(courseId) {
+        try {
+            return await this.request(`/learning/courses/${courseId}/enroll`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Enroll in course unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getEnrolledCourses() {
+        try {
+            return await this.request('/learning/courses/enrolled');
+        } catch (error) {
+            console.warn('Get enrolled courses unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Quiz and Assessment
+    async getQuizzes(courseId) {
+        try {
+            return await this.request(`/learning/quizzes?courseId=${courseId}`);
+        } catch (error) {
+            console.warn('Get quizzes unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async submitQuiz(quizData) {
+        try {
+            return await this.request('/learning/quizzes/submit', {
+                method: 'POST',
+                body: JSON.stringify(quizData)
+            });
+        } catch (error) {
+            console.warn('Submit quiz unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Certificates
+    async getCertificates() {
+        try {
+            return await this.request('/learning/certificates');
+        } catch (error) {
+            console.warn('Get certificates unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getCertificate(certificateId) {
+        try {
+            return await this.request(`/learning/certificates/${certificateId}`);
+        } catch (error) {
+            console.warn('Get certificate unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Search and Discovery
+    async searchLearningContent(query, filters = {}) {
+        try {
+            const params = new URLSearchParams({ query, ...filters });
+            return await this.request(`/learning/search?${params}`);
+        } catch (error) {
+            console.warn('Search learning content unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Recommendations
+    async getRecommendations() {
+        try {
+            return await this.request('/learning/recommendations');
+        } catch (error) {
+            console.warn('Get recommendations unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    // Learning Path
+    async getLearningPaths() {
+        try {
+            return await this.request('/learning/paths');
+        } catch (error) {
+            console.warn('Get learning paths unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getLearningPath(pathId) {
+        try {
+            return await this.request(`/learning/paths/${pathId}`);
+        } catch (error) {
+            console.warn('Get learning path unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Notifications
+    async getLearningNotifications() {
+        try {
+            return await this.request('/learning/notifications');
+        } catch (error) {
+            console.warn('Get learning notifications unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async markLearningNotificationAsRead(notificationId) {
+        try {
+            return await this.request(`/learning/notifications/${notificationId}/read`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Mark notification as read unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // General Notification Management
+    async getAllNotifications(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/notifications?${query}`);
+        } catch (error) {
+            console.warn('Get all notifications unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getUnreadNotifications() {
+        try {
+            return await this.request('/notifications/unread');
+        } catch (error) {
+            console.warn('Get unread notifications unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async markNotificationAsRead(notificationId) {
+        try {
+            return await this.request(`/notifications/${notificationId}/read`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Mark notification as read unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async markAllNotificationsAsRead() {
+        try {
+            return await this.request('/notifications/mark-all-read', {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Mark all notifications as read unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async deleteNotification(notificationId) {
+        try {
+            return await this.request(`/notifications/${notificationId}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.warn('Delete notification unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async deleteAllNotifications() {
+        try {
+            return await this.request('/notifications', {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.warn('Delete all notifications unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getNotificationPreferences() {
+        try {
+            return await this.request('/notifications/preferences');
+        } catch (error) {
+            console.warn('Get notification preferences unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async updateNotificationPreferences(preferences) {
+        try {
+            return await this.request('/notifications/preferences', {
+                method: 'PUT',
+                body: JSON.stringify(preferences)
+            });
+        } catch (error) {
+            console.warn('Update notification preferences unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async subscribeToPushNotifications(subscriptionData) {
+        try {
+            return await this.request('/notifications/push/subscribe', {
+                method: 'POST',
+                body: JSON.stringify(subscriptionData)
+            });
+        } catch (error) {
+            console.warn('Subscribe to push notifications unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async unsubscribeFromPushNotifications() {
+        try {
+            return await this.request('/notifications/push/unsubscribe', {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Unsubscribe from push notifications unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async sendNotification(notificationData) {
+        try {
+            return await this.request('/notifications/send', {
+                method: 'POST',
+                body: JSON.stringify(notificationData)
+            });
+        } catch (error) {
+            console.warn('Send notification unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getNotificationHistory(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/notifications/history?${query}`);
+        } catch (error) {
+            console.warn('Get notification history unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getNotificationStats() {
+        try {
+            return await this.request('/notifications/stats');
+        } catch (error) {
+            console.warn('Get notification stats unavailable');
+            return { success: true, data: { total: 0, unread: 0, today: 0 } };
+        }
+    }
+
+    // AI Tracking and Analytics Endpoints
+
+    // AI Interaction Tracking
+    async trackAIInteraction(interactionData) {
+        try {
+            return await this.request('/ai/tracking/interaction', {
+                method: 'POST',
+                body: JSON.stringify(interactionData)
+            });
+        } catch (error) {
+            console.warn('Track AI interaction unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getAIInteractionHistory(userId, params = {}) {
+        try {
+            const query = new URLSearchParams({ userId, ...params });
+            return await this.request(`/ai/tracking/history?${query}`);
+        } catch (error) {
+            console.warn('Get AI interaction history unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAIUsageStats(userId) {
+        try {
+            return await this.request(`/ai/tracking/usage/${userId}`);
+        } catch (error) {
+            console.warn('Get AI usage stats unavailable');
+            return { success: true, data: { totalInteractions: 0, avgResponseTime: 0, mostUsedFeatures: [] } };
+        }
+    }
+
+    async getAIEngagementMetrics(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/engagement?${query}`);
+        } catch (error) {
+            console.warn('Get AI engagement metrics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIInsights(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/insights?${query}`);
+        } catch (error) {
+            console.warn('Get AI insights unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAIPerformanceMetrics(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/performance?${query}`);
+        } catch (error) {
+            console.warn('Get AI performance metrics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIRecommendations(userId) {
+        try {
+            return await this.request(`/ai/tracking/recommendations/${userId}`);
+        } catch (error) {
+            console.warn('Get AI recommendations unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async logAIEvent(eventData) {
+        try {
+            return await this.request('/ai/tracking/event', {
+                method: 'POST',
+                body: JSON.stringify(eventData)
+            });
+        } catch (error) {
+            console.warn('Log AI event unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getAIConversionTracking(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/conversion?${query}`);
+        } catch (error) {
+            console.warn('Get AI conversion tracking unavailable');
+            return { success: true, data: { conversionRate: 0, totalConversions: 0, attributedValue: 0 } };
+        }
+    }
+
+    async getAIBehaviorAnalysis(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/behavior?${query}`);
+        } catch (error) {
+            console.warn('Get AI behavior analysis unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAILeadingIndicators(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/leading-indicators?${query}`);
+        } catch (error) {
+            console.warn('Get AI leading indicators unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIFunnelAnalysis(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/funnel?${query}`);
+        } catch (error) {
+            console.warn('Get AI funnel analysis unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAICohortAnalysis(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/cohort?${query}`);
+        } catch (error) {
+            console.warn('Get AI cohort analysis unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAIPredictiveAnalytics(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/predictive?${query}`);
+        } catch (error) {
+            console.warn('Get AI predictive analytics unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIAttributionData(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/attribution?${query}`);
+        } catch (error) {
+            console.warn('Get AI attribution data unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAISentimentAnalysis(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/sentiment?${query}`);
+        } catch (error) {
+            console.warn('Get AI sentiment analysis unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIHeatmapData(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/heatmap?${query}`);
+        } catch (error) {
+            console.warn('Get AI heatmap data unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAIUserSegmentation(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/segmentation?${query}`);
+        } catch (error) {
+            console.warn('Get AI user segmentation unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAIVisualizationData(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/visualization?${query}`);
+        } catch (error) {
+            console.warn('Get AI visualization data unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIAnomalyDetection(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/anomaly-detection?${query}`);
+        } catch (error) {
+            console.warn('Get AI anomaly detection unavailable');
+            return { success: true, data: [] };
+        }
+    }
+
+    async getAIAudienceInsights(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/audience-insights?${query}`);
+        } catch (error) {
+            console.warn('Get AI audience insights unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIContentEffectiveness(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/content-effectiveness?${query}`);
+        } catch (error) {
+            console.warn('Get AI content effectiveness unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIFeedbackAnalysis(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/feedback-analysis?${query}`);
+        } catch (error) {
+            console.warn('Get AI feedback analysis unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    async getAIExperimentTracking(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            return await this.request(`/ai/tracking/experiment?${query}`);
+        } catch (error) {
+            console.warn('Get AI experiment tracking unavailable');
+            return { success: true, data: {} };
+        }
+    }
+
+    // Seed Data Management
+    async seedSkills(seedData) {
+        try {
+            return await this.request('/admin/seed/skills', {
+                method: 'POST',
+                body: JSON.stringify(seedData)
+            });
+        } catch (error) {
+            console.warn('Seeding skills unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async seedProjects(seedData) {
+        try {
+            return await this.request('/admin/seed/projects', {
+                method: 'POST',
+                body: JSON.stringify(seedData)
+            });
+        } catch (error) {
+            console.warn('Seeding projects unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async seedTestData() {
+        try {
+            return await this.request('/admin/seed/test-data', {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Seeding test data unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async resetDatabase() {
+        try {
+            return await this.request('/admin/reset', {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Resetting database unavailable');
+            return { success: false, message: error.message };
+        }
+    }
 }
 
 export default new ApiService();

@@ -113,17 +113,44 @@ const Analytics = () => {
   // Real-time WebSocket Connection
   useEffect(() => {
     if (viewMode === 'realtime') {
-      const ws = new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:3001');
-      
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setRealtimeData(prev => ({
-          ...prev,
-          ...data
-        }));
-      };
+      let ws;
 
-      return () => ws.close();
+      try {
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected for real-time analytics');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setRealtimeData(prev => ({
+              ...prev,
+              ...data
+            }));
+          } catch (parseError) {
+            console.error('Error parsing WebSocket message:', parseError);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = (event) => {
+          console.log('WebSocket closed:', event.code, event.reason);
+        };
+      } catch (error) {
+        console.error('Failed to establish WebSocket connection:', error);
+      }
+
+      return () => {
+        if (ws) {
+          ws.close();
+        }
+      };
     }
   }, [viewMode]);
 
@@ -544,6 +571,18 @@ const Analytics = () => {
     );
   }
 
+  // Don't render until data is loaded
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
   const data = analyticsData || generateEnhancedDemoData();
 
   return (
@@ -582,7 +621,7 @@ const Analytics = () => {
                     </span>
                   </button>
                   <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 max-h-96 overflow-y-auto">
-                    {notifications.map((notif, idx) => (
+                    {(notifications || []).map((notif, idx) => (
                       <div key={idx} className="p-4 border-b border-slate-700 hover:bg-slate-700/50">
                         <div className="flex items-start gap-3">
                           <FiAlertCircle className={`text-${notif.type === 'warning' ? 'yellow' : notif.type === 'error' ? 'red' : 'blue'}-400 mt-1`} />
@@ -990,7 +1029,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-6">Traffic Sources</h3>
                 <div className="space-y-4">
-                  {data.traffic.sources.map((source, index) => (
+                  {(data.traffic?.sources || []).map((source, index) => (
                     <div key={index} className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900/70 transition-colors group cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center relative" style={{
@@ -1042,7 +1081,7 @@ const Analytics = () => {
                           fill="#8884d8"
                           dataKey="count"
                         >
-                          {data.technical.devices.map((entry, index) => (
+                          {(data.technical?.devices || []).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -1063,7 +1102,7 @@ const Analytics = () => {
                           fill="#8884d8"
                           dataKey="users"
                         >
-                          {data.technical.browsers.map((entry, index) => (
+                          {(data.technical?.browsers || []).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
                           ))}
                         </Pie>
@@ -1073,7 +1112,7 @@ const Analytics = () => {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {data.technical.devices.map((device, index) => {
+                  {(data.technical?.devices || []).map((device, index) => {
                     const Icon = device.device === 'Desktop' ? FiMonitor : device.device === 'Mobile' ? FiSmartphone : FiTablet;
                     return (
                       <div key={index} className="flex items-center justify-between p-3 bg-slate-900/30 rounded-lg">
@@ -1098,7 +1137,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-6">Geographic Distribution</h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-                  {data.locations.map((location, index) => (
+                  {(data.locations || []).map((location, index) => (
                     <div key={index} className="space-y-2 p-3 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -1128,7 +1167,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 mb-8">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Top Performing Projects</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.topProjects.map((project, index) => (
+                {(data.topProjects || []).map((project, index) => (
                   <div key={index} className="bg-slate-900/50 rounded-lg p-5 hover:bg-slate-900/70 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/10">
                     <div className="flex items-start justify-between mb-4">
                       <h4 className="text-slate-300 font-medium flex-1">{project.name}</h4>
@@ -1184,7 +1223,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-6">Goals & Objectives</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {data.conversion.goals.map((goal, index) => (
+                  {(data.conversion?.goals || []).map((goal, index) => (
                     <div key={index} className="p-4 bg-slate-900/30 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
@@ -1262,7 +1301,7 @@ const Analytics = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.traffic.sources.map((source, index) => (
+                    {(data.traffic?.sources || []).map((source, index) => (
                       <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-900/30">
                         <td className="py-4 text-slate-300 font-medium">{source.source}</td>
                         <td className="py-4 text-right text-slate-300">{source.visits.toLocaleString()}</td>
@@ -1289,7 +1328,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-6">Top Referrers</h3>
                 <div className="space-y-3">
-                  {data.traffic.referrers.map((referrer, index) => (
+                  {(data.traffic?.referrers || []).map((referrer, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-colors">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <FiLink className="text-cyan-400 flex-shrink-0" />
@@ -1311,7 +1350,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-6">Campaign Performance</h3>
                 <div className="space-y-4">
-                  {data.traffic.campaigns.map((campaign, index) => (
+                  {(data.traffic?.campaigns || []).map((campaign, index) => (
                     <div key={index} className="p-4 bg-slate-900/30 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-slate-300 font-medium">{campaign.name}</h4>
@@ -1343,7 +1382,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Top SEO Keywords</h3>
               <div className="space-y-3">
-                {data.traffic.keywords.map((keyword, index) => (
+                {(data.traffic?.keywords || []).map((keyword, index) => (
                   <div key={index} className="p-4 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
@@ -1415,7 +1454,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">User Journey Flow</h3>
               <div className="space-y-4">
-                {data.behavior.userFlow.map((flow, index) => (
+                {(data.behavior?.userFlow || []).map((flow, index) => (
                   <div key={index} className="relative">
                     <div className="flex items-center gap-4">
                       <div className="flex-1 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
@@ -1449,7 +1488,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Custom Events Tracking</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.behavior.eventTracking.map((event, index) => (
+                {(data.behavior?.eventTracking || []).map((event, index) => (
                   <div key={index} className="p-4 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-colors">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
@@ -1479,7 +1518,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Site Search Terms</h3>
               <div className="space-y-3">
-                {data.behavior.searchTerms.map((search, index) => (
+                {(data.behavior?.searchTerms || []).map((search, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <FiSearch className="text-cyan-400" />
@@ -1542,7 +1581,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Conversion Funnel</h3>
               <div className="space-y-4">
-                {data.conversion.funnel.map((stage, index) => (
+                {(data.conversion?.funnel || []).map((stage, index) => (
                   <div key={index} className="relative">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
@@ -1586,7 +1625,7 @@ const Analytics = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.conversion.attribution.map((attr, index) => (
+                    {(data.conversion?.attribution || []).map((attr, index) => (
                       <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-900/30">
                         <td className="py-4 text-slate-300 font-medium">{attr.channel}</td>
                         <td className="py-4 text-right text-slate-300">{attr.firstClick}</td>
@@ -1615,7 +1654,7 @@ const Analytics = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.conversion.cohortAnalysis.map((cohort, index) => (
+                    {(data.conversion?.cohortAnalysis || []).map((cohort, index) => (
                       <tr key={index} className="border-b border-slate-700/50">
                         <td className="py-3 text-slate-300 font-medium pr-6">{cohort.week}</td>
                         <td className="py-3 text-right text-slate-300 px-2">{cohort.users}</td>
@@ -1680,7 +1719,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Active Pages Right Now</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.behavior.pageViews.slice(0, 6).map((page, index) => (
+                {(data.behavior?.pageViews || []).slice(0, 6).map((page, index) => (
                   <div key={index} className="p-4 bg-slate-900/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-slate-300 font-medium">{page.page}</h4>
@@ -1706,7 +1745,7 @@ const Analytics = () => {
                 </div>
               </div>
               <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
-                {data.realtimeActivity.map((activity) => (
+                {(data.realtimeActivity || []).map((activity) => (
                   <div 
                     key={activity.id} 
                     className="flex items-start gap-4 p-3 bg-slate-900/50 rounded-lg hover:bg-slate-900/70 transition-colors animate-slideIn"
@@ -1781,7 +1820,7 @@ const Analytics = () => {
                 <div>
                   <h4 className="text-slate-400 font-medium mb-4">Load Time by Page</h4>
                   <div className="space-y-3">
-                    {data.technical.loadTimes.byPage.map((page, index) => (
+                    {(data.technical?.loadTimes?.byPage || []).map((page, index) => (
                       <div key={index} className="p-3 bg-slate-900/30 rounded">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-slate-300 font-medium">{page.page}</span>
@@ -1876,7 +1915,7 @@ const Analytics = () => {
                 <div>
                   <h4 className="text-slate-400 font-medium mb-4">Keyword Rankings</h4>
                   <div className="space-y-3">
-                    {data.seo.rankings.map((keyword, index) => (
+                    {(data.seo?.rankings || []).map((keyword, index) => (
                       <div key={index} className="p-3 bg-slate-900/30 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-slate-300 font-medium">{keyword.keyword}</span>
@@ -1904,7 +1943,7 @@ const Analytics = () => {
                 <div>
                   <h4 className="text-slate-400 font-medium mb-4">Top Backlinks</h4>
                   <div className="space-y-3">
-                    {data.seo.backlinks.map((backlink, index) => (
+                    {(data.seo?.backlinks || []).map((backlink, index) => (
                       <div key={index} className="p-3 bg-slate-900/30 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-slate-300 font-medium">{backlink.domain}</span>
@@ -1927,7 +1966,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Social Media Performance</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {Object.entries(data.social.followers).map(([platform, stats]) => (
+                {Object.entries(data.social?.followers || {}).map(([platform, stats]) => (
                   <div key={platform} className="p-4 bg-slate-900/30 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-slate-300 font-medium capitalize">{platform}</h4>
@@ -1947,7 +1986,7 @@ const Analytics = () => {
 
               <div className="space-y-4">
                 <h4 className="text-slate-400 font-medium">Social Shares & Engagement</h4>
-                {data.social.shares.map((share, index) => (
+                {(data.social?.shares || []).map((share, index) => (
                   <div key={index} className="p-4 bg-slate-900/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-slate-300 font-medium">{share.platform}</span>
@@ -1966,7 +2005,7 @@ const Analytics = () => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-cyan-400 mb-6">Error Monitoring</h3>
               <div className="space-y-3">
-                {data.technical.errors.map((error, index) => (
+                {(data.technical?.errors || []).map((error, index) => (
                   <div key={index} className="flex items-center justify-between p-4 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-colors">
                     <div className="flex items-center gap-4">
                       <FiAlertCircle className={`text-2xl ${
@@ -1996,7 +2035,7 @@ const Analytics = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-6">A/B Test Results</h3>
                 <div className="space-y-4">
-                  {abTests.map((test, index) => (
+                  {(abTests || []).map((test, index) => (
                     <div key={index} className="p-4 bg-slate-900/30 rounded-lg">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-slate-300 font-medium">{test.name}</h4>

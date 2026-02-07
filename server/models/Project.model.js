@@ -25,13 +25,13 @@ const projectSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['planning', 'in-progress', 'completed', 'archived'],
+        enum: ['idea', 'planning', 'in-progress', 'testing', 'completed', 'on-hold', 'archived'],
         default: 'in-progress',
         index: true
     },
     category: {
         type: String,
-        enum: ['Web', 'Mobile', 'Desktop', 'AI/ML', 'Blockchain', 'DevOps', 'Other'],
+        enum: ['Web', 'Mobile', 'Desktop', 'AI/ML', 'Blockchain', 'DevOps', 'Data', 'Game', 'IoT', 'Other'],
         required: true,
         index: true
     },
@@ -39,7 +39,11 @@ const projectSchema = new mongoose.Schema({
         github: { type: String, trim: true },
         live: { type: String, trim: true },
         demo: { type: String, trim: true },
-        documentation: { type: String, trim: true }
+        documentation: { type: String, trim: true },
+        staging: { type: String, trim: true },
+        analytics: { type: String, trim: true },
+        monitoring: { type: String, trim: true },
+        api: { type: String, trim: true }
     },
     images: [{
         url: { type: String, required: true },
@@ -64,7 +68,7 @@ const projectSchema = new mongoose.Schema({
     endDate: Date,
     priority: {
         type: String,
-        enum: ['low', 'medium', 'high'],
+        enum: ['low', 'medium', 'high', 'urgent'],
         default: 'medium'
     },
     visibility: {
@@ -85,7 +89,61 @@ const projectSchema = new mongoose.Schema({
         forks: { type: Number, default: 0 },
         commits: { type: Number, default: 0 },
         lastCommit: Date
-    }
+    },
+    // Extended fields for enhanced project management
+    client: { type: String, trim: true },
+    budget: { type: Number, default: 0 },
+    currentStage: { type: String, enum: ['idea', 'planning', 'development', 'testing', 'deployment', 'maintenance'], default: 'planning' },
+    stageHistory: [{
+        stage: String,
+        date: Date,
+        notes: String
+    }],
+    milestones: [{
+        name: String,
+        description: String,
+        dueDate: Date,
+        completed: { type: Boolean, default: false },
+        completedAt: Date
+    }],
+    team: [{
+        name: String,
+        role: String,
+        email: String
+    }],
+    resources: {
+        budget: { type: Number, default: 0 },
+        timeline: String,
+        tools: [String],
+        documentation: String
+    },
+    deliverables: {
+        current: [String],
+        completed: [String],
+        pending: [String]
+    },
+    automation: {
+        autoDeploy: { type: Boolean, default: false },
+        ciCd: { type: Boolean, default: false },
+        testing: { type: Boolean, default: false },
+        monitoring: { type: Boolean, default: false },
+        notifications: { type: Boolean, default: true }
+    },
+    analytics: {
+        views: { type: Number, default: 0 },
+        engagement: { type: Number, default: 0 },
+        performance: { type: Number, default: 0 },
+        uptime: { type: Number, default: 0 },
+        errors: { type: Number, default: 0 }
+    },
+    challenges: String,
+    achievements: [String],
+    fullDescription: String,
+    teamSize: Number,
+    completionDate: Date,
+    hidden: { type: Boolean, default: false },
+    archived: { type: Boolean, default: false },
+    pinned: { type: Boolean, default: false }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
@@ -97,6 +155,10 @@ projectSchema.index({ title: 'text', description: 'text', technologies: 'text' }
 projectSchema.index({ createdAt: -1 });
 projectSchema.index({ updatedAt: -1 });
 projectSchema.index({ featured: -1, createdAt: -1 });
+projectSchema.index({ status: 1 });
+projectSchema.index({ category: 1 });
+projectSchema.index({ priority: 1 });
+projectSchema.index({ currentStage: 1 });
 
 // Virtual for project duration
 projectSchema.virtual('duration').get(function() {

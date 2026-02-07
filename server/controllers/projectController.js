@@ -100,6 +100,12 @@ exports.createProject = asyncHandler(async (req, res) => {
 // @route   PUT /api/projects/:id
 // @access  Private
 exports.updateProject = asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400);
+        throw new Error('Validation failed: ' + errors.array().map(err => err.msg).join(', '));
+    }
+
     const project = await Project.findOne({
         _id: req.params.id,
         userId: req.user.id
