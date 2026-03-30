@@ -45,7 +45,9 @@ const AITrackingSystem = () => {
     // State Management
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [realTimeEnabled, setRealTimeEnabled] = useState(true);
+    const [realTimeEnabled, setRealTimeEnabled] = useState(false);
+    const [wsConnectionAttempts, setWsConnectionAttempts] = useState(0);
+    const maxRetryAttempts = 3;
     const [aiInsights, setAiInsights] = useState([]);
     const [notifications, setNotifications] = useState(true);
     const [viewMode, setViewMode] = useState('overview');
@@ -112,12 +114,15 @@ const AITrackingSystem = () => {
 
     const fetchHeatmapData = async () => {
         try {
-            const response = await apiService.request('/tracking/heatmap');
-            if (response.success) {
-                setHeatmapData(response.heatmap);
-            }
+            const response = await apiService.getHeatmapData();
+            setHeatmapData(response.heatmap);
         } catch (err) {
-            console.error('Heatmap error:', err);
+            console.warn('Heatmap data unavailable:', err);
+            // Don't show error notification for 500 errors to prevent spam
+            if (!err.message || (!err.message.includes('500') && !err.message.includes('Server error'))) {
+                error('Failed to load heatmap data');
+            }
+            setHeatmapData(null); // Set to null to prevent crashes
         }
     };
 
@@ -162,6 +167,7 @@ const AITrackingSystem = () => {
 
         wsRef.current.onopen = () => {
             console.log('WebSocket connected');
+            setWsConnectionAttempts(0); // Reset attempts on successful connection
             wsRef.current.send(JSON.stringify({ 
                 type: 'auth', 
                 token: localStorage.getItem('token') 
@@ -179,8 +185,12 @@ const AITrackingSystem = () => {
 
         wsRef.current.onclose = () => {
             console.log('WebSocket disconnected');
-            if (realTimeEnabled) {
+            if (realTimeEnabled && wsConnectionAttempts < maxRetryAttempts) {
+                setWsConnectionAttempts(prev => prev + 1);
                 setTimeout(setupWebSocket, 5000);
+            } else if (wsConnectionAttempts >= maxRetryAttempts) {
+                console.log('Max retry attempts reached, disabling WebSocket');
+                setRealTimeEnabled(false);
             }
         };
     };

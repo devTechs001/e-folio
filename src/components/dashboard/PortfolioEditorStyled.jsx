@@ -38,7 +38,7 @@ import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
 
 // Enhanced Sortable Section Component
-const SortableSection = ({ section, onEdit, onToggle, onDelete, onDuplicate, onClone, theme, isSelected }) => {
+const SortableSection = ({ section, onEdit, onToggle, onDelete, onDuplicate, onClone, theme, isSelected, sections, updateConfig }) => {
   const {
     attributes,
     listeners,
@@ -1931,9 +1931,11 @@ const PortfolioEditor = () => {
                             onToggle={toggleSection}
                             onDelete={deleteSection}
                             onDuplicate={duplicateSection}
-                            onClone={cloneAsTemplate}
+                            onClone={cloneSection}
                             theme={theme}
                             isSelected={selectedSection?.id === section.id}
+                            sections={sections}
+                            updateConfig={updateConfig}
                           />
                         ))}
                       </SortableContext>
@@ -3544,6 +3546,8 @@ const PortfolioEditor = () => {
                               onClone={cloneAsTemplate}
                               theme={theme}
                               isSelected={selectedSection?.id === section.id}
+                              sections={sections}
+                              updateConfig={updateConfig}
                             />
                           ))}
                         </SortableContext>

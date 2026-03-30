@@ -1800,19 +1800,19 @@ const Analytics = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">Average</span>
-                      <span className="text-cyan-400 font-semibold">{data.technical.loadTimes.avg}s</span>
+                      <span className="text-cyan-400 font-semibold">{data.technical?.loadTimes?.avg || 0}s</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">Median</span>
-                      <span className="text-blue-400 font-semibold">{data.technical.loadTimes.median}s</span>
+                      <span className="text-blue-400 font-semibold">{data.technical?.loadTimes?.median || 0}s</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">95th Percentile</span>
-                      <span className="text-purple-400 font-semibold">{data.technical.loadTimes.p95}s</span>
+                      <span className="text-purple-400 font-semibold">{data.technical?.loadTimes?.p95 || 0}s</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">99th Percentile</span>
-                      <span className="text-pink-400 font-semibold">{data.technical.loadTimes.p99}s</span>
+                      <span className="text-pink-400 font-semibold">{data.technical?.loadTimes?.p99 || 0}s</span>
                     </div>
                   </div>
                 </div>
