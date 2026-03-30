@@ -140,7 +140,12 @@ const Collaborators = () => {
             setCollaborators(response.collaborators || []);
         } catch (err) {
             console.error('Error loading collaborators:', err);
-            error('Failed to load collaborators');
+            // Don't show error for 500 errors to prevent spam
+            if (!err.message || (!err.message.includes('500') && !err.message.includes('Server error'))) {
+                error('Failed to load collaborators');
+            }
+            // Set empty array to prevent crashes
+            setCollaborators([]);
         } finally {
             setLoading(false);
         }

@@ -340,13 +340,11 @@ const AIAssistant = () => {
     // Database Operations
     const loadConversations = async () => {
         try {
-            const response = await ApiService.get('/ai/conversations', {
-                params: { userId: user?.id }
-            });
+            const response = await apiService.getAIConversations(user?.id);
             
-            setConversations(response.data.conversations || []);
+            setConversations(response.conversations || []);
             
-            if (response.data.conversations.length > 0 && !currentConversation) {
+            if (response.conversations.length > 0 && !currentConversation) {
                 await loadConversation(response.data.conversations[0].id);
             }
         } catch (err) {
@@ -462,10 +460,8 @@ const AIAssistant = () => {
 
     const loadUsageStats = async () => {
         try {
-            const response = await ApiService.get('/ai/usage-stats', {
-                params: { userId: user?.id }
-            });
-            setUsageStats(response.data);
+            const response = await apiService.getUsageStats(user?.id);
+            setUsageStats(response);
         } catch (err) {
             console.error('Error loading usage stats:', err);
         }
@@ -473,11 +469,8 @@ const AIAssistant = () => {
 
     const loadUserPreferences = async () => {
         try {
-            const response = await ApiService.get('/ai/preferences', {
-                params: { userId: user?.id }
-            });
-            
-            const prefs = response.data;
+            const response = await apiService.getAIPreferences(user?.id);
+            const prefs = response;
             if (prefs) {
                 // Default to free model (gpt-3.5-turbo) when possible
                 setAiModel(prefs.aiModel || 'gpt-3.5-turbo');
