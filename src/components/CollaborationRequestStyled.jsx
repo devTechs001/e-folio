@@ -620,12 +620,12 @@ const CollaborationRequest = () => {
                     animate={{ scale: 1, opacity: 1 }}
                     className="max-w-2xl w-full"
                 >
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 md:p-12 text-center">
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-8 md:p-12 text-center">
                         <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1, rotate: 360 }}
-                            transition={{ delay: 0.2, type: 'spring' }}
-                            className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center"
+                            transition={{ delay: 0.2, type: 'spring', duration: 0.8 }}
+                            className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center shadow-lg"
                         >
                             <CheckCircle size={48} className="text-white" />
                         </motion.div>
@@ -634,7 +634,7 @@ const CollaborationRequest = () => {
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4"
+                            className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-6"
                         >
                             Request Submitted Successfully! 🎉
                         </motion.h2>
@@ -649,10 +649,71 @@ const CollaborationRequest = () => {
                             You'll receive an email with further instructions once approved.
                         </motion.p>
 
+                        {/* Request Details Summary */}
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.5 }}
+                            className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 mb-8 border border-blue-100 dark:border-blue-800"
+                        >
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-lg">Request Summary</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Name</p>
+                                    <p className="font-medium text-gray-900 dark:text-white">{formData.name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                                    <p className="font-medium text-gray-900 dark:text-white">{formData.email}</p>
+                                </div>
+                                {formData.role && (
+                                    <div>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
+                                        <p className="font-medium text-gray-900 dark:text-white">{formData.role}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Submitted</p>
+                                    <p className="font-medium text-gray-900 dark:text-white">{new Date().toLocaleString()}</p>
+                                </div>
+                            </div>
+                            
+                            {/* Reference Number */}
+                            <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Reference Number</p>
+                                        <p className="font-mono font-medium text-blue-600 dark:text-blue-400">
+                                            REQ-{Date.now().toString().slice(-8)}
+                                        </p>
+                                    </div>
+                                    <div className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
+                                        <span className="text-xs font-medium text-green-700 dark:text-green-400">Status: Received</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.6 }}
+                            className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 mb-8 border border-green-200 dark:border-green-800"
+                        >
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center justify-center gap-2">
+                                <Mail className="text-green-600" size={20} />
+                                Confirmation Email Sent
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm">
+                                We've sent a confirmation email to <span className="font-medium text-gray-900 dark:text-white">{formData.email}</span>. 
+                                Please check your inbox (and spam folder) for your request confirmation.
+                            </p>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.7 }}
                             className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 mb-8"
                         >
                             <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center justify-center gap-2">

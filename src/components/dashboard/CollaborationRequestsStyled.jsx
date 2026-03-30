@@ -78,18 +78,18 @@ const CollaborationRequests = () => {
         loadStats();
 
         // Listen for real-time updates
-        const handleNewRequest = useCallback((request) => {
+        const handleNewRequest = (request) => {
             setRequests(prev => [request, ...prev]);
             info(`📬 New collaboration request from ${request.name}`);
             loadStats();
-        }, [info]);
+        };
 
-        const handleRequestUpdated = useCallback((updatedRequest) => {
+        const handleRequestUpdated = (updatedRequest) => {
             setRequests(prev => prev.map(r =>
                 r.id === updatedRequest.id ? updatedRequest : r
             ));
             loadStats();
-        }, []);
+        };
 
         on('new_collaboration_request', handleNewRequest);
         on('collaboration_request_updated', handleRequestUpdated);

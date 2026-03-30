@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { 
-    Home, FolderKanban, Settings, Palette, BarChart3, 
+    Home, FolderKanban, FolderOpen, Settings, Palette, BarChart3, 
     Users, UserPlus, Image, Mail, MessageSquare, Bot,
     FileEdit, TrendingUp, LogOut, ArrowLeft, Menu, X,
     Wrench, User, GraduationCap, Activity, PieChart,

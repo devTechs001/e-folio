@@ -90,10 +90,22 @@ const WorkspaceManager = () => {
             if (response.success) {
                 setWorkspaces(response.workspaces || []);
                 setStats(response.stats || stats);
+            } else {
+                // Handle API errors gracefully
+                console.warn('Workspace API returned non-success:', response);
+                setWorkspaces([]);
+                // Don't show error for 404 - workspaces might not be set up yet
+                if (response.message && !response.message.includes('404')) {
+                    error('Failed to load workspaces');
+                }
             }
         } catch (err) {
             console.error('Error loading workspaces:', err);
-            error('Failed to load workspaces');
+            // Don't show error for 404 - workspaces might not be set up yet
+            if (err.message && !err.message.includes('404')) {
+                error('Failed to load workspaces');
+            }
+            setWorkspaces([]); // Set empty array to prevent crashes
         } finally {
             setLoading(false);
         }
