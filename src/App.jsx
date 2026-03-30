@@ -18,6 +18,7 @@ import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Sitemap from './pages/Sitemap';
 import CVPage from './pages/CVPage';
+import CollaboratorWorkspace from './components/CollaboratorWorkspace';
 import './index.css';
 
 // Component to handle hash navigation
@@ -102,6 +103,11 @@ const App = () => {
                                 <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
                                 <Route path="/collaborate" element={<CollaborationRequest />} />
                                 <Route path="/reviews" element={<PublicReviews />} />
+                                <Route path="/workspace" element={
+                                    <ProtectedRoute>
+                                        <CollaboratorWorkspace />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/terms" element={<TermsAndConditions />} />
                                 <Route path="/privacy" element={<PrivacyPolicy />} />
                                 <Route path="/sitemap" element={<Sitemap />} />

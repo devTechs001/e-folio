@@ -113,7 +113,10 @@ exports.approveRequest = async (req, res) => {
 
         // Generate invite token
         const inviteToken = generateInviteToken();
-        const inviteLink = `${process.env.FRONTEND_URL}/register?token=${inviteToken}&email=${encodeURIComponent(request.email)}`;
+        
+        // Use environment variable with fallback to prevent broken links
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
+        const inviteLink = `${frontendUrl}/register?token=${inviteToken}&email=${encodeURIComponent(request.email)}`;
 
         // Update request
         request.status = 'approved';
@@ -645,8 +648,8 @@ exports.getRequestActivity = async (req, res) => {
     try {
         const { requestId } = req.params;
         const request = await CollaborationRequest.findById(requestId)
-            .populate('userId', 'name email')
-            .populate('notes.userId', 'name email');
+            .populate('processedBy', 'name email')
+            .populate('notes.addedBy', 'name email');
 
         if (!request) {
             return res.status(404).json({
@@ -655,9 +658,51 @@ exports.getRequestActivity = async (req, res) => {
             });
         }
 
+        // Build activity timeline from request data
+        const activity = [];
+        
+        // Add submission event
+        activity.push({
+            type: 'submitted',
+            timestamp: request.submittedAt,
+            details: 'Collaboration request submitted'
+        });
+
+        // Add status change events
+        if (request.status === 'approved' && request.processedAt) {
+            activity.push({
+                type: 'approved',
+                timestamp: request.processedAt,
+                details: 'Request approved',
+                processedBy: request.processedBy
+            });
+        } else if (request.status === 'rejected' && request.processedAt) {
+            activity.push({
+                type: 'rejected',
+                timestamp: request.processedAt,
+                details: 'Request rejected',
+                processedBy: request.processedBy
+            });
+        }
+
+        // Add note events
+        if (request.notes && request.notes.length > 0) {
+            request.notes.forEach(note => {
+                activity.push({
+                    type: 'note_added',
+                    timestamp: note.addedAt,
+                    details: 'Note added',
+                    addedBy: note.addedBy
+                });
+            });
+        }
+
+        // Sort by timestamp
+        activity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
         res.json({
             success: true,
-            activity: request.activity || []
+            activity
         });
     } catch (error) {
         console.error('Get activity error:', error);
@@ -807,3 +852,4 @@ const getCollaboratorActivity = async (req, res) => {
 exports.getCollaborators = getCollaborators;
 exports.getPendingInvites = getPendingInvites;
 exports.getCollaboratorActivity = getCollaboratorActivity;
+exports.getRequestDetails = getRequestById; // Alias for clarity

@@ -734,7 +734,7 @@ const CollaborationRequest = () => {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <Phone size={16} className="inline mr-2" />
-                                                Phone Number *
+                                                Phone Number
                                             </label>
                                             <input
                                                 type="tel"
@@ -758,7 +758,7 @@ const CollaborationRequest = () => {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <MapPin size={16} className="inline mr-2" />
-                                                Location *
+                                                Location
                                             </label>
                                             <input
                                                 type="text"
@@ -783,7 +783,7 @@ const CollaborationRequest = () => {
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                             <Clock size={16} className="inline mr-2" />
-                                            Timezone *
+                                            Timezone
                                         </label>
                                         <select
                                             value={formData.timezone}

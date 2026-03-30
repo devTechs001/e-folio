@@ -212,13 +212,13 @@ class ApiService {
 class ApiService {
     // ... existing methods ...
 
-    // Collaboration Request (Public)
+    // Collaboration Request (Public) - Updated to use /collaboration-requests
     async submitCollaborationRequest(data) {
-        return this.post('/api/collaboration/submit', data);
+        return this.post('/api/collaboration-requests/submit', data);
     }
 
     async uploadCollaborationFile(formData, config = {}) {
-        return this.post('/api/collaboration/upload', formData, {
+        return this.post('/api/collaboration-requests/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             ...config
         });
@@ -227,35 +227,35 @@ class ApiService {
     // Owner methods (already exist in previous code)
     // These are called from the CollaborationRequests dashboard component
     async getCollaborationRequests(params = {}) {
-        return this.get('/api/collaboration/requests', { params });
+        return this.get('/api/collaboration-requests/requests', { params });
     }
 
     async getCollaborationStats() {
-        return this.get('/api/collaboration/stats');
+        return this.get('/api/collaboration-requests/stats');
     }
 
     async approveRequest(id, data = {}) {
-        return this.post(`/api/collaboration/requests/${id}/approve`, data);
+        return this.post(`/api/collaboration-requests/requests/${id}/approve`, data);
     }
 
     async rejectRequest(id, data = {}) {
-        return this.post(`/api/collaboration/requests/${id}/reject`, data);
+        return this.post(`/api/collaboration-requests/requests/${id}/reject`, data);
     }
 
     async bulkApproveRequests(requestIds) {
-        return this.post('/api/collaboration/bulk/approve', { requestIds });
+        return this.post('/api/collaboration-requests/bulk/approve', { requestIds });
     }
 
     async bulkRejectRequests(requestIds, reason = '') {
-        return this.post('/api/collaboration/bulk/reject', { requestIds, reason });
+        return this.post('/api/collaboration-requests/bulk/reject', { requestIds, reason });
     }
 
     async archiveRequest(id) {
-        return this.post(`/api/collaboration/requests/${id}/archive`);
+        return this.post(`/api/collaboration-requests/requests/${id}/archive`);
     }
 
     async exportCollaborationRequests(params = {}) {
-        return this.get('/api/collaboration/export', {
+        return this.get('/api/collaboration-requests/export', {
             params,
             responseType: 'blob'
         });

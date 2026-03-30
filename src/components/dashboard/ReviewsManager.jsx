@@ -77,11 +77,11 @@ const ReviewsManager = () => {
             loadFeaturedReviews();
 
             // Socket listeners
-            const handleNewReview = (review) => {
+            const handleNewReview = useCallback((review) => {
                 setReviews(prev => [review, ...prev]);
                 info(`New review from ${review.name}`);
                 loadAnalytics();
-            };
+            }, [info]);
 
             on('new_review', handleNewReview);
 
@@ -89,9 +89,9 @@ const ReviewsManager = () => {
                 off('new_review', handleNewReview);
             };
         }
-    }, [filter, sortBy, sortOrder, currentPage, isOwner, on, off]);
+    }, [isOwner, on, off, info, loadReviews, loadAnalytics, loadFeaturedReviews]);
 
-    const loadReviews = async () => {
+    const loadReviews = useCallback(async () => {
         try {
             setLoading(true);
             const response = await apiService.getReviews({
@@ -105,7 +105,7 @@ const ReviewsManager = () => {
                 startDate: dateRange.start,
                 endDate: dateRange.end
             });
-            
+
             if (response.success) {
                 setReviews(response.reviews || []);
                 setStats(response.stats || {});
@@ -116,9 +116,9 @@ const ReviewsManager = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter, sortBy, sortOrder, currentPage, reviewsPerPage, searchQuery, ratingFilter, dateRange, error]);
 
-    const loadAnalytics = async () => {
+    const loadAnalytics = useCallback(async () => {
         try {
             const response = await apiService.getReviewAnalytics();
             if (response.success) {
@@ -127,9 +127,9 @@ const ReviewsManager = () => {
         } catch (err) {
             console.error('Error loading analytics:', err);
         }
-    };
+    }, []);
 
-    const loadFeaturedReviews = async () => {
+    const loadFeaturedReviews = useCallback(async () => {
         try {
             const response = await apiService.getFeaturedReviews();
             if (response.success) {
@@ -138,7 +138,7 @@ const ReviewsManager = () => {
         } catch (err) {
             console.error('Error loading featured reviews:', err);
         }
-    };
+    }, []);
 
     const handleModerate = async (reviewId, status, responseText = '') => {
         try {

@@ -265,73 +265,87 @@ class ApiService {
         });
     }
 
+    async uploadCollaborationFile(formData, config) {
+        try {
+            return await this.request('/collaboration-requests/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {},
+                ...config
+            });
+        } catch (error) {
+            console.error('File upload failed:', error);
+            throw error;
+        }
+    }
+
     async getCollaborationRequests() {
-        return this.request('/collaboration-requests/requests');
+        return this.request('/collaboration/requests');
     }
 
     async approveRequest(requestId, data = {}) {
-        return this.request(`/collaboration-requests/requests/${requestId}/approve`, {
+        return this.request(`/collaboration/requests/${requestId}/approve`, {
             method: 'POST',
             body: JSON.stringify(data)
         });
     }
 
     async rejectRequest(requestId, data = {}) {
-        return this.request(`/collaboration-requests/requests/${requestId}/reject`, {
+        return this.request(`/collaboration/requests/${requestId}/reject`, {
             method: 'POST',
             body: JSON.stringify(data)
         });
     }
 
     async getCollaborationStats() {
-        return this.request('/collaboration-requests/stats');
+        return this.request('/collaboration/stats');
     }
 
     async getRequestDetails(requestId) {
-        return this.request(`/collaboration-requests/requests/${requestId}`);
+        return this.request(`/collaboration/requests/${requestId}`);
     }
 
     async addRequestNote(requestId, note) {
-        return this.request(`/collaboration-requests/requests/${requestId}/notes`, {
+        return this.request(`/collaboration/requests/${requestId}/notes`, {
             method: 'POST',
             body: JSON.stringify({ note })
         });
     }
 
     async archiveRequest(requestId) {
-        return this.request(`/collaboration-requests/requests/${requestId}/archive`, {
+        return this.request(`/collaboration/requests/${requestId}/archive`, {
             method: 'POST'
         });
     }
 
     async bulkApproveRequests(requestIds) {
-        return this.request('/collaboration-requests/bulk/approve', {
+        return this.request('/collaboration/requests/bulk/approve', {
             method: 'POST',
             body: JSON.stringify({ requestIds })
         });
     }
 
     async bulkRejectRequests(requestIds) {
-        return this.request('/collaboration-requests/bulk/reject', {
+        return this.request('/collaboration/requests/bulk/reject', {
             method: 'POST',
             body: JSON.stringify({ requestIds })
         });
     }
 
     async exportRequests(filters = {}) {
-        return this.request('/collaboration-requests/export?' + new URLSearchParams(filters));
+        return this.request('/collaboration/export?' + new URLSearchParams(filters));
     }
 
     async getCollaborators() {
-        return this.request('/collaboration-requests/collaborators');
+        return this.request('/collaboration/collaborators');
     }
 
     async getPendingInvites() {
-        return this.request('/collaboration-requests/invites/pending');
+        return this.request('/collaboration/invites/pending');
     }
 
     async getCollaboratorActivity() {
-        return this.request('/collaboration-requests/activity');
+        return this.request('/collaboration/activity');
     }
 
     // Analytics APIs
@@ -538,19 +552,6 @@ class ApiService {
         return { success: true };
     }
 
-    async uploadCollaborationFile(formData, config) {
-        try {
-            return await this.request('/collaboration/upload', {
-                method: 'POST',
-                body: formData,
-                headers: {},
-                ...config
-            });
-        } catch (error) {
-            console.error('File upload failed:', error);
-            throw error;
-        }
-    }
 
     // Media APIs
     async uploadMedia(formData) {
@@ -949,11 +950,10 @@ class ApiService {
         });
     }
 
-    async moderateReview(id, status) {
-        // This endpoint may not be implemented in backend yet
-        return this.request(`/reviews/${id}/moderate`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status })
+    async moderateReview(id, data = {}) {
+        return this.request(`/reviews/${id}/approve`, {
+            method: 'POST',
+            body: JSON.stringify(data)
         });
     }
 
@@ -967,6 +967,84 @@ class ApiService {
         return this.request(`/reviews/${id}/like`, {
             method: 'DELETE'
         });
+    }
+
+    // Workspace APIs
+    async createWorkspace(workspaceData) {
+        return this.request('/workspace', {
+            method: 'POST',
+            body: JSON.stringify(workspaceData)
+        });
+    }
+
+    async getWorkspaces(params = {}) {
+        const query = new URLSearchParams(params);
+        return this.request(`/workspace?${query}`);
+    }
+
+    async getWorkspaceById(workspaceId) {
+        return this.request(`/workspace/${workspaceId}`);
+    }
+
+    async getCollaboratorWorkspaces() {
+        return this.request('/workspace/my-collaborations');
+    }
+
+    async addCollaborator(workspaceId, collaboratorData) {
+        return this.request(`/workspace/${workspaceId}/collaborators`, {
+            method: 'POST',
+            body: JSON.stringify(collaboratorData)
+        });
+    }
+
+    async removeCollaborator(workspaceId, collaboratorId) {
+        return this.request(`/workspace/${workspaceId}/collaborators/${collaboratorId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async updateCollaboratorPermissions(workspaceId, collaboratorId, permissions) {
+        return this.request(`/workspace/${workspaceId}/collaborators/${collaboratorId}/permissions`, {
+            method: 'PUT',
+            body: JSON.stringify(permissions)
+        });
+    }
+
+    async addTask(workspaceId, taskData) {
+        return this.request(`/workspace/${workspaceId}/tasks`, {
+            method: 'POST',
+            body: JSON.stringify(taskData)
+        });
+    }
+
+    async updateTaskStatus(workspaceId, taskId, status) {
+        return this.request(`/workspace/${workspaceId}/tasks/${taskId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        });
+    }
+
+    async updateWorkspaceSettings(workspaceId, settings) {
+        return this.request(`/workspace/${workspaceId}/settings`, {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
+    }
+
+    async archiveWorkspace(workspaceId) {
+        return this.request(`/workspace/${workspaceId}/archive`, {
+            method: 'PUT'
+        });
+    }
+
+    async deleteWorkspace(workspaceId) {
+        return this.request(`/workspace/${workspaceId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async getWorkspaceAnalytics(workspaceId) {
+        return this.request(`/workspace/${workspaceId}/analytics`);
     }
 
     // Learning Center APIs
@@ -1217,10 +1295,10 @@ class ApiService {
         }
     }
 
-    // Collaboration Requests APIs
+    // Collaboration Requests APIs (Use /collaboration-requests to match server routes)
     async getCollaborationStats() {
         try {
-            return await this.request('/collaboration/stats');
+            return await this.request('/collaboration-requests/stats');
         } catch (error) {
             console.warn('Collaboration stats unavailable');
             return { success: false, message: 'Failed to fetch collaboration stats' };
@@ -1229,7 +1307,7 @@ class ApiService {
 
     async getCollaborationRequests() {
         try {
-            return await this.request('/collaboration/requests');
+            return await this.request('/collaboration-requests/requests');
         } catch (error) {
             console.warn('Collaboration requests unavailable');
             return { success: true, data: [] };

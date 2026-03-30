@@ -1,0 +1,1014 @@
+        at SocketProvider (http://localhost:3000/src/contexts/SocketContext.jsx:32:34)
+        at NotificationProvider (http://localhost:3000/src/components/NotificationSystem.jsx:31:33)
+        at AuthProvider (http://localhost:3000/src/contexts/AuthContext.jsx:30:25)
+        at div
+        at ThemeProvider (http://localhost:3000/src/contexts/ThemeContext.jsx:336:33)
+        at App (http://localhost:3000/src/App.jsx:58:3)
+
+    React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error caught by boundary: ReferenceError: Cannot access 'loadReviews' before initialization
+        at ReviewsManager (ReviewsManager.jsx:92:33)
+        at renderWithHooks (react-dom.development.js:15486:18)
+        at updateFunctionComponent (react-dom.development.js:19617:20)
+        at mountLazyComponent (react-dom.development.js:19988:17)
+        at beginWork (react-dom.development.js:21632:16)
+        at beginWork$1 (react-dom.development.js:27465:14)
+        at performUnitOfWork (react-dom.development.js:26596:12)
+        at workLoopSync (react-dom.development.js:26505:5)
+        at renderRootSync (react-dom.development.js:26473:7)
+        at recoverFromConcurrentError (react-dom.development.js:25889:20) Object Error Component Stack
+        at ErrorBoundary (ErrorBoundary.jsx:7:9)
+        at RenderedRoute (chunk-EPOLDU6W.mjs:5864:26)
+        at Routes (chunk-EPOLDU6W.mjs:6664:3)
+        at main (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at DashboardContent (Dashboard.jsx:291:32)
+        at ErrorBoundary (ErrorBoundary.jsx:7:9)
+        at DashboardProvider (DashboardContext.jsx:14:30)
+        at Dashboard (<anonymous>)
+        at ProtectedRoute (ProtectedRoute.jsx:5:27)
+        at RenderedRoute (chunk-EPOLDU6W.mjs:5864:26)
+        at Routes (chunk-EPOLDU6W.mjs:6664:3)
+        at div (<anonymous>)
+        at Router (chunk-EPOLDU6W.mjs:6605:13)
+        at BrowserRouter (chunk-EPOLDU6W.mjs:9815:3)
+        at SocketProvider (SocketContext.jsx:16:34)
+        at NotificationProvider (NotificationSystem.jsx:15:33)
+        at AuthProvider (AuthContext.jsx:14:25)
+        at div (<anonymous>)
+        at ThemeProvider (ThemeContext.jsx:322:33)
+        at App (App.jsx:41:5)
+    overrideMethod @ installHook.js:1
+    :3000/src/components/CollaboratorWorkspace.jsx:1   Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+    installHook.js:1  [vite] Failed to reload /src/App.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  [vite] Failed to reload /src/App.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Failed to load WorkspaceManager: SyntaxError: The requested module '/node_modules/.vite/deps/lucide-react.js?v=d8b140fe' does not provide an
+     export named 'TaskSquare' (at WorkspaceManager.jsx:7:26)
+    overrideMethod @ installHook.js:1
+    :3000/src/components/CollaboratorWorkspace.jsx?t=1773912724036:1   Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+    installHook.js:1  [vite] Failed to reload /src/App.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+    overrideMethod @ installHook.js:1
+    react-dom.development.js:22878  Uncaught Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for 
+    one of the following reasons:
+    1. You might have mismatching versions of React and the renderer (such as React DOM)
+    2. You might be breaking the Rules of Hooks
+    3. You might have more than one copy of React in the same app
+    See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+        at Object.throwInvalidHookError (react-dom.development.js:15408:9)
+        at useCallback (react.development.js:1646:21)
+        at CollaborationRequestsStyled.jsx:81:34
+        at commitHookEffectListMount (react-dom.development.js:23189:26)
+        at commitPassiveMountOnFiber (react-dom.development.js:24965:13)
+        at commitPassiveMountEffects_complete (react-dom.development.js:24930:9)
+        at commitPassiveMountEffects_begin (react-dom.development.js:24917:7)
+        at commitPassiveMountEffects (react-dom.development.js:24905:3)
+        at flushPassiveEffectsImpl (react-dom.development.js:27078:3)
+        at flushPassiveEffects (react-dom.development.js:27023:14)
+    react-dom.development.js:22878  Uncaught Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for 
+    one of the following reasons:
+    1. You might have mismatching versions of React and the renderer (such as React DOM)
+    2. You might be breaking the Rules of Hooks
+    3. You might have more than one copy of React in the same app
+    See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+        at Object.throwInvalidHookError (react-dom.development.js:15408:9)
+        at useCallback (react.development.js:1646:21)
+        at CollaborationRequestsStyled.jsx:81:34
+        at commitHookEffectListMount (react-dom.development.js:23189:26)
+        at invokePassiveEffectMountInDEV (react-dom.development.js:25193:13)
+        at invokeEffectsInDev (react-dom.development.js:27390:11)
+        at commitDoubleInvokeEffectsInDEV (react-dom.development.js:27369:7)
+        at flushPassiveEffectsImpl (react-dom.development.js:27095:5)
+        at flushPassiveEffects (react-dom.development.js:27023:14)
+        at react-dom.development.js:26808:9
+    installHook.js:1  The above error occurred in the <CollaborationRequests> component:
+
+        at CollaborationRequests (http://localhost:3000/src/components/dashboard/CollaborationRequestsStyled.jsx:78:29)
+        at Suspense
+        at LazyCollaborationRequests
+        at div
+        at Suspense
+        at ErrorBoundary (http://localhost:3000/src/components/ErrorBoundary.jsx:8:5)
+        at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:6312:26)
+        at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:7161:3)
+        at main
+        at div
+        at div
+        at DashboardContent (http://localhost:3000/src/pages/Dashboard.jsx?t=1773912391500:623:30)
+        at ErrorBoundary (http://localhost:3000/src/components/ErrorBoundary.jsx:8:5)
+        at DashboardProvider (http://localhost:3000/src/contexts/DashboardContext.jsx:29:30)
+        at Dashboard
+        at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:21:27)
+        at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:6312:26)
+        at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:7161:3)
+        at div
+        at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:7102:13)
+        at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:10272:3)
+        at SocketProvider (http://localhost:3000/src/contexts/SocketContext.jsx:32:34)
+        at NotificationProvider (http://localhost:3000/src/components/NotificationSystem.jsx:31:33)
+        at AuthProvider (http://localhost:3000/src/contexts/AuthContext.jsx:30:25)
+        at div
+        at ThemeProvider (http://localhost:3000/src/contexts/ThemeContext.jsx:336:33)
+        at App (http://localhost:3000/src/App.jsx:58:3)
+
+    React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error caught by boundary: Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen 
+    for one of the following reasons:
+    1. You might have mismatching versions of React and the renderer (such as React DOM)
+    2. You might be breaking the Rules of Hooks
+    3. You might have more than one copy of React in the same app
+    See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+        at Object.throwInvalidHookError (react-dom.development.js:15408:9)
+        at useCallback (react.development.js:1646:21)
+        at CollaborationRequestsStyled.jsx:81:34
+        at commitHookEffectListMount (react-dom.development.js:23189:26)
+        at commitPassiveMountOnFiber (react-dom.development.js:24965:13)
+        at commitPassiveMountEffects_complete (react-dom.development.js:24930:9)
+        at commitPassiveMountEffects_begin (react-dom.development.js:24917:7)
+        at commitPassiveMountEffects (react-dom.development.js:24905:3)
+        at flushPassiveEffectsImpl (react-dom.development.js:27078:3)
+        at flushPassiveEffects (react-dom.development.js:27023:14) Object Error Component Stack
+        at ErrorBoundary (ErrorBoundary.jsx:7:9)
+        at RenderedRoute (chunk-EPOLDU6W.mjs:5864:26)
+        at Routes (chunk-EPOLDU6W.mjs:6664:3)
+        at main (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at DashboardContent (Dashboard.jsx:291:32)
+        at ErrorBoundary (ErrorBoundary.jsx:7:9)
+        at DashboardProvider (DashboardContext.jsx:14:30)
+        at Dashboard (<anonymous>)
+        at ProtectedRoute (ProtectedRoute.jsx:5:27)
+        at RenderedRoute (chunk-EPOLDU6W.mjs:5864:26)
+        at Routes (chunk-EPOLDU6W.mjs:6664:3)
+        at div (<anonymous>)
+        at Router (chunk-EPOLDU6W.mjs:6605:13)
+        at BrowserRouter (chunk-EPOLDU6W.mjs:9815:3)
+        at SocketProvider (SocketContext.jsx:16:34)
+        at NotificationProvider (NotificationSystem.jsx:15:33)
+        at AuthProvider (AuthContext.jsx:14:25)
+        at div (<anonymous>)
+        at ThemeProvider (ThemeContext.jsx:322:33)
+        at App (App.jsx:41:5)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  The above error occurred in the <CollaborationRequests> component:
+
+        at CollaborationRequests (http://localhost:3000/src/components/dashboard/CollaborationRequestsStyled.jsx:78:29)
+        at Suspense
+        at LazyCollaborationRequests
+        at div
+        at Suspense
+        at ErrorBoundary (http://localhost:3000/src/components/ErrorBoundary.jsx:8:5)
+        at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:6312:26)
+        at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:7161:3)
+        at main
+        at div
+        at div
+        at DashboardContent (http://localhost:3000/src/pages/Dashboard.jsx?t=1773912391500:623:30)
+        at ErrorBoundary (http://localhost:3000/src/components/ErrorBoundary.jsx:8:5)
+        at DashboardProvider (http://localhost:3000/src/contexts/DashboardContext.jsx:29:30)
+        at Dashboard
+        at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:21:27)
+        at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:6312:26)
+        at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:7161:3)
+        at div
+        at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:7102:13)
+        at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=d8b140fe:10272:3)
+        at SocketProvider (http://localhost:3000/src/contexts/SocketContext.jsx:32:34)
+        at NotificationProvider (http://localhost:3000/src/components/NotificationSystem.jsx:31:33)
+        at AuthProvider (http://localhost:3000/src/contexts/AuthContext.jsx:30:25)
+        at div
+        at ThemeProvider (http://localhost:3000/src/contexts/ThemeContext.jsx:336:33)
+        at App (http://localhost:3000/src/App.jsx:58:3)
+
+    React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error caught by boundary: Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen 
+    for one of the following reasons:
+    1. You might have mismatching versions of React and the renderer (such as React DOM)
+    2. You might be breaking the Rules of Hooks
+    3. You might have more than one copy of React in the same app
+    See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+        at Object.throwInvalidHookError (react-dom.development.js:15408:9)
+        at useCallback (react.development.js:1646:21)
+        at CollaborationRequestsStyled.jsx:81:34
+        at commitHookEffectListMount (react-dom.development.js:23189:26)
+        at invokePassiveEffectMountInDEV (react-dom.development.js:25193:13)
+        at invokeEffectsInDev (react-dom.development.js:27390:11)
+        at commitDoubleInvokeEffectsInDEV (react-dom.development.js:27369:7)
+        at flushPassiveEffectsImpl (react-dom.development.js:27095:5)
+        at flushPassiveEffects (react-dom.development.js:27023:14)
+        at react-dom.development.js:26808:9 Object Error Component Stack
+        at ErrorBoundary (ErrorBoundary.jsx:7:9)
+        at RenderedRoute (chunk-EPOLDU6W.mjs:5864:26)
+        at Routes (chunk-EPOLDU6W.mjs:6664:3)
+        at main (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at DashboardContent (Dashboard.jsx:291:32)
+        at ErrorBoundary (ErrorBoundary.jsx:7:9)
+        at DashboardProvider (DashboardContext.jsx:14:30)
+        at Dashboard (<anonymous>)
+        at ProtectedRoute (ProtectedRoute.jsx:5:27)
+        at RenderedRoute (chunk-EPOLDU6W.mjs:5864:26)
+        at Routes (chunk-EPOLDU6W.mjs:6664:3)
+        at div (<anonymous>)
+        at Router (chunk-EPOLDU6W.mjs:6605:13)
+        at BrowserRouter (chunk-EPOLDU6W.mjs:9815:3)
+        at SocketProvider (SocketContext.jsx:16:34)
+        at NotificationProvider (NotificationSystem.jsx:15:33)
+        at AuthProvider (AuthContext.jsx:14:25)
+        at div (<anonymous>)
+        at ThemeProvider (ThemeContext.jsx:322:33)
+        at App (App.jsx:41:5)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    [NEW] Explain Console errors by using Copilot in Edge: click
+             
+             to explain an error. 
+            Learn more
+            Don't show again
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+    collaborators:1   Failed to load resource: the server responded with a status of 500 ()
+    installHook.js:1  API request failed: 500 for /collaboration-requests/collaborators
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:45
+    installHook.js:1  API Error: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    request @ api.service.js:51
+    installHook.js:1  Error loading collaborators: Error: Server error
+        at ApiService.request (api.service.js:46:23)
+        at async loadCollaborators (CollaboratorsStyled.jsx:139:30)
+    overrideMethod @ installHook.js:1
+    loadCollaborators @ CollaboratorsStyled.jsx:142
+
+
+  ✕ Qwen OAuth quota exceeded: Your free daily quota has been reached.
+
+    To continue using Qwen Code without waiting, upgrade to the Alibaba Cloud Coding Plan:
+      China:       https://help.aliyun.com/zh/model-studio/coding-plan
+      Global/Intl: https://www.alibabacloud.com/help/en/model-studio/coding-plan
+
+    After subscribing, run /auth to configure your Coding Plan API key. (Press Ctrl+Y to retry)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+>   Type your message or @path/to/file
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  auto-accept edits (shift + tab to cycle)                                                                                                  16.1% context used

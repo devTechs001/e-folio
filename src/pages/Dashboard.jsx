@@ -82,6 +82,10 @@ const CollaborationRequests = lazy(() => import('../components/dashboard/Collabo
     console.error('Failed to load CollaborationRequests:', err);
     return { default: () => <div>Error loading Collaboration Requests</div> };
 }));
+const WorkspaceManager = lazy(() => import('../components/dashboard/WorkspaceManager').catch(err => {
+    console.error('Failed to load WorkspaceManager:', err);
+    return { default: () => <div>Error loading Workspace Manager</div> };
+}));
 const LearningCenter = lazy(() => import('../components/dashboard/LearningCenterStyled').catch(err => {
     console.error('Failed to load LearningCenter:', err);
     return { default: () => <div>Error loading Learning Center</div> };
@@ -245,6 +249,15 @@ const LazyCollaborationRequests = () => {
         </Suspense>
     );
 };
+const LazyWorkspaceManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <WorkspaceManager />
+        </Suspense>
+    );
+};
 const LazyLearningCenter = () => {
     return (
         <Suspense fallback={<div className="flex items-center justify-center h-64">
@@ -394,9 +407,9 @@ const DashboardContent = () => {
             description: 'Manage email communications'
         },
         {
-            path: '/dashboard/chat',
+            path: '/dashboard/chats',
             icon: 'fas fa-comments',
-            label: 'Chat',
+            label: 'Chats',
             component: LazyChatSystem,
             roles: ['owner', 'collaborator'],
             badge: '2',
@@ -426,12 +439,22 @@ const DashboardContent = () => {
         {
             path: '/dashboard/collaboration-requests',
             icon: 'fas fa-user-plus',
-            label: 'Collab Requests',
+            label: 'Collaboration',
             component: LazyCollaborationRequests,
             roles: ['owner'],
             badge: '1',
             category: 'Team',
             description: 'Pending collaboration requests'
+        },
+        {
+            path: '/dashboard/workspaces',
+            icon: 'fas fa-briefcase',
+            label: 'Workspaces',
+            component: LazyWorkspaceManager,
+            roles: ['owner'],
+            badge: 'New',
+            category: 'Team',
+            description: 'Manage collaborator workspaces'
         },
         {
             path: '/dashboard/ai-tracking',

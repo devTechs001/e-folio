@@ -17,8 +17,8 @@ export default defineConfig(({ command, mode }) => {
     ],
     
     // Base URL configuration
-    // Netlify serves from root, not a subdirectory
-    base: '/',
+    // Netlify serves from root, GitHub Pages from /e-folio/
+    base: process.env.NODE_ENV === 'production' ? '/e-folio/' : '/',
   
     // Resolve configuration
     resolve: {
@@ -76,7 +76,7 @@ export default defineConfig(({ command, mode }) => {
     
     // Server configuration
     server: {
-      port: 3000,
+      port: 5173,
       strictPort: true,
       open: true,
       host: true,

@@ -64,6 +64,18 @@ router.route('/:id/moderate')
 router.post('/:id/like', reviewsController.likeReview);
 router.delete('/:id/like', reviewsController.unlikeReview);
 
+// Reply to review
+router.post('/:id/reply', auth, reviewsController.replyToReview);
+
+// Toggle featured status
+router.put('/:id/featured', auth, reviewsController.toggleFeaturedReview);
+
+// Toggle visibility
+router.put('/:id/visibility', auth, reviewsController.toggleReviewVisibility);
+
+// Export reviews
+router.get('/export', auth, reviewsController.exportReviews);
+
 // Upload attachment endpoint
 router.post('/upload-attachment', upload.single('file'), (req, res) => {
     try {
@@ -74,14 +86,17 @@ router.post('/upload-attachment', upload.single('file'), (req, res) => {
             });
         }
 
+        // Return full URL
+        const fullUrl = `${req.protocol}://${req.get('host')}/uploads/reviews/${req.file.filename}`;
+
         res.json({
             success: true,
-            url: `/uploads/reviews/${req.file.filename}`,
+            url: fullUrl,
             fileName: req.file.originalname,
             fileSize: req.file.size
         });
     } catch (error) {
-        res.status(50).json({
+        res.status(500).json({
             success: false,
             message: 'Upload failed',
             error: error.message

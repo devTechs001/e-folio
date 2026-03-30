@@ -36,6 +36,7 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
         'fas fa-envelope': Mail,
         'fas fa-users': Users,
         'fas fa-user-plus': UserPlus,
+        'fas fa-briefcase': FolderOpen,
         'fas fa-comments': MessageSquare,
         'fas fa-robot': Bot,
         'fas fa-edit': FileEdit,

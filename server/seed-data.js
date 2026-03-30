@@ -5,6 +5,7 @@ const DashboardStats = require('./models/DashboardStats');
 const Testimonial = require('./models/Testimonial.model');
 const User = require('./models/User.model');
 const dotenv = require('dotenv');
+const enterpriseProjects = require('./seed-enterprise-projects');
 
 dotenv.config();
 
@@ -367,14 +368,23 @@ async function seedDatabase() {
         // Add userId to all seed data
         const userId = ownerUser._id;
         
-        // Seed projects
+        // Seed projects (existing + enterprise)
         const projectsWithUser = seedProjects.map(project => ({
             ...project,
             userId: userId
         }));
-        
-        await Project.insertMany(projectsWithUser);
-        console.log('Seeded projects');
+
+        // Add enterprise projects
+        const enterpriseProjectsWithUser = enterpriseProjects.map(project => ({
+            ...project,
+            userId: userId
+        }));
+
+        // Combine all projects
+        const allProjects = [...projectsWithUser, ...enterpriseProjectsWithUser];
+
+        await Project.insertMany(allProjects);
+        console.log(`Seeded ${allProjects.length} projects (${seedProjects.length} original + ${enterpriseProjects.length} enterprise)`);
 
         // Seed skills
         const skillsWithUser = seedSkills.map(skill => ({
@@ -397,7 +407,7 @@ async function seedDatabase() {
         // Seed dashboard stats
         await DashboardStats.create({
             userId: userId,
-            totalProjects: seedProjects.length,
+            totalProjects: allProjects.length,
             totalVisitors: 1543,
             collaborators: 5,
             messages: 23,

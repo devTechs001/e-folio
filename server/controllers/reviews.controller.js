@@ -42,8 +42,17 @@ exports.createReview = async (req, res) => {
             });
         }
 
-        // Check for duplicate review from same email
+        // Validate email format if provided
         if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid email format'
+                });
+            }
+
+            // Check for duplicate review from same email
             const existingReview = await Review.findOne({
                 email,
                 createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }

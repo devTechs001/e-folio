@@ -40,6 +40,8 @@ const portfolioRoutes = require('./routes/portfolio.routes');
 const testimonialsRoutes = require('./routes/testimonials.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const contactRoutes = require('./routes/contact.routes');
+const netlifyFormRoutes = require('./routes/netlify-form.routes');
+const workspaceRoutes = require('./routes/workspace.routes');
 
 // Create Express app and server
 const app = express();
@@ -47,19 +49,22 @@ const server = http.createServer(app);
 
 // Socket.IO CORS - Allow multiple origins
 const socketAllowedOrigins = [
-    process.env.CLIENT_URL,
-    process.env.CLIENT_URL?.replace(/\/$/, ''),
-    process.env.CLIENT_URL?.concat('/'),
-    'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:3000',
     'https://e-folio-pro.netlify.app',
     'https://e-folio-pro.netlify.app/'
 ].filter(Boolean);
 
 const io = socketIo(server, {
     cors: {
-        origin: socketAllowedOrigins,
+        origin: [
+            process.env.CLIENT_URL,
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'http://localhost:3000',
+            'https://e-folio-pro.netlify.app'
+        ].filter(Boolean),
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -70,11 +75,9 @@ const PORT = process.env.PORT || 5000;
 // CORS Configuration - Allow multiple origins and handle trailing slashes
 const allowedOrigins = [
     process.env.CLIENT_URL,
-    process.env.CLIENT_URL?.replace(/\/$/, ''), // Remove trailing slash
-    process.env.CLIENT_URL?.concat('/'),         // Add trailing slash
-    'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:3000',
     'https://e-folio-pro.netlify.app',
     'https://e-folio-pro.netlify.app/'
 ].filter(Boolean); // Remove undefined values
@@ -128,6 +131,8 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/testimonials', testimonialsRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/netlify-form', netlifyFormRoutes);
+app.use('/api/workspace', workspaceRoutes);
 
 
 // API Routes

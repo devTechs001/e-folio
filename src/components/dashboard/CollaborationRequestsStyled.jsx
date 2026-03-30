@@ -78,18 +78,18 @@ const CollaborationRequests = () => {
         loadStats();
 
         // Listen for real-time updates
-        const handleNewRequest = (request) => {
+        const handleNewRequest = useCallback((request) => {
             setRequests(prev => [request, ...prev]);
             info(`📬 New collaboration request from ${request.name}`);
             loadStats();
-        };
+        }, [info]);
 
-        const handleRequestUpdated = (updatedRequest) => {
-            setRequests(prev => prev.map(r => 
+        const handleRequestUpdated = useCallback((updatedRequest) => {
+            setRequests(prev => prev.map(r =>
                 r.id === updatedRequest.id ? updatedRequest : r
             ));
             loadStats();
-        };
+        }, []);
 
         on('new_collaboration_request', handleNewRequest);
         on('collaboration_request_updated', handleRequestUpdated);
@@ -98,7 +98,7 @@ const CollaborationRequests = () => {
             off('new_collaboration_request', handleNewRequest);
             off('collaboration_request_updated', handleRequestUpdated);
         };
-    }, [on, off]);
+    }, [on, off, info]);
 
     // Filter and search
     useEffect(() => {
@@ -158,7 +158,7 @@ const CollaborationRequests = () => {
     }, [requests, searchQuery, filterStatus, sortBy, sortOrder, dateRange]);
 
     // API Functions
-    const loadRequests = async () => {
+    const loadRequests = useCallback(async () => {
         try {
             setLoading(true);
             const response = await apiService.getCollaborationRequests();
@@ -171,20 +171,20 @@ const CollaborationRequests = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [error]);
 
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
             const response = await apiService.getCollaborationStats();
             setStats(response.stats || stats);
         } catch (err) {
             console.error('Error loading stats:', err);
         }
-    };
+    }, []);
 
-    const handleApprove = async (id, name, customMessage = '') => {
+    const handleApprove = useCallback(async (id, name, customMessage = '') => {
         if (processingIds.includes(id)) return;
-        
+
         setProcessingIds(prev => [...prev, id]);
         try {
             const response = await apiService.approveRequest(id, {
@@ -192,13 +192,13 @@ const CollaborationRequests = () => {
                 customMessage,
                 note: notes[id]
             });
-            
+
             if (response.success) {
-                setRequests(prev => prev.map(r => 
+                setRequests(prev => prev.map(r =>
                     r.id === id ? { ...r, status: 'approved' } : r
                 ));
                 success(`✅ Approved ${name}! Invite link: ${response.inviteLink}`);
-                
+
                 // Copy invite link to clipboard
                 if (response.inviteLink) {
                     navigator.clipboard.writeText(response.inviteLink);
@@ -213,20 +213,20 @@ const CollaborationRequests = () => {
         } finally {
             setProcessingIds(prev => prev.filter(i => i !== id));
         }
-    };
+    }, [processingIds, emailTemplate, notes, success, info, error]);
 
-    const handleReject = async (id, name, reason = '') => {
+    const handleReject = useCallback(async (id, name, reason = '') => {
         if (processingIds.includes(id)) return;
-        
+
         setProcessingIds(prev => [...prev, id]);
         try {
             const response = await apiService.rejectRequest(id, {
                 reason,
                 note: notes[id]
             });
-            
+
             if (response.success) {
-                setRequests(prev => prev.map(r => 
+                setRequests(prev => prev.map(r =>
                     r.id === id ? { ...r, status: 'rejected' } : r
                 ));
                 success(`Rejected collaboration request from ${name}`);
@@ -239,7 +239,7 @@ const CollaborationRequests = () => {
         } finally {
             setProcessingIds(prev => prev.filter(i => i !== id));
         }
-    };
+    }, [processingIds, notes, success, error]);
 
     const handleBulkApprove = async () => {
         if (selectedRequests.length === 0) return;
