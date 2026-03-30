@@ -38,6 +38,7 @@ const ReviewsManager = () => {
     const [replyText, setReplyText] = useState('');
     const [showTemplates, setShowTemplates] = useState(false);
     const [ratingFilter, setRatingFilter] = useState('all');
+    const [sourceFilter, setSourceFilter] = useState('all');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
@@ -45,6 +46,13 @@ const ReviewsManager = () => {
     const [replyTemplates, setReplyTemplates] = useState([]);
     const [showBulkActions, setShowBulkActions] = useState(false);
     const [featuredReviews, setFeaturedReviews] = useState([]);
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        totalPages: 1,
+        totalReviews: 0,
+        hasNext: false,
+        hasPrev: false
+    });
 
     const replyTemplatesData = [
         {
@@ -69,28 +77,7 @@ const ReviewsManager = () => {
         }
     ];
 
-    // Load data
-    useEffect(() => {
-        if (isOwner()) {
-            loadReviews();
-            loadAnalytics();
-            loadFeaturedReviews();
-
-            // Socket listeners
-            const handleNewReview = useCallback((review) => {
-                setReviews(prev => [review, ...prev]);
-                info(`New review from ${review.name}`);
-                loadAnalytics();
-            }, [info]);
-
-            on('new_review', handleNewReview);
-
-            return () => {
-                off('new_review', handleNewReview);
-            };
-        }
-    }, [isOwner, on, off, info, loadReviews, loadAnalytics, loadFeaturedReviews]);
-
+    // Load data functions
     const loadReviews = useCallback(async () => {
         try {
             setLoading(true);
@@ -102,28 +89,30 @@ const ReviewsManager = () => {
                 limit: reviewsPerPage,
                 search: searchQuery,
                 rating: ratingFilter,
-                startDate: dateRange.start,
-                endDate: dateRange.end
+                dateRange: dateRange,
+                source: sourceFilter
             });
-
-            if (response.success) {
-                setReviews(response.reviews || []);
-                setStats(response.stats || {});
-            }
+            
+            setReviews(response.reviews || []);
+            setPagination(response.pagination || {
+                currentPage: 1,
+                totalPages: 1,
+                totalReviews: 0,
+                hasNext: false,
+                hasPrev: false
+            });
         } catch (err) {
-            console.error('Error fetching reviews:', err);
+            console.error('Error loading reviews:', err);
             error('Failed to load reviews');
         } finally {
             setLoading(false);
         }
-    }, [filter, sortBy, sortOrder, currentPage, reviewsPerPage, searchQuery, ratingFilter, dateRange, error]);
+    }, [filter, sortBy, sortOrder, currentPage, reviewsPerPage, searchQuery, ratingFilter, dateRange, sourceFilter, error]);
 
     const loadAnalytics = useCallback(async () => {
         try {
             const response = await apiService.getReviewAnalytics();
-            if (response.success) {
-                setAnalytics(response.analytics);
-            }
+            setAnalytics(response.analytics);
         } catch (err) {
             console.error('Error loading analytics:', err);
         }
@@ -132,13 +121,36 @@ const ReviewsManager = () => {
     const loadFeaturedReviews = useCallback(async () => {
         try {
             const response = await apiService.getFeaturedReviews();
-            if (response.success) {
-                setFeaturedReviews(response.reviews || []);
-            }
+            setFeaturedReviews(response.reviews || []);
         } catch (err) {
             console.error('Error loading featured reviews:', err);
         }
     }, []);
+
+    // Event handlers
+    const handleNewReview = useCallback((review) => {
+        setReviews(prev => [review, ...prev]);
+        info(`New review from ${review.name}`);
+        loadAnalytics();
+    }, [info, loadAnalytics]);
+
+    // Load data
+    useEffect(() => {
+        if (isOwner()) {
+            loadReviews();
+            loadAnalytics();
+            loadFeaturedReviews();
+
+            // Socket listeners
+            on('new_review', handleNewReview);
+
+            return () => {
+                off('new_review', handleNewReview);
+            };
+        }
+    }, [isOwner, on, off, handleNewReview, loadReviews, loadAnalytics, loadFeaturedReviews]);
+
+    // Filter and search effects
 
     const handleModerate = async (reviewId, status, responseText = '') => {
         try {
