@@ -79,6 +79,20 @@ const CollaborationRequest = () => {
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
 
+    // Helper function to calculate required fields progress
+    const getRequiredFieldsProgress = () => {
+        const requiredFields = ['name', 'email', 'message', 'terms'];
+        const completed = requiredFields.filter(field => {
+            const value = formData[field];
+            if (field === 'terms') {
+                return value === true;
+            }
+            return value && value.toString().trim().length > 0;
+        }).length;
+        
+        return { completed, total: requiredFields.length };
+    };
+
     const steps = [
         { id: 1, title: 'Personal Info', icon: User, fields: ['name', 'email'] },
         { id: 2, title: 'Professional', icon: Briefcase, fields: [] },
@@ -230,7 +244,8 @@ const CollaborationRequest = () => {
                 // Optional field
                 break;
             case 'terms':
-                if (!value || value === false || value === 'false') {
+                // Only validate terms if user has interacted with it (touched)
+                if (touched.terms && value !== true) {
                     error = 'Terms acceptance is required - You must accept the terms and conditions to continue';
                 }
                 break;
@@ -291,7 +306,8 @@ const CollaborationRequest = () => {
             if (messageError) allErrors.message = messageError;
         }
 
-        if (!terms || terms === false || terms === 'false') {
+        // Always validate terms on submission
+        if (terms !== true) {
             allErrors.terms = 'Terms acceptance is required - You must accept the terms and conditions to continue';
         }
 
@@ -315,6 +331,17 @@ const CollaborationRequest = () => {
         
         // Mark field as touched when user interacts with it
         setTouched(prev => ({ ...prev, [name]: true }));
+        
+        // Real-time validation for immediate feedback (but not aggressive)
+        if (normalizedValue && normalizedValue.toString().trim().length > 0) {
+            const error = validateField(name, normalizedValue);
+            if (error) {
+                // Only show error if user has stopped typing briefly
+                setTimeout(() => {
+                    setErrors(prev => ({ ...prev, [name]: error }));
+                }, 500);
+            }
+        }
     };
 
     const handleBlur = (name) => {
@@ -329,6 +356,19 @@ const CollaborationRequest = () => {
         if (validateStep(currentStep)) {
             setCurrentStep(prev => Math.min(prev + 1, steps.length));
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Show success feedback for step completion
+            const step = steps.find(s => s.id === currentStep);
+            if (step) {
+                // Brief success indication
+                const stepElement = document.querySelector('.step-progress');
+                if (stepElement) {
+                    stepElement.classList.add('step-completed');
+                    setTimeout(() => {
+                        stepElement.classList.remove('step-completed');
+                    }, 1000);
+                }
+            }
         } else {
             // Find the first error field and scroll to it
             const firstErrorField = Object.keys(errors).find(key => errors[key]);
@@ -336,7 +376,20 @@ const CollaborationRequest = () => {
                 const errorElement = document.querySelector(`[data-field="${firstErrorField}"]`);
                 if (errorElement) {
                     errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add visual feedback
+                    errorElement.classList.add('error-focus');
+                    setTimeout(() => {
+                        errorElement.classList.remove('error-focus');
+                    }, 2000);
                 }
+            }
+            
+            // Show error summary
+            const errorCount = Object.keys(errors).filter(key => errors[key]).length;
+            if (errorCount > 0) {
+                // Show error notification
+                const errorSummary = `Please fix ${errorCount} error${errorCount > 1 ? 's' : ''} before proceeding`;
+                console.error('Form validation errors:', errors);
             }
         }
     };
@@ -442,6 +495,9 @@ const CollaborationRequest = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Mark terms as touched for submission validation
+        setTouched(prev => ({ ...prev, terms: true }));
+
         // Use enhanced validation for all required fields
         if (!validateAllFields()) {
             // Scroll to the first error field
@@ -451,15 +507,36 @@ const CollaborationRequest = () => {
                 const stepWithError = steps.find(step => step.fields.includes(firstErrorField));
                 if (stepWithError) {
                     setCurrentStep(stepWithError.id);
+                    // Scroll to the error field after step change
+                    setTimeout(() => {
+                        const errorElement = document.querySelector(`[data-field="${firstErrorField}"]`);
+                        if (errorElement) {
+                            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            errorElement.classList.add('error-focus');
+                            setTimeout(() => {
+                                errorElement.classList.remove('error-focus');
+                            }, 2000);
+                        }
+                    }, 300);
                 }
             }
-            error('Please fix validation errors in the form');
+            
+            // Show detailed error feedback
+            const errorCount = Object.keys(errors).filter(key => errors[key]).length;
+            const errorFields = Object.keys(errors).filter(key => errors[key]).map(key => 
+                key.charAt(0).toUpperCase() + key.slice(1)
+            ).join(', ');
+            
+            error(`Please fix ${errorCount} error${errorCount > 1 ? 's' : ''}: ${errorFields}`);
             return;
         }
 
         setLoading(true);
 
         try {
+            // Show progress feedback
+            console.log('Submitting collaboration request...');
+            
             const response = await apiService.submitCollaborationRequest(formData);
 
             if (response.success) {
@@ -474,12 +551,48 @@ const CollaborationRequest = () => {
                         budget: formData.budget
                     });
                 }
+                
+                // Log successful submission
+                console.log('Collaboration request submitted successfully:', {
+                    name: formData.name,
+                    email: formData.email,
+                    timestamp: new Date().toISOString()
+                });
             } else {
-                error(response.message || 'Failed to submit request');
+                // Handle API response errors
+                const errorMessage = response.message || 'Failed to submit request';
+                error(errorMessage);
+                console.error('Submission failed:', response);
+                
+                // Show retry suggestion
+                setTimeout(() => {
+                    if (window.confirm('Would you like to try submitting again?')) {
+                        handleSubmit(e);
+                    }
+                }, 1000);
             }
         } catch (err) {
             console.error('Submission error:', err);
-            error(err.message || 'Failed to submit request. Please try again.');
+            
+            // Enhanced error handling
+            let errorMessage = 'Failed to submit request. Please try again.';
+            
+            if (err.message?.includes('network')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+            } else if (err.message?.includes('timeout')) {
+                errorMessage = 'Request timed out. Please try again.';
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            error(errorMessage);
+            
+            // Log detailed error for debugging
+            console.error('Detailed submission error:', {
+                error: err,
+                formData: { ...formData, message: formData.message.substring(0, 100) + '...' }, // Truncate for privacy
+                timestamp: new Date().toISOString()
+            });
         } finally {
             setLoading(false);
         }
@@ -634,6 +747,43 @@ const CollaborationRequest = () => {
 
                 {/* Progress Bar */}
                 <div className="mb-8">
+                    {/* Form Status */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full ${
+                                    Object.keys(errors).filter(key => errors[key]).length === 0 
+                                        ? 'bg-green-500' 
+                                        : 'bg-yellow-500'
+                                }`} />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Form Status: {
+                                        Object.keys(errors).filter(key => errors[key]).length === 0 
+                                            ? 'All fields valid' 
+                                            : `${Object.keys(errors).filter(key => errors[key]).length} error${Object.keys(errors).filter(key => errors[key]).length > 1 ? 's' : ''}`
+                                    }
+                                </span>
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                Step {currentStep} of {steps.length}
+                            </div>
+                        </div>
+                        
+                        {/* Required Fields Progress */}
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                <span>Required Fields Progress</span>
+                                <span>{getRequiredFieldsProgress().completed} / {getRequiredFieldsProgress().total}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div 
+                                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${(getRequiredFieldsProgress().completed / getRequiredFieldsProgress().total) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between mb-4">
                         {steps.map((step, index) => (
                             <React.Fragment key={step.id}>
@@ -642,7 +792,7 @@ const CollaborationRequest = () => {
                                         initial={{ scale: 0 }}
                                         animate={{ scale: 1 }}
                                         transition={{ delay: index * 0.1 }}
-                                        className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all ${
+                                        className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all step-progress ${
                                             currentStep > step.id
                                                 ? 'bg-green-500 text-white'
                                                 : currentStep === step.id
@@ -706,6 +856,12 @@ const CollaborationRequest = () => {
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <User size={16} className="inline mr-2" />
                                                 Full Name *
+                                                {formData.name && formData.name.trim().length > 0 && !errors.name && (
+                                                    <Check size={16} className="inline ml-2 text-green-500" />
+                                                )}
+                                                {errors.name && touched.name && (
+                                                    <AlertCircle size={16} className="inline ml-2 text-red-500" />
+                                                )}
                                             </label>
                                             <input
                                                 type="text"
@@ -714,7 +870,9 @@ const CollaborationRequest = () => {
                                                 onBlur={() => handleBlur('name')}
                                                 data-field="name"
                                                 className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
-                                                    errors.name && touched.name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                    errors.name && touched.name ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 
+                                                    formData.name && formData.name.trim().length > 0 && !errors.name ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 
+                                                    'border-gray-200 dark:border-gray-700'
                                                 }`}
                                                 placeholder="John Doe"
                                             />
@@ -724,6 +882,12 @@ const CollaborationRequest = () => {
                                                     {errors.name}
                                                 </p>
                                             )}
+                                            {formData.name && formData.name.trim().length > 0 && !errors.name && (
+                                                <p className="mt-1 text-sm text-green-500 flex items-center gap-1">
+                                                    <Check size={14} />
+                                                    Name looks good!
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Email */}
@@ -731,6 +895,12 @@ const CollaborationRequest = () => {
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                 <Mail size={16} className="inline mr-2" />
                                                 Email Address *
+                                                {formData.email && formData.email.trim().length > 0 && !errors.email && (
+                                                    <Check size={16} className="inline ml-2 text-green-500" />
+                                                )}
+                                                {errors.email && touched.email && (
+                                                    <AlertCircle size={16} className="inline ml-2 text-red-500" />
+                                                )}
                                             </label>
                                             <input
                                                 type="email"
@@ -739,7 +909,9 @@ const CollaborationRequest = () => {
                                                 onBlur={() => handleBlur('email')}
                                                 data-field="email"
                                                 className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
-                                                    errors.email && touched.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                                    errors.email && touched.email ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 
+                                                    formData.email && formData.email.trim().length > 0 && !errors.email ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 
+                                                    'border-gray-200 dark:border-gray-700'
                                                 }`}
                                                 placeholder="john@example.com"
                                             />
@@ -747,6 +919,12 @@ const CollaborationRequest = () => {
                                                 <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
                                                     <AlertCircle size={14} />
                                                     {errors.email}
+                                                </p>
+                                            )}
+                                            {formData.email && formData.email.trim().length > 0 && !errors.email && (
+                                                <p className="mt-1 text-sm text-green-500 flex items-center gap-1">
+                                                    <Check size={14} />
+                                                    Email format is valid!
                                                 </p>
                                             )}
                                         </div>
@@ -1367,6 +1545,12 @@ const CollaborationRequest = () => {
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                             <MessageSquare size={16} className="inline mr-2" />
                                             Tell me about yourself and your project *
+                                            {formData.message && formData.message.trim().length > 0 && !errors.message && (
+                                                <Check size={16} className="inline ml-2 text-green-500" />
+                                            )}
+                                            {errors.message && touched.message && (
+                                                <AlertCircle size={16} className="inline ml-2 text-red-500" />
+                                            )}
                                         </label>
                                         <textarea
                                             value={formData.message}
@@ -1374,8 +1558,10 @@ const CollaborationRequest = () => {
                                             onBlur={() => handleBlur('message')}
                                             data-field="message"
                                             rows={6}
-                                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white resize-none ${
-                                                errors.message && touched.message ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white resize-none transition-all ${
+                                                errors.message && touched.message ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 
+                                                formData.message && formData.message.trim().length > 0 && !errors.message ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 
+                                                'border-gray-200 dark:border-gray-700'
                                             }`}
                                             placeholder="Describe your project, goals, and what you're looking for in a collaboration..."
                                         />
@@ -1387,13 +1573,19 @@ const CollaborationRequest = () => {
                                                 </p>
                                             ) : (
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    Minimum 20 characters
+                                                    Minimum 20 characters required
                                                 </p>
                                             )}
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                                 {formData.message.length} characters
                                             </p>
                                         </div>
+                                        {formData.message && formData.message.trim().length > 0 && !errors.message && (
+                                            <p className="mt-1 text-sm text-green-500 flex items-center gap-1">
+                                                <Check size={14} />
+                                                Great! Your message provides good detail.
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* File Attachments */}
@@ -1555,7 +1747,11 @@ const CollaborationRequest = () => {
                                                 onChange={(e) => handleFieldChange('terms', e.target.checked)}
                                                 onBlur={() => handleBlur('terms')}
                                                 data-field="terms"
-                                                className="w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-0.5 transition-all"
+                                                className={`w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-0.5 transition-all ${
+                                                    errors.terms && touched.terms ? 'border-red-500' : 
+                                                    formData.terms ? 'border-green-500' : 
+                                                    'border-gray-300 dark:border-gray-600'
+                                                }`}
                                             />
                                             <span className="text-sm text-gray-700 dark:text-gray-300 select-none">
                                                 I agree to the{' '}
@@ -1567,12 +1763,24 @@ const CollaborationRequest = () => {
                                                     privacy policy
                                                 </Link>
                                                 {' '}*
+                                                {formData.terms && !errors.terms && (
+                                                    <Check size={16} className="inline ml-2 text-green-500" />
+                                                )}
+                                                {errors.terms && touched.terms && (
+                                                    <AlertCircle size={16} className="inline ml-2 text-red-500" />
+                                                )}
                                             </span>
                                         </label>
                                         {errors.terms && touched.terms && (
                                             <p className="text-sm text-red-500 flex items-center gap-1 ml-8">
                                                 <AlertCircle size={14} />
                                                 {errors.terms}
+                                            </p>
+                                        )}
+                                        {formData.terms && !errors.terms && (
+                                            <p className="text-sm text-green-500 flex items-center gap-1 ml-8">
+                                                <Check size={14} />
+                                                Thank you for accepting the terms!
                                             </p>
                                         )}
                                     </div>
