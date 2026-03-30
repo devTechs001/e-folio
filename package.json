@@ -3,7 +3,7 @@
   "displayName": "E-Folio Pro - Advanced Portfolio Platform",
   "description": "A modern, AI-powered portfolio platform with real-time collaboration, advanced analytics, and comprehensive portfolio management tools.",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "homepage": "https://devtechs001.github.io/e-folio",
   "author": "E-Folio Team",
