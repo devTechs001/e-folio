@@ -362,37 +362,37 @@ class ApiService {
 
     // AI APIs
     async generateContent(prompt, type, context = {}) {
-        return this.request('/ai/generate', {
+        return this.request('/ai/chat', {
             method: 'POST',
-            body: JSON.stringify({ prompt, type, context })
+            body: JSON.stringify({ message: prompt, type, context })
         });
     }
 
     async improveContent(content, instructions = '') {
-        return this.request('/ai/improve', {
+        return this.request('/ai/chat', {
             method: 'POST',
-            body: JSON.stringify({ content, instructions })
+            body: JSON.stringify({ message: `Improve this content: ${content}. Instructions: ${instructions}`, type: 'improve' })
         });
     }
 
     async getSuggestions(category, current = []) {
-        return this.request('/ai/suggestions', {
+        return this.request('/ai/chat', {
             method: 'POST',
-            body: JSON.stringify({ category, current })
+            body: JSON.stringify({ message: `Provide suggestions for ${category}. Current items: ${current.join(', ')}`, type: 'suggestions' })
         });
     }
 
     async analyzeContent(content, type) {
-        return this.request('/ai/analyze', {
+        return this.request('/ai/moderate', {
             method: 'POST',
             body: JSON.stringify({ content, type })
         });
     }
 
     async generateCode(description, language = 'javascript') {
-        return this.request('/ai/code', {
+        return this.request('/ai/chat', {
             method: 'POST',
-            body: JSON.stringify({ description, language })
+            body: JSON.stringify({ message: `Generate ${language} code for: ${description}`, type: 'code' })
         });
     }
 
@@ -402,10 +402,22 @@ class ApiService {
         return this.request(`/chat/rooms/${room}/messages?${query}`);
     }
 
+    async getRooms() {
+        return this.request('/chat/rooms');
+    }
+
     async sendMessage(messageData) {
         return this.request('/chat/messages', {
             method: 'POST',
             body: JSON.stringify(messageData)
+        });
+    }
+
+    async uploadChatFile(formData) {
+        return this.request('/chat/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {}
         });
     }
 
@@ -555,7 +567,7 @@ class ApiService {
 
     // Media APIs
     async uploadMedia(formData) {
-        return this.request('/media/upload', {
+        return this.request('/media/files/upload', {
             method: 'POST',
             body: formData,
             headers: {}
@@ -564,12 +576,13 @@ class ApiService {
 
     async getMedia(filters = {}) {
         const query = new URLSearchParams(filters);
-        return this.request(`/media?${query}`);
+        return this.request(`/media/files?${query}`);
     }
 
     async deleteMedia(id) {
-        return this.request(`/media/${id}`, {
-            method: 'DELETE'
+        return this.request('/media/files', {
+            method: 'DELETE',
+            body: JSON.stringify({ fileIds: [id] })
         });
     }
 
@@ -587,6 +600,10 @@ class ApiService {
         return this.request(`/email?${query}`);
     }
 
+    async getEmailById(id) {
+        return this.request(`/email/${id}`);
+    }
+
     async sendEmail(emailData) {
         return this.request('/email/send', {
             method: 'POST',
@@ -598,6 +615,20 @@ class ApiService {
         return this.request(`/email/${id}`, {
             method: 'DELETE'
         });
+    }
+
+    async markEmailAsRead(id) {
+        return this.request(`/email/${id}/read`, {
+            method: 'POST'
+        });
+    }
+
+    async getEmailStats() {
+        return this.request('/email/stats');
+    }
+
+    async getQuickResponses() {
+        return this.request('/email/quick-responses/all');
     }
 
     // Education APIs

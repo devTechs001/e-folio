@@ -11,14 +11,14 @@ const {
     deleteSubmission,
     getStatistics
 } = require('../controllers/netlify-form.controller');
-const { protect, adminOnly } = require('../middleware/auth.middleware');
+const { auth, isOwner } = require('../middleware/auth.middleware');
 
 // Public route for form submission
 router.post('/submit', submitForm);
 
 // Protected admin routes
-router.use(protect);
-router.use(adminOnly);
+router.use(auth);
+router.use(isOwner);
 
 router.get('/statistics', getStatistics);
 router.get('/submissions', getSubmissions);

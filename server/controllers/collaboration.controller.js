@@ -852,4 +852,3 @@ const getCollaboratorActivity = async (req, res) => {
 exports.getCollaborators = getCollaborators;
 exports.getPendingInvites = getPendingInvites;
 exports.getCollaboratorActivity = getCollaboratorActivity;
-exports.getRequestDetails = getRequestById; // Alias for clarity

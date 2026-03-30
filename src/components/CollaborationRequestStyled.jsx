@@ -80,10 +80,10 @@ const CollaborationRequest = () => {
     const [touched, setTouched] = useState({});
 
     const steps = [
-        { id: 1, title: 'Personal Info', icon: User, fields: ['name', 'email', 'phone', 'location'] },
-        { id: 2, title: 'Professional', icon: Briefcase, fields: ['role', 'company', 'experience', 'skills'] },
-        { id: 3, title: 'Online Presence', icon: Link2, fields: ['portfolio', 'github', 'linkedin'] },
-        { id: 4, title: 'Project Details', icon: Target, fields: ['projectType', 'budget', 'timeline'] },
+        { id: 1, title: 'Personal Info', icon: User, fields: ['name', 'email'] },
+        { id: 2, title: 'Professional', icon: Briefcase, fields: [] },
+        { id: 3, title: 'Online Presence', icon: Link2, fields: [] },
+        { id: 4, title: 'Project Details', icon: Target, fields: [] },
         { id: 5, title: 'Final Details', icon: MessageSquare, fields: ['message', 'terms'] }
     ];
 
@@ -230,7 +230,7 @@ const CollaborationRequest = () => {
                 // Optional field
                 break;
             case 'terms':
-                if (!value) {
+                if (!value || value === false || value === 'false') {
                     error = 'Terms acceptance is required - You must accept the terms and conditions to continue';
                 }
                 break;
@@ -243,7 +243,9 @@ const CollaborationRequest = () => {
 
     const validateStep = (stepId) => {
         const step = steps.find(s => s.id === stepId);
-        if (!step) return true;
+        if (!step || !step.fields || step.fields.length === 0) {
+            return true; // Skip validation for steps with no required fields
+        }
 
         const stepErrors = {};
         step.fields.forEach(field => {
@@ -263,28 +265,33 @@ const CollaborationRequest = () => {
         const allErrors = {};
 
         // Check required fields regardless of step
-        if (!formData.name || (typeof formData.name === 'string' && formData.name.trim().length === 0)) {
+        const name = formData.name || '';
+        const email = formData.email || '';
+        const message = formData.message || '';
+        const terms = formData.terms;
+
+        if (!name || (typeof name === 'string' && name.trim().length === 0)) {
             allErrors.name = 'Name is required - Please enter your full name';
         } else {
-            const nameError = validateField('name', formData.name);
+            const nameError = validateField('name', name);
             if (nameError) allErrors.name = nameError;
         }
 
-        if (!formData.email || (typeof formData.email === 'string' && formData.email.trim().length === 0)) {
+        if (!email || (typeof email === 'string' && email.trim().length === 0)) {
             allErrors.email = 'Email is required - Please enter your email address';
         } else {
-            const emailError = validateField('email', formData.email);
+            const emailError = validateField('email', email);
             if (emailError) allErrors.email = emailError;
         }
 
-        if (!formData.message || (typeof formData.message === 'string' && formData.message.trim().length === 0)) {
+        if (!message || (typeof message === 'string' && message.trim().length === 0)) {
             allErrors.message = 'Message is required - Please tell us about your collaboration interest';
         } else {
-            const messageError = validateField('message', formData.message);
+            const messageError = validateField('message', message);
             if (messageError) allErrors.message = messageError;
         }
 
-        if (!formData.terms) {
+        if (!terms || terms === false || terms === 'false') {
             allErrors.terms = 'Terms acceptance is required - You must accept the terms and conditions to continue';
         }
 
@@ -301,10 +308,13 @@ const CollaborationRequest = () => {
 
         setFormData(prev => ({ ...prev, [name]: normalizedValue }));
 
-        // Clear error when user starts typing
+        // Clear error when user starts typing or changes value
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
+        
+        // Mark field as touched when user interacts with it
+        setTouched(prev => ({ ...prev, [name]: true }));
     };
 
     const handleBlur = (name) => {
@@ -319,6 +329,15 @@ const CollaborationRequest = () => {
         if (validateStep(currentStep)) {
             setCurrentStep(prev => Math.min(prev + 1, steps.length));
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            // Find the first error field and scroll to it
+            const firstErrorField = Object.keys(errors).find(key => errors[key]);
+            if (firstErrorField) {
+                const errorElement = document.querySelector(`[data-field="${firstErrorField}"]`);
+                if (errorElement) {
+                    errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
     };
 
@@ -693,6 +712,7 @@ const CollaborationRequest = () => {
                                                 value={formData.name}
                                                 onChange={(e) => handleFieldChange('name', e.target.value)}
                                                 onBlur={() => handleBlur('name')}
+                                                data-field="name"
                                                 className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
                                                     errors.name && touched.name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                                 }`}
@@ -717,6 +737,7 @@ const CollaborationRequest = () => {
                                                 value={formData.email}
                                                 onChange={(e) => handleFieldChange('email', e.target.value)}
                                                 onBlur={() => handleBlur('email')}
+                                                data-field="email"
                                                 className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-all ${
                                                     errors.email && touched.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                                                 }`}
@@ -1351,6 +1372,7 @@ const CollaborationRequest = () => {
                                             value={formData.message}
                                             onChange={(e) => handleFieldChange('message', e.target.value)}
                                             onBlur={() => handleBlur('message')}
+                                            data-field="message"
                                             rows={6}
                                             className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white resize-none ${
                                                 errors.message && touched.message ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
@@ -1531,6 +1553,8 @@ const CollaborationRequest = () => {
                                                 type="checkbox"
                                                 checked={formData.terms}
                                                 onChange={(e) => handleFieldChange('terms', e.target.checked)}
+                                                onBlur={() => handleBlur('terms')}
+                                                data-field="terms"
                                                 className="w-5 h-5 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-0.5 transition-all"
                                             />
                                             <span className="text-sm text-gray-700 dark:text-gray-300 select-none">

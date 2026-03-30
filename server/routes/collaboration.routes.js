@@ -11,7 +11,7 @@ const {
     bulkRejectRequests,
     archiveRequest,
     exportRequests,
-    getRequestDetails,
+    getRequestById,
     addRequestNote,
     getCollaborators,
     getPendingInvites,
@@ -28,7 +28,7 @@ router.get('/requests', getCollaborationRequests);
 router.get('/stats', getCollaborationStats);
 
 // Get single request details
-router.get('/requests/:id', getRequestDetails);
+router.get('/requests/:id', getRequestById);
 
 // Approve request
 router.post('/requests/:id/approve', approveRequest);
