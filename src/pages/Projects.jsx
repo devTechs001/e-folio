@@ -99,7 +99,7 @@ const Projects = () => {
             ],
             links: {
                 github: "https://github.com/devTechs001/ecommerce-platform",
-                live: "https://demo.devtechs001.com/ecommerce"
+                live: "https://devtechs001.github.io/omnibiz/"
             },
             technologies: ["React", "Node.js", "MongoDB", "Stripe", "Express", "Redux", "JWT", "Socket.io"],
             category: "Web",
@@ -251,6 +251,66 @@ const Projects = () => {
             duration: "5 months",
             teamSize: 4,
             achievements: ["$1M+ in transactions", "Security audit passed", "20k+ wallet downloads"]
+        },
+        {
+            id: 7,
+            title: "GB Chat",
+            description: "Real-time chat application with group messaging, file sharing, and advanced communication features.",
+            fullDescription: "A comprehensive real-time chat application built with modern web technologies. Features include group messaging, private chats, file sharing, emoji reactions, typing indicators, online status tracking, message search, and responsive design for all devices.",
+            imageUrl: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
+            thumbnail: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
+            images: [
+                { url: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3", caption: "Chat Interface" },
+                { url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2", caption: "Group Chat" },
+                { url: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0", caption: "Mobile View" },
+                { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "File Sharing" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/GB-chat",
+                live: "https://devtechs001.github.io/GB-chat/"
+            },
+            technologies: ["React", "Socket.io", "Node.js", "Express", "MongoDB", "JWT", "Tailwind CSS", "WebRTC"],
+            category: "Web",
+            tags: ["Real-time", "Chat", "Messaging", "Socket.io", "Communication"],
+            views: 856,
+            likes: 34,
+            featured: true,
+            status: "Live",
+            completionDate: "2024-02-15",
+            duration: "2 months",
+            teamSize: 2,
+            challenges: "Implementing real-time messaging, file uploads, and scalable socket connections",
+            achievements: ["1000+ active users", "99.9% uptime", "Sub-second message delivery"]
+        },
+        {
+            id: 8,
+            title: "Moview Watch",
+            description: "Movie streaming platform with personalized recommendations, watchlists, and social features.",
+            fullDescription: "A comprehensive movie streaming platform that provides users with a vast library of films and TV shows. Features include personalized recommendations based on viewing history, watchlist management, user ratings and reviews, social sharing, genre filtering, search functionality, and responsive design for optimal viewing on any device.",
+            imageUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
+            thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
+            images: [
+                { url: "https://images.unsplash.com/photo-1536440136628-849c177e76a1", caption: "Movie Library" },
+                { url: "https://images.unsplash.com/photo-1489599745951-884f3749b052", caption: "Movie Details" },
+                { url: "https://images.unsplash.com/photo-1518676590629-3d8889cced0c", caption: "Watch Interface" },
+                { url: "https://images.unsplash.com/photo-1535016120720-40c6a9e0a2f5", caption: "User Dashboard" }
+            ],
+            links: {
+                github: "https://github.com/devTechs001/moview-watch",
+                live: "https://devtechs001.github.io/moview-watch/"
+            },
+            technologies: ["React", "Redux", "TMDB API", "Node.js", "Express", "MongoDB", "JWT", "CSS3", "Video.js"],
+            category: "Web",
+            tags: ["Streaming", "Movies", "Entertainment", "API Integration", "Media"],
+            views: 1243,
+            likes: 56,
+            featured: true,
+            status: "Live",
+            completionDate: "2024-03-01",
+            duration: "3 months",
+            teamSize: 3,
+            challenges: "Integrating TMDB API, implementing video streaming, and building recommendation engine",
+            achievements: ["5000+ registered users", "50,000+ movies streamed", "4.8/5 user rating"]
         }
     ];
 

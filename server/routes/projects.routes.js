@@ -26,6 +26,34 @@ const projectValidation = [
     body('visibility').optional().isIn(['public', 'private', 'unlisted'])
 ];
 
+// Public endpoint (no auth required)
+router.get('/public', async (req, res) => {
+    try {
+        const Project = require('../models/Project.model');
+        
+        const projects = await Project.find({ 
+            visibility: 'public',
+            hidden: false,
+            archived: false 
+        })
+        .select('title description technologies category status featured tags views likes links images completionDate teamSize challenges achievements fullDescription')
+        .sort({ featured: -1, createdAt: -1 })
+        .lean();
+
+        res.json({
+            success: true,
+            projects,
+            total: projects.length
+        });
+    } catch (error) {
+        console.error('Error fetching public projects:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch projects'
+        });
+    }
+});
+
 // All routes require authentication
 router.use(protect);
 
