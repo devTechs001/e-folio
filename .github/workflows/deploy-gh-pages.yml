@@ -40,6 +40,7 @@ jobs:
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://e-folio-backend-server.onrender.com/api' }}
           VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL || 'https://e-folio-backend-server.onrender.com' }}
+          GITHUB_PAGES: true
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

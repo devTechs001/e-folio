@@ -18,7 +18,7 @@ export default defineConfig(({ command, mode }) => {
     
     // Base URL configuration
     // Netlify serves from root, GitHub Pages from /e-folio/
-    base: process.env.NODE_ENV === 'production' ? '/e-folio/' : '/',
+    base: env.GITHUB_PAGES === 'true' ? '/e-folio/' : '/',
   
     // Resolve configuration
     resolve: {
