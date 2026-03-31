@@ -189,24 +189,6 @@ module.exports = (io) => {
                 console.error('Direct notification error:', error);
             }
         });
-                socket.userRole = user.role;
-
-                // Broadcast updated user list
-                io.emit('active_users', Array.from(activeConnections.values()));
-                
-                console.log(`👤 User authenticated: ${user.name} (${user.role})`);
-                
-                socket.emit('authenticated', { success: true, user: {
-                    id: user._id,
-                    name: user.name,
-                    role: user.role,
-                    avatar: user.avatar
-                }});
-            } catch (error) {
-                console.error('Authentication error:', error);
-                socket.emit('error', { message: 'Authentication failed' });
-            }
-        });
 
         // Join chat room
         socket.on('join_room', async (roomId) => {

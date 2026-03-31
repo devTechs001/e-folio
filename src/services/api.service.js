@@ -457,6 +457,22 @@ class ApiService {
         return this.request('/profile/skills');
     }
 
+    async getCertifications() {
+        return this.request('/profile/certifications');
+    }
+
+    async getWorkExperience() {
+        return this.request('/profile/experience');
+    }
+
+    async getLanguages() {
+        return this.request('/profile/languages');
+    }
+
+    async exportResume(format) {
+        return this.request(`/profile/export/${format}`);
+    }
+
     async updateSkill(skillData) {
         return this.request('/profile/skills', {
             method: 'POST',
@@ -1185,6 +1201,10 @@ class ApiService {
 
     async getApiKeys() {
         return this.request('/settings/api-keys');
+    }
+
+    async getActiveSessions() {
+        return this.request('/settings/sessions');
     }
 
     async generateApiKey(data) {

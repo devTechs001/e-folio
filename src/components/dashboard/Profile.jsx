@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
@@ -37,6 +38,7 @@ import {
 const Profile = () => {
     const { user, updateUser } = useAuth();
     const { theme } = useTheme();
+    const { socket, connected, on, off } = useSocket();
     const { success, error: showError } = useNotifications();
     
     const [isEditing, setIsEditing] = useState(false);
@@ -147,6 +149,84 @@ const Profile = () => {
         };
     }, []);
 
+    // Real-time socket listeners
+    useEffect(() => {
+        if (!connected || !socket) return;
+
+        // Listen for profile updates from other users
+        const handleProfileUpdate = (data) => {
+            if (data.userId === user?.id) {
+                console.log('Profile updated in real-time:', data);
+                setProfile(prev => ({
+                    ...prev,
+                    ...data.profile
+                }));
+                updateUser(data.user);
+                success('Profile updated from another device');
+            }
+        };
+
+        // Listen for real-time activity updates
+        const handleActivityUpdate = (data) => {
+            if (data.userId === user?.id) {
+                console.log('Activity updated in real-time:', data);
+                setRecentActivity(prev => [data.activity, ...prev.slice(0, 9)]);
+                
+                // Update stats if provided
+                if (data.stats) {
+                    setProfileStats(prev => ({
+                        ...prev,
+                        ...data.stats
+                    }));
+                }
+            }
+        };
+
+        // Listen for collaboration requests
+        const handleCollaborationRequest = (data) => {
+            if (data.targetUserId === user?.id) {
+                console.log('New collaboration request:', data);
+                success(`New collaboration request from ${data.requesterName}`);
+                // Could update a notifications state here
+            }
+        };
+
+        // Listen for profile view notifications
+        const handleProfileView = (data) => {
+            if (data.profileId === user?.id && data.viewerId !== user?.id) {
+                console.log('Profile viewed:', data);
+                setProfileStats(prev => ({
+                    ...prev,
+                    totalViews: (prev?.totalViews || 0) + 1,
+                    viewsChart: [...(prev?.viewsChart || []), {
+                        timestamp: Date.now(),
+                        views: (prev?.totalViews || 0) + 1
+                    }].slice(-20) // Keep last 20 entries
+                }));
+            }
+        };
+
+        // Register socket listeners
+        socket.on('profile:updated', handleProfileUpdate);
+        socket.on('activity:updated', handleActivityUpdate);
+        socket.on('collaboration:request', handleCollaborationRequest);
+        socket.on('profile:viewed', handleProfileView);
+
+        // Join profile room for real-time updates
+        socket.emit('profile:join', { userId: user?.id });
+
+        return () => {
+            // Cleanup socket listeners
+            socket.off('profile:updated', handleProfileUpdate);
+            socket.off('activity:updated', handleActivityUpdate);
+            socket.off('collaboration:request', handleCollaborationRequest);
+            socket.off('profile:viewed', handleProfileView);
+            
+            // Leave profile room
+            socket.emit('profile:leave', { userId: user?.id });
+        };
+    }, [connected, socket, user?.id, success, updateUser]);
+
     useEffect(() => {
         generateQRCode();
     }, []);
@@ -252,6 +332,16 @@ const Profile = () => {
                 }));
                 setAvatarPreview(response.user.avatar);
                 setCoverPreview(response.user.coverImage);
+                
+                // Emit real-time profile update to other connected clients
+                if (socket && connected) {
+                    socket.emit('profile:update', {
+                        userId: user?.id,
+                        profile: profile,
+                        user: response.user,
+                        timestamp: Date.now()
+                    });
+                }
                 
                 // Emit settings change event for other components
                 window.dispatchEvent(new CustomEvent('settingsChanged', { 

@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
@@ -42,6 +43,7 @@ import DashboardLayout from './DashboardLayout';
 const Settings = () => {
     const { user, updateUser, logout } = useAuth();
     const { theme, themes, changeTheme, currentTheme } = useTheme();
+    const { socket, connected, on, off } = useSocket();
     const { success, error: showError, warning } = useNotifications();
 
     const [activeTab, setActiveTab] = useState('profile');
@@ -118,6 +120,90 @@ const Settings = () => {
     useEffect(() => {
         loadUserSettings();
     }, []);
+
+    // Real-time socket listeners for settings
+    useEffect(() => {
+        if (!connected || !socket) return;
+
+        // Listen for settings updates from other devices
+        const handleSettingsUpdate = (data) => {
+            if (data.userId === user?.id) {
+                console.log('Settings updated in real-time:', data);
+                setSettings(prev => ({
+                    ...prev,
+                    ...data.settings
+                }));
+                updateUser(data.user);
+                success('Settings updated from another device');
+                
+                // Apply theme changes immediately
+                if (data.settings.appearance?.theme) {
+                    changeTheme(data.settings.appearance.theme);
+                }
+            }
+        };
+
+        // Listen for security alerts
+        const handleSecurityAlert = (data) => {
+            if (data.userId === user?.id) {
+                console.log('Security alert:', data);
+                warning(data.message);
+                
+                // Update sessions if provided
+                if (data.sessions) {
+                    setSessions(data.sessions);
+                }
+            }
+        };
+
+        // Listen for API key changes
+        const handleApiKeyChange = (data) => {
+            if (data.userId === user?.id) {
+                console.log('API key changed:', data);
+                if (data.action === 'created') {
+                    setApiKeys(prev => [...prev, data.apiKey]);
+                    success('New API key created');
+                } else if (data.action === 'deleted') {
+                    setApiKeys(prev => prev.filter(key => key.id !== data.keyId));
+                    warning('API key revoked');
+                }
+            }
+        };
+
+        // Listen for session changes
+        const handleSessionChange = (data) => {
+            if (data.userId === user?.id) {
+                console.log('Session changed:', data);
+                if (data.action === 'new') {
+                    setSessions(prev => [data.session, ...prev]);
+                    warning('New session detected');
+                } else if (data.action === 'terminated') {
+                    setSessions(prev => prev.filter(session => session.id !== data.sessionId));
+                    warning('Session terminated');
+                }
+            }
+        };
+
+        // Register socket listeners
+        socket.on('settings:updated', handleSettingsUpdate);
+        socket.on('security:alert', handleSecurityAlert);
+        socket.on('apikey:changed', handleApiKeyChange);
+        socket.on('session:changed', handleSessionChange);
+
+        // Join settings room for real-time updates
+        socket.emit('settings:join', { userId: user?.id });
+
+        return () => {
+            // Cleanup socket listeners
+            socket.off('settings:updated', handleSettingsUpdate);
+            socket.off('security:alert', handleSecurityAlert);
+            socket.off('apikey:changed', handleApiKeyChange);
+            socket.off('session:changed', handleSessionChange);
+            
+            // Leave settings room
+            socket.emit('settings:leave', { userId: user?.id });
+        };
+    }, [connected, socket, user?.id, success, warning, updateUser, changeTheme]);
 
     const loadUserSettings = async () => {
         try {
@@ -197,6 +283,16 @@ const Settings = () => {
                 
                 // Update user context with new data
                 updateUser(response.user);
+                
+                // Emit real-time settings update to other connected clients
+                if (socket && connected) {
+                    socket.emit('settings:update', {
+                        userId: user?.id,
+                        settings: settings,
+                        user: response.user,
+                        timestamp: Date.now()
+                    });
+                }
                 
                 // Apply real-time settings changes
                 applyRealtimeSettings(settings);
