@@ -2,6 +2,8 @@
 
 A modern, feature-rich portfolio platform built with React and Vite, designed for developers who want more than just a static portfolio.
 
+*Last updated: GitHub Pages deployment with base path fix*
+
 ##  Features
 
 ###  Landing Page
