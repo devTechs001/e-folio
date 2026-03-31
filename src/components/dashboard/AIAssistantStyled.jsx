@@ -28,37 +28,141 @@ import 'katex/dist/katex.min.css';
 import Picker from 'emoji-picker-react';
 import toast from 'react-hot-toast';
 
-// Empty State for AI Assistant
+// Enhanced Empty State for AI Assistant
 const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
     return (
         <div className="flex items-center justify-center h-full p-6">
-            <div className="max-w-2xl w-full text-center">
-                <h2 className="text-2xl font-semibold mb-2">Start a conversation</h2>
-                <p className="text-sm text-gray-400 mb-6">Ask the assistant anything — try a suggestion below or type your question.</p>
+            <motion.div 
+                className="max-w-4xl w-full text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+            >
+                {/* Animated AI Brain Icon */}
+                <motion.div
+                    className="w-24 h-24 mx-auto mb-6 relative"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 rounded-full animate-pulse" />
+                    <div className="absolute inset-1 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center">
+                        <Brain size={48} className="text-blue-500" />
+                    </div>
+                    <motion.div
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                    />
+                </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <motion.h2 
+                    className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                >
+                    Start a conversation with AI
+                </motion.h2>
+                <motion.p 
+                    className="text-lg text-gray-600 dark:text-gray-400 mb-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    Ask the assistant anything — try a suggestion below or type your question.
+                </motion.p>
+
+                {/* Enhanced Predefined Prompts Grid */}
+                <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                >
                     {suggestions.map((sugg, idx) => {
                         const Icon = sugg.icon || (() => null);
                         return (
-                            <button
+                            <motion.button
                                 key={idx}
                                 onClick={() => setInput(typeof sugg.prompt === 'function' ? sugg.prompt({ model: aiModel }) : sugg.prompt)}
-                                className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-left transition"
+                                className="group relative overflow-hidden bg-gradient-to-br from-white/80 to-gray-50 dark:from-gray-800/80 dark:to-gray-900/80 hover:from-blue-50/80 hover:to-purple-50/80 dark:hover:from-blue-900/30 dark:hover:to-purple-900/30 border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-4 text-left transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 * idx }}
+                                whileHover={{ scale: 1.02, y: -2 }}
+                                whileTap={{ scale: 0.98 }}
                             >
-                                <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-md">
-                                    <Icon size={20} />
+                                {/* Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                
+                                <div className="relative z-10 flex items-start gap-4">
+                                    {/* Enhanced Icon Container */}
+                                    <motion.div 
+                                        className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg flex-shrink-0"
+                                        whileHover={{ scale: 1.1, rotate: 5 }}
+                                        whileTap={{ scale: 0.9 }}
+                                    >
+                                        <Icon size={24} className="text-white" />
+                                    </motion.div>
+                                    
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                            {sugg.text}
+                                        </div>
+                                        {sugg.prompt && (
+                                            <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+                                                {String(sugg.prompt).substring(0, 120)}
+                                                {String(sugg.prompt).length > 120 && '...'}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Category Badge */}
+                                        {sugg.category && (
+                                            <motion.div
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ delay: 0.2 + idx * 0.1 }}
+                                                className="mt-2 inline-block"
+                                            >
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded-full">
+                                                    <Tag size={10} />
+                                                    {sugg.category}
+                                                </span>
+                                            </motion.div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-sm">
-                                    <div className="font-medium">{sugg.text}</div>
-                                    {sugg.prompt && (
-                                        <div className="text-xs text-gray-400 mt-1 truncate">{String(sugg.prompt).substring(0, 80)}</div>
-                                    )}
-                                </div>
-                            </button>
+
+                                {/* Hover Effect Corner */}
+                                <motion.div
+                                    className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100"
+                                    animate={{ scale: [1, 1.5, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                />
+                            </motion.button>
                         );
                     })}
-                </div>
-            </div>
+                </motion.div>
+
+                {/* Quick Tips Section */}
+                <motion.div
+                    className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                >
+                    <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb size={16} className="text-blue-600 dark:text-blue-400" />
+                        <span className="font-semibold text-blue-900 dark:text-blue-100">Quick Tips</span>
+                    </div>
+                    <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                        <p>• Use Ctrl+Enter to send messages quickly</p>
+                        <p>• Upload files for AI analysis and insights</p>
+                        <p>• Try voice recording for hands-free interaction</p>
+                    </div>
+                </motion.div>
+            </motion.div>
         </div>
     );
 };
@@ -205,59 +309,99 @@ const AIAssistant = () => {
     const suggestions = [
         { 
             icon: Code, 
-            text: 'Generate code snippet', 
+            text: 'Generate React Component', 
             color: 'blue',
-            prompt: 'Write a {language} function that {description}. Include error handling and documentation.',
-            category: 'code'
+            prompt: 'Create a modern React component for {component_name} with TypeScript, Tailwind CSS, and proper error handling. Include hooks, props validation, and responsive design.',
+            category: 'Development',
+            tags: ['react', 'typescript', 'frontend']
         },
         { 
             icon: Lightbulb, 
-            text: 'Get creative ideas', 
+            text: 'Brainstorm Project Ideas', 
             color: 'amber',
-            prompt: 'Generate 10 creative ideas for {topic}. Think outside the box.',
-            category: 'creative'
+            prompt: 'Generate 10 innovative project ideas for {domain} with detailed descriptions, tech stacks, potential challenges, and monetization strategies.',
+            category: 'Creative',
+            tags: ['brainstorming', 'innovation', 'strategy']
         },
         { 
             icon: FileText, 
-            text: 'Write documentation', 
+            text: 'Write Technical Documentation', 
             color: 'green',
-            prompt: 'Write comprehensive documentation for {project}. Include setup, usage, and examples.',
-            category: 'writing'
+            prompt: 'Create comprehensive technical documentation for {project} including API endpoints, setup instructions, usage examples, and troubleshooting guide.',
+            category: 'Documentation',
+            tags: ['writing', 'api', 'documentation']
         },
         { 
             icon: Zap, 
-            text: 'Optimize performance', 
+            text: 'Performance Optimization', 
             color: 'purple',
-            prompt: 'Analyze and optimize the performance of {code/system}. Suggest improvements.',
-            category: 'optimization'
+            prompt: 'Analyze this code/application for performance bottlenecks and provide specific optimization strategies:\n\n{code_or_description}',
+            category: 'Optimization',
+            tags: ['performance', 'optimization', 'analysis']
         },
         {
             icon: Brain,
-            text: 'Explain concept',
+            text: 'Explain Complex Concepts',
             color: 'pink',
-            prompt: 'Explain {concept} like I\'m 5, then provide a technical deep dive.',
-            category: 'learning'
+            prompt: 'Explain {concept} in three different ways: 1) Simple analogy for beginners, 2) Technical explanation for developers, 3) Advanced details with real-world examples.',
+            category: 'Learning',
+            tags: ['education', 'explanation', 'tutorial']
         },
         {
             icon: MessageSquare,
-            text: 'Review code',
+            text: 'Code Review & Refactoring',
             color: 'indigo',
-            prompt: 'Review this code for quality, performance, and security:\n\n{code}',
-            category: 'review'
+            prompt: 'Perform a comprehensive code review of this code, focusing on: code quality, security vulnerabilities, performance issues, and suggest improvements:\n\n{code}',
+            category: 'Review',
+            tags: ['code-review', 'refactoring', 'quality']
         },
         {
             icon: Database,
-            text: 'Database design',
+            text: 'Database Schema Design',
             color: 'cyan',
-            prompt: 'Design a database schema for {application}. Include relationships and indexes.',
-            category: 'database'
+            prompt: 'Design a complete database schema for {application_type} including ERD, relationships, indexes, constraints, and migration scripts.',
+            category: 'Database',
+            tags: ['database', 'schema', 'design']
         },
         {
             icon: Terminal,
-            text: 'Debug issue',
+            text: 'Debug & Troubleshoot',
             color: 'red',
-            prompt: 'Help me debug this error: {error}\n\nCode context:\n{code}',
-            category: 'debug'
+            prompt: 'Help me debug this issue. Error: {error}\nContext: {context}\nCode: {code}\n\nProvide step-by-step debugging approach and solutions.',
+            category: 'Debugging',
+            tags: ['debugging', 'troubleshooting', 'error']
+        },
+        {
+            icon: TrendingUp,
+            text: 'Architecture Planning',
+            color: 'emerald',
+            prompt: 'Design system architecture for {project} including microservices, data flow, scalability considerations, and technology recommendations.',
+            category: 'Architecture',
+            tags: ['architecture', 'design', 'scalability']
+        },
+        {
+            icon: Shield,
+            text: 'Security Analysis',
+            color: 'orange',
+            prompt: 'Conduct a security analysis of this code/application and identify vulnerabilities, attack vectors, and provide security best practices:\n\n{code_or_description}',
+            category: 'Security',
+            tags: ['security', 'audit', 'vulnerability']
+        },
+        {
+            icon: Users,
+            text: 'UX/UI Design Review',
+            color: 'teal',
+            prompt: 'Review this UI/UX design and provide feedback on usability, accessibility, visual hierarchy, and user experience improvements:\n\n{design_description}',
+            category: 'Design',
+            tags: ['ux', 'ui', 'design']
+        },
+        {
+            icon: GitBranch,
+            text: 'Git Workflow Setup',
+            color: 'lime',
+            prompt: 'Design a comprehensive Git workflow for {team_size} team working on {project_type} including branching strategy, CI/CD pipeline, and best practices.',
+            category: 'DevOps',
+            tags: ['git', 'workflow', 'devops']
         }
     ];
 
@@ -340,7 +484,7 @@ const AIAssistant = () => {
     // Database Operations
     const loadConversations = async () => {
         try {
-            const response = await apiService.getAIConversations(user?.id);
+            const response = await ApiService.getAIConversations(user?.id);
             
             setConversations(response.conversations || []);
             
@@ -460,7 +604,7 @@ const AIAssistant = () => {
 
     const loadUsageStats = async () => {
         try {
-            const response = await apiService.getUsageStats(user?.id);
+            const response = await ApiService.getUsageStats(user?.id);
             setUsageStats(response);
         } catch (err) {
             console.error('Error loading usage stats:', err);
@@ -469,7 +613,7 @@ const AIAssistant = () => {
 
     const loadUserPreferences = async () => {
         try {
-            const response = await apiService.getAIPreferences(user?.id);
+            const response = await ApiService.getAIPreferences(user?.id);
             const prefs = response;
             if (prefs) {
                 // Default to free model (gpt-3.5-turbo) when possible
@@ -1425,6 +1569,7 @@ const AIAssistant = () => {
                 <AnimatePresence>
                     {showHistory && (
                         <ConversationHistory
+                            key="conversation-history"
                             conversations={conversations}
                             currentConversation={currentConversation}
                             searchQuery={searchQuery}
@@ -1492,6 +1637,7 @@ const AIAssistant = () => {
                 <AnimatePresence>
                     {showSettings && (
                         <SettingsPanel
+                            key="settings-panel"
                             aiModel={aiModel}
                             setAiModel={setAiModel}
                             aiProvider={aiProvider}
@@ -1867,7 +2013,7 @@ const MessageList = ({
     );
 };
 
-// Input Area Component
+// Enhanced Input Area Component
 const InputArea = ({
     input, setInput, selectedFiles, removeFile, handleSend, isTyping, 
     stopGeneration, fileInputRef, handleFileUpload, toggleRecording, 
@@ -1875,29 +2021,64 @@ const InputArea = ({
     showEmojiPicker, setShowEmojiPicker
 }) => {
     return (
-        <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-xl">
+        <motion.div 
+            className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 backdrop-blur-xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
             <div className="max-w-4xl mx-auto">
-                {selectedFiles.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                        {selectedFiles.map((file, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm"
-                            >
-                                <File size={16} />
-                                <span className="truncate max-w-xs">{file.name}</span>
-                                <button
-                                    onClick={() => removeFile(idx)}
-                                    className="p-1 hover:bg-red-500/20 rounded transition-colors"
+                {/* Enhanced File Preview */}
+                <AnimatePresence>
+                    {selectedFiles.length > 0 && (
+                        <motion.div
+                            key="file-preview"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="flex flex-wrap gap-3 mb-4"
+                        >
+                            {selectedFiles.map((file, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    whileHover={{ scale: 1.02 }}
+                                    className="group relative flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                                 >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                                    <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                                        <File size={16} className="text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                            {file.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            {(file.size / 1024).toFixed(1)} KB
+                                        </p>
+                                    </div>
+                                    <motion.button
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={() => removeFile(idx)}
+                                        className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </motion.button>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                <div className="relative">
+                {/* Enhanced Input Container */}
+                <motion.div 
+                    className="relative group"
+                    whileHover={{ scale: 1.01 }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
                     <textarea
                         ref={textareaRef}
                         value={input}
@@ -1908,13 +2089,14 @@ const InputArea = ({
                                 if (!isTyping) handleSend();
                             }
                         }}
-                        placeholder={`Message AI Assistant... (${aiModel}, temp: ${temperature}, max: ${maxTokens})`}
-                        className="w-full p-4 pr-16 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        placeholder="Ask AI anything... (Ctrl+Enter to send, Shift+Enter for new line)"
+                        className="relative w-full p-4 pr-32 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
                         rows="1"
-                        style={{ minHeight: '60px', maxHeight: '200px' }}
+                        style={{ minHeight: '80px', maxHeight: '300px' }}
                         disabled={isTyping}
                     />
 
+                    {/* Enhanced Action Buttons */}
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                         <input
                             type="file"
@@ -1925,61 +2107,109 @@ const InputArea = ({
                             accept="image/*,audio/*,video/*,text/*,.pdf,.doc,.docx"
                         />
                         
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.1, y: -2 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => fileInputRef.current?.click()}
-                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            className="p-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                            title="Attach files"
                         >
                             <Paperclip size={18} />
-                        </button>
+                        </motion.button>
 
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.1, y: -2 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={toggleRecording}
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
                                 isRecording 
-                                    ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
-                                    : 'hover:bg-white/10'
+                                    ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse' 
+                                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                             }`}
+                            title={isRecording ? 'Stop recording' : 'Start voice recording'}
                         >
                             <Mic size={18} />
-                        </button>
+                        </motion.button>
 
                         {isTyping ? (
-                            <button
+                            <motion.button
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.9 }}
                                 onClick={stopGeneration}
-                                className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+                                className="p-2.5 bg-red-500 text-white hover:bg-red-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                                title="Stop generation"
                             >
                                 <Square size={18} />
-                            </button>
+                            </motion.button>
                         ) : (
-                            <button
+                            <motion.button
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.9 }}
                                 onClick={() => handleSend()}
                                 disabled={!input.trim() && selectedFiles.length === 0}
-                                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                                className={`p-2.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl ${
+                                    input.trim() || selectedFiles.length > 0
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                }`}
+                                title="Send message (Ctrl+Enter)"
                             >
                                 <Send size={18} />
-                            </button>
+                            </motion.button>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
+                {/* Enhanced Status Bar */}
+                <motion.div 
+                    className="flex items-center justify-between mt-4 text-xs text-gray-500 dark:text-gray-400"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                >
                     <div className="flex items-center gap-4">
-                        <span>Model: {aiModel}</span>
-                        <span>Temp: {temperature}</span>
-                        <span>Max: {maxTokens}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span>Press ⏎ to send, ⇧ ⏎ for new line</span>
-                        <button
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            className="p-1 hover:bg-white/10 rounded transition-colors"
+                        <motion.div 
+                            className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full"
+                            whileHover={{ scale: 1.05 }}
                         >
-                            <Smile size={14} />
-                        </button>
+                            <Cpu size={12} />
+                            <span className="font-medium">{aiModel}</span>
+                        </motion.div>
+                        <motion.div 
+                            className="flex items-center gap-1.5 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full"
+                            whileHover={{ scale: 1.05 }}
+                        >
+                            <Activity size={12} />
+                            <span className="font-medium">Temp: {temperature}</span>
+                        </motion.div>
+                        <motion.div 
+                            className="flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full"
+                            whileHover={{ scale: 1.05 }}
+                        >
+                            <Zap size={12} />
+                            <span className="font-medium">Max: {maxTokens}</span>
+                        </motion.div>
                     </div>
-                </div>
+                    
+                    <div className="flex items-center gap-3">
+                        <motion.span 
+                            className="flex items-center gap-1"
+                            whileHover={{ scale: 1.05 }}
+                        >
+                            <Clock size={12} />
+                            <span>Auto-save enabled</span>
+                        </motion.span>
+                        <motion.span 
+                            className="flex items-center gap-1 text-green-600 dark:text-green-400"
+                            whileHover={{ scale: 1.05 }}
+                        >
+                            <Shield size={12} />
+                            <span>Secured</span>
+                        </motion.span>
+                    </div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -2004,8 +2234,7 @@ const SettingsPanel = ({
         { id: 'llama3-70b', name: 'Llama 3 70B', provider: 'groq' },
         { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'anthropic' },
         { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'anthropic' },
-        { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google' },
-        { id: 'llama-3-70b', name: 'Llama 3 70B', provider: 'meta' }
+        { id: 'llama-3-70b', name: 'Llama 3 70B (Meta)', provider: 'meta' }
     ];
 
     return (

@@ -7,7 +7,11 @@ import {
     Check, Tag, Eye, EyeOff, RefreshCw, BarChart, TrendingUp,
     Calendar, Users, Target, Sparkles, Brain, Bot, Settings,
     Bell, Shield, Award, Globe, Headphones, MessageCircle,
-    FileText, Database, Activity, PieChart, LineChart
+    FileText, Database, Activity, PieChart, LineChart, MailOpen,
+    AtSign, Hash, Link, Smile, Frown, Meh, Heart,
+    Bookmark, MoreHorizontal, ChevronLeft, ChevronRight,
+    CheckSquare, Square, User, Lock, Unlock, Cloud, Sun,
+    Moon, Wifi, WifiOff, Volume2, VolumeX
 } from 'lucide-react';
 import DashboardLayout from './DashboardLayout';
 
@@ -148,7 +152,12 @@ const EmailManagerEnhanced = () => {
     // ✅ UPDATED: Actual send functionality
     const handleSendEmail = () => {
         if (!composeData.to) {
-            alert('Please enter a recipient');
+            // Create a simple notification instead of alert
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse';
+            notification.textContent = 'Please enter a recipient';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
             return;
         }
 
@@ -175,8 +184,12 @@ const EmailManagerEnhanced = () => {
         setStats(prev => ({ ...prev, sent: prev.sent + 1 }));
         resetCompose();
         
-        // Show success message
-        alert(composeData.scheduledFor ? 'Email scheduled!' : 'Email sent!');
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        notification.textContent = composeData.scheduledFor ? 'Email scheduled!' : 'Email sent successfully!';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
     };
 
     // ✅ UPDATED: Save draft functionality
@@ -201,7 +214,13 @@ const EmailManagerEnhanced = () => {
         setEmails(prev => [draft, ...prev]);
         setStats(prev => ({ ...prev, drafts: prev.drafts + 1 }));
         resetCompose();
-        alert('Draft saved!');
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        notification.textContent = 'Draft saved successfully!';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
     };
 
     // ✅ UPDATED: Toggle star functionality
@@ -224,14 +243,49 @@ const EmailManagerEnhanced = () => {
 
     // ✅ UPDATED: Delete functionality
     const handleDeleteEmail = (emailId) => {
-        if (window.confirm('Move email to trash?')) {
+        // Create confirmation dialog instead of window.confirm
+        const confirmDialog = document.createElement('div');
+        confirmDialog.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+        confirmDialog.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm mx-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Email</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Move this email to trash? This action can be undone.</p>
+                <div class="flex gap-3 justify-end">
+                    <button id="cancel-delete" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                    <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(confirmDialog);
+        
+        const handleConfirm = () => {
             setEmails(prev => prev.map(email => 
                 email.id === emailId 
                     ? { ...email, folder: 'trash' }
                     : email
             ));
             setSelectedEmail(null);
-        }
+            
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            notification.textContent = 'Email moved to trash';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            
+            document.body.removeChild(confirmDialog);
+        };
+        
+        const handleCancel = () => {
+            document.body.removeChild(confirmDialog);
+        };
+        
+        document.getElementById('confirm-delete').addEventListener('click', handleConfirm);
+        document.getElementById('cancel-delete').addEventListener('click', handleCancel);
+        confirmDialog.addEventListener('click', (e) => {
+            if (e.target === confirmDialog) handleCancel();
+        });
     };
 
     // ✅ ADDED: Mark as read/unread
@@ -767,27 +821,43 @@ const EmailManagerEnhanced = () => {
                                     <p>No emails found</p>
                                 </div>
                             ) : (
-                                filteredEmails.map(email => (
-                                    <div
+                                filteredEmails.map((email, index) => (
+                                    <motion.div
                                         key={email.id}
-                                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors ${
-                                            selectedEmail?.id === email.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : ''
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        whileHover={{ scale: 1.02, x: 4 }}
+                                        className={`group relative p-4 cursor-pointer transition-all duration-200 ${
+                                            selectedEmail?.id === email.id 
+                                                ? 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 border-l-4 border-blue-500 shadow-sm' 
+                                                : 'hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-700'
                                         } ${
-                                            email.unread ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                                            email.unread 
+                                                ? 'bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-900/20 dark:to-indigo-900/20 border-l-2 border-blue-400' 
+                                                : ''
                                         }`}
                                     >
-                                        <div className="flex items-start gap-3">
-                                            {/* ✅ ADDED: Checkbox */}
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmails.includes(email.id)}
-                                                onChange={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleSelectEmail(email.id);
-                                                }}
-                                                className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
+                                        {/* Animated gradient overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        
+                                        <div className="flex items-start gap-3 relative z-10">
+                                            {/* Enhanced Checkbox */}
+                                            <motion.div
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedEmails.includes(email.id)}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSelectEmail(email.id);
+                                                    }}
+                                                    className="mt-1 w-4 h-4 rounded border-2 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </motion.div>
                                             
                                             <div 
                                                 className="flex-1 min-w-0"
@@ -799,47 +869,119 @@ const EmailManagerEnhanced = () => {
                                                     }
                                                 }}
                                             >
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <h4 className={`text-sm truncate ${email.unread ? 'font-bold' : 'font-medium'} text-gray-900 dark:text-white`}>
-                                                        {email.from?.name || 'Unknown'}
-                                                    </h4>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                                        {formatTime(email.timestamp)}
-                                                    </span>
+                                                {/* Email Header */}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        {/* Avatar */}
+                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                            {email.from?.name?.charAt(0) || 'U'}
+                                                        </div>
+                                                        <h4 className={`text-sm truncate transition-all duration-200 ${
+                                                            email.unread 
+                                                                ? 'font-bold text-gray-900 dark:text-white' 
+                                                                : 'font-medium text-gray-700 dark:text-gray-300'
+                                                        }`}>
+                                                            {email.from?.name || 'Unknown'}
+                                                        </h4>
+                                                        {/* Status indicators */}
+                                                        {email.priority === 'high' && (
+                                                            <motion.div
+                                                                initial={{ scale: 0 }}
+                                                                animate={{ scale: 1 }}
+                                                                className="w-2 h-2 bg-red-500 rounded-full"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                                            {formatTime(email.timestamp)}
+                                                        </span>
+                                                        {/* Quick actions */}
+                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1">
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.2 }}
+                                                                whileTap={{ scale: 0.8 }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleToggleStar(email.id);
+                                                                }}
+                                                                className="p-1 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 rounded transition-colors"
+                                                            >
+                                                                <Star size={14} className={email.starred ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'} />
+                                                            </motion.button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <p className={`text-sm truncate ${email.unread ? 'font-semibold' : ''} text-gray-700 dark:text-gray-300`}>
+                                                
+                                                {/* Subject */}
+                                                <p className={`text-sm truncate mb-1 transition-all duration-200 ${
+                                                    email.unread 
+                                                        ? 'font-semibold text-gray-800 dark:text-gray-100' 
+                                                        : 'text-gray-700 dark:text-gray-300'
+                                                }`}>
                                                     {email.subject}
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                                                
+                                                {/* Preview */}
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2 line-clamp-2">
                                                     {email.preview}
                                                 </p>
                                                 
-                                                {/* Labels and indicators */}
-                                                <div className="flex items-center gap-2 mt-2">
+                                                {/* Enhanced Labels and indicators */}
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     {email.starred && (
-                                                        <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                                                        <motion.div
+                                                            initial={{ rotate: -180 }}
+                                                            animate={{ rotate: 0 }}
+                                                            className="flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-full"
+                                                        >
+                                                            <Star size={10} className="fill-yellow-400 text-yellow-400" />
+                                                            <span className="text-xs text-yellow-700 dark:text-yellow-300">Starred</span>
+                                                        </motion.div>
                                                     )}
                                                     {email.hasAttachment && (
-                                                        <Paperclip size={12} className="text-gray-400" />
+                                                        <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                                            <Paperclip size={10} className="text-gray-500 dark:text-gray-400" />
+                                                            <span className="text-xs text-gray-600 dark:text-gray-300">Attachment</span>
+                                                        </div>
                                                     )}
                                                     {email.priority === 'high' && (
-                                                        <Flag size={12} className="text-red-500" />
+                                                        <motion.div
+                                                            initial={{ scale: 0 }}
+                                                            animate={{ scale: 1 }}
+                                                            className="flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 rounded-full"
+                                                        >
+                                                            <Flag size={10} className="text-red-500" />
+                                                            <span className="text-xs text-red-700 dark:text-red-300">High Priority</span>
+                                                        </motion.div>
                                                     )}
                                                     {email.labels?.map(labelId => {
                                                         const label = labels.find(l => l.id === labelId);
                                                         return label ? (
-                                                            <div
+                                                            <motion.div
                                                                 key={labelId}
-                                                                className="w-2 h-2 rounded-full"
-                                                                style={{ backgroundColor: label.color }}
+                                                                initial={{ scale: 0 }}
+                                                                animate={{ scale: 1 }}
+                                                                whileHover={{ scale: 1.1 }}
+                                                                className="px-2 py-1 rounded-full text-xs font-medium"
+                                                                style={{ 
+                                                                    backgroundColor: `${label.color}20`,
+                                                                    color: label.color,
+                                                                    border: `1px solid ${label.color}40`
+                                                                }}
                                                                 title={label.name}
-                                                            />
+                                                            >
+                                                                {label.name}
+                                                            </motion.div>
                                                         ) : null;
                                                     })}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                        
+                                        {/* Hover effect border */}
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    </motion.div>
                                 ))
                             )}
                         </div>
@@ -966,7 +1108,23 @@ const EmailManagerEnhanced = () => {
                                             ref={editorRef}
                                             value={composeData.body}
                                             onChange={(e) => setComposeData({...composeData, body: e.target.value})}
-                                            placeholder="Write your message..."
+                                            onKeyDown={(e) => {
+                                                // Ctrl+Enter to send
+                                                if (e.ctrlKey && e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleSendEmail();
+                                                }
+                                                // Ctrl+S to save draft
+                                                if (e.ctrlKey && e.key === 's') {
+                                                    e.preventDefault();
+                                                    saveDraft();
+                                                }
+                                                // Escape to cancel
+                                                if (e.key === 'Escape') {
+                                                    resetCompose();
+                                                }
+                                            }}
+                                            placeholder="Write your message... (Ctrl+Enter to send, Ctrl+S to save draft, Escape to cancel)"
                                             rows={15}
                                             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white resize-none"
                                         />

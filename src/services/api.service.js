@@ -2700,6 +2700,37 @@ class ApiService {
             return { success: false, message: error.message };
         }
     }
+
+    // AI Service Methods
+    async getUsageStats(userId) {
+        try {
+            return await this.request(`/ai/usage-stats${userId ? `?userId=${userId}` : ''}`);
+        } catch (error) {
+            console.warn('Usage stats unavailable:', error);
+            return { usage: {} };
+        }
+    }
+
+    async getAIPreferences(userId) {
+        try {
+            return await this.request(`/ai/preferences${userId ? `?userId=${userId}` : ''}`);
+        } catch (error) {
+            console.warn('AI preferences unavailable:', error);
+            return { aiModel: 'gpt-3.5-turbo', aiProvider: 'openai', temperature: 0.7, maxTokens: 2000 };
+        }
+    }
+
+    async updateAIPreferences(preferences) {
+        try {
+            return await this.request('/ai/preferences', {
+                method: 'PUT',
+                body: JSON.stringify(preferences)
+            });
+        } catch (error) {
+            console.warn('Failed to update AI preferences:', error);
+            return { success: false, message: error.message };
+        }
+    }
 }
 
 export default new ApiService();

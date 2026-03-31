@@ -1931,7 +1931,7 @@ const PortfolioEditor = () => {
                             onToggle={toggleSection}
                             onDelete={deleteSection}
                             onDuplicate={duplicateSection}
-                            onClone={cloneSection}
+                            onClone={cloneAsTemplate}
                             theme={theme}
                             isSelected={selectedSection?.id === section.id}
                             sections={sections}

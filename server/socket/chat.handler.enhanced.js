@@ -50,6 +50,147 @@ module.exports = (io) => {
                 socket.userName = user.name;
                 socket.userRole = user.role;
 
+                // Broadcast online users update
+                const onlineUsers = Array.from(activeConnections.values()).map(conn => ({
+                    id: conn.userId,
+                    name: conn.name,
+                    email: conn.email,
+                    role: conn.role,
+                    avatar: conn.avatar,
+                    status: conn.status,
+                    connectedAt: conn.connectedAt
+                }));
+                
+                io.emit('online_users', onlineUsers);
+
+                // Send welcome notification
+                socket.emit('notification', {
+                    type: 'system_alert',
+                    message: `Welcome back, ${user.name}!`,
+                    title: 'Connected',
+                    timestamp: new Date()
+                });
+
+                console.log(`👤 User authenticated: ${user.name} (${user.role})`);
+                socket.emit('authenticated', { success: true, user: { name: user.name, role: user.role } });
+            } catch (error) {
+                console.error('Authentication error:', error);
+                socket.emit('error', { message: 'Authentication failed' });
+            }
+        });
+
+        // Handle collaboration request notifications
+        socket.on('collaboration_request', async (requestData) => {
+            try {
+                // Notify all owner users about new collaboration request
+                const owners = Array.from(activeConnections.values()).filter(conn => conn.role === 'owner');
+                
+                owners.forEach(owner => {
+                    io.to(owner.socketId).emit('notification', {
+                        type: 'collaboration_request',
+                        message: `New collaboration request from ${requestData.name}`,
+                        title: 'Collaboration Request',
+                        sender: requestData.name,
+                        senderEmail: requestData.email,
+                        requestId: requestData.id,
+                        timestamp: new Date(),
+                        action: {
+                            label: 'View Request',
+                            onClick: () => window.location.href = '/dashboard/collaborators'
+                        }
+                    });
+                });
+
+                console.log(`📩 Collaboration request sent to ${owners.length} owners`);
+            } catch (error) {
+                console.error('Collaboration request notification error:', error);
+            }
+        });
+
+        // Handle project update notifications
+        socket.on('project_update', async (projectData) => {
+            try {
+                // Notify all connected users about project update
+                const notification = {
+                    type: 'project_update',
+                    message: `Project "${projectData.name}" has been updated`,
+                    title: 'Project Updated',
+                    projectName: projectData.name,
+                    projectId: projectData.id,
+                    changes: projectData.changes,
+                    timestamp: new Date()
+                };
+
+                // Send to all users
+                io.emit('notification', notification);
+                
+                console.log(`🔄 Project update notification sent: ${projectData.name}`);
+            } catch (error) {
+                console.error('Project update notification error:', error);
+            }
+        });
+
+        // Handle system alerts
+        socket.on('system_alert', (alertData) => {
+            try {
+                const notification = {
+                    type: 'system_alert',
+                    message: alertData.message,
+                    title: alertData.title || 'System Alert',
+                    severity: alertData.severity || 'info',
+                    timestamp: new Date()
+                };
+
+                // Send to all connected users or specific role
+                if (alertData.targetRole) {
+                    const targetUsers = Array.from(activeConnections.values()).filter(conn => conn.role === alertData.targetRole);
+                    targetUsers.forEach(user => {
+                        io.to(user.socketId).emit('notification', notification);
+                    });
+                } else {
+                    io.emit('notification', notification);
+                }
+                
+                console.log(`🚨 System alert sent: ${alertData.message}`);
+            } catch (error) {
+                console.error('System alert notification error:', error);
+            }
+        });
+
+        // Handle direct user notifications
+        socket.on('send_notification', async (notificationData) => {
+            try {
+                const { targetUserId, type, message, title, action } = notificationData;
+                
+                // Find target user's active connections
+                const targetConnections = Array.from(activeConnections.values()).filter(conn => 
+                    conn.userId.toString() === targetUserId.toString()
+                );
+                
+                if (targetConnections.length > 0) {
+                    const notification = {
+                        type: type || 'info',
+                        message,
+                        title: title || 'Notification',
+                        action,
+                        timestamp: new Date(),
+                        sender: socket.userName
+                    };
+                    
+                    targetConnections.forEach(conn => {
+                        io.to(conn.socketId).emit('notification', notification);
+                    });
+                    
+                    console.log(`📬 Direct notification sent to ${targetConnections.length} connections for user ${targetUserId}`);
+                } else {
+                    console.log(`📬 User ${targetUserId} not currently online`);
+                }
+            } catch (error) {
+                console.error('Direct notification error:', error);
+            }
+        });
+                socket.userRole = user.role;
+
                 // Broadcast updated user list
                 io.emit('active_users', Array.from(activeConnections.values()));
                 
