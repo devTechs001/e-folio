@@ -160,10 +160,13 @@ const AIChatbot = () => {
   ];
 
   const followUpSuggestions = {
+    personal: ['Your background', 'What technologies do you use', 'What are your hobbies'],
     projects: ['Show me web projects', 'Latest project details', 'Tech stack used'],
     skills: ['Frontend skills', 'Backend skills', 'DevOps tools'],
     collaborate: ['Freelance rates', 'Availability', 'Past collaborations'],
     experience: ['Education background', 'Certifications', 'Languages spoken'],
+    education: ['Your training', 'Courses completed', 'Learning journey'],
+    interests: ['What do you do for fun', 'Side projects', 'Tech interests'],
     contact: ['Email address', 'Social links', 'Location'],
     default: ['Tell me more', 'Show projects', 'Contact info']
   };
@@ -227,6 +230,22 @@ const AIChatbot = () => {
       "Great question! My portfolio showcases my work in web development and software engineering. Is there something specific you'd like to know more about?",
       "I appreciate your curiosity! I've worked on many interesting projects and learned a lot along the way. What aspect would you like to dive into?"
     ],
+    personal: [
+      `Hey${userName ? ' ' + userName : ''}! I'm Daniel Mukula, also known as Dev. I'm a full-stack developer passionate about building modern web applications and solving real-world problems. Want to know about my skills, projects, or what I do for fun?`,
+      `I'm Daniel Mukula (Dev for short) — a developer who loves creating things for the web. I work with React, Node.js, Python, and various other technologies. Ask me about my journey, skills, or what inspires me!`,
+      `My name is Daniel Mukula, and I go by Dev online. I've been building web applications and exploring new technologies. Feel free to ask about my experience, education, or interests — I'm an open book!`,
+      `Dev here! I'm a developer focused on full-stack web development with a love for clean code and great user experiences. I'm always learning and building. What would you like to know about me?`
+    ],
+    education: [
+      "I've studied and trained in software development, focusing on modern web technologies. I believe in continuous learning and staying up to date with the latest tools and practices. Want to know about specific courses or certifications?",
+      "My education journey has been a mix of formal study and hands-on projects. I'm always taking courses to sharpen my skills in areas like React, Node.js, and software architecture. Curious about any specific area?",
+      "I'm passionate about learning and have completed training in full-stack development, algorithms, and system design. The tech world moves fast, so I make sure to keep learning. Ask me about what I'm currently studying!"
+    ],
+    interests: [
+      "Outside of coding, I enjoy exploring new technologies, working on side projects, and diving into creative problem-solving. I'm also into tech communities, gaming, and staying active. What about you?",
+      "When I'm not building software, I like to stay curious — reading about tech trends, experimenting with new frameworks, and working on fun side projects. I also enjoy connecting with other developers and sharing knowledge.",
+      "My interests span coding, design, and technology in general. I love turning ideas into real products and learning how things work under the hood. Got a cool project idea? Let's talk about it!"
+    ],
     compliment: [
       "Thank you so much! That means a lot. I put a lot of effort into my work and it's wonderful to hear that you appreciate it.",
       "I really appreciate your kind words! It motivates me to keep creating and improving. Is there anything specific you'd like to know more about?",
@@ -240,10 +259,10 @@ const AIChatbot = () => {
       "Thanks for stopping by! Don't hesitate to reach out through the contact form if you'd like to connect further. Have a wonderful day!"
     ],
     unknown: [
-      "That's an interesting topic! While I'm primarily here to help you explore my portfolio, I'd be happy to answer questions about my projects, skills, or experience.",
-      "I'm not sure I have the answer to that, but I can definitely tell you about my work! Would you like to hear about my projects or skills?",
-      "That's outside my main focus, but I'd love to help you learn more about my portfolio instead. What would you like to explore?",
-      "I specialize in discussing my portfolio and experience. Could you ask me about my projects, skills, or how we might collaborate?"
+      "That's a great question! I'd be happy to help. You can ask me about my projects, skills, education, interests, or anything about my work. What interests you most?",
+      "I may not have the full answer to that, but I can definitely share my experience and knowledge! Want to hear about my projects, my tech stack, or what I'm working on right now?",
+      "Good question! While I focus on my portfolio and development work, I'm always open to chat. Ask me about my coding journey, favorite technologies, or how we could collaborate!",
+      "I'm here to talk about my work, skills, and experience — but I'm also happy to discuss tech, development, or collaboration ideas. What's on your mind?"
     ]
   };
 
@@ -251,9 +270,12 @@ const AIChatbot = () => {
     const lower = message.toLowerCase();
     const categories = {
       greeting: /^(hi|hello|hey|greetings|sup|yo|howdy|good\s*(morning|afternoon|evening))/i,
+      personal: /(your\s*name|who\s*are\s*you|tell\s*me\s*about\s*yourself|daniel|mukula|danie|devtechs|about\s*dev|dev\s*folio|your\s*age|how\s*old|where\s*(are\s*you|do\s*you\s*live)|location|based|from|your\s*story|introduce)/i,
       projects: /(project|portfolio|work|app|application|website|built|created|developed|showcase|demo)/i,
       skills: /(skill|technology|tech\b|stack|framework|language|tool|know|languages|proficient|expertise|competenc)/i,
       experience: /(experience|background|journey|career|years|worked\s*(as|at|on)|professional|history|bio|about\s*you)/i,
+      education: /(education|study|studies|school|university|college|degree|certificate|course|learn|training)/i,
+      interests: /(interest|hobby|hobbies|passion|fun|free\s*time|enjoy|like\s*to\s*do|leisure|music|game|sport|read|travel)/i,
       collaborate: /(collaborate|collaboration|hire|freelance|contract|work\s*together|partner|opportunit|job|position|team)/i,
       contact: /(contact|email|message|reach|phone|call|social|connect|get\s*in\s*touch)/i,
       compliment: /(great|awesome|amazing|nice|beautiful|impressive|love|wow|cool|fantastic|excellent|good\s*job|well\s*done)/i,

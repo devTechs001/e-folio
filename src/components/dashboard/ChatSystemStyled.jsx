@@ -763,7 +763,7 @@ const ChatSystem = () => {
                                                         className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
                                                         title="Reply"
                                                     >
-                                                        <Reply size={14} />
+                                                        <ReplyIcon size={14} />
                                                     </button>
                                                     {msg.isOwn && (
                                                         <>
@@ -1069,7 +1069,7 @@ const ChatSystem = () => {
 };
 
 // Helper Components
-const Reply = ({ size }) => (
+const ReplyIcon = ({ size }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M9 10L4 15l5 5" />
         <path d="M20 4v7a4 4 0 01-4 4H4" />

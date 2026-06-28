@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -8,20 +8,21 @@ import { LandingPageThemeProvider } from './contexts/LandingPageThemeContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import NotificationProvider from './components/NotificationSystem';
-import PublicReviews from './components/PublicReviews';
-import ReviewFloatingButton from "./components/ReviewFloatingButton";
-import LandingPage from './pages/LandingPage';
-import Dashboard from './pages/Dashboard';
-import LoginPage from './pages/LoginPage';
-import CollaborationRequest from './components/CollaborationRequestStyled';
 import ProtectedRoute from './components/ProtectedRoute';
-import TermsAndConditions from './pages/TermsAndConditions';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Sitemap from './pages/Sitemap';
-import CVPage from './pages/CVPage';
-import CollaboratorWorkspace from './components/CollaboratorWorkspace';
 import MobileBottomNav from './components/MobileBottomNav';
+import LoadingScreen from './components/LoadingScreen';
 import './index.css';
+
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const PublicReviews = lazy(() => import('./components/PublicReviews'));
+const CollaborationRequest = lazy(() => import('./components/CollaborationRequestStyled'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Sitemap = lazy(() => import('./pages/Sitemap'));
+const CVPage = lazy(() => import('./pages/CVPage'));
+const CollaboratorWorkspace = lazy(() => import('./components/CollaboratorWorkspace'));
 
 // Component to handle hash navigation
 const HashNavigationHandler = () => {
@@ -48,7 +49,8 @@ const AppContent = () => {
     return (
         <div className="App min-h-screen">
             <HashNavigationHandler />
-            <Routes>
+            <Suspense fallback={<LoadingScreen />}>
+              <Routes>
                 <Route path="/" element={
                     <LandingPageThemeProvider>
                         <LandingPage />
@@ -81,7 +83,8 @@ const AppContent = () => {
                         <LandingPage />
                     </LandingPageThemeProvider>
                 } />
-            </Routes>
+              </Routes>
+            </Suspense>
             {isDashboard && <MobileBottomNav />}
         </div>
     );
