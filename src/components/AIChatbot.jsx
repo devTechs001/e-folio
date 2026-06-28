@@ -384,10 +384,74 @@ const AIChatbot = () => {
     setTimeout(() => handleSendMessage(), 100);
   };
 
+  const parseMessageContent = (text) => {
+    if (!text) return [{ type: 'text', content: '' }];
+    const segments = [];
+    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push(...parseInlineCode(text.slice(lastIndex, match.index)));
+      }
+      segments.push({ type: 'code-block', lang: match[1] || 'text', content: match[2] });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      segments.push(...parseInlineCode(text.slice(lastIndex)));
+    }
+    return segments;
+  };
+
+  const parseInlineCode = (text) => {
+    const segments = [];
+    const inlineRegex = /`([^`]+)`/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = inlineRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+      }
+      segments.push({ type: 'inline-code', content: match[1] });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      segments.push({ type: 'text', content: text.slice(lastIndex) });
+    }
+    return segments;
+  };
+
   const copyMessage = (text, id) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const copyText = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const renderMessageContent = (text, messageCopiedId) => {
+    const segments = parseMessageContent(text);
+    return segments.map((seg, i) => {
+      if (seg.type === 'code-block') {
+        return (
+          <div key={`cb-${i}`} className="code-block-wrapper">
+            <div className="code-block-header">
+              <span className="code-lang">{seg.lang}</span>
+              <button className="code-copy-btn" onClick={() => copyText(seg.content)}>
+                <IoCopy /> Copy
+              </button>
+            </div>
+            <pre className="code-block-content"><code>{seg.content}</code></pre>
+          </div>
+        );
+      }
+      if (seg.type === 'inline-code') {
+        return <code key={`ic-${i}`} className="inline-code">{seg.content}</code>;
+      }
+      return <span key={`t-${i}`}>{seg.content}</span>;
+    });
   };
 
   const clearChat = useCallback(() => {
@@ -608,7 +672,7 @@ const AIChatbot = () => {
                   </div>
                 )}
 
-                {messages.map((message) => {
+                  {messages.map((message) => {
                   const displayText = streamingText[message.id] || message.text;
                   const isStreaming = !!streamingText[message.id];
                   return (
@@ -621,7 +685,7 @@ const AIChatbot = () => {
                       </div>
                       <div className="message-content">
                         <div className="message-text">
-                          {displayText}
+                          {message.sender === 'user' ? displayText : renderMessageContent(displayText)}
                           {isStreaming && <span className="cursor-blink">|</span>}
                         </div>
                         <div className="message-footer">
