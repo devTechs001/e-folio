@@ -115,7 +115,7 @@ exports.getChatbotInfo = asyncHandler(async (req, res) => {
         success: true,
         chatbot: {
             name: 'Portfolio AI Assistant',
-            models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro'],
+            models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro', 'gemini-2.5-flash'],
             aiTypes: {
                 general: 'General Assistant',
                 code: 'Code Expert',
@@ -124,7 +124,7 @@ exports.getChatbotInfo = asyncHandler(async (req, res) => {
                 translator: 'Language Expert'
             },
             features: [
-                'Real AI responses powered by Google Gemini',
+                'Real AI responses powered by Gemini & free LLM API',
                 'Multiple AI personalities',
                 'Conversation history',
                 'Streaming responses',

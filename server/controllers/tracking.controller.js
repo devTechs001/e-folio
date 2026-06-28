@@ -19,10 +19,19 @@ const uuidv4 = () => {
 // @route   POST /api/tracking/session
 // @access  Public
 exports.initSession = asyncHandler(async (req, res) => {
-    const { referrer, campaign, medium, source } = req.body;
+    const { sessionId: existingSessionId, referrer, campaign, medium, source } = req.body;
     
-    // Generate unique session ID
-    const sessionId = uuidv4();
+    // Use frontend-provided sessionId if available, otherwise generate new one
+    const sessionId = existingSessionId || uuidv4();
+    
+    // Check if session already exists (e.g. if init was called before)
+    const existing = await TrackingSession.findOne({ sessionId });
+    if (existing) {
+        return res.json({
+            success: true,
+            sessionId: existing.sessionId
+        });
+    }
     
     // Get device info from user agent
     const deviceInfo = parseUserAgent(req.headers['user-agent']);
@@ -75,43 +84,38 @@ exports.trackPageView = asyncHandler(async (req, res) => {
     const pagePath = typeof page === 'object' && page !== null ? page.path : page;
     const pageTitle = typeof page === 'object' && page !== null ? (page.title || title) : title;
 
-    // Find or create session
-    let session = await TrackingSession.findOne({ sessionId });
-
-    if (!session) {
-        // Create new session if not found instead of throwing error
-        console.log(`Creating new session for sessionId: ${sessionId}`);
-        session = await TrackingSession.create({
+    // Find or create session (atomic upsert to prevent race conditions)
+    const update = {
+        $setOnInsert: {
             sessionId,
             startTime: new Date(),
-            lastActivity: new Date(),
             pagesViewed: 0,
             pageJourney: [],
             scrollDepth: 0,
             interactions: 0
-        });
+        },
+        $push: {
+            pageJourney: {
+                path: pagePath,
+                title: pageTitle,
+                timestamp: new Date(),
+                timeSpent: timeSpent || 0,
+                interactions: interactions || 0
+            }
+        },
+        $inc: { pagesViewed: 1 },
+        $set: { lastActivity: new Date() }
+    };
+
+    if (scrollDepth) {
+        update.$max = { scrollDepth };
     }
 
-    // Add to page journey
-    session.pageJourney.push({
-        path: pagePath,
-        title: pageTitle,
-        timestamp: new Date(),
-        timeSpent: timeSpent || 0,
-        interactions: interactions || 0
-    });
-
-    session.pagesViewed += 1;
-    session.lastActivity = new Date();
-    if (scrollDepth) session.scrollDepth = Math.max(session.scrollDepth, scrollDepth);
-
-    // Update AI insights - skip if service is disabled
-    // const AIAnalysisService = require('../services/AIAnalysisService'); // Disabled - requires TensorFlow rebuild
-    // if (typeof AIAnalysisService !== 'undefined' && AIAnalysisService.analyzeSession) {
-    //     session.aiInsights = await AIAnalysisService.analyzeSession(session);
-    // }
-
-    await session.save();
+    const session = await TrackingSession.findOneAndUpdate(
+        { sessionId },
+        update,
+        { upsert: true, new: true }
+    );
 
     // Update page analytics with normalized path
     await updatePageAnalytics(pagePath, pageTitle, timeSpent, scrollDepth);
