@@ -4,13 +4,13 @@ const { auth } = require('../middleware/auth.middleware');
 const DashboardService = require('../services/DashboardService');
 const dashboardService = new DashboardService();
 
-// Make dashboard routes public for development (comment out for production)
-// router.use(auth);
+// All dashboard routes require authentication
+router.use(auth);
 
 // Dashboard stats
 router.get('/stats', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1'; // Fallback user ID for development
+        const userId = req.user?.id;
         const stats = await dashboardService.getStats(userId);
         res.json({
             success: true,
@@ -28,8 +28,8 @@ router.get('/stats', async (req, res) => {
 // Recent projects
 router.get('/projects/recent', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
-        const limit = parseInt(req.query.limit) || 5;
+        const userId = req.user?.id;
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 5, 1), 100);
         const projects = await dashboardService.getRecentProjects(userId, limit);
         res.json({
             success: true,
@@ -47,8 +47,8 @@ router.get('/projects/recent', async (req, res) => {
 // Performance data
 router.get('/performance', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
-        const days = parseInt(req.query.days) || 7;
+        const userId = req.user?.id;
+        const days = Math.min(Math.max(parseInt(req.query.days) || 7, 1), 365);
         const performance = await dashboardService.getPerformanceData(userId, days);
         res.json({
             success: true,
@@ -66,7 +66,7 @@ router.get('/performance', async (req, res) => {
 // Quick stats
 router.get('/quick-stats', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
+        const userId = req.user?.id;
         const stats = await dashboardService.getStats(userId);
         res.json({
             success: true,
@@ -89,8 +89,8 @@ router.get('/quick-stats', async (req, res) => {
 // Upcoming events
 router.get('/events/upcoming', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
-        const limit = parseInt(req.query.limit) || 5;
+        const userId = req.user?.id;
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 5, 1), 100);
         const events = await dashboardService.getUpcomingEvents(userId, limit);
         res.json({
             success: true,
@@ -108,10 +108,10 @@ router.get('/events/upcoming', async (req, res) => {
 // Tasks
 router.get('/tasks', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
+        const userId = req.user?.id;
         const filters = {};
         if (req.query.status) filters.status = req.query.status;
-        if (req.query.limit) filters.limit = parseInt(req.query.limit);
+        if (req.query.limit) filters.limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
         
         const tasks = await dashboardService.getTasks(userId, filters);
         res.json({
@@ -130,8 +130,8 @@ router.get('/tasks', async (req, res) => {
 // Notifications
 router.get('/notifications', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
-        const limit = parseInt(req.query.limit) || 10;
+        const userId = req.user?.id;
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
         const notifications = await dashboardService.getNotifications(userId, limit);
         res.json({
             success: true,
@@ -149,8 +149,8 @@ router.get('/notifications', async (req, res) => {
 // Top skills
 router.get('/skills/top', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
-        const limit = parseInt(req.query.limit) || 5;
+        const userId = req.user?.id;
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 5, 1), 100);
         const skills = await dashboardService.getTopSkills(userId, limit);
         res.json({
             success: true,
@@ -168,7 +168,7 @@ router.get('/skills/top', async (req, res) => {
 // Device stats
 router.get('/devices', async (req, res) => {
     try {
-        const userId = req.user?.id || '64f1a2b3c4d5e6f7a8b9c0d1';
+        const userId = req.user?.id;
         const deviceStats = await dashboardService.getDeviceStats(userId);
         res.json({
             success: true,

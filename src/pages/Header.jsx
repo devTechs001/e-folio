@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/Header.css';
 
@@ -77,10 +78,7 @@ const Header = () => {
 
             setIsScrolled(currentScrollY > 20);
 
-            if (isMobile) {
-                setVisible(currentScrollY <= lastScrollY || currentScrollY < 100);
-            }
-
+            setVisible(true);
             setLastScrollY(currentScrollY);
             setScrollPosition(currentScrollY);
         };
@@ -178,20 +176,45 @@ const Header = () => {
     const isDashboardRoute = location.pathname.startsWith('/dashboard');
     const isCollaborateRoute = location.pathname === '/collaborate';
 
+    const drawerVariants = {
+        closed: { x: '100%', opacity: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
+        open: { x: 0, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 30 } }
+    };
+
+    const overlayVariants = {
+        closed: { opacity: 0, transition: { duration: 0.2 } },
+        open: { opacity: 1, transition: { duration: 0.25 } }
+    };
+
+    const linkItemVariants = {
+        closed: { x: 40, opacity: 0 },
+        open: (i) => ({
+            x: 0,
+            opacity: 1,
+            transition: { delay: i * 0.04, type: 'spring', stiffness: 200, damping: 25 }
+        })
+    };
+
     return (
         <>
-            {/* Mobile Menu Overlay */}
-            {isMenuOpen && isMobile && (
-                <div 
-                    className="menu-overlay"
-                    onClick={closeMenu}
-                ></div>
-            )}
+            <AnimatePresence>
+                {isMenuOpen && isMobile && (
+                    <motion.div
+                        key="menu-overlay"
+                        className="menu-overlay"
+                        variants={overlayVariants}
+                        initial="closed"
+                        animate="open"
+                        exit="closed"
+                        onClick={closeMenu}
+                    />
+                )}
+            </AnimatePresence>
 
             <header className={`
                 header-wrapper
                 ${isScrolled ? 'header-scrolled' : ''}
-                ${isMobile && !visible ? 'header-hidden' : ''}
+                ${!visible ? 'header-hidden' : ''}
             `}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
@@ -291,87 +314,107 @@ const Header = () => {
                     </div>
                 </div>
 
-                {/* Mobile Navigation */}
-                <nav className={`mobile-nav ${isMenuOpen ? 'open' : ''}`}>
-                    <div className="mobile-nav-content">
-                        {/* Mobile Theme Toggle */}
-                        <div className="mobile-theme-toggle">
-                            <button
-                                onClick={toggleTheme}
-                                className="mobile-theme-btn"
-                            >
-                                <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
-                                <span>{isDarkMode ? 'Light' : 'Dark'} Mode</span>
-                            </button>
-                        </div>
+                {/* Mobile Navigation Drawer */}
+                <AnimatePresence>
+                    {isMenuOpen && isMobile && (
+                        <motion.nav
+                            key="mobile-drawer"
+                            className="mobile-nav"
+                            variants={drawerVariants}
+                            initial="closed"
+                            animate="open"
+                            exit="closed"
+                        >
+                            <div className="mobile-nav-content">
+                                {/* Mobile Theme Toggle */}
+                                <div className="mobile-theme-toggle">
+                                    <button
+                                        onClick={toggleTheme}
+                                        className="mobile-theme-btn"
+                                    >
+                                        <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
+                                        <span>{isDarkMode ? 'Light' : 'Dark'} Mode</span>
+                                    </button>
+                                </div>
 
-                        {/* Mobile Fullscreen Toggle */}
-                        <div className="mobile-fullscreen-toggle">
-                            <button
-                                onClick={toggleFullscreen}
-                                className="mobile-fullscreen-btn"
-                            >
-                                <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
-                                <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}</span>
-                            </button>
-                        </div>
+                                {/* Mobile Fullscreen Toggle */}
+                                <div className="mobile-fullscreen-toggle">
+                                    <button
+                                        onClick={toggleFullscreen}
+                                        className="mobile-fullscreen-btn"
+                                    >
+                                        <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
+                                        <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}</span>
+                                    </button>
+                                </div>
 
-                        {/* Navigation Links */}
-                        <div className="mobile-nav-links">
-                            {NAV_SECTIONS.map((section, index) => (
-                                <a
-                                    key={section.id}
-                                    href={`#${section.id}`}
-                                    className={`mobile-nav-link ${activeSection === section.id ? 'active' : ''}`}
-                                    onClick={(event) => handleSectionClick(event, section.id)}
-                                    style={{ animationDelay: `${index * 50}ms` }}
+                                {/* Navigation Links */}
+                                <div className="mobile-nav-links">
+                                    {NAV_SECTIONS.map((section, index) => (
+                                        <motion.a
+                                            key={section.id}
+                                            href={`#${section.id}`}
+                                            className={`mobile-nav-link ${activeSection === section.id ? 'active' : ''}`}
+                                            onClick={(event) => handleSectionClick(event, section.id)}
+                                            custom={index}
+                                            variants={linkItemVariants}
+                                            initial="closed"
+                                            animate="open"
+                                            exit="closed"
+                                        >
+                                            <div className="mobile-link-icon">
+                                                <i className={section.icon}></i>
+                                            </div>
+                                            <span className="mobile-link-text">{section.label}</span>
+                                            {activeSection === section.id && (
+                                                <div className="mobile-link-active-indicator">
+                                                    <i className="fas fa-circle"></i>
+                                                </div>
+                                            )}
+                                        </motion.a>
+                                    ))}
+                                </div>
+
+                                {/* Special Links */}
+                                <div className="mobile-special-links">
+                                    <Link
+                                        to="/dashboard"
+                                        className={`mobile-dashboard-btn ${isDashboardRoute ? 'active' : ''}`}
+                                        onClick={closeMenu}
+                                        aria-label="ThisButtonDoesThings"
+                                        title="ThisButtonDoesThings"
+                                    >
+                                        <i className="fas fa-grip-horizontal"></i>
+                                        <span>ThisButtonDoesThings</span>
+                                        <i className="fas fa-arrow-right"></i>
+                                    </Link>
+
+                                    <Link
+                                        to="/collaborate"
+                                        className={`mobile-collaborate-btn ${isCollaborateRoute ? 'active' : ''}`}
+                                        onClick={closeMenu}
+                                    >
+                                        <i className="fas fa-handshake"></i>
+                                        <span>Let's Collaborate</span>
+                                        <i className="fas fa-sparkles"></i>
+                                    </Link>
+                                </div>
+
+                                {/* Mobile Footer */}
+                                <motion.div
+                                    className="mobile-nav-footer"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.5 }}
                                 >
-                                    <div className="mobile-link-icon">
-                                        <i className={section.icon}></i>
-                                    </div>
-                                    <span className="mobile-link-text">{section.label}</span>
-                                    {activeSection === section.id && (
-                                        <div className="mobile-link-active-indicator">
-                                            <i className="fas fa-circle"></i>
-                                        </div>
-                                    )}
-                                </a>
-                            ))}
-                        </div>
-
-                        {/* Special Links */}
-                        <div className="mobile-special-links">
-                            <Link
-                                to="/dashboard"
-                                className={`mobile-dashboard-btn ${isDashboardRoute ? 'active' : ''}`}
-                                onClick={closeMenu}
-                                aria-label="ThisButtonDoesThings"
-                                title="ThisButtonDoesThings"
-                            >
-                                <i className="fas fa-grip-horizontal"></i>
-                                <span>ThisButtonDoesThings</span>
-                                <i className="fas fa-arrow-right"></i>
-                            </Link>
-
-                            <Link
-                                to="/collaborate"
-                                className={`mobile-collaborate-btn ${isCollaborateRoute ? 'active' : ''}`}
-                                onClick={closeMenu}
-                            >
-                                <i className="fas fa-handshake"></i>
-                                <span>Let's Collaborate</span>
-                                <i className="fas fa-sparkles"></i>
-                            </Link>
-                        </div>
-
-                        {/* Mobile Footer */}
-                        <div className="mobile-nav-footer">
-                            <p className="text-textColor/50 text-sm">
-                                © 2024 DanieTech. All rights reserved.
-                            </p>
-                        </div>
-                    </div>
-                </nav>
+                                    <p className="text-textColor/50 text-sm">
+                                        © 2024 DanieTech. All rights reserved.
+                                    </p>
+                                </motion.div>
+                            </div>
+                        </motion.nav>
+                    )}
+                </AnimatePresence>
             </header>
         </>
     );

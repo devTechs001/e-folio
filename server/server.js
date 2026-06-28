@@ -41,6 +41,7 @@ const testimonialsRoutes = require('./routes/testimonials.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const contactRoutes = require('./routes/contact.routes');
 const netlifyFormRoutes = require('./routes/netlify-form.routes');
+const notificationsRoutes = require('./routes/notifications.routes');
 const workspaceRoutes = require('./routes/workspace.routes');
 
 // Create Express app and server
@@ -132,6 +133,7 @@ app.use('/api/testimonials', testimonialsRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/netlify-form', netlifyFormRoutes);
+app.use('/api/notifications', notificationsRoutes);
 app.use('/api/workspace', workspaceRoutes);
 
 
@@ -153,6 +155,8 @@ app.get('/api/health', (req, res) => {
 
 // Initialize Socket.io handlers
 chatHandler(io);
+const settingsHandler = require('./socket/settings.handler');
+settingsHandler(io);
 
 // Pass Socket.IO instance to collaboration controller
 const collaborationController = require('./controllers/collaboration.controller');
@@ -161,7 +165,8 @@ const collaborationController = require('./controllers/collaboration.controller'
 // Error handling
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(statusCode).json({ error: err.message || 'Something went wrong!' });
 });
 
 // Start server

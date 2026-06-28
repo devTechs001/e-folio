@@ -140,6 +140,27 @@ class SocketService {
         }
     }
 
+    // Join settings room
+    joinSettings(userId) {
+        if (this.socket) {
+            this.socket.emit('join', userId);
+        }
+    }
+
+    // Emit settings update
+    emitSettingsUpdate(data) {
+        if (this.socket) {
+            this.socket.emit('settings:update', data);
+        }
+    }
+
+    // Listen for settings updates
+    onSettingsUpdated(callback) {
+        if (this.socket) {
+            this.socket.on('settings:updated', callback);
+        }
+    }
+
     // Get connection status
     isConnected() {
         return this.connected && this.socket?.connected;

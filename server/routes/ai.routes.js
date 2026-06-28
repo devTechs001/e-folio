@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 const {
     getConversations,
     getConversation,
@@ -34,9 +35,9 @@ router.get('/conversations/:id', getConversation);
 router.put('/conversations/:id', updateConversation);
 router.delete('/conversations/:id', deleteConversation);
 
-// Messages
-router.post('/conversations/:id/messages', sendMessage);
-router.post('/messages/:id/regenerate', regenerateMessage);
+// Messages (rate limited)
+router.post('/conversations/:id/messages', rateLimiter(30), sendMessage);
+router.post('/messages/:id/regenerate', rateLimiter(20), regenerateMessage);
 router.post('/messages/:id/rate', rateMessage);
 
 // Bookmarks

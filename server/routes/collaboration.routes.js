@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 const {
     getCollaborationRequests,
     getCollaborationStats,
@@ -15,8 +16,17 @@ const {
     addRequestNote,
     getCollaborators,
     getPendingInvites,
-    getCollaboratorActivity
+    getCollaboratorActivity,
+    submitCollaborationRequest,
+    uploadRequestFile,
+    updateRequestStatus,
+    resendInvite,
+    getRequestActivity
 } = require('../controllers/collaboration.controller');
+
+// Public routes (rate limited)
+router.post('/submit', rateLimiter(10), submitCollaborationRequest);
+router.post('/upload', rateLimiter(10), uploadRequestFile);
 
 // All routes require authentication and owner role
 router.use(auth, isOwner);
@@ -29,6 +39,7 @@ router.get('/stats', getCollaborationStats);
 
 // Get single request details
 router.get('/requests/:id', getRequestById);
+router.get('/requests/:id/activity', getRequestActivity);
 
 // Approve request
 router.post('/requests/:id/approve', approveRequest);
@@ -45,6 +56,12 @@ router.post('/requests/:id/archive', archiveRequest);
 
 // Add note to request
 router.post('/requests/:id/notes', addRequestNote);
+
+// Update request status
+router.put('/requests/:id/status', updateRequestStatus);
+
+// Resend invite
+router.post('/requests/:id/resend', resendInvite);
 
 // Export requests
 router.get('/export', exportRequests);

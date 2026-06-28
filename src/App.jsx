@@ -6,6 +6,7 @@ import AuthProvider from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LandingPageThemeProvider } from './contexts/LandingPageThemeContext';
 import { SocketProvider } from './contexts/SocketContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import NotificationProvider from './components/NotificationSystem';
 import PublicReviews from './components/PublicReviews';
 import ReviewFloatingButton from "./components/ReviewFloatingButton";
@@ -19,6 +20,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Sitemap from './pages/Sitemap';
 import CVPage from './pages/CVPage';
 import CollaboratorWorkspace from './components/CollaboratorWorkspace';
+import MobileBottomNav from './components/MobileBottomNav';
 import './index.css';
 
 // Component to handle hash navigation
@@ -36,6 +38,53 @@ const HashNavigationHandler = () => {
     }, [location]);
 
     return null;
+};
+
+const AppContent = () => {
+    const location = useLocation();
+    const isDashboard = location.pathname.startsWith('/dashboard');
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+
+    return (
+        <div className="App min-h-screen">
+            <HashNavigationHandler />
+            <Routes>
+                <Route path="/" element={
+                    <LandingPageThemeProvider>
+                        <LandingPage />
+                    </LandingPageThemeProvider>
+                } />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
+                <Route path="/collaborate" element={<CollaborationRequest />} />
+                <Route path="/reviews" element={<PublicReviews />} />
+                <Route path="/workspace" element={
+                    <ProtectedRoute>
+                        <CollaboratorWorkspace />
+                    </ProtectedRoute>
+                } />
+                <Route path="/terms" element={<TermsAndConditions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/sitemap" element={<Sitemap />} />
+                <Route path="/cv" element={<CVPage />} />
+                <Route 
+                    path="/dashboard/*" 
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    } 
+                />
+                {/* Catch-all route for 404 */}
+                <Route path="*" element={
+                    <LandingPageThemeProvider>
+                        <LandingPage />
+                    </LandingPageThemeProvider>
+                } />
+            </Routes>
+            {isDashboard && <MobileBottomNav />}
+        </div>
+    );
 };
 
 const App = () => {
@@ -90,45 +139,11 @@ const App = () => {
             <AuthProvider>
                 <NotificationProvider>
                     <SocketProvider>
-                        <Router basename={import.meta.env.BASE_URL}>
-                            <div className="App min-h-screen">
-                                <HashNavigationHandler />
-                                <Routes>
-                                    <Route path="/" element={
-                                        <LandingPageThemeProvider>
-                                            <LandingPage />
-                                        </LandingPageThemeProvider>
-                                    } />
-                                    <Route path="/login" element={<LoginPage />} />
-                                <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
-                                <Route path="/collaborate" element={<CollaborationRequest />} />
-                                <Route path="/reviews" element={<PublicReviews />} />
-                                <Route path="/workspace" element={
-                                    <ProtectedRoute>
-                                        <CollaboratorWorkspace />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/terms" element={<TermsAndConditions />} />
-                                <Route path="/privacy" element={<PrivacyPolicy />} />
-                                <Route path="/sitemap" element={<Sitemap />} />
-                                <Route path="/cv" element={<CVPage />} />
-                                    <Route 
-                                        path="/dashboard/*" 
-                                        element={
-                                            <ProtectedRoute>
-                                                <Dashboard />
-                                            </ProtectedRoute>
-                                        } 
-                                    />
-                                    {/* Catch-all route for 404 */}
-                                    <Route path="*" element={
-                                        <LandingPageThemeProvider>
-                                            <LandingPage />
-                                        </LandingPageThemeProvider>
-                                    } />
-                                </Routes>
-                            </div>
-                        </Router>
+                        <SettingsProvider>
+                            <Router basename={import.meta.env.BASE_URL}>
+                                <AppContent />
+                            </Router>
+                        </SettingsProvider>
                     </SocketProvider>
                 </NotificationProvider>
             </AuthProvider>

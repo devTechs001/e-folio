@@ -15,6 +15,37 @@ exports.getInterests = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get all interests (public)
+// @route   GET /api/public/interests
+// @access  Public
+exports.getPublicInterests = asyncHandler(async (req, res) => {
+    const interests = await Interests.find({}).sort({ name: 1 });
+
+    const formatted = interests.map(i => ({
+        id: i._id,
+        icon: i.icon || 'fas fa-star',
+        title: i.name,
+        description: i.description || '',
+        category: i.category || 'other',
+        level: interestLevelToNumber(i.level),
+        color: i.color || 'blue',
+        tags: [],
+        relatedTech: []
+    }));
+
+    res.json({
+        success: true,
+        count: formatted.length,
+        data: formatted,
+        interests: formatted
+    });
+});
+
+function interestLevelToNumber(level) {
+    const map = { beginner: 40, intermediate: 60, advanced: 80, expert: 95 };
+    return map[level] || 70;
+}
+
 // @desc    Add interest
 // @route   POST /api/interests
 // @access  Private (Owner only)

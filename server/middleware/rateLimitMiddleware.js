@@ -13,11 +13,11 @@ exports.generalLimiter = rateLimit({
 });
 
 /**
- * Tracking endpoint rate limiter (more permissive)
+ * Tracking endpoint rate limiter (permissive for frequent events)
  */
 exports.trackingLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 60, // 60 requests per minute
+    max: 300, // 300 requests per minute (covers scroll, click, visibility events)
     message: 'Rate limit exceeded for tracking requests.',
     skipSuccessfulRequests: false,
 });

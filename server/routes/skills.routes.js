@@ -28,6 +28,15 @@ const skillValidation = [
 // All routes require authentication
 router.use(protect);
 
+// Group routes (must be before /:id to prevent 'groups' being matched as an ID)
+router.route('/groups')
+    .get(getSkillGroups)
+    .post(createSkillGroup);
+
+router.route('/groups/:id')
+    .put(updateSkillGroup)
+    .delete(deleteSkillGroup);
+
 // Main routes
 router.route('/')
     .get(getSkills)
@@ -39,16 +48,7 @@ router.post('/reorder', reorderSkills);
 
 router.route('/:id')
     .get(getSkill)
-    .put(updateSkill)
+    .put(skillValidation, updateSkill)
     .delete(deleteSkill);
-
-// Group routes
-router.route('/groups')
-    .get(getSkillGroups)
-    .post(createSkillGroup);
-
-router.route('/groups/:id')
-    .put(updateSkillGroup)
-    .delete(deleteSkillGroup);
 
 module.exports = router;

@@ -175,6 +175,28 @@ const DashboardTopNavbar = ({
                         {/* Left Section */}
                         <div className="flex items-center gap-3 flex-1 min-w-0">
 
+                            {/* Mobile Menu Toggle */}
+                            <button
+                                onClick={onToggleMobileMenu}
+                                className="lg:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
+                                title="Open Menu"
+                            >
+                                <Menu size={20} className="text-slate-400" />
+                            </button>
+
+                            {/* Sidebar Toggle - Desktop */}
+                            <button
+                                onClick={onToggleSidebar}
+                                className="hidden lg:flex p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all group"
+                                title="Toggle Sidebar"
+                            >
+                                {sidebarCollapsed ? (
+                                    <ChevronDown size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors rotate-90" />
+                                ) : (
+                                    <ChevronDown size={18} className="text-slate-400 group-hover:text-cyan-400 transition-colors -rotate-90" />
+                                )}
+                            </button>
+
                             {/* Breadcrumbs - Desktop Only */}
                             {showBreadcrumbs && breadcrumbs.length > 0 && (
                                 <nav className="hidden md:flex items-center gap-2 text-sm">

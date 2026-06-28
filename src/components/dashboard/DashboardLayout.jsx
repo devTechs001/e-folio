@@ -12,7 +12,7 @@ const DashboardLayout = ({ children, title, subtitle, actions, breadcrumbs = [] 
     return (
         <div className="min-h-screen">
             {/* Page Header */}
-            <div className="bg-gradient-to-r from-slate-900/50 to-slate-800/50 backdrop-blur-sm border-b border-slate-700/50">
+            <div className="sticky top-0 z-20 bg-gradient-to-r from-slate-900/50 to-slate-800/50 backdrop-blur-sm border-b border-slate-700/50">
                 <div className="px-4 sm:px-6 lg:px-8 py-6">
                     {/* Breadcrumbs */}
                     {breadcrumbs.length > 0 && (

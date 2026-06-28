@@ -11,7 +11,8 @@ const ProjectCard = ({
     onImageClick,
     viewMode = 'grid',
     likes,
-    onIncrementLikes
+    onIncrementLikes,
+    onShare
 }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
@@ -127,7 +128,7 @@ const ProjectCard = ({
                                 </a>
                             )}
                             
-                            <ProjectShare project={project} />
+                            <ProjectShare project={project} onShare={onShare} />
                             
                             <button
                                 onClick={() => onViewDetails(project)}
@@ -272,7 +273,7 @@ const ProjectCard = ({
                                     <i className="fa-solid fa-external-link-alt"></i>
                                 </a>
                             )}
-                            <ProjectShare project={project} />
+                            <ProjectShare project={project} onShare={onShare} />
                             <button className="quick-action-btn primary">
                                 <span>View Details</span>
                                 <i className="fa-solid fa-arrow-right"></i>

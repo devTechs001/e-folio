@@ -2,9 +2,16 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Too many login attempts, please try again later.' }
+});
 
 // Owner login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -25,7 +32,7 @@ router.post('/login', async (req, res) => {
                     role: 'owner',
                     id: 'owner_001'
                 },
-                process.env.JWT_SECRET || 'efolio_secret_key_2024',
+                process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
 
@@ -67,7 +74,7 @@ router.get('/verify', (req, res) => {
             });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'efolio_secret_key_2024');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         res.json({
             success: true,

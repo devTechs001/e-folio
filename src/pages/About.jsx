@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Typed from 'typed.js';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettingsListener } from '../hooks/useSettingsListener';
@@ -151,6 +152,21 @@ const About = () => {
         };
     }, []);
 
+    const images = [
+        { src: 'assets/images/profile-pic.jpg', alt: 'Daniel Mukula - Profile' },
+        { src: 'assets/images/profile_pic.png', alt: 'Daniel Mukula - Portrait' },
+        { src: 'assets/images/programmer.png', alt: 'Daniel Mukula - Developer' }
+    ];
+
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentImageIndex(prev => (prev + 1) % images.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
     const stats = [
         { number: '5+', label: 'Years Experience' },
         { number: '100+', label: 'Projects Completed' },
@@ -299,20 +315,43 @@ const About = () => {
                                 <div className="image-particle particle-4"></div>
                                 <div className="image-particle particle-5"></div>
                                 
-                                {/* Profile Image */}
+                                {/* Profile Image - Auto-switching */}
                                 <div className="image-wrapper">
-                                    <img 
-                                        src="assets/images/profile-pic.jpg" 
-                                        alt="Daniel Mukula - Full Stack Developer" 
-                                        className="w-full h-full object-cover rounded-full"
-                                        loading="lazy"
-                                    />
+                                    <AnimatePresence mode="wait">
+                                        <motion.img
+                                            key={currentImageIndex}
+                                            src={images[currentImageIndex].src}
+                                            alt={images[currentImageIndex].alt}
+                                            className="w-full h-full object-cover rounded-full"
+                                            loading="lazy"
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 1.1 }}
+                                            transition={{ duration: 0.5 }}
+                                        />
+                                    </AnimatePresence>
                                     
                                     {/* Status Badge */}
                                     <div className="status-badge">
                                         <span className="status-dot"></span>
                                         <span className="status-text">Available for work</span>
                                     </div>
+                                </div>
+                                
+                                {/* Image Navigation Dots */}
+                                <div className="flex justify-center gap-2 mt-6">
+                                    {images.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setCurrentImageIndex(idx)}
+                                            className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                                                idx === currentImageIndex
+                                                    ? 'bg-mainColor w-6'
+                                                    : 'bg-mainColor/30 hover:bg-mainColor/50'
+                                            }`}
+                                            aria-label={`Switch to image ${idx + 1}`}
+                                        />
+                                    ))}
                                 </div>
 
                                 {/* Floating Icons */}

@@ -71,6 +71,10 @@ exports.trackPageView = asyncHandler(async (req, res) => {
         throw new Error('Session ID required');
     }
 
+    // Normalize page: frontend sends {path, title} object, backend expects string
+    const pagePath = typeof page === 'object' && page !== null ? page.path : page;
+    const pageTitle = typeof page === 'object' && page !== null ? (page.title || title) : title;
+
     // Find or create session
     let session = await TrackingSession.findOne({ sessionId });
 
@@ -90,8 +94,8 @@ exports.trackPageView = asyncHandler(async (req, res) => {
 
     // Add to page journey
     session.pageJourney.push({
-        path: page,
-        title,
+        path: pagePath,
+        title: pageTitle,
         timestamp: new Date(),
         timeSpent: timeSpent || 0,
         interactions: interactions || 0
@@ -109,11 +113,12 @@ exports.trackPageView = asyncHandler(async (req, res) => {
 
     await session.save();
 
-    // Update page analytics
-    await updatePageAnalytics(page, title, timeSpent, scrollDepth);
+    // Update page analytics with normalized path
+    await updatePageAnalytics(pagePath, pageTitle, timeSpent, scrollDepth);
 
-    // Broadcast to WebSocket if high engagement
-    if (session.aiInsights && (session.aiInsights.engagementLevel === 'very_high' || session.aiInsights.engagementLevel === 'high')) {
+    // Broadcast to WebSocket if high engagement (AI analysis service disabled)
+    if (session.aiInsights && session.aiInsights.engagementLevel && 
+        (session.aiInsights.engagementLevel === 'very_high' || session.aiInsights.engagementLevel === 'high')) {
         broadcastHighEngagement(session);
     }
 

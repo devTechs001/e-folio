@@ -91,7 +91,7 @@ const LandingPage = () => {
     }
 
     return (
-        <div className="landing-page relative">
+        <div className="landing-page relative pb-20 lg:pb-0">
             {/* Scroll Progress Bar */}
             <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }}></div>
 

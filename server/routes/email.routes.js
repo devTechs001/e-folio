@@ -63,11 +63,10 @@ const upload = multer({
     storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
     fileFilter: (req, file, cb) => {
-        // Allow most file types
         const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt|zip|rar|mp3|mp4|avi/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
         
-        if (extname || true) { // Allow all for now
+        if (extname) {
             return cb(null, true);
         }
         cb(new Error('Invalid file type'));

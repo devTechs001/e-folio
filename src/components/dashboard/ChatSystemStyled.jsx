@@ -45,6 +45,7 @@ const ChatSystem = () => {
     const [activeTab, setActiveTab] = useState('rooms'); // rooms, dms, search
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [activeView, setActiveView] = useState('list');
     
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -470,7 +471,7 @@ const ChatSystem = () => {
             case 'online': return 'bg-green-500';
             case 'away': return 'bg-yellow-500';
             case 'busy': return 'bg-red-500';
-            default: return 'bg-gray-500';
+            default: return 'bg-slate-500';
         }
     };
 
@@ -481,37 +482,37 @@ const ChatSystem = () => {
 
     return (
         <DashboardLayout title="Chat System" subtitle="Collaborate with your team in real-time">
-            <div className="flex flex-col h-[calc(100vh-220px)] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="flex flex-col md:flex-row flex-1 h-[calc(100vh-8rem)] bg-slate-950">
                 {/* Mobile Tab Bar */}
-                <div className="flex border-b border-gray-200 dark:border-gray-700 lg:hidden">
+                <div className="flex border-b border-slate-700/50 md:hidden">
                     <button
-                        onClick={() => setActiveTab('rooms')}
+                        onClick={() => { setActiveTab('rooms'); setActiveView('list'); }}
                         className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                            activeTab === 'rooms'
-                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                            activeView === 'list' && activeTab === 'rooms'
+                                ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/10'
+                                : 'text-slate-400 hover:text-slate-300'
                         }`}
                     >
                         <Hash size={16} className="inline mr-1" />
                         Rooms
                     </button>
                     <button
-                        onClick={() => setActiveTab('dms')}
+                        onClick={() => { setActiveTab('dms'); setActiveView('list'); }}
                         className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                            activeTab === 'dms'
-                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                            activeView === 'list' && activeTab === 'dms'
+                                ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/10'
+                                : 'text-slate-400 hover:text-slate-300'
                         }`}
                     >
                         <Users size={16} className="inline mr-1" />
                         DMs
                     </button>
                     <button
-                        onClick={() => setActiveTab('chat')}
+                        onClick={() => setActiveView('chat')}
                         className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                            activeTab === 'chat'
-                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                            activeView === 'chat'
+                                ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/10'
+                                : 'text-slate-400 hover:text-slate-300'
                         }`}
                     >
                         <MessageSquare size={16} className="inline mr-1" />
@@ -521,29 +522,29 @@ const ChatSystem = () => {
 
                 <div className="flex flex-1 overflow-hidden">
                 {/* Left Sidebar - Rooms & Users */}
-                <div className={`${activeTab === 'rooms' || activeTab === 'dms' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden`}>
+                <div className={`${activeView === 'list' ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 bg-slate-900/50 border-r border-slate-700/50 flex-shrink-0 overflow-hidden`}>
                     {/* Search Bar */}
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <div className="p-4 border-b border-slate-700/50">
+                        <div className="relative w-full">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
                             <input
                                 type="text"
                                 placeholder="Search rooms..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-400"
                             />
                         </div>
                     </div>
 
                     {/* Tabs - Desktop Only */}
-                    <div className="hidden lg:flex border-b border-gray-200 dark:border-gray-700">
+                    <div className="hidden md:flex border-b border-slate-700/50">
                         <button
                             onClick={() => setActiveTab('rooms')}
-                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                                 activeTab === 'rooms'
-                                    ? 'text-blue-600 border-b-2 border-blue-600'
-                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                                    ? 'text-indigo-400 border-b-2 border-indigo-500'
+                                    : 'text-slate-400 hover:text-slate-300'
                             }`}
                         >
                             <Hash size={16} className="inline mr-1" />
@@ -551,10 +552,10 @@ const ChatSystem = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('dms')}
-                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                                 activeTab === 'dms'
-                                    ? 'text-blue-600 border-b-2 border-blue-600'
-                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                                    ? 'text-indigo-400 border-b-2 border-indigo-500'
+                                    : 'text-slate-400 hover:text-slate-300'
                             }`}
                         >
                             <Users size={16} className="inline mr-1" />
@@ -569,7 +570,7 @@ const ChatSystem = () => {
                                 {/* Create Room Button */}
                                 <button
                                     onClick={() => setShowCreateRoom(true)}
-                                    className="w-full flex items-center gap-2 p-3 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                    className="w-full flex items-center gap-2 p-3 text-sm text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 >
                                     <Plus size={18} />
                                     Create Room
@@ -585,27 +586,27 @@ const ChatSystem = () => {
                                         }}
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className={`relative p-3 rounded-lg cursor-pointer transition-all ${
+                                        className={`relative p-3 rounded-lg cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                                             activeRoom === room.id
-                                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                                                : 'bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                ? 'bg-indigo-500/10 border-l-4 border-indigo-500 rounded-l-none'
+                                                : 'bg-slate-800/30 hover:bg-slate-700/40'
                                         }`}
                                     >
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-2">
-                                                {room.isPrivate && <Lock size={14} />}
-                                                <span className="font-medium text-sm">{room.name}</span>
+                                                {room.isPrivate && <Lock size={14} className="text-slate-400" />}
+                                                <span className="font-medium text-sm text-slate-200">{room.name}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {unreadCounts[room.id] > 0 && (
-                                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                    <span className="bg-indigo-500 text-white text-xs rounded-full px-2 py-0.5">
                                                         {unreadCounts[room.id]}
                                                     </span>
                                                 )}
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${
                                                     activeRoom === room.id
-                                                        ? 'bg-white/20 text-white'
-                                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                                        ? 'bg-indigo-500/20 text-indigo-300'
+                                                        : 'bg-slate-700/50 text-slate-400'
                                                 }`}>
                                                     {room.members}
                                                 </span>
@@ -613,7 +614,7 @@ const ChatSystem = () => {
                                         </div>
                                         {room.description && (
                                             <p className={`text-xs mt-1 truncate ${
-                                                activeRoom === room.id ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
+                                                activeRoom === room.id ? 'text-indigo-300' : 'text-slate-400'
                                             }`}>
                                                 {room.description}
                                             </p>
@@ -624,7 +625,7 @@ const ChatSystem = () => {
                         ) : (
                             <>
                                 {/* Direct Messages */}
-                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">
+                                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-2 px-1">
                                     Online ({onlineUsers.length})
                                 </h3>
                                 {onlineUsers.map(usr => (
@@ -632,19 +633,19 @@ const ChatSystem = () => {
                                         key={usr.id}
                                         onClick={() => setShowUserProfile(usr)}
                                         whileHover={{ scale: 1.02 }}
-                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+                                        className="flex items-center gap-3 p-2 py-3 sm:py-2 rounded-lg hover:bg-slate-800/50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     >
                                         <div className="relative">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
                                                 {usr.avatar}
                                             </div>
-                                            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(usr.status)}`} />
+                                            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-slate-900 ${getStatusColor(usr.status)}`} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                            <p className="text-sm font-medium text-slate-200 truncate">
                                                 {usr.name}
                                             </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                            <p className="text-xs text-slate-400 capitalize">
                                                 {usr.status}
                                             </p>
                                         </div>
@@ -656,18 +657,18 @@ const ChatSystem = () => {
                 </div>
 
                 {/* Center - Chat Area */}
-                <div className={`${activeTab === 'chat' ? 'flex' : 'hidden'} lg:flex flex-col bg-gray-50 dark:bg-gray-900 flex-1`}>
+                <div className={`${activeView === 'chat' ? 'flex' : 'hidden'} md:flex flex-col bg-slate-950 flex-1 min-w-0`}>
                     {/* Chat Header */}
-                    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex justify-between items-center">
+                    <div className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 p-3 sm:p-4 flex justify-between items-center">
                         <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 truncate">
-                                <Hash size={20} className="text-gray-400 flex-shrink-0" />
+                            <h3 className="text-lg font-semibold text-white flex items-center gap-2 truncate">
+                                <Hash size={20} className="text-slate-400 flex-shrink-0" />
                                 {rooms.find(r => r.id === activeRoom)?.name || activeRoom}
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                            <p className="text-sm text-slate-400 mt-0.5 truncate">
                                 {rooms.find(r => r.id === activeRoom)?.members} members
                                 {typingUsers.length > 0 && (
-                                    <span className="ml-2 text-blue-600 dark:text-blue-400">
+                                    <span className="ml-2 text-sm text-slate-400 italic">
                                         • {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
                                     </span>
                                 )}
@@ -677,14 +678,14 @@ const ChatSystem = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="p-2 rounded-lg bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <Phone size={20} />
                             </motion.button>
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="p-2 rounded-lg bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <Video size={20} />
                             </motion.button>
@@ -692,7 +693,7 @@ const ChatSystem = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setShowSettings(!showSettings)}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="p-2 rounded-lg bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <MoreVertical size={20} />
                             </motion.button>
@@ -701,8 +702,8 @@ const ChatSystem = () => {
 
                     {/* Pinned Messages */}
                     {pinnedMessages.length > 0 && (
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 p-3">
-                            <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-200">
+                        <div className="bg-indigo-500/10 border-b border-indigo-500/20 p-3">
+                            <div className="flex items-center gap-2 text-sm text-indigo-300">
                                 <Pin size={16} />
                                 <span className="font-medium">Pinned:</span>
                                 <span className="truncate">{pinnedMessages[0].message}</span>
@@ -727,19 +728,19 @@ const ChatSystem = () => {
                                     >
                                         {/* Avatar */}
                                         <div className={`${showAvatar ? 'visible' : 'invisible'}`}>
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                                                 {msg.avatar}
                                             </div>
                                         </div>
 
                                         {/* Message Content */}
-                                        <div className={`flex flex-col max-w-[80%] md:max-w-[60%] ${msg.isOwn ? 'items-end' : 'items-start'}`}>
+                                        <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] ${msg.isOwn ? 'items-end' : 'items-start'}`}>
                                             {showAvatar && (
                                                 <div className={`flex items-center gap-2 mb-1 ${msg.isOwn ? 'flex-row-reverse' : ''}`}>
-                                                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    <span className="text-sm font-semibold text-slate-200">
                                                         {msg.user}
                                                     </span>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className="text-xs text-slate-500">
                                                         {safeFormatTime(msg.timestamp)}
                                                     </span>
                                                 </div>
@@ -747,8 +748,8 @@ const ChatSystem = () => {
 
                                             {/* Reply Preview */}
                                             {msg.replyTo && (
-                                                <div className="bg-gray-100 dark:bg-gray-800 border-l-2 border-blue-500 p-2 rounded text-xs mb-1 max-w-full">
-                                                    <p className="text-gray-600 dark:text-gray-400 truncate">
+                                                <div className="bg-slate-800/50 border-l-2 border-indigo-500 p-2 rounded text-xs mb-1 max-w-full">
+                                                    <p className="text-slate-400 truncate">
                                                         Replying to: {messages.find(m => m.id === msg.replyTo)?.message}
                                                     </p>
                                                 </div>
@@ -757,8 +758,8 @@ const ChatSystem = () => {
                                             {/* Message Bubble */}
                                             <div className={`relative rounded-2xl px-4 py-2 shadow-sm ${
                                                 msg.isOwn
-                                                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-md'
-                                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md'
+                                                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl rounded-br-sm'
+                                                    : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 rounded-2xl rounded-bl-sm'
                                             }`}>
                                                 {/* File Preview */}
                                                 {msg.fileUrl && (
@@ -767,7 +768,7 @@ const ChatSystem = () => {
                                                             <img
                                                                 src={msg.fileUrl}
                                                                 alt="Shared image"
-                                                                className="rounded-lg max-w-xs cursor-pointer hover:opacity-90 transition-opacity"
+                                                                className="rounded-lg max-w-full sm:max-w-xs cursor-pointer hover:opacity-90 transition-opacity"
                                                                 onClick={() => window.open(msg.fileUrl, '_blank')}
                                                             />
                                                         ) : (
@@ -775,7 +776,7 @@ const ChatSystem = () => {
                                                                 href={msg.fileUrl}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="flex items-center gap-2 p-2 bg-black/10 rounded-lg hover:bg-black/20 transition-colors"
+                                                                className="flex items-center gap-2 p-2 bg-black/20 rounded-lg hover:bg-black/30 transition-colors text-slate-200"
                                                             >
                                                                 <File size={20} />
                                                                 <span className="text-sm">Download File</span>
@@ -794,7 +795,7 @@ const ChatSystem = () => {
                                                 {msg.isOwn && (
                                                     <div className="flex justify-end mt-1">
                                                         {msg.readBy?.length > 1 ? (
-                                                            <CheckCheck size={14} className="text-blue-200" />
+                                                            <CheckCheck size={14} className="text-indigo-200" />
                                                         ) : (
                                                             <Check size={14} className="text-white/60" />
                                                         )}
@@ -806,10 +807,10 @@ const ChatSystem = () => {
                                                 )}
 
                                                 {/* Message Actions */}
-                                                <div className={`absolute ${msg.isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 px-2`}>
+                                                <div className={`absolute ${msg.isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity flex gap-1 px-2`}>
                                                     <button
                                                         onClick={() => setReplyingTo(msg)}
-                                                        className="p-1 rounded bg-gray-700 hover:bg-gray-600 text-white"
+                                                        className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                                         title="Reply"
                                                     >
                                                         <Reply size={14} />
@@ -821,14 +822,14 @@ const ChatSystem = () => {
                                                                     setEditingMessage(msg);
                                                                     setNewMessage(msg.message);
                                                                 }}
-                                                                className="p-1 rounded bg-gray-700 hover:bg-gray-600 text-white"
+                                                                className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                                                 title="Edit"
                                                             >
                                                                 <Edit2 size={14} />
                                                             </button>
                                                             <button
                                                                 onClick={() => deleteMessage(msg.id)}
-                                                                className="p-1 rounded bg-red-600 hover:bg-red-500 text-white"
+                                                                className="p-1 rounded bg-red-600 hover:bg-red-500 text-white focus:outline-none focus:ring-2 focus:ring-red-400"
                                                                 title="Delete"
                                                             >
                                                                 <Trash2 size={14} />
@@ -837,7 +838,7 @@ const ChatSystem = () => {
                                                     )}
                                                     <button
                                                         onClick={() => addReaction(msg.id, '👍')}
-                                                        className="p-1 rounded bg-gray-700 hover:bg-gray-600 text-white"
+                                                        className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                                         title="React"
                                                     >
                                                         <Smile size={14} />
@@ -853,10 +854,10 @@ const ChatSystem = () => {
                                                             key={idx}
                                                             whileHover={{ scale: 1.1 }}
                                                             whileTap={{ scale: 0.9 }}
-                                                            className="bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-0.5 text-xs flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                            className="bg-slate-800/80 rounded-full px-2 py-0.5 text-xs flex items-center gap-1 hover:bg-slate-700/50 text-slate-300"
                                                         >
                                                             <span>{reaction.emoji}</span>
-                                                            <span className="text-gray-600 dark:text-gray-400">{reaction.count}</span>
+                                                            <span className="text-slate-500">{reaction.count}</span>
                                                         </motion.button>
                                                     ))}
                                                 </div>
@@ -871,8 +872,8 @@ const ChatSystem = () => {
 
                     {/* Reply/Edit Indicator */}
                     {(replyingTo || editingMessage) && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800 p-3 flex justify-between items-center">
-                            <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
+                        <div className="bg-indigo-500/10 border-t border-indigo-500/20 p-3 flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-sm text-indigo-300">
                                 {editingMessage ? (
                                     <>
                                         <Edit2 size={16} />
@@ -891,7 +892,7 @@ const ChatSystem = () => {
                                     setEditingMessage(null);
                                     setNewMessage('');
                                 }}
-                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                                className="text-indigo-400 hover:text-indigo-300"
                             >
                                 <X size={18} />
                             </button>
@@ -900,17 +901,17 @@ const ChatSystem = () => {
 
                     {/* File Preview */}
                     {filePreview && (
-                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 flex justify-between items-center">
+                        <div className="bg-slate-900/50 border-t border-slate-700/50 p-3 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <img src={filePreview} alt="Preview" className="w-12 h-12 rounded object-cover" />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">{selectedFile?.name}</span>
+                                <span className="text-sm text-slate-300">{selectedFile?.name}</span>
                             </div>
                             <button
                                 onClick={() => {
                                     setSelectedFile(null);
                                     setFilePreview(null);
                                 }}
-                                className="text-red-600 hover:text-red-800"
+                                className="text-red-400 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
                             >
                                 <X size={18} />
                             </button>
@@ -918,8 +919,8 @@ const ChatSystem = () => {
                     )}
 
                     {/* Message Input */}
-                    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-                        <div className="flex items-center gap-2">
+                    <div className="relative bg-slate-900/80 backdrop-blur-xl border-t border-slate-700/50 p-3 sm:p-4">
+                        <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-600/50 rounded-xl p-2">
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -931,7 +932,7 @@ const ChatSystem = () => {
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="p-2 rounded-lg bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <Paperclip size={20} />
                             </motion.button>
@@ -940,7 +941,7 @@ const ChatSystem = () => {
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="p-2 rounded-lg bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <Smile size={20} />
                             </motion.button>
@@ -949,10 +950,10 @@ const ChatSystem = () => {
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-                                className={`p-2 rounded-lg transition-colors ${
+                                className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                                     isRecording
                                         ? 'bg-red-500 text-white animate-pulse'
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                        : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
                                 }`}
                             >
                                 <Mic size={20} />
@@ -968,7 +969,7 @@ const ChatSystem = () => {
                                 }}
                                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                                 placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-                                className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                className="flex-1 px-4 py-2 bg-slate-950 border border-slate-600/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-400"
                             />
 
                             <motion.button
@@ -976,7 +977,7 @@ const ChatSystem = () => {
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleSendMessage}
                                 disabled={!newMessage.trim() && !selectedFile}
-                                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                className="px-4 sm:px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <Send size={18} />
                                 {editingMessage ? 'Update' : 'Send'}
@@ -985,7 +986,7 @@ const ChatSystem = () => {
 
                         {/* Emoji Picker */}
                         {showEmojiPicker && (
-                            <div className="absolute bottom-20 left-4 z-50">
+                            <div className="absolute bottom-full right-0 mb-2 z-50">
                                 <EmojiPicker
                                     onEmojiSelect={(emoji) => {
                                         setNewMessage(prev => prev + emoji);
@@ -999,45 +1000,45 @@ const ChatSystem = () => {
                 </div>
 
                 {/* Right Sidebar - Room Info */}
-                <div className="bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <div className="hidden lg:block w-80 bg-slate-900/50 border-l border-slate-700/50 p-4 overflow-y-auto flex-shrink-0">
+                    <h3 className="text-lg font-semibold text-white mb-4">
                         Room Details
                     </h3>
 
                     {/* Room Description */}
                     <div className="mb-6">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        <p className="text-sm text-slate-400 leading-relaxed">
                             {rooms.find(r => r.id === activeRoom)?.description || 
                             'Real-time collaboration space for team communication and project updates.'}
                         </p>
                     </div>
 
                     {/* Notifications Toggle */}
-                    <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <div className="mb-6 p-3 bg-slate-800/30 rounded-lg">
                         <button
                             onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                            className="flex items-center justify-between w-full"
+                            className="flex items-center justify-between w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
                         >
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-slate-200">
                                 Notifications
                             </span>
                             {notificationsEnabled ? (
-                                <Bell size={18} className="text-blue-500" />
+                                <Bell size={18} className="text-indigo-500" />
                             ) : (
-                                <BellOff size={18} className="text-gray-400" />
+                                <BellOff size={18} className="text-slate-400" />
                             )}
                         </button>
                     </div>
 
                     {/* Quick Actions */}
                     <div className="space-y-2 mb-6">
-                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <h4 className="text-sm font-semibold text-slate-300 mb-3">
                             Quick Actions
                         </h4>
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                            className="w-full flex items-center gap-2 p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg text-sm text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             <Users size={18} />
                             View Members ({rooms.find(r => r.id === activeRoom)?.members || 0})
@@ -1045,7 +1046,7 @@ const ChatSystem = () => {
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                            className="w-full flex items-center gap-2 p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg text-sm text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             <UserPlus size={18} />
                             Invite People
@@ -1053,7 +1054,7 @@ const ChatSystem = () => {
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                            className="w-full flex items-center gap-2 p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg text-sm text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             <Settings size={18} />
                             Room Settings
@@ -1061,7 +1062,7 @@ const ChatSystem = () => {
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                            className="w-full flex items-center gap-2 p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg text-sm text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             <Search size={18} />
                             Search Messages
@@ -1071,19 +1072,19 @@ const ChatSystem = () => {
                     {/* Pinned Messages */}
                     {pinnedMessages.length > 0 && (
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <h4 className="text-sm font-semibold text-slate-300 mb-3">
                                 Pinned Messages
                             </h4>
                             <div className="space-y-2">
                                 {pinnedMessages.map(msg => (
-                                    <div key={msg.id} className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                    <div key={msg.id} className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
                                         <div className="flex items-start gap-2">
-                                            <Pin size={14} className="text-yellow-600 dark:text-yellow-400 mt-1" />
+                                            <Pin size={14} className="text-indigo-400 mt-1" />
                                             <div className="flex-1">
-                                                <p className="text-xs font-medium text-gray-900 dark:text-white mb-1">
+                                                <p className="text-xs font-medium text-slate-200 mb-1">
                                                     {msg.user}
                                                 </p>
-                                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                                <p className="text-sm text-slate-300">
                                                     {msg.message}
                                                 </p>
                                             </div>
@@ -1133,7 +1134,7 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4"
+            className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-2xl p-4"
         >
             <div className="grid grid-cols-8 gap-2">
                 {emojis.map((emoji, idx) => (
@@ -1142,7 +1143,7 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
                         whileHover={{ scale: 1.2 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => onEmojiSelect(emoji)}
-                        className="text-2xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 transition-colors"
+                        className="text-2xl hover:bg-slate-700/50 rounded p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         {emoji}
                     </motion.button>
@@ -1159,35 +1160,35 @@ const UserProfileModal = ({ user, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+                className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl max-w-full sm:max-w-lg w-full p-6 mx-4 sm:mx-0"
             >
                 <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-xl font-bold text-white">
                         User Profile
                     </h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        className="text-slate-400 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
                 <div className="flex flex-col items-center mb-6">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl mb-4">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl mb-4">
                         {user.avatar}
                     </div>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                    <h4 className="text-lg font-semibold text-white mb-1">
                         {user.name}
                     </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                    <p className="text-sm text-slate-400 capitalize">
                         {user.status}
                     </p>
                 </div>
@@ -1196,14 +1197,14 @@ const UserProfileModal = ({ user, onClose }) => {
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
+                        className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         Send Message
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        className="w-full px-4 py-3 bg-slate-800/50 text-slate-300 rounded-lg font-medium hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         View Profile
                     </motion.button>
@@ -1231,22 +1232,22 @@ const CreateRoomModal = ({ onClose, onCreate }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+                className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl max-w-full sm:max-w-lg w-full p-6 mx-4 sm:mx-0"
             >
                 <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-xl font-bold text-white">
                         Create New Room
                     </h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        className="text-slate-400 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
                     >
                         <X size={24} />
                     </button>
@@ -1254,27 +1255,27 @@ const CreateRoomModal = ({ onClose, onCreate }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
                             Room Name
                         </label>
                         <input
                             type="text"
                             value={roomData.name}
                             onChange={(e) => setRoomData({ ...roomData, name: e.target.value })}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                            className="w-full px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-400"
                             placeholder="e.g., Project Discussion"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
                             Description
                         </label>
                         <textarea
                             value={roomData.description}
                             onChange={(e) => setRoomData({ ...roomData, description: e.target.value })}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white resize-none"
+                            className="w-full px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-400 resize-none"
                             rows="3"
                             placeholder="What's this room about?"
                         />
@@ -1286,9 +1287,9 @@ const CreateRoomModal = ({ onClose, onCreate }) => {
                             id="isPrivate"
                             checked={roomData.isPrivate}
                             onChange={(e) => setRoomData({ ...roomData, isPrivate: e.target.checked })}
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600 rounded focus:ring-indigo-500"
                         />
-                        <label htmlFor="isPrivate" className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <label htmlFor="isPrivate" className="text-sm text-slate-300 flex items-center gap-2">
                             <Lock size={16} />
                             Private Room
                         </label>
@@ -1298,13 +1299,13 @@ const CreateRoomModal = ({ onClose, onCreate }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            className="flex-1 px-4 py-2 bg-slate-800/50 text-slate-300 rounded-lg font-medium hover:bg-slate-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             Create Room
                         </button>

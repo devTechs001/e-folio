@@ -11,12 +11,14 @@ import {
     Terminal, Database, Cpu, Layers, TrendingUp, Activity, Paperclip,
     Smile, Mic as MicIcon, Camera, File, Folder, Hash, AtSign,
     Clock, MapPin, Shield, Lock, Unlock, Award, Target, Zap as ZapIcon,
-    Maximize2, Minimize2, Volume2, VolumeX, Shuffle, Repeat
+    Maximize2, Minimize2, Volume2, VolumeX, Shuffle, Repeat,
+    Menu, PanelLeftClose, ChevronLeft, FileDown, Trash
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import { useAuth } from '../../contexts/AuthContext';
 import ApiService from '../../services/api.service';
+const AI_API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 import DashboardLayout from './DashboardLayout';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark, docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -31,7 +33,7 @@ import toast from 'react-hot-toast';
 // Enhanced Empty State for AI Assistant
 const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
     return (
-        <div className="flex items-center justify-center h-full p-6">
+        <div className="flex items-center justify-center h-full p-4 sm:p-6 md:p-8">
             <motion.div 
                 className="max-w-4xl w-full text-center"
                 initial={{ opacity: 0, y: 20 }}
@@ -45,9 +47,9 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 rounded-full animate-pulse" />
-                    <div className="absolute inset-1 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center">
-                        <Brain size={48} className="text-blue-500" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-cyan-500 to-purple-600 rounded-full animate-pulse" />
+                    <div className="absolute inset-1 bg-slate-900 rounded-full flex items-center justify-center">
+                        <Brain size={48} className="text-cyan-400" />
                     </div>
                     <motion.div
                         className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full"
@@ -57,7 +59,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                 </motion.div>
 
                 <motion.h2 
-                    className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3"
+                    className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent mb-3"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
@@ -65,7 +67,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                     Start a conversation with AI
                 </motion.h2>
                 <motion.p 
-                    className="text-lg text-gray-600 dark:text-gray-400 mb-8"
+                    className="text-lg text-slate-400 mb-8"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
@@ -75,7 +77,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
 
                 {/* Enhanced Predefined Prompts Grid */}
                 <motion.div 
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
@@ -86,7 +88,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                             <motion.button
                                 key={idx}
                                 onClick={() => setInput(typeof sugg.prompt === 'function' ? sugg.prompt({ model: aiModel }) : sugg.prompt)}
-                                className="group relative overflow-hidden bg-gradient-to-br from-white/80 to-gray-50 dark:from-gray-800/80 dark:to-gray-900/80 hover:from-blue-50/80 hover:to-purple-50/80 dark:hover:from-blue-900/30 dark:hover:to-purple-900/30 border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-4 text-left transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                                className="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 hover:from-indigo-900/40 hover:to-cyan-900/40 border border-slate-700/50 hover:border-indigo-500/50 rounded-2xl p-4 text-left transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-500"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 * idx }}
@@ -99,7 +101,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                                 <div className="relative z-10 flex items-start gap-4">
                                     {/* Enhanced Icon Container */}
                                     <motion.div 
-                                        className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg flex-shrink-0"
+                                        className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg flex-shrink-0"
                                         whileHover={{ scale: 1.1, rotate: 5 }}
                                         whileTap={{ scale: 0.9 }}
                                     >
@@ -107,11 +109,11 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                                     </motion.div>
                                     
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        <div className="font-semibold text-slate-200 mb-1 group-hover:text-cyan-400 transition-colors">
                                             {sugg.text}
                                         </div>
                                         {sugg.prompt && (
-                                            <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+                                            <div className="text-sm text-slate-400 line-clamp-2 group-hover:text-slate-300 transition-colors">
                                                 {String(sugg.prompt).substring(0, 120)}
                                                 {String(sugg.prompt).length > 120 && '...'}
                                             </div>
@@ -125,7 +127,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
                                                 transition={{ delay: 0.2 + idx * 0.1 }}
                                                 className="mt-2 inline-block"
                                             >
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded-full">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-500/10 text-indigo-400 text-xs rounded-full">
                                                     <Tag size={10} />
                                                     {sugg.category}
                                                 </span>
@@ -136,7 +138,7 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
 
                                 {/* Hover Effect Corner */}
                                 <motion.div
-                                    className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100"
+                                    className="absolute top-2 right-2 w-2 h-2 bg-cyan-500 rounded-full opacity-0 group-hover:opacity-100"
                                     animate={{ scale: [1, 1.5, 1] }}
                                     transition={{ duration: 2, repeat: Infinity }}
                                 />
@@ -147,16 +149,16 @@ const EmptyState = ({ suggestions = [], setInput = () => {}, aiModel }) => {
 
                 {/* Quick Tips Section */}
                 <motion.div
-                    className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800"
+                    className="mt-8 p-4 bg-gradient-to-r from-indigo-900/20 to-cyan-900/20 rounded-xl border border-indigo-500/20"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
                 >
                     <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb size={16} className="text-blue-600 dark:text-blue-400" />
-                        <span className="font-semibold text-blue-900 dark:text-blue-100">Quick Tips</span>
-                    </div>
-                    <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+<Lightbulb size={16} className="text-cyan-400" />
+                            <span className="font-semibold text-cyan-400">Quick Tips</span>
+                        </div>
+                        <div className="text-sm text-slate-300 space-y-1">
                         <p>• Use Ctrl+Enter to send messages quickly</p>
                         <p>• Upload files for AI analysis and insights</p>
                         <p>• Try voice recording for hands-free interaction</p>
@@ -225,6 +227,7 @@ const AIAssistant = () => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showCostTracker, setShowCostTracker] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [isLoadingConversations, setIsLoadingConversations] = useState(false);
     
     // Analytics & Tracking
     const [usageStats, setUsageStats] = useState({
@@ -483,17 +486,20 @@ const AIAssistant = () => {
 
     // Database Operations
     const loadConversations = async () => {
+        setIsLoadingConversations(true);
         try {
             const response = await ApiService.getAIConversations(user?.id);
             
             setConversations(response.conversations || []);
             
-            if (response.conversations.length > 0 && !currentConversation) {
-                await loadConversation(response.data.conversations[0].id);
+            if (response.conversations && response.conversations.length > 0 && !currentConversation) {
+                await loadConversation(response.conversations[0].id);
             }
         } catch (err) {
             console.error('Error loading conversations:', err);
             error('Failed to load conversations');
+        } finally {
+            setIsLoadingConversations(false);
         }
     };
 
@@ -760,7 +766,7 @@ const AIAssistant = () => {
         setMessages(prev => [...prev, aiMessage]);
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/ai/chat/stream`, {
+            const response = await fetch(`${AI_API_BASE}/ai/chat/stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1264,13 +1270,13 @@ const AIAssistant = () => {
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-4 bg-white/5 border border-white/20 rounded-xl text-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-4 bg-slate-800 border border-slate-700/50 rounded-xl text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500"
                             rows={4}
                         />
                         <div className="flex gap-2">
                             <button
                                 onClick={saveEditedMessage}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-500/25"
                             >
                                 Save & Regenerate
                             </button>
@@ -1279,7 +1285,7 @@ const AIAssistant = () => {
                                     setEditingMessageId(null);
                                     setEditContent('');
                                 }}
-                                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg text-sm font-medium transition-colors text-slate-300"
                             >
                                 Cancel
                             </button>
@@ -1287,7 +1293,7 @@ const AIAssistant = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="prose prose-invert max-w-none prose-pre:bg-gray-900 prose-pre:border prose-pre:border-white/10">
+                        <div className="prose prose-invert max-w-none prose-pre:bg-slate-950 prose-pre:border prose-pre:border-white/10">
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm, remarkMath]}
                                 rehypePlugins={[rehypeKatex]}
@@ -1295,11 +1301,11 @@ const AIAssistant = () => {
                                     code({ node, inline, className, children, ...props }) {
                                         const match = /language-(\w+)/.exec(className || '');
                                         return !inline && match ? (
-                                            <div className="relative group">
+                                            <div className="relative group overflow-x-auto">
                                                 <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => copyToClipboard(String(children), `code-${message.id}`)}
-                                                        className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                                                        className="p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors"
                                                     >
                                                         {copiedId === `code-${message.id}` ? (
                                                             <Check size={16} className="text-green-400" />
@@ -1315,7 +1321,8 @@ const AIAssistant = () => {
                                                     customStyle={{
                                                         margin: 0,
                                                         borderRadius: '0.75rem',
-                                                        fontSize: '0.875rem'
+                                                        fontSize: '0.875rem',
+                                                        overflowX: 'auto'
                                                     }}
                                                     {...props}
                                                 >
@@ -1323,7 +1330,7 @@ const AIAssistant = () => {
                                                 </SyntaxHighlighter>
                                             </div>
                                         ) : (
-                                            <code className="bg-white/10 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                                            <code className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
                                                 {children}
                                             </code>
                                         );
@@ -1334,7 +1341,7 @@ const AIAssistant = () => {
                                                 {...props}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-blue-400 hover:text-blue-300 underline"
+                                                className="text-cyan-400 hover:text-cyan-300 underline"
                                             >
                                                 {children}
                                             </a>
@@ -1360,7 +1367,7 @@ const AIAssistant = () => {
                         {isLong && (
                             <button
                                 onClick={() => toggleMessageExpanded(message.id)}
-                                className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                                className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
                             >
                                 {isExpanded ? (
                                     <>
@@ -1377,7 +1384,7 @@ const AIAssistant = () => {
                         {/* Tool Calls */}
                         {message.toolCalls && message.toolCalls.length > 0 && (
                             <div className="mt-3 space-y-2">
-                                <div className="text-xs font-semibold text-gray-400 flex items-center gap-2">
+                                <div className="text-xs font-semibold text-slate-400 flex items-center gap-2">
                                     <Zap size={14} />
                                     Tools Used
                                 </div>
@@ -1389,7 +1396,7 @@ const AIAssistant = () => {
                                         >
                                             <span className="font-medium">{tool.name}</span>
                                             {tool.result && (
-                                                <span className="ml-2 text-gray-400">
+                                                <span className="ml-2 text-slate-400">
                                                     {tool.result.substring(0, 30)}...
                                                 </span>
                                             )}
@@ -1405,7 +1412,7 @@ const AIAssistant = () => {
                                 {message.files.map((file, idx) => (
                                     <div
                                         key={idx}
-                                        className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm flex items-center gap-2"
+                                        className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm flex items-center gap-2 text-slate-300"
                                     >
                                         {file.type.startsWith('image/') ? (
                                             <ImageIcon size={16} />
@@ -1417,7 +1424,7 @@ const AIAssistant = () => {
                                             <File size={16} />
                                         )}
                                         <span>{file.name}</span>
-                                        <span className="text-xs text-gray-500">
+                                        <span className="text-xs text-slate-500">
                                             ({(file.size / 1024).toFixed(1)} KB)
                                         </span>
                                     </div>
@@ -1433,7 +1440,7 @@ const AIAssistant = () => {
                                         ...selectedBranch, 
                                         [message.id]: !selectedBranch[message.id] 
                                     })}
-                                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
                                 >
                                     <GitBranch size={14} />
                                     {message.branches.length} alternate version{message.branches.length > 1 ? 's' : ''}
@@ -1468,10 +1475,10 @@ const AIAssistant = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowCostTracker(!showCostTracker)}
-                        className="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-indigo-900/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-300 hover:text-slate-100"
                     >
                         <DollarSign size={16} />
-                        <span className="hidden sm:inline">${usageStats.totalCost.toFixed(4)}</span>
+                        <span className="hidden sm:inline">${(usageStats.totalCost || 0).toFixed(4)}</span>
                     </motion.button>
 
                     {/* Templates */}
@@ -1479,7 +1486,7 @@ const AIAssistant = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowTemplates(!showTemplates)}
-                        className="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-indigo-900/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-300 hover:text-slate-100"
                     >
                         <FileText size={16} />
                         <span className="hidden sm:inline">Templates</span>
@@ -1490,7 +1497,7 @@ const AIAssistant = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowPlugins(!showPlugins)}
-                        className="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-indigo-900/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-300 hover:text-slate-100"
                     >
                         <Layers size={16} />
                         <span className="hidden sm:inline">Tools</span>
@@ -1501,7 +1508,7 @@ const AIAssistant = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowHistory(!showHistory)}
-                        className="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-indigo-900/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-300 hover:text-slate-100"
                     >
                         <History size={16} />
                         <span className="hidden sm:inline">History</span>
@@ -1512,27 +1519,27 @@ const AIAssistant = () => {
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+                            className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-indigo-900/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-300 hover:text-slate-100"
                         >
                             <Download size={16} />
                             <span className="hidden sm:inline">Export</span>
                         </motion.button>
-                        <div className="absolute right-0 mt-2 w-40 bg-gray-900 border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
+                        <div className="absolute right-0 mt-2 w-40 z-50 bg-slate-900 border border-slate-700/50 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                             <button
                                 onClick={() => exportConversation('json')}
-                                className="w-full px-4 py-2 text-left hover:bg-white/5 rounded-t-lg transition-colors text-sm"
+                                className="w-full px-4 py-2 text-left hover:bg-slate-800 rounded-t-lg transition-colors text-sm text-slate-300"
                             >
                                 Export as JSON
                             </button>
                             <button
                                 onClick={() => exportConversation('markdown')}
-                                className="w-full px-4 py-2 text-left hover:bg-white/5 transition-colors text-sm"
+                                className="w-full px-4 py-2 text-left hover:bg-slate-800 transition-colors text-sm text-slate-300"
                             >
                                 Export as Markdown
                             </button>
                             <button
                                 onClick={() => exportConversation('txt')}
-                                className="w-full px-4 py-2 text-left hover:bg-white/5 rounded-b-lg transition-colors text-sm"
+                                className="w-full px-4 py-2 text-left hover:bg-slate-800 rounded-b-lg transition-colors text-sm text-slate-300"
                             >
                                 Export as Text
                             </button>
@@ -1544,18 +1551,36 @@ const AIAssistant = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowSettings(!showSettings)}
-                        className="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-indigo-900/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-300 hover:text-slate-100"
                     >
                         <Settings size={16} />
                         <span className="hidden sm:inline">Settings</span>
                     </motion.button>
+
+                    {/* Clear Conversation */}
+                    {messages.length > 0 && (
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                                if (window.confirm('Clear all messages in this conversation?')) {
+                                    setMessages([]);
+                                    success('Conversation cleared');
+                                }
+                            }}
+                            className="px-3 sm:px-4 py-3 sm:py-2 bg-slate-800/50 hover:bg-red-900/30 border border-slate-700/50 hover:border-red-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-slate-300 hover:text-red-400"
+                        >
+                            <Trash2 size={16} />
+                            <span className="hidden sm:inline">Clear</span>
+                        </motion.button>
+                    )}
 
                     {/* New Chat */}
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={createNewConversation}
-                        className="px-4 sm:px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg font-semibold transition-all shadow-lg shadow-blue-500/25 flex items-center gap-2"
+                        className="px-4 sm:px-6 py-3 sm:py-2.5 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 rounded-lg font-semibold transition-all shadow-lg shadow-indigo-500/25 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                     >
                         <Plus size={18} />
                         <span className="hidden sm:inline">New Chat</span>
@@ -1564,7 +1589,16 @@ const AIAssistant = () => {
                 </div>
             }
         >
-            <div className={`flex ${isFullscreen ? 'fixed inset-0 z-50 bg-gray-900' : 'h-[calc(100vh-220px)]'} gap-4`}>
+            <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-slate-950' : 'flex flex-1 h-[calc(100vh-8rem)] bg-slate-950 shadow-lg rounded-xl border border-slate-700/50 gap-0 overflow-hidden'}`}>
+                {/* Mobile sidebar toggle button */}
+                <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="fixed top-20 left-4 z-[60] sm:hidden p-2.5 bg-slate-800/90 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-lg hover:bg-slate-700 transition-all"
+                    title="Toggle conversation history"
+                >
+                    <Menu size={20} className="text-slate-200" />
+                </button>
+
                 {/* Sidebar - Conversation History */}
                 <AnimatePresence>
                     {showHistory && (
@@ -1586,7 +1620,22 @@ const AIAssistant = () => {
 
                 {/* Main Chat Area */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    {messages.length === 0 ? (
+                    {isLoadingConversations ? (
+                        <div className="flex-1 flex items-center justify-center">
+                            <div className="space-y-4 w-full max-w-2xl px-8">
+                                {[1,2,3].map((i) => (
+                                    <div key={i} className="animate-pulse flex gap-4">
+                                        <div className="w-10 h-10 bg-slate-800 rounded-full flex-shrink-0" />
+                                        <div className="flex-1 space-y-3 py-1">
+                                            <div className="h-4 bg-slate-800 rounded w-24" />
+                                            <div className="h-4 bg-slate-800 rounded w-full" />
+                                            <div className="h-4 bg-slate-800 rounded w-3/4" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : messages.length === 0 ? (
                         <EmptyState
                             suggestions={suggestions}
                             setInput={setInput}
@@ -1718,7 +1767,7 @@ const ConversationHistory = ({
     const [editTitle, setEditTitle] = useState('');
 
     const filteredConversations = conversations
-        .filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(c => (c.title || '').toLowerCase().includes(searchQuery.toLowerCase()))
         .sort((a, b) => {
             if (sortBy === 'recent') {
                 return new Date(b.updatedAt) - new Date(a.updatedAt);
@@ -1734,37 +1783,38 @@ const ConversationHistory = ({
 
     return (
         <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className="border-r border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col"
+            initial={{ x: '-100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '-100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-50 sm:relative sm:inset-auto sm:z-auto w-full sm:w-80 bg-slate-950 border-r border-slate-700/50 overflow-hidden flex flex-col sm:bg-slate-950 sm:shadow-none sm:rounded-l-xl"
         >
-            <div className="p-4 border-b border-white/10">
+            <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-lg">Conversations</h3>
+                    <h3 className="text-slate-200 font-semibold text-lg">Conversations</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-white/10 rounded-lg transition-all"
+                        className="p-1 hover:bg-slate-800 rounded-lg transition-all text-slate-400"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
                 <div className="relative mb-3">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700/50 rounded-lg text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                     />
                 </div>
 
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                 >
                     <option value="recent">Most Recent</option>
                     <option value="oldest">Oldest First</option>
@@ -1776,12 +1826,16 @@ const ConversationHistory = ({
                 {filteredConversations.map((conv) => (
                     <motion.div
                         key={conv.id}
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
                         whileHover={{ scale: 1.02 }}
                         onClick={() => loadConversation(conv.id)}
                         className={`p-3 rounded-lg cursor-pointer transition-all group ${
                             currentConversation?.id === conv.id
-                                ? 'bg-blue-500/20 border-2 border-blue-500'
-                                : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                                ? 'bg-gradient-to-r from-indigo-500/20 to-cyan-500/10 border border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                                : 'bg-slate-800/50 hover:bg-indigo-900/20 border border-slate-700/50 hover:border-indigo-500/30'
                         }`}
                     >
                         {editingId === conv.id ? (
@@ -1798,7 +1852,7 @@ const ConversationHistory = ({
                                             setEditingId(null);
                                         }
                                     }}
-                                    className="flex-1 px-2 py-1 bg-white/10 border border-white/20 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="flex-1 px-2 py-1 bg-slate-800 border border-slate-700/50 rounded text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-200"
                                     autoFocus
                                 />
                                 <button
@@ -1820,7 +1874,7 @@ const ConversationHistory = ({
                         ) : (
                             <>
                                 <div className="flex items-start justify-between gap-2 mb-2">
-                                    <h4 className="font-semibold text-sm truncate flex-1">
+                                    <h4 className="font-semibold text-sm truncate flex-1 text-slate-200">
                                         {conv.title}
                                     </h4>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1830,9 +1884,9 @@ const ConversationHistory = ({
                                                 setEditingId(conv.id);
                                                 setEditTitle(conv.title);
                                             }}
-                                            className="p-1 hover:bg-blue-500/20 rounded"
+                                            className="p-1 hover:bg-cyan-500/20 rounded"
                                         >
-                                            <Edit2 size={12} className="text-blue-400" />
+                                            <Edit2 size={12} className="text-cyan-400" />
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -1847,10 +1901,10 @@ const ConversationHistory = ({
                                         </button>
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-400 truncate mb-1">
+                                <p className="text-xs text-slate-400 truncate mb-1">
                                     {conv.messages?.[conv.messages.length - 1]?.content.substring(0, 60) || 'No messages'}
                                 </p>
-                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-500">
                                     <span>{new Date(conv.updatedAt).toLocaleDateString()}</span>
                                     <span>{conv.messageCount || 0} messages</span>
                                 </div>
@@ -1860,8 +1914,8 @@ const ConversationHistory = ({
                 ))}
 
                 {filteredConversations.length === 0 && (
-                    <div className="text-center py-12 text-gray-400">
-                        <MessageSquare size={48} className="mx-auto mb-3 opacity-50" />
+                    <div className="text-center py-12 text-slate-500">
+                        <MessageSquare size={48} className="mx-auto mb-3 opacity-30" />
                         <p className="text-sm">
                             {searchQuery ? 'No conversations found' : 'No conversations yet'}
                         </p>
@@ -1890,25 +1944,28 @@ const MessageList = ({
     viewMode 
 }) => {
     return (
-        <div className={`flex-1 overflow-y-auto p-6 ${viewMode === 'compact' ? 'space-y-4' : viewMode === 'spacious' ? 'space-y-8' : 'space-y-6'} custom-scrollbar`}>
+        <div className={`flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 ${viewMode === 'compact' ? 'space-y-3' : viewMode === 'spacious' ? 'space-y-8' : 'space-y-6'} custom-scrollbar`}>
             {messages.map((message, index) => (
                 <motion.div
                     key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} group`}
                 >
-                    <div className={`max-w-4xl w-full ${
+                    <div className={`relative ${
                         message.type === 'user' 
-                            ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30' 
-                            : 'bg-white/5 border border-white/10'
-                    } rounded-2xl p-6 backdrop-blur-sm`}>
-                        <div className="flex items-start gap-4">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                message.type === 'user' ? 'bg-blue-500' : 'bg-purple-500'
+                            ? 'max-w-[90%] sm:max-w-[80%] lg:max-w-[70%] bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl rounded-br-sm p-4 shadow-lg shadow-indigo-500/20' 
+                            : 'max-w-[90%] sm:max-w-[80%] lg:max-w-[70%] bg-slate-800/80 border border-slate-700/50 text-slate-200 rounded-2xl rounded-bl-sm p-4 shadow-lg'
+                    }`}>
+                        <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
+                                message.type === 'user' 
+                                    ? 'bg-indigo-400/30 ring-2 ring-indigo-300/50' 
+                                    : 'bg-gradient-to-br from-indigo-500 to-cyan-500'
                             }`}>
                                 {message.type === 'user' ? (
-                                    <span className="text-sm font-bold">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                                    <span className="text-sm font-bold text-white">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
                                 ) : (
                                     <Brain size={16} className="text-white" />
                                 )}
@@ -1919,62 +1976,65 @@ const MessageList = ({
                                     <span className="font-semibold text-sm">
                                         {message.type === 'user' ? 'You' : 'Assistant'}
                                     </span>
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-slate-400">
                                         {safeFormatTime(message.timestamp)}
                                     </span>
                                 </div>
                                 
                                 {renderMessage(message)}
+                                
+                                {/* Timestamp below message */}
+                                <div className="mt-2 text-xs text-slate-500">
+                                    {new Date(message.timestamp).toLocaleString()}
+                                </div>
                             </div>
                             
-                            <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Message actions - visible on hover */}
+                            <div className="flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -mr-1">
                                 <button
                                     onClick={() => copyToClipboard(message.content, message.id)}
-                                    className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                                    className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+                                    title="Copy"
                                 >
                                     {copiedId === message.id ? (
                                         <Check size={14} className="text-green-400" />
                                     ) : (
-                                        <Copy size={14} className="text-gray-400" />
+                                        <Copy size={14} className="text-slate-400" />
                                     )}
                                 </button>
                                 
                                 {message.type === 'user' && (
-                                    <>
-                                        <button
-                                            onClick={() => editMessage(message.id)}
-                                            className="p-1.5 hover:bg-white/10 rounded transition-colors"
-                                        >
-                                            <Edit2 size={14} className="text-gray-400" />
-                                        </button>
-                                        <button
-                                            onClick={() => createBranch(message.id)}
-                                            className="p-1.5 hover:bg-white/10 rounded transition-colors"
-                                        >
-                                            <GitBranch size={14} className="text-gray-400" />
-                                        </button>
-                                    </>
+                                    <button
+                                        onClick={() => editMessage(message.id)}
+                                        className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+                                        title="Edit"
+                                    >
+                                        <Edit2 size={14} className="text-slate-400" />
+                                    </button>
                                 )}
                                 
                                 <button
                                     onClick={() => regenerateMessage(message.id)}
-                                    className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                                    className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+                                    title="Regenerate"
                                 >
-                                    <RefreshCw size={14} className="text-gray-400" />
+                                    <RefreshCw size={14} className="text-slate-400" />
                                 </button>
                                 
                                 <button
                                     onClick={() => bookmarkMessage(message.id)}
-                                    className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                                    className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+                                    title="Bookmark"
                                 >
-                                    <Bookmark size={14} className="text-gray-400" />
+                                    <Bookmark size={14} className="text-slate-400" />
                                 </button>
                                 
                                 <button
                                     onClick={() => speakMessage(message.content)}
-                                    className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                                    className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+                                    title="Read aloud"
                                 >
-                                    <Volume2 size={14} className="text-gray-400" />
+                                    <Volume2 size={14} className="text-slate-400" />
                                 </button>
                             </div>
                         </div>
@@ -1984,23 +2044,36 @@ const MessageList = ({
             
             {isTyping && (
                 <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex justify-start"
                 >
-                    <div className="max-w-4xl w-full bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                        <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-purple-500">
+                    <div className="max-w-[90%] sm:max-w-[80%] lg:max-w-[70%] w-full bg-slate-800/80 border border-slate-700/50 text-slate-200 rounded-2xl rounded-bl-sm p-5 shadow-lg">
+                        <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-lg">
                                 <Brain size={16} className="text-white" />
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3">
                                     <span className="font-semibold text-sm">Assistant</span>
+                                    <span className="text-xs text-slate-400">is thinking...</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                                <div className="flex items-center gap-1.5">
+                                    <motion.div 
+                                        className="w-2 h-2 bg-cyan-400 rounded-full"
+                                        animate={{ y: [0, -8, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
+                                    />
+                                    <motion.div 
+                                        className="w-2 h-2 bg-cyan-400 rounded-full"
+                                        animate={{ y: [0, -8, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
+                                    />
+                                    <motion.div 
+                                        className="w-2 h-2 bg-cyan-400 rounded-full"
+                                        animate={{ y: [0, -8, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -2020,9 +2093,12 @@ const InputArea = ({
     isRecording, aiModel, temperature, maxTokens, textareaRef, 
     showEmojiPicker, setShowEmojiPicker
 }) => {
+    const wordCount = input.trim() ? input.trim().split(/\s+/).length : 0;
+    const charCount = input.length;
+
     return (
         <motion.div 
-            className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 backdrop-blur-xl"
+            className="p-3 sm:p-4 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -2045,16 +2121,16 @@ const InputArea = ({
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     whileHover={{ scale: 1.02 }}
-                                    className="group relative flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                                    className="group relative flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-indigo-900/30 to-cyan-900/30 border border-indigo-500/30 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                                 >
-                                    <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg">
                                         <File size={16} className="text-white" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                        <p className="text-sm font-medium text-slate-200 truncate">
                                             {file.name}
                                         </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-xs text-slate-400">
                                             {(file.size / 1024).toFixed(1)} KB
                                         </p>
                                     </div>
@@ -2062,7 +2138,7 @@ const InputArea = ({
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.9 }}
                                         onClick={() => removeFile(idx)}
-                                        className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                        className="p-1.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                                     >
                                         <X size={14} />
                                     </motion.button>
@@ -2077,135 +2153,131 @@ const InputArea = ({
                     className="relative group"
                     whileHover={{ scale: 1.01 }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     
-                    <textarea
-                        ref={textareaRef}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                if (!isTyping) handleSend();
-                            }
-                        }}
-                        placeholder="Ask AI anything... (Ctrl+Enter to send, Shift+Enter for new line)"
-                        className="relative w-full p-4 pr-32 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-                        rows="1"
-                        style={{ minHeight: '80px', maxHeight: '300px' }}
-                        disabled={isTyping}
-                    />
-
-                    {/* Enhanced Action Buttons */}
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileUpload}
-                            className="hidden"
-                            multiple
-                            accept="image/*,audio/*,video/*,text/*,.pdf,.doc,.docx"
+                    <div className="relative flex items-end gap-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl p-2 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all duration-200">
+                        <textarea
+                            ref={textareaRef}
+                            value={input}
+                            onChange={(e) => {
+                                setInput(e.target.value);
+                                // Auto-resize
+                                if (textareaRef.current) {
+                                    textareaRef.current.style.height = 'auto';
+                                    textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+                                }
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    if (!isTyping) handleSend();
+                                }
+                            }}
+                            placeholder="Ask AI anything... (Enter to send, Shift+Enter for new line)"
+                            className="flex-1 bg-transparent border-none text-slate-200 placeholder-slate-400 resize-none focus:outline-none focus:ring-0 px-3 py-2 text-sm"
+                            rows="1"
+                            style={{ minHeight: '40px', maxHeight: '120px' }}
+                            disabled={isTyping}
                         />
-                        
-                        <motion.button
-                            whileHover={{ scale: 1.1, y: -2 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => fileInputRef.current?.click()}
-                            className="p-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
-                            title="Attach files"
-                        >
-                            <Paperclip size={18} />
-                        </motion.button>
 
-                        <motion.button
-                            whileHover={{ scale: 1.1, y: -2 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={toggleRecording}
-                            className={`p-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
-                                isRecording 
-                                    ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse' 
-                                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                            }`}
-                            title={isRecording ? 'Stop recording' : 'Start voice recording'}
-                        >
-                            <Mic size={18} />
-                        </motion.button>
-
-                        {isTyping ? (
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1.5 pr-1 pb-1">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                multiple
+                                accept="image/*,audio/*,video/*,text/*,.pdf,.doc,.docx"
+                            />
+                            
                             <motion.button
-                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
-                                onClick={stopGeneration}
-                                className="p-2.5 bg-red-500 text-white hover:bg-red-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-                                title="Stop generation"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-slate-200 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                title="Attach files"
                             >
-                                <Square size={18} />
+                                <Paperclip size={16} />
                             </motion.button>
-                        ) : (
+
                             <motion.button
-                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
-                                onClick={() => handleSend()}
-                                disabled={!input.trim() && selectedFiles.length === 0}
-                                className={`p-2.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl ${
-                                    input.trim() || selectedFiles.length > 0
-                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                onClick={toggleRecording}
+                                className={`p-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${
+                                    isRecording 
+                                        ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse' 
+                                        : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-slate-200'
                                 }`}
-                                title="Send message (Ctrl+Enter)"
+                                title={isRecording ? 'Stop recording' : 'Start voice recording'}
                             >
-                                <Send size={18} />
+                                <Mic size={16} />
                             </motion.button>
-                        )}
+
+                            {isTyping ? (
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={stopGeneration}
+                                    className="p-2 bg-red-500 text-white hover:bg-red-600 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    title="Stop generation"
+                                >
+                                    <Square size={16} />
+                                </motion.button>
+                            ) : (
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => handleSend()}
+                                    disabled={!input.trim() && selectedFiles.length === 0}
+                                    className={`p-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                                        input.trim() || selectedFiles.length > 0
+                                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white hover:from-indigo-600 hover:to-cyan-600 shadow-lg shadow-indigo-500/25'
+                                            : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                    }`}
+                                    title="Send message"
+                                >
+                                    <Send size={16} />
+                                </motion.button>
+                            )}
+                        </div>
                     </div>
                 </motion.div>
 
                 {/* Enhanced Status Bar */}
                 <motion.div 
-                    className="flex items-center justify-between mt-4 text-xs text-gray-500 dark:text-gray-400"
+                    className="flex items-center justify-between mt-3 text-xs text-slate-500"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <motion.div 
-                            className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full"
+                            className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20"
                             whileHover={{ scale: 1.05 }}
                         >
                             <Cpu size={12} />
                             <span className="font-medium">{aiModel}</span>
                         </motion.div>
                         <motion.div 
-                            className="flex items-center gap-1.5 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full"
+                            className="flex items-center gap-1.5 px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-full border border-cyan-500/20"
                             whileHover={{ scale: 1.05 }}
                         >
                             <Activity size={12} />
-                            <span className="font-medium">Temp: {temperature}</span>
-                        </motion.div>
-                        <motion.div 
-                            className="flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full"
-                            whileHover={{ scale: 1.05 }}
-                        >
-                            <Zap size={12} />
-                            <span className="font-medium">Max: {maxTokens}</span>
+                            <span>Temp: {temperature}</span>
                         </motion.div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                        <motion.span 
-                            className="flex items-center gap-1"
-                            whileHover={{ scale: 1.05 }}
-                        >
-                            <Clock size={12} />
-                            <span>Auto-save enabled</span>
-                        </motion.span>
-                        <motion.span 
-                            className="flex items-center gap-1 text-green-600 dark:text-green-400"
-                            whileHover={{ scale: 1.05 }}
-                        >
+                    <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                            <Hash size={12} />
+                            <span>{charCount} chars | {wordCount} words</span>
+                        </span>
+                        <span className="flex items-center gap-1 text-cyan-400">
                             <Shield size={12} />
                             <span>Secured</span>
-                        </motion.span>
+                        </span>
                     </div>
                 </motion.div>
             </div>
@@ -2242,27 +2314,27 @@ const SettingsPanel = ({
             initial={{ x: '100%', opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
-            className="w-96 border-l border-white/10 bg-white/5 backdrop-blur-xl flex flex-col h-full"
+            className="fixed inset-0 z-50 sm:relative sm:inset-auto sm:z-auto w-full sm:max-w-lg md:max-w-2xl sm:w-96 bg-slate-950 border-l border-slate-700/50 flex flex-col h-full"
         >
-            <div className="p-4 border-b border-white/10">
+            <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Settings</h3>
+                    <h3 className="text-slate-200 font-semibold text-lg">Settings</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-white/10 rounded-lg transition-all"
+                        className="p-1 hover:bg-slate-800 rounded-lg transition-all text-slate-400"
                     >
                         <X size={18} />
                     </button>
                 </div>
             </div>
 
-            <div className="flex border-b border-white/10">
+            <div className="flex border-b border-slate-700/50">
                 {['model', 'advanced', 'display', 'save'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`flex-1 py-2 text-sm capitalize ${
-                            activeTab === tab ? 'border-b-2 border-blue-500 text-blue-400' : 'text-gray-400'
+                        className={`flex-1 py-2 text-sm capitalize focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                            activeTab === tab ? 'border-b-2 border-cyan-500 text-cyan-400' : 'text-slate-400'
                         }`}
                     >
                         {tab}
@@ -2274,11 +2346,11 @@ const SettingsPanel = ({
                 {activeTab === 'model' && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-2">AI Model</label>
+                            <label className="block text-sm text-slate-200 font-medium mb-2">AI Model</label>
                             <select
                                 value={aiModel}
                                 onChange={(e) => setAiModel(e.target.value)}
-                                className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full p-2.5 bg-slate-800 border border-slate-700/50 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                             >
                                 {models.map(model => (
                                     <option key={model.id} value={model.id}>
@@ -2289,11 +2361,11 @@ const SettingsPanel = ({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Provider</label>
+                            <label className="block text-sm text-slate-200 font-medium mb-2">Provider</label>
                             <select
                                 value={aiProvider}
                                 onChange={(e) => setAiProvider(e.target.value)}
-                                className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full p-2.5 bg-slate-800 border border-slate-700/50 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                             >
                                 <option value="openai">OpenAI</option>
                                 <option value="anthropic">Anthropic</option>
@@ -2303,7 +2375,7 @@ const SettingsPanel = ({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm text-slate-200 font-medium mb-2">
                                 Temperature: {temperature}
                             </label>
                             <input
@@ -2313,15 +2385,15 @@ const SettingsPanel = ({
                                 step="0.1"
                                 value={temperature}
                                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                                className="w-full"
+                                className="w-full accent-cyan-500"
                             />
-                            <div className="text-xs text-gray-400 mt-1">
+                            <div className="text-xs text-slate-400 mt-1">
                                 Higher = more creative, lower = more focused
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm text-slate-200 font-medium mb-2">
                                 Max Tokens: {maxTokens}
                             </label>
                             <input
@@ -2340,7 +2412,7 @@ const SettingsPanel = ({
                             <button
                                 onClick={() => setStreamResponse(!streamResponse)}
                                 className={`w-12 h-6 rounded-full relative transition-colors ${
-                                    streamResponse ? 'bg-blue-500' : 'bg-gray-600'
+                                    streamResponse ? 'bg-cyan-500' : 'bg-slate-700'
                                 }`}
                             >
                                 <div
@@ -2356,7 +2428,7 @@ const SettingsPanel = ({
                 {activeTab === 'advanced' && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm text-slate-200 font-medium mb-2">
                                 Top-P: {topP}
                             </label>
                             <input
@@ -2371,7 +2443,7 @@ const SettingsPanel = ({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm text-slate-200 font-medium mb-2">
                                 Frequency Penalty: {frequencyPenalty}
                             </label>
                             <input
@@ -2386,7 +2458,7 @@ const SettingsPanel = ({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm text-slate-200 font-medium mb-2">
                                 Presence Penalty: {presencePenalty}
                             </label>
                             <input
@@ -2401,7 +2473,7 @@ const SettingsPanel = ({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm text-slate-200 font-medium mb-2">
                                 Context Window: {contextWindow} messages
                             </label>
                             <input
@@ -2421,7 +2493,7 @@ const SettingsPanel = ({
                                 <button
                                     onClick={() => setUseRAG(!useRAG)}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                                        useRAG ? 'bg-blue-500' : 'bg-gray-600'
+                                        useRAG ? 'bg-cyan-500' : 'bg-slate-700'
                                     }`}
                                 >
                                     <div
@@ -2437,7 +2509,7 @@ const SettingsPanel = ({
                                 <button
                                     onClick={() => setEnableWebSearch(!enableWebSearch)}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                                        enableWebSearch ? 'bg-blue-500' : 'bg-gray-600'
+                                        enableWebSearch ? 'bg-cyan-500' : 'bg-slate-700'
                                     }`}
                                 >
                                     <div
@@ -2453,7 +2525,7 @@ const SettingsPanel = ({
                                 <button
                                     onClick={() => setEnableCodeExecution(!enableCodeExecution)}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                                        enableCodeExecution ? 'bg-blue-500' : 'bg-gray-600'
+                                        enableCodeExecution ? 'bg-cyan-500' : 'bg-slate-700'
                                     }`}
                                 >
                                     <div
@@ -2469,7 +2541,7 @@ const SettingsPanel = ({
                                 <button
                                     onClick={() => setEnableVision(!enableVision)}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                                        enableVision ? 'bg-blue-500' : 'bg-gray-600'
+                                        enableVision ? 'bg-cyan-500' : 'bg-slate-700'
                                     }`}
                                 >
                                     <div
@@ -2485,7 +2557,7 @@ const SettingsPanel = ({
                                 <button
                                     onClick={() => setEnableImageGen(!enableImageGen)}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                                        enableImageGen ? 'bg-blue-500' : 'bg-gray-600'
+                                        enableImageGen ? 'bg-cyan-500' : 'bg-slate-700'
                                     }`}
                                 >
                                     <div
@@ -2502,7 +2574,7 @@ const SettingsPanel = ({
                 {activeTab === 'display' && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-2">View Mode</label>
+                            <label className="block text-sm text-slate-200 font-medium mb-2">View Mode</label>
                             <div className="space-y-2">
                                 {['compact', 'comfortable', 'spacious'].map((mode) => (
                                     <label key={mode} className="flex items-center gap-2">
@@ -2512,20 +2584,20 @@ const SettingsPanel = ({
                                             value={mode}
                                             checked={viewMode === mode}
                                             onChange={(e) => setViewMode(e.target.value)}
-                                            className="text-blue-500"
+                                            className="text-cyan-500 accent-cyan-500"
                                         />
-                                        <span className="capitalize">{mode}</span>
+                                        <span className="capitalize text-slate-300">{mode}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
                         <div className="flex items-center justify-between">
-                            <span className="text-sm">Auto-save conversations</span>
+                            <span className="text-sm text-slate-300">Auto-save conversations</span>
                             <button
                                 onClick={() => setAutoSave(!autoSave)}
                                 className={`w-12 h-6 rounded-full relative transition-colors ${
-                                    autoSave ? 'bg-blue-500' : 'bg-gray-600'
+                                    autoSave ? 'bg-cyan-500' : 'bg-slate-700'
                                 }`}
                             >
                                 <div
@@ -2541,11 +2613,11 @@ const SettingsPanel = ({
                 {activeTab === 'save' && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-2">System Prompt</label>
+                            <label className="block text-sm text-slate-200 font-medium mb-2">System Prompt</label>
                             <textarea
                                 value={systemPrompt}
                                 onChange={(e) => setSystemPrompt(e.target.value)}
-                                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full p-3 bg-slate-800 border border-slate-700/50 rounded-lg text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                                 rows="4"
                                 placeholder="Enter system prompt..."
                             />
@@ -2553,7 +2625,7 @@ const SettingsPanel = ({
 
                         <button
                             onClick={saveUserPreferences}
-                            className="w-full py-2 bg-blue-500 hover:bg-blue-600 rounded-lg font-medium transition-colors"
+                            className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 rounded-lg font-medium transition-all text-white shadow-lg shadow-indigo-500/25"
                         >
                             Save Preferences
                         </button>
@@ -2571,14 +2643,14 @@ const PluginsPanel = ({ availableTools, togglePlugin, onClose }) => {
             initial={{ x: '100%', opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
-            className="w-96 border-l border-white/10 bg-white/5 backdrop-blur-xl flex flex-col h-full"
+            className="fixed inset-0 z-50 sm:relative sm:inset-auto sm:z-auto w-full sm:max-w-lg md:max-w-2xl sm:w-96 bg-slate-950 border-l border-slate-700/50 flex flex-col h-full"
         >
-            <div className="p-4 border-b border-white/10">
+            <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Tools & Plugins</h3>
+                    <h3 className="text-slate-200 font-semibold text-lg">Tools & Plugins</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-white/10 rounded-lg transition-all"
+                        className="p-1 hover:bg-slate-800 rounded-lg transition-all text-slate-400"
                     >
                         <X size={18} />
                     </button>
@@ -2593,25 +2665,25 @@ const PluginsPanel = ({ availableTools, togglePlugin, onClose }) => {
                             key={tool.id}
                             className={`p-4 rounded-lg border transition-all ${
                                 tool.enabled
-                                    ? 'bg-blue-500/10 border-blue-500/30'
-                                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                    ? 'bg-indigo-500/10 border-indigo-500/30'
+                                    : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800'
                             }`}
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-lg bg-slate-700/50 flex items-center justify-center text-slate-300">
                                         <Icon size={20} />
                                     </div>
                                     <div>
-                                        <h4 className="font-medium">{tool.name}</h4>
-                                        <p className="text-xs text-gray-400">AI Enhancement Tool</p>
+                                        <h4 className="font-medium text-slate-200">{tool.name}</h4>
+                                        <p className="text-xs text-slate-400">AI Enhancement Tool</p>
                                     </div>
                                 </div>
                                 
                                 <button
                                     onClick={() => togglePlugin(tool.id)}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                                        tool.enabled ? 'bg-blue-500' : 'bg-gray-600'
+                                        tool.enabled ? 'bg-cyan-500' : 'bg-slate-700'
                                     }`}
                                 >
                                     <div
@@ -2622,7 +2694,7 @@ const PluginsPanel = ({ availableTools, togglePlugin, onClose }) => {
                                 </button>
                             </div>
                             
-                            <p className="text-sm text-gray-300">
+                            <p className="text-sm text-slate-400">
                                 Enhance your AI experience with {tool.name.toLowerCase()} capabilities.
                             </p>
                         </div>
@@ -2651,36 +2723,36 @@ const TemplatesPanel = ({ promptTemplates, applyTemplate, onClose }) => {
             initial={{ x: '100%', opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
-            className="w-96 border-l border-white/10 bg-white/5 backdrop-blur-xl flex flex-col h-full"
+            className="fixed inset-0 z-50 sm:relative sm:inset-auto sm:z-auto w-full sm:max-w-lg md:max-w-2xl sm:w-96 bg-slate-950 border-l border-slate-700/50 flex flex-col h-full"
         >
-            <div className="p-4 border-b border-white/10">
+            <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Prompt Templates</h3>
+                    <h3 className="text-slate-200 font-semibold text-lg">Prompt Templates</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-white/10 rounded-lg transition-all"
+                        className="p-1 hover:bg-slate-800 rounded-lg transition-all text-slate-400"
                     >
                         <X size={18} />
                     </button>
                 </div>
             </div>
 
-            <div className="p-4 space-y-3 border-b border-white/10">
+            <div className="p-4 space-y-3 border-b border-slate-700/50">
                 <input
                     type="text"
                     placeholder="Search templates..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700/50 rounded-lg text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                 />
                 
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`px-3 py-1 text-xs rounded-full ${
+                        className={`px-3 py-1 text-xs rounded-full transition-colors ${
                             selectedCategory === 'all'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white/10 text-gray-300'
+                                ? 'bg-cyan-500 text-white'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                         }`}
                     >
                         All
@@ -2689,10 +2761,10 @@ const TemplatesPanel = ({ promptTemplates, applyTemplate, onClose }) => {
                         <button
                             key={category}
                             onClick={() => setSelectedCategory(category)}
-                            className={`px-3 py-1 text-xs rounded-full capitalize ${
+                            className={`px-3 py-1 text-xs rounded-full capitalize transition-colors ${
                                 selectedCategory === category
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-white/10 text-gray-300'
+                                    ? 'bg-cyan-500 text-white'
+                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }`}
                         >
                             {category}
@@ -2705,20 +2777,20 @@ const TemplatesPanel = ({ promptTemplates, applyTemplate, onClose }) => {
                 {filteredTemplates.map((template) => (
                     <div
                         key={template.id}
-                        className="p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                        className="p-4 rounded-lg border border-slate-700/50 bg-slate-800/50 hover:bg-slate-800 transition-colors cursor-pointer"
                         onClick={() => applyTemplate(template)}
                     >
                         <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium">{template.name}</h4>
+                            <h4 className="font-medium text-slate-200">{template.name}</h4>
                         </div>
-                        <p className="text-sm text-gray-300 mb-3 line-clamp-2">
+                        <p className="text-sm text-slate-400 mb-3 line-clamp-2">
                             {template.prompt}
                         </p>
                         <div className="flex flex-wrap gap-1">
                             {template.tags.map(tag => (
                                 <span
                                     key={tag}
-                                    className="px-2 py-1 bg-white/10 text-xs rounded-full text-gray-300"
+                                    className="px-2 py-1 bg-slate-700/50 text-xs rounded-full text-slate-400"
                                 >
                                     {tag}
                                 </span>
@@ -2738,14 +2810,14 @@ const CostTrackerPanel = ({ usageStats, onClose }) => {
             initial={{ x: '100%', opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
-            className="w-96 border-l border-white/10 bg-white/5 backdrop-blur-xl flex flex-col h-full"
+            className="fixed inset-0 z-50 sm:relative sm:inset-auto sm:z-auto w-full sm:max-w-lg md:max-w-2xl sm:w-96 bg-slate-950 border-l border-slate-700/50 flex flex-col h-full"
         >
-            <div className="p-4 border-b border-white/10">
+            <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Usage & Cost</h3>
+                    <h3 className="text-slate-200 font-semibold text-lg">Usage & Cost</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-white/10 rounded-lg transition-all"
+                        className="p-1 hover:bg-slate-800 rounded-lg transition-all text-slate-400"
                     >
                         <X size={18} />
                     </button>
@@ -2754,58 +2826,58 @@ const CostTrackerPanel = ({ usageStats, onClose }) => {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="text-2xl font-bold text-green-400">
+                    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                        <div className="text-2xl font-bold text-emerald-400">
                             ${usageStats.totalCost?.toFixed(4) || '0.0000'}
                         </div>
-                        <div className="text-sm text-gray-400">Total Cost</div>
+                        <div className="text-sm text-slate-400">Total Cost</div>
                     </div>
-                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="text-2xl font-bold text-blue-400">
+                    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                        <div className="text-2xl font-bold text-cyan-400">
                             {usageStats.totalTokens || 0}
                         </div>
-                        <div className="text-sm text-gray-400">Tokens Used</div>
+                        <div className="text-sm text-slate-400">Tokens Used</div>
                     </div>
-                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="text-2xl font-bold text-purple-400">
+                    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                        <div className="text-2xl font-bold text-indigo-400">
                             {usageStats.totalMessages || 0}
                         </div>
-                        <div className="text-sm text-gray-400">Messages</div>
+                        <div className="text-sm text-slate-400">Messages</div>
                     </div>
-                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="text-2xl font-bold text-yellow-400">
+                    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                        <div className="text-2xl font-bold text-amber-400">
                             {usageStats.conversationCount || 0}
                         </div>
-                        <div className="text-sm text-gray-400">Conversations</div>
+                        <div className="text-sm text-slate-400">Conversations</div>
                     </div>
                 </div>
 
-                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                    <h4 className="font-medium mb-3">Cost Breakdown</h4>
+                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <h4 className="font-medium text-slate-200 mb-3">Cost Breakdown</h4>
                     <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-sm text-slate-400">
                             <span>Input Tokens:</span>
-                            <span className="text-gray-300">0.0000</span>
+                            <span className="text-slate-300">0.0000</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-sm text-slate-400">
                             <span>Output Tokens:</span>
-                            <span className="text-gray-300">0.0000</span>
+                            <span className="text-slate-300">0.0000</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-sm text-slate-400">
                             <span>Images:</span>
-                            <span className="text-gray-300">0.0000</span>
+                            <span className="text-slate-300">0.0000</span>
                         </div>
-                        <div className="flex justify-between text-sm font-medium pt-2 border-t border-white/10">
+                        <div className="flex justify-between text-sm font-medium pt-2 border-t border-slate-700/50 text-slate-200">
                             <span>Total:</span>
-                            <span className="text-green-400">${usageStats.totalCost?.toFixed(4) || '0.0000'}</span>
+                            <span className="text-emerald-400">${usageStats.totalCost?.toFixed(4) || '0.0000'}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                    <h4 className="font-medium mb-3">Monthly Usage</h4>
-                    <div className="h-32 bg-gray-900 rounded-lg flex items-center justify-center">
-                        <div className="text-center text-gray-400">
+                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <h4 className="font-medium text-slate-200 mb-3">Monthly Usage</h4>
+                    <div className="h-32 bg-slate-900 rounded-lg flex items-center justify-center">
+                        <div className="text-center text-slate-500">
                             <BarChart2 size={32} className="mx-auto mb-2" />
                             <p>Usage Chart</p>
                         </div>

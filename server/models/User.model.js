@@ -160,8 +160,6 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
 };
 
 // Indexes
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
 userSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);

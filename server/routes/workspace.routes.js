@@ -1,34 +1,32 @@
 // routes/workspace.routes.js
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../middleware/auth.middleware');
+const { auth, isOwner } = require('../middleware/auth.middleware');
 const workspaceController = require('../controllers/workspace.controller');
 
 // All routes require authentication
 router.use(auth);
 
-// Workspace CRUD
-router.post('/', workspaceController.createWorkspace);
+// Workspace CRUD (collaborators can view, owner creates/manages)
 router.get('/', workspaceController.getWorkspaces);
-router.get('/all', workspaceController.getAllWorkspaces); // Owner can see ALL workspaces
+router.get('/all', workspaceController.getAllWorkspaces);
 router.get('/my-collaborations', workspaceController.getCollaboratorWorkspaces);
 router.get('/:workspaceId', workspaceController.getWorkspaceById);
+router.get('/:workspaceId/analytics', workspaceController.getWorkspaceAnalytics);
 
-// Workspace actions
-router.put('/:workspaceId/settings', workspaceController.updateWorkspaceSettings);
-router.put('/:workspaceId/archive', workspaceController.archiveWorkspace);
-router.delete('/:workspaceId', workspaceController.deleteWorkspace);
+// Owner-only operations
+router.post('/', isOwner, workspaceController.createWorkspace);
+router.put('/:workspaceId/settings', isOwner, workspaceController.updateWorkspaceSettings);
+router.put('/:workspaceId/archive', isOwner, workspaceController.archiveWorkspace);
+router.delete('/:workspaceId', isOwner, workspaceController.deleteWorkspace);
 
-// Collaborator management
-router.post('/:workspaceId/collaborators', workspaceController.addCollaborator);
-router.delete('/:workspaceId/collaborators/:collaboratorId', workspaceController.removeCollaborator);
-router.put('/:workspaceId/collaborators/:collaboratorId/permissions', workspaceController.updateCollaboratorPermissions);
+// Collaborator management (owner only)
+router.post('/:workspaceId/collaborators', isOwner, workspaceController.addCollaborator);
+router.delete('/:workspaceId/collaborators/:collaboratorId', isOwner, workspaceController.removeCollaborator);
+router.put('/:workspaceId/collaborators/:collaboratorId/permissions', isOwner, workspaceController.updateCollaboratorPermissions);
 
 // Task management
 router.post('/:workspaceId/tasks', workspaceController.addTask);
 router.put('/:workspaceId/tasks/:taskId/status', workspaceController.updateTaskStatus);
-
-// Analytics
-router.get('/:workspaceId/analytics', workspaceController.getWorkspaceAnalytics);
 
 module.exports = router;

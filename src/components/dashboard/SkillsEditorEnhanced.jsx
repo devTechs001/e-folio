@@ -14,6 +14,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import ApiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
+import cacheService from '../../services/cache.service';
 
 const SkillsEditorEnhanced = () => {
     const { user, isOwner } = useAuth();
@@ -35,6 +36,13 @@ const SkillsEditorEnhanced = () => {
     const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
     const [showResourceModal, setShowResourceModal] = useState(false);
     const [showBulkActions, setShowBulkActions] = useState(false);
+    
+    // Sync indicator state
+    const [syncStatus, setSyncStatus] = useState('unknown');
+    const [lastSynced, setLastSynced] = useState(null);
+    
+    // Category view state
+    const [categoryViewExpanded, setCategoryViewExpanded] = useState({});
     
     // Filter/Search States
     const [searchQuery, setSearchQuery] = useState('');
@@ -127,6 +135,7 @@ const SkillsEditorEnhanced = () => {
                 const skills = response.skills;
                 setTechnicalSkills(skills.filter(s => s.type === 'technical'));
                 setProfessionalSkills(skills.filter(s => s.type === 'professional'));
+                markSynced();
             } else {
                 // Use fallback skills if no skills from API
                 const fallbackTechnical = getFallbackTechnicalSkills();
@@ -182,6 +191,48 @@ const SkillsEditorEnhanced = () => {
         } catch (err) {
             console.error('Groups error:', err);
         }
+    };
+
+    // Sync indicator check
+    useEffect(() => {
+        const cachedSkills = cacheService.get('skills');
+        if (cachedSkills) {
+            setSyncStatus('synced');
+            setLastSynced(new Date().toLocaleTimeString());
+        } else {
+            setSyncStatus('stale');
+        }
+        const interval = setInterval(() => {
+            const fresh = cacheService.get('skills');
+            setSyncStatus(fresh ? 'synced' : 'stale');
+            if (fresh) setLastSynced(new Date().toLocaleTimeString());
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const markSynced = () => {
+        cacheService.set('skills', { synced: true }, cacheService.CACHE_TTL?.FIVE_MINUTES || 300000);
+        setSyncStatus('synced');
+        setLastSynced(new Date().toLocaleTimeString());
+    };
+
+    const getCategoryGroups = (skills) => {
+        const groups = {};
+        const catDefs = categoryOptions[activeTab] || [];
+        catDefs.forEach(cat => { groups[cat.value] = []; });
+        skills.forEach(skill => {
+            const cat = skill.category || 'Other';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(skill);
+        });
+        Object.keys(groups).forEach(k => {
+            if (groups[k].length === 0) delete groups[k];
+        });
+        return groups;
+    };
+
+    const toggleCategorySection = (cat) => {
+        setCategoryViewExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
     };
 
     // CRUD Operations
@@ -268,6 +319,7 @@ const SkillsEditorEnhanced = () => {
             setSelectedSkills([]);
             success(`Deleted ${selectedSkills.length} skills`);
             loadAnalytics();
+            markSynced();
         } catch (err) {
             error('Failed to delete skills');
         }
@@ -309,6 +361,7 @@ const SkillsEditorEnhanced = () => {
             }
             
             await ApiService.reorderSkills(newOrder.map((s, idx) => ({ id: s.id, order: idx })));
+            markSynced();
         } catch (err) {
             error('Failed to reorder skills');
         }
@@ -444,6 +497,27 @@ const SkillsEditorEnhanced = () => {
             subtitle={`Manage ${currentSkills.length} ${activeTab} skills with AI-powered insights`}
             actions={
                 <div className="flex items-center gap-3">
+                    {/* Sync Indicator */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                            syncStatus === 'synced'
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        }`}
+                    >
+                        <motion.div
+                            animate={{ rotate: syncStatus === 'synced' ? 0 : 360 }}
+                            transition={{ repeat: syncStatus === 'synced' ? 0 : Infinity, duration: 2 }}
+                        >
+                            <RefreshCw size={14} />
+                        </motion.div>
+                        <span className="hidden lg:inline">
+                            {syncStatus === 'synced' ? `Synced ${lastSynced ? `at ${lastSynced}` : ''}` : 'Unsaved changes'}
+                        </span>
+                    </motion.div>
+
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -453,11 +527,23 @@ const SkillsEditorEnhanced = () => {
                     />
 
                     <button
+                        onClick={() => setViewMode(viewMode === 'category' ? 'grid' : 'category')}
+                        className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                            viewMode === 'category'
+                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                                : 'bg-white/5 hover:bg-white/10 border-white/10'
+                        }`}
+                        title="Toggle category view"
+                    >
+                        <Bookmark size={16} /> <span className="hidden sm:inline">Categories</span>
+                    </button>
+
+                    <button
                         onClick={() => fileInputRef.current?.click()}
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
                                  rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                     >
-                        <Upload size={16} /> Import
+                        <Upload size={16} /> <span className="hidden sm:inline">Import</span>
                     </button>
 
                     <button
@@ -465,13 +551,13 @@ const SkillsEditorEnhanced = () => {
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
                                  rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                     >
-                        <Download size={16} /> Export
+                        <Download size={16} /> <span className="hidden sm:inline">Export</span>
                     </button>
 
                     <button
                         onClick={() => setShowAnalyticsModal(true)}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
-                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+                        className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
+                                 rounded-lg text-sm font-medium transition-all items-center gap-2"
                     >
                         <BarChart3 size={16} /> Analytics
                     </button>
@@ -482,7 +568,7 @@ const SkillsEditorEnhanced = () => {
                                  hover:to-purple-700 rounded-lg font-semibold transition-all shadow-lg 
                                  shadow-blue-500/25 flex items-center gap-2"
                     >
-                        <Plus size={18} /> Add Skill
+                        <Plus size={18} /> <span className="hidden sm:inline">Add Skill</span>
                     </button>
                 </div>
             }
@@ -522,8 +608,8 @@ const SkillsEditorEnhanced = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center justify-between">
-                    <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
+                    <div className="flex gap-2 w-full sm:w-auto">
                         {['technical', 'professional'].map(tab => (
                             <button
                                 key={tab}
@@ -531,14 +617,14 @@ const SkillsEditorEnhanced = () => {
                                     setActiveTab(tab);
                                     setSelectedSkills([]);
                                 }}
-                                className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2 ${
+                                className={`flex-1 sm:flex-none px-4 sm:px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center sm:justify-start gap-2 ${
                                     activeTab === tab
                                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
                                         : 'bg-white/5 hover:bg-white/10 border border-white/10'
                                 }`}
                             >
                                 {tab === 'technical' ? <Code size={18} /> : <Award size={18} />}
-                                <span className="capitalize">{tab} Skills</span>
+                                <span className="capitalize text-sm sm:text-base">{tab} Skills</span>
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                                     activeTab === tab ? 'bg-white/20' : 'bg-white/10'
                                 }`}>
@@ -550,15 +636,15 @@ const SkillsEditorEnhanced = () => {
 
                     <button
                         onClick={() => setShowGroupModal(true)}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
-                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+                        className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 
+                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start"
                     >
                         <Settings size={16} /> Manage Groups
                     </button>
                 </div>
 
                 {/* Filters & Search */}
-                <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/10">
+                <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white/10">
                     {/* Bulk Actions Bar */}
                     <AnimatePresence>
                         {selectedSkills.length > 0 && (
@@ -566,14 +652,14 @@ const SkillsEditorEnhanced = () => {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl 
-                                         flex items-center justify-between"
+                                className="mb-4 p-3 sm:p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl 
+                                         flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 justify-between"
                             >
                                 <div className="flex items-center gap-3">
-                                    <CheckCircle className="text-blue-500" size={20} />
-                                    <span className="font-semibold">{selectedSkills.length} selected</span>
+                                    <CheckCircle className="text-blue-500 flex-shrink-0" size={20} />
+                                    <span className="font-semibold text-sm sm:text-base">{selectedSkills.length} selected</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <button
                                         onClick={() => {
                                             selectedSkills.forEach(id => {
@@ -582,7 +668,7 @@ const SkillsEditorEnhanced = () => {
                                             });
                                             setSelectedSkills([]);
                                         }}
-                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+                                        className="px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
                                     >
                                         Toggle Visibility
                                     </button>
@@ -594,20 +680,20 @@ const SkillsEditorEnhanced = () => {
                                             });
                                             setSelectedSkills([]);
                                         }}
-                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+                                        className="px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
                                     >
                                         Duplicate All
                                     </button>
                                     <button
                                         onClick={handleBulkDelete}
-                                        className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 
+                                        className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 
                                                  rounded-lg text-sm font-medium transition-all"
                                     >
                                         Delete All
                                     </button>
                                     <button
                                         onClick={() => setSelectedSkills([])}
-                                        className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
+                                        className="p-2 hover:bg-white/10 rounded-lg transition-all"
                                     >
                                         <X size={18} />
                                     </button>
@@ -616,16 +702,16 @@ const SkillsEditorEnhanced = () => {
                         )}
                     </AnimatePresence>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         {/* Search */}
-                        <div className="relative lg:col-span-2">
+                        <div className="relative flex-1 sm:min-w-[200px] lg:min-w-[280px]">
                             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search skills..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl 
+                                className="w-full pl-11 pr-4 py-3 sm:py-2.5 bg-white/5 border border-white/10 rounded-xl 
                                          text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 
                                          placeholder-gray-500"
                             />
@@ -644,7 +730,7 @@ const SkillsEditorEnhanced = () => {
                         <select
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
-                            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
+                            className="px-4 py-3 sm:py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
                                      focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
                         >
                             <option value="all">All Categories</option>
@@ -657,7 +743,7 @@ const SkillsEditorEnhanced = () => {
                         <select
                             value={filterLevel}
                             onChange={(e) => setFilterLevel(e.target.value)}
-                            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
+                            className="px-4 py-3 sm:py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
                                      focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
                         >
                             <option value="all">All Levels</option>
@@ -671,7 +757,7 @@ const SkillsEditorEnhanced = () => {
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
+                                className="flex-1 px-4 py-3 sm:py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
                                          focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
                             >
                                 <option value="level">Highest Level</option>
@@ -681,12 +767,13 @@ const SkillsEditorEnhanced = () => {
                                 <option value="experience">Experience</option>
                             </select>
 
-                            <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
+                            <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg flex-shrink-0">
                                 <button
                                     onClick={() => setViewMode('grid')}
                                     className={`p-1.5 rounded transition-all ${
                                         viewMode === 'grid' ? 'bg-blue-500 text-white' : 'hover:bg-white/10'
                                     }`}
+                                    title="Grid view"
                                 >
                                     <Grid size={16} />
                                 </button>
@@ -695,6 +782,7 @@ const SkillsEditorEnhanced = () => {
                                     className={`p-1.5 rounded transition-all ${
                                         viewMode === 'list' ? 'bg-blue-500 text-white' : 'hover:bg-white/10'
                                     }`}
+                                    title="List view"
                                 >
                                     <List size={16} />
                                 </button>
@@ -703,18 +791,18 @@ const SkillsEditorEnhanced = () => {
                     </div>
 
                     {/* Additional Options */}
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 justify-between">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setShowHidden(!showHidden)}
-                                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-all"
+                                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-all py-1"
                             >
                                 {showHidden ? <Eye size={16} /> : <EyeOff size={16} />}
-                                {showHidden ? 'Showing hidden' : 'Hide hidden skills'}
+                                {showHidden ? 'Showing hidden' : 'Hide hidden'}
                             </button>
                             <button
                                 onClick={selectAllSkills}
-                                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-all"
+                                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-all py-1"
                             >
                                 <CheckCircle size={16} />
                                 {selectedSkills.length === filteredSkills.length ? 'Deselect All' : 'Select All'}
@@ -753,12 +841,27 @@ const SkillsEditorEnhanced = () => {
                             Add Skill
                         </button>
                     </div>
+                ) : viewMode === 'category' ? (
+                    <CategoryGroupView
+                        groups={getCategoryGroups(filteredSkills)}
+                        categoryOptions={categoryOptions[activeTab] || []}
+                        expanded={categoryViewExpanded}
+                        onToggle={toggleCategorySection}
+                        selectedSkills={selectedSkills}
+                        onToggleSelect={toggleSkillSelection}
+                        onUpdate={handleUpdateSkill}
+                        onDelete={handleDeleteSkill}
+                        onDuplicate={handleDuplicateSkill}
+                        getLevelBadge={getLevelBadge}
+                        setSelectedSkill={setSelectedSkill}
+                        setShowResourceModal={setShowResourceModal}
+                    />
                 ) : viewMode === 'grid' ? (
                     <Reorder.Group
                         axis="y"
                         values={filteredSkills}
                         onReorder={handleReorderSkills}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
                     >
                         {filteredSkills.map((skill, index) => (
                             <Reorder.Item key={skill.id} value={skill}>
@@ -903,7 +1006,7 @@ const SkillCard = ({
                         <input
                             type="text"
                             value={skill.name}
-                            onChange={(e) => onUpdate(skill.id, 'name', e.target.value)}
+                            onChange={(e) => onUpdate(skill.id, { name: e.target.value })}
                             onBlur={() => setIsEditing(false)}
                             className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg 
                                      text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -1042,7 +1145,7 @@ const SkillCard = ({
                 )}
             </div>
 
-            {/* Progress Bar */}
+            {/* Proficiency Bar */}
             <div>
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-400 font-medium">Proficiency</span>
@@ -1050,24 +1153,32 @@ const SkillCard = ({
                         {skill.level}%
                     </span>
                 </div>
-                <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10 relative">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${skill.level}%` }}
-                        transition={{ duration: 1, delay: index * 0.1 }}
+                        transition={{ duration: 1, delay: index * 0.1, ease: 'easeOut' }}
                         className="h-full rounded-full relative overflow-hidden"
                         style={{
-                            background: `linear-gradient(90deg, ${skill.color}, ${skill.color}dd)`,
-                            boxShadow: `0 0 10px ${skill.color}40`
+                            background: `linear-gradient(90deg, ${skill.color}88, ${skill.color}, ${skill.color}dd)`,
+                            boxShadow: `0 0 12px ${skill.color}50, inset 0 0 4px rgba(255,255,255,0.2)`
                         }}
                     >
                         <div
-                            className="absolute inset-0 opacity-30"
+                            className="absolute inset-0 opacity-40"
                             style={{
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
                                 animation: 'shimmer 2s infinite'
                             }}
                         />
+                        {/* Segment dots for visual granularity */}
+                        {[25, 50, 75].map(dot => (
+                            <div
+                                key={dot}
+                                className="absolute top-0 bottom-0 w-0.5 bg-white/20"
+                                style={{ left: `${dot}%` }}
+                            />
+                        ))}
                     </motion.div>
                 </div>
 
@@ -1090,6 +1201,131 @@ const SkillCard = ({
     );
 };
 
+// Category Group View Component
+const CategoryGroupView = ({
+    groups, categoryOptions, expanded, onToggle,
+    selectedSkills, onToggleSelect, onUpdate, onDelete,
+    onDuplicate, getLevelBadge, setSelectedSkill, setShowResourceModal
+}) => {
+    const categoryColors = {
+        Frontend: '#61dafb', Backend: '#68a063', DevOps: '#f7931e',
+        Database: '#4479a1', Mobile: '#a4c639', 'AI/ML': '#8b5cf6',
+        Cloud: '#ff9900', Tools: '#f05032',
+        Leadership: '#8b5cf6', Communication: '#3b82f6',
+        'Project Management': '#10b981', 'Problem Solving': '#f59e0b',
+        Creativity: '#ec4899', Teamwork: '#06b6d4'
+    };
+
+    return (
+        <div className="space-y-4">
+            {Object.entries(groups).map(([category, skills]) => {
+                const catDef = categoryOptions.find(c => c.value === category);
+                const catColor = catDef?.color || categoryColors[category] || '#3b82f6';
+                const avgLevel = Math.round(skills.reduce((a, s) => a + s.level, 0) / skills.length);
+
+                return (
+                    <motion.div
+                        key={category}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden"
+                    >
+                        <button
+                            onClick={() => onToggle(category)}
+                            className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl" style={{ background: `${catColor}20` }}>
+                                    {catDef?.icon ? (
+                                        <i className={catDef.icon} style={{ color: catColor }} />
+                                    ) : (
+                                        <Bookmark size={16} style={{ color: catColor }} />
+                                    )}
+                                </div>
+                                <div className="text-left">
+                                    <h4 className="font-bold text-white">{category}</h4>
+                                    <p className="text-xs text-gray-400">{skills.length} skills · Avg {avgLevel}%</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${avgLevel}%` }}
+                                            className="h-full rounded-full"
+                                            style={{ background: `linear-gradient(90deg, ${catColor}, ${catColor}dd)` }}
+                                        />
+                                    </div>
+                                </div>
+                                {expanded[category] ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                            </div>
+                        </button>
+
+                        <AnimatePresence>
+                            {expanded[category] && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="border-t border-white/10"
+                                >
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-5">
+                                        {skills.map((skill, idx) => {
+                                            const badge = getLevelBadge(skill.level);
+                                            return (
+                                                <motion.div
+                                                    key={skill.id}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.03 }}
+                                                    className={`relative bg-white/5 border rounded-xl p-4 hover:bg-white/10 transition-all ${
+                                                        selectedSkills.includes(skill.id) ? 'ring-2 ring-blue-500 border-blue-500' : 'border-white/10'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <button
+                                                            onClick={() => onToggleSelect(skill.id)}
+                                                            className="p-1.5 hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
+                                                        >
+                                                            {selectedSkills.includes(skill.id) ? (
+                                                                <CheckCircle className="text-blue-500" size={16} />
+                                                            ) : (
+                                                                <div className="w-4 h-4 border-2 border-white/30 rounded" />
+                                                            )}
+                                                        </button>
+                                                        <i className={skill.icon} style={{ color: skill.color }} />
+                                                        <span className="font-semibold text-sm truncate text-white">{skill.name}</span>
+                                                        <span className={`ml-auto px-2 py-0.5 rounded text-xs font-bold ${badge.color}`}>
+                                                            {skill.level}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${skill.level}%` }}
+                                                            className="h-full rounded-full"
+                                                            style={{
+                                                                background: `linear-gradient(90deg, ${skill.color}88, ${skill.color})`,
+                                                                boxShadow: `0 0 6px ${skill.color}40`
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                );
+            })}
+        </div>
+    );
+};
+
 // Modal Components
 const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, categoryOptions }) => {
     if (!show) return null;
@@ -1097,13 +1333,13 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
     const currentCategoryOptions = categoryOptions[skill.type] || [];
     
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-slate-800 rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-auto"
             >
-                <h3 className="text-2xl font-bold text-cyan-400 mb-4">Add New Skill</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-4">Add New Skill</h3>
                 <div className="space-y-4">
                     <div>
                         <label className="block text-slate-300 text-sm font-medium mb-2">Skill Name</label>
@@ -1112,7 +1348,7 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
                             placeholder="Enter skill name"
                             value={skill.name}
                             onChange={(e) => setSkill({ ...skill, name: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            className="w-full px-4 py-3 sm:py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         />
                     </div>
                     
@@ -1121,7 +1357,7 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
                         <select
                             value={skill.category}
                             onChange={(e) => setSkill({ ...skill, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            className="w-full px-4 py-3 sm:py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         >
                             <option value="">Select Category</option>
                             {currentCategoryOptions.map(cat => (
@@ -1138,7 +1374,7 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
                             max="100"
                             value={skill.level}
                             onChange={(e) => setSkill({ ...skill, level: parseInt(e.target.value) })}
-                            className="w-full"
+                            className="w-full h-2 sm:h-3"
                         />
                     </div>
                     
@@ -1147,7 +1383,7 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
                         <select
                             value={skill.icon}
                             onChange={(e) => setSkill({ ...skill, icon: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            className="w-full px-4 py-3 sm:py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         >
                             {iconOptions.map(icon => (
                                 <option key={icon.value} value={icon.value}>{icon.label}</option>
@@ -1161,20 +1397,20 @@ const AddSkillModal = ({ show, onClose, skill, setSkill, onSave, iconOptions, ca
                             type="color"
                             value={skill.color}
                             onChange={(e) => setSkill({ ...skill, color: e.target.value })}
-                            className="w-full h-10 bg-slate-700 rounded-lg cursor-pointer"
+                            className="w-full h-12 sm:h-10 bg-slate-700 rounded-lg cursor-pointer"
                         />
                     </div>
                     
-                    <div className="flex gap-4 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
                         <button 
                             onClick={onSave} 
-                            className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg transition-colors"
+                            className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-3 sm:py-2 rounded-lg transition-colors font-medium"
                         >
                             Save Skill
                         </button>
                         <button 
                             onClick={onClose} 
-                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors"
+                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 sm:py-2 rounded-lg transition-colors font-medium"
                         >
                             Cancel
                         </button>
@@ -1189,26 +1425,26 @@ const AnalyticsModal = ({ show, onClose, analytics, skills }) => {
     if (!show) return null;
     
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-slate-800 rounded-xl p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto"
             >
-                <h3 className="text-2xl font-bold text-cyan-400 mb-4">Skills Analytics</h3>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-slate-700 p-4 rounded-lg">
-                        <p className="text-slate-400">Total Skills</p>
-                        <p className="text-3xl font-bold text-white">{skills.length}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-4">Skills Analytics</h3>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4">
+                    <div className="bg-slate-700 p-3 sm:p-4 rounded-lg">
+                        <p className="text-xs sm:text-sm text-slate-400">Total Skills</p>
+                        <p className="text-2xl sm:text-3xl font-bold text-white">{skills.length}</p>
                     </div>
-                    <div className="bg-slate-700 p-4 rounded-lg">
-                        <p className="text-slate-400">Average Level</p>
-                        <p className="text-3xl font-bold text-white">
+                    <div className="bg-slate-700 p-3 sm:p-4 rounded-lg">
+                        <p className="text-xs sm:text-sm text-slate-400">Average Level</p>
+                        <p className="text-2xl sm:text-3xl font-bold text-white">
                             {(skills.reduce((acc, s) => acc + s.level, 0) / skills.length || 0).toFixed(1)}
                         </p>
                     </div>
                 </div>
-                <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg">
+                <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 sm:py-2 rounded-lg font-medium">
                     Close
                 </button>
             </motion.div>
@@ -1220,15 +1456,15 @@ const ResourceModal = ({ show, onClose, skill, onUpdate }) => {
     if (!show || !skill) return null;
     
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full"
+                className="bg-slate-800 rounded-xl p-4 sm:p-6 max-w-2xl w-full mx-2 sm:mx-auto"
             >
-                <h3 className="text-2xl font-bold text-cyan-400 mb-4">Resources for {skill.name}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-4">Resources for {skill.name}</h3>
                 <p className="text-slate-400 mb-4">Add learning resources, certifications, and projects</p>
-                <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg">
+                <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 sm:py-2 rounded-lg font-medium">
                     Close
                 </button>
             </motion.div>
@@ -1240,15 +1476,40 @@ const GroupManagementModal = ({ show, onClose, groups, onUpdate }) => {
     if (!show) return null;
     
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full"
+                className="bg-slate-800 rounded-xl p-4 sm:p-6 max-w-2xl w-full mx-2 sm:mx-auto"
             >
-                <h3 className="text-2xl font-bold text-cyan-400 mb-4">Manage Skill Groups</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-4">Manage Skill Groups</h3>
                 <p className="text-slate-400 mb-4">Organize your skills into groups</p>
-                <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg">
+                <div className="space-y-2 mb-4">
+                    {groups.length === 0 ? (
+                        <p className="text-slate-500 text-sm">No groups configured yet. Create groups to organize your skills.</p>
+                    ) : (
+                        groups.map((group, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="bg-slate-700/50 rounded-lg p-3 flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-slate-600 rounded-lg">
+                                        <Bookmark size={16} className="text-cyan-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-white text-sm">{group.name}</p>
+                                        <p className="text-xs text-slate-400">{group.skills?.length || 0} skills</p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
+                </div>
+                <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 sm:py-2 rounded-lg font-medium">
                     Close
                 </button>
             </motion.div>

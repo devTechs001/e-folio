@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../services/api.service';
+import cacheService, { CACHE_TTL } from '../services/cache.service';
 import '../styles/Skills.css';
 
 const Skills = () => {
@@ -7,12 +8,16 @@ const Skills = () => {
     const [professionalSkills, setProfessionalSkills] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadSkills();
-    }, []);
-
-    const loadSkills = async () => {
+    const loadSkills = useCallback(async () => {
         try {
+            const cached = cacheService.get('public_skills');
+            if (cached) {
+                setTechnicalSkills(cached.technical);
+                setProfessionalSkills(cached.professional);
+                setLoading(false);
+                return;
+            }
+
             console.log('Fetching skills from API...');
             const response = await apiService.request('/public/skills');
             console.log('Skills API response:', response);
@@ -22,6 +27,7 @@ const Skills = () => {
                 const technical = response.skills.filter(s => s.type === 'technical');
                 const professional = response.skills.filter(s => s.type === 'professional');
                 
+                cacheService.set('public_skills', { technical, professional }, CACHE_TTL.TEN_MINUTES);
                 setTechnicalSkills(technical);
                 setProfessionalSkills(professional);
             } else {
@@ -37,7 +43,21 @@ const Skills = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setTechnicalSkills, setProfessionalSkills, setLoading]);
+
+    useEffect(() => {
+        loadSkills();
+    }, [loadSkills]);
+
+    useEffect(() => {
+        const handleSettingsChange = (e) => {
+            console.log('[Skills] Settings changed, refreshing data...');
+            cacheService.delete('public_skills');
+            loadSkills();
+        };
+        window.addEventListener('settingsChanged', handleSettingsChange);
+        return () => window.removeEventListener('settingsChanged', handleSettingsChange);
+    }, [loadSkills]);
 
     const getFallbackTechnicalSkills = () => [
         { name: "HTML5", level: 90, icon: "fa-brands fa-html5" },

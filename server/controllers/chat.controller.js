@@ -384,3 +384,99 @@ exports.getDirectMessages = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
+
+// Remove reaction
+exports.removeReaction = async (req, res) => {
+    try {
+        const { emoji } = req.params;
+        const message = await Message.findById(req.params.id);
+
+        if (!message) {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+
+        const reactionIndex = message.reactions.findIndex(
+            r => r.emoji === emoji && r.user.toString() === req.user.id
+        );
+
+        if (reactionIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Reaction not found' });
+        }
+
+        message.reactions.splice(reactionIndex, 1);
+        await message.save();
+
+        // Group reactions by emoji
+        const groupedReactions = message.reactions.reduce((acc, r) => {
+            const existing = acc.find(item => item.emoji === r.emoji);
+            if (existing) {
+                existing.count++;
+                existing.users.push(r.userName);
+            } else {
+                acc.push({ emoji: r.emoji, count: 1, users: [r.userName] });
+            }
+            return acc;
+        }, []);
+
+        // Emit socket event
+        req.app.get('io').to(message.room.toString()).emit('message_reaction', {
+            messageId: message._id,
+            reactions: groupedReactions
+        });
+
+        res.json({ success: true, reactions: groupedReactions });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Unpin message
+exports.unpinMessage = async (req, res) => {
+    try {
+        const message = await Message.findById(req.params.id);
+
+        if (!message) {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+
+        message.isPinned = false;
+        await message.save();
+
+        res.json({ success: true, message });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Create direct message
+exports.createDirectMessage = async (req, res) => {
+    try {
+        const { participantId } = req.body;
+
+        if (!participantId) {
+            return res.status(400).json({ success: false, message: 'Participant ID is required' });
+        }
+
+        if (participantId === req.user.id) {
+            return res.status(400).json({ success: false, message: 'Cannot create DM with yourself' });
+        }
+
+        // Check if conversation already exists
+        let conversation = await DirectMessage.findOne({
+            participants: { $all: [req.user.id, participantId], $size: 2 }
+        });
+
+        if (!conversation) {
+            conversation = new DirectMessage({
+                participants: [req.user.id, participantId]
+            });
+            await conversation.save();
+        }
+
+        await conversation.populate('participants', 'name avatar status');
+
+        res.json({ success: true, conversation });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};

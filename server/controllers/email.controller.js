@@ -7,7 +7,7 @@ const Folder = require('../models/Folder');
 // const QuickResponse = require('../models/QuickResponse'); // TODO: Create model
 // const ScheduledEmail = require('../models/ScheduledEmail'); // TODO: Create model
 // const EmailSettings = require('../models/EmailSettings'); // TODO: Create model
-// const { sendEmail: sendEmailService } = require('../utils/email'); // TODO: Create util
+const { sendEmail: sendEmailService } = require('../utils/email');
 const nodemailer = require('nodemailer');
 const { Parser } = require('json2csv');
 

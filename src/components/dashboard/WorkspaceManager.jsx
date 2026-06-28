@@ -4,7 +4,7 @@ import {
     Users, Plus, Search, Filter, MoreVertical, Edit, Trash2, Archive,
     CheckCircle, Clock, AlertCircle, TrendingUp, Calendar, Mail,
     Shield, Settings, Eye, Download, ExternalLink, X, ChevronDown,
-    ChevronUp, UserPlus, Square as TaskSquare, FolderOpen, BarChart, Zap,
+    ChevronUp, UserPlus, Shield as TaskSquare, FolderOpen, BarChart, Zap,
     Lock, Unlock, Star, MessageSquare, FileText, Activity
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

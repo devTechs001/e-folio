@@ -12,7 +12,8 @@ import {
     Target, ArrowRight, Play, Pause, SkipForward, GitBranch,
     Database, Server, Shield, Bell, MessageSquare, Globe,
     PieChart, LineChart, Timer, Award, Flag, MapPin, Heart,
-    Share2, Bookmark, ThumbsUp, Eye as ViewIcon
+    Share2, Bookmark, ThumbsUp, Eye as ViewIcon, Columns,
+    Circle, LayoutDashboard, DownloadCloud
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -22,6 +23,7 @@ import DashboardLayout from './DashboardLayout';
 import ProjectModal from '../../pages/ProjectModal';
 import ProjectShare from '../../pages/ProjectShare';
 import ProjectSkeleton from '../../pages/ProjectSkeleton';
+import cacheService from '../../services/cache.service';
 
 // Comprehensive Project Stages Definition
 const projectStages = [
@@ -244,15 +246,15 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-gray-200 dark:border-gray-700"
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-white">{title}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h3>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                        className="p-3 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500"
                     >
-                        <X className="w-5 h-5 text-slate-400" />
+                        <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                 </div>
                 
@@ -260,28 +262,28 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     {/* Basic Information */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Title *
                             </label>
                             <input
                                 type="text"
                                 value={project.title || ''}
                                 onChange={(e) => handleChange('title', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Enter project title"
                                 required
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Client/Company
                             </label>
                             <input
                                 type="text"
                                 value={project.client || ''}
                                 onChange={(e) => handleChange('client', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Client name or company"
                             />
                         </div>
@@ -289,29 +291,29 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Description *
-                        </label>
-                        <textarea
-                            value={project.description || ''}
-                            onChange={(e) => handleChange('description', e.target.value)}
-                            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                            placeholder="Enter project description"
-                            rows={4}
-                            required
-                        />
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        Description *
+                    </label>
+                    <textarea
+                        value={project.description || ''}
+                        onChange={(e) => handleChange('description', e.target.value)}
+                        className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Enter project description"
+                        rows={4}
+                        required
+                    />
                     </div>
                     
                     {/* Category, Status, Priority */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Category
                             </label>
                             <select
                                 value={project.category || 'Web'}
                                 onChange={(e) => handleChange('category', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="Web">Web Application</option>
                                 <option value="Mobile">Mobile App</option>
@@ -327,13 +329,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Status
                             </label>
                             <select
                                 value={project.status || 'planning'}
                                 onChange={(e) => handleChange('status', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="idea">Idea</option>
                                 <option value="planning">Planning</option>
@@ -346,13 +348,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Priority
                             </label>
                             <select
                                 value={project.priority || 'medium'}
                                 onChange={(e) => handleChange('priority', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
@@ -365,38 +367,38 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     {/* Dates */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Start Date
                             </label>
                             <input
                                 type="date"
                                 value={project.startDate || ''}
                                 onChange={(e) => handleChange('startDate', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 End Date
                             </label>
                             <input
                                 type="date"
                                 value={project.endDate || ''}
                                 onChange={(e) => handleChange('endDate', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Budget ($)
                             </label>
                             <input
                                 type="number"
                                 value={project.budget || ''}
                                 onChange={(e) => handleChange('budget', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="0"
                                 min="0"
                             />
@@ -405,10 +407,10 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Technologies Multi-select */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                             Technologies
                         </label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 bg-slate-700 rounded-lg">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
                             {technologyOptions.map((tech, index) => (
                                 <label key={`${tech}-${index}`} className="flex items-center space-x-2 text-sm">
                                     <input
@@ -422,9 +424,9 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                                                 handleChange('technologies', techs.filter(t => t !== tech));
                                             }
                                         }}
-                                        className="rounded text-cyan-500 focus:ring-cyan-500"
+                                        className="rounded text-indigo-500 focus:ring-indigo-500"
                                     />
-                                    <span className="text-slate-300">{tech}</span>
+                                    <span className="text-gray-600 dark:text-gray-400">{tech}</span>
                                 </label>
                             ))}
                         </div>
@@ -432,50 +434,50 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Tags */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                             Tags (comma separated)
                         </label>
                         <input
                             type="text"
                             value={(project.tags || []).join(', ')}
                             onChange={(e) => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(t => t))}
-                            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="frontend, backend, fullstack"
                         />
                     </div>
                     
                     {/* Links */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                             Project Links
                         </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input
                                 type="url"
                                 value={project.links?.github || ''}
                                 onChange={(e) => handleLinkChange('github', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="GitHub URL"
                             />
                             <input
                                 type="url"
                                 value={project.links?.live || ''}
                                 onChange={(e) => handleLinkChange('live', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Live Demo URL"
                             />
                             <input
                                 type="url"
                                 value={project.links?.documentation || ''}
                                 onChange={(e) => handleLinkChange('documentation', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Documentation URL"
                             />
                             <input
                                 type="url"
                                 value={project.links?.api || ''}
                                 onChange={(e) => handleLinkChange('api', e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="API Documentation URL"
                             />
                         </div>
@@ -483,30 +485,30 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Images */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                             Project Images
                         </label>
                         <div className="space-y-3">
                             {(project.images || []).map((image, index) => (
-                                <div key={index} className="flex gap-2">
+                                <div key={index} className="flex flex-col sm:flex-row gap-2">
                                     <input
                                         type="url"
                                         value={image.url || ''}
                                         onChange={(e) => handleImageChange(index, 'url', e.target.value)}
-                                        className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                        className="flex-1 px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Image URL"
                                     />
                                     <input
                                         type="text"
                                         value={image.caption || ''}
                                         onChange={(e) => handleImageChange(index, 'caption', e.target.value)}
-                                        className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                        className="flex-1 px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Image caption"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => handleImageRemove(index)}
-                                        className="px-3 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all"
+                                        className="px-3 py-3 sm:py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all"
                                     >
                                         <X size={16} />
                                     </button>
@@ -515,7 +517,7 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                             <button
                                 type="button"
                                 onClick={handleImageAdd}
-                                className="w-full px-4 py-2 bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition-all flex items-center justify-center gap-2"
+                                className="w-full px-4 py-3 sm:py-2 bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={16} />
                                 Add Image
@@ -530,26 +532,26 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                             id="featured"
                             checked={project.featured || false}
                             onChange={(e) => handleChange('featured', e.target.checked)}
-                            className="rounded text-cyan-500 focus:ring-cyan-500"
+                            className="rounded text-indigo-500 focus:ring-indigo-500"
                         />
-                        <label htmlFor="featured" className="text-sm font-medium text-slate-300">
+                        <label htmlFor="featured" className="text-sm font-medium text-gray-600 dark:text-gray-400">
                             Featured Project
                         </label>
                     </div>
                     
                     {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                            className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={uploading}
-                            className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white rounded-lg transition-colors"
+                            className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500"
                         >
                             {uploading ? 'Saving...' : 'Save Project'}
                         </button>
@@ -603,6 +605,10 @@ const ProjectManagerEnhanced = () => {
     const [showProjectModal, setShowProjectModal] = useState(false);
     const [lightboxImage, setLightboxImage] = useState(null);
     const [favorites, setFavorites] = useState([]);
+    const [filterPriority, setFilterPriority] = useState('all');
+    const [lastSyncTime, setLastSyncTime] = useState(null);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [activeStatFilter, setActiveStatFilter] = useState('all');
     
     // Enhanced Project Structure
     const [newProject, setNewProject] = useState({
@@ -685,6 +691,17 @@ const ProjectManagerEnhanced = () => {
     useEffect(() => {
         localStorage.setItem('favorites', JSON.stringify(favorites));
     }, [favorites]);
+
+    // Init last sync time from cache
+    useEffect(() => {
+        const cached = cacheService.get('projects_last_sync');
+        if (cached) {
+            setLastSyncTime(cached);
+        } else {
+            setLastSyncTime(new Date().toISOString());
+            cacheService.set('projects_last_sync', new Date().toISOString(), 86400000);
+        }
+    }, []);
 
     const loadProjects = async () => {
         try {
@@ -1591,13 +1608,24 @@ const ProjectManagerEnhanced = () => {
     // Filter and Sort
     const filteredProjects = projects
         .filter(p => {
-            const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.technologies?.some(tech => tech.toLowerCase().includes(searchQuery.toLowerCase()));
+            const q = searchQuery.toLowerCase();
+            const matchesSearch = !q ||
+                p.title.toLowerCase().includes(q) ||
+                p.description.toLowerCase().includes(q) ||
+                p.technologies?.some(tech => tech.toLowerCase().includes(q)) ||
+                p.tags?.some(tag => tag.toLowerCase().includes(q)) ||
+                (p.priority || '').toLowerCase().includes(q) ||
+                (p.status || '').toLowerCase().includes(q) ||
+                (p.client || '').toLowerCase().includes(q);
             const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
             const matchesCategory = filterCategory === 'all' || p.category === filterCategory;
             const matchesTags = filterTags.length === 0 || filterTags.some(tag => p.tags?.includes(tag));
-            return matchesSearch && matchesStatus && matchesCategory && matchesTags;
+            const matchesPriority = filterPriority === 'all' || p.priority === filterPriority;
+            const matchesStatFilter = activeStatFilter === 'all' ||
+                (activeStatFilter === 'active' && (p.status === 'in-progress' || p.status === 'planning' || p.status === 'testing')) ||
+                (activeStatFilter === 'completed' && p.status === 'completed') ||
+                (activeStatFilter === 'archived' && p.archived === true);
+            return matchesSearch && matchesStatus && matchesCategory && matchesTags && matchesPriority && matchesStatFilter;
         })
         .sort((a, b) => {
             switch (sortBy) {
@@ -1629,7 +1657,7 @@ const ProjectManagerEnhanced = () => {
             title="Project Manager"
             subtitle={`Manage and showcase ${projects.length} portfolio projects`}
             actions={
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -1640,8 +1668,8 @@ const ProjectManagerEnhanced = () => {
                     
                     <button
                         onClick={() => window.open('/projects', '_blank')}
-                        className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 
-                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2 
+                        className="hidden md:flex px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 
+                                 rounded-lg text-sm font-medium transition-all items-center gap-2 
                                  hover:bg-blue-500/20"
                         title="View projects page"
                     >
@@ -1652,10 +1680,13 @@ const ProjectManagerEnhanced = () => {
                     <button
                         onClick={() => {
                             loadProjects();
+                            const now = new Date().toISOString();
+                            setLastSyncTime(now);
+                            cacheService.set('projects_last_sync', now, 86400000);
                             success('Projects synchronized successfully!');
                         }}
-                        className="px-4 py-2 bg-green-500/10 text-green-500 border border-green-500/20 
-                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2 
+                        className="hidden lg:flex px-4 py-2 bg-green-500/10 text-green-500 border border-green-500/20 
+                                 rounded-lg text-sm font-medium transition-all items-center gap-2 
                                  hover:bg-green-500/20"
                         title="Sync projects with public page"
                     >
@@ -1663,42 +1694,80 @@ const ProjectManagerEnhanced = () => {
                         Sync Projects
                     </button>
                     
+                    {lastSyncTime && (
+                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                            <span className="text-xs text-cyan-400 font-medium whitespace-nowrap">
+                                Synced: {new Date(lastSyncTime).toLocaleTimeString()}
+                            </span>
+                        </div>
+                    )}
+                    
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
+                        className="px-4 py-3 sm:py-2 bg-white/5 hover:bg-white/10 border border-white/10 
                                  rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                     >
                         <Upload size={16} /> Import
                     </button>
 
-                    <button
-                        onClick={handleExportProjects}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
-                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-                    >
-                        <Download size={16} /> Export
-                    </button>
+                    <div className="relative group/export">
+                        <button
+                            className="px-4 py-3 sm:py-2 bg-white/5 hover:bg-white/10 border border-white/10 
+                                     rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+                        >
+                            <Download size={16} /> Export
+                        </button>
+                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+                                    rounded-xl shadow-xl overflow-hidden z-50 opacity-0 invisible group-hover/export:opacity-100 
+                                    group-hover/export:visible transition-all duration-200">
+                            <button
+                                onClick={() => {
+                                    handleExportProjects();
+                                }}
+                                className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300"
+                            >
+                                <FileText size={16} /> Export JSON
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const csv = projectsToCSV(filteredProjects);
+                                    const blob = new Blob([csv], { type: 'text/csv' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `projects-export-${new Date().toISOString().split('T')[0]}.csv`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    success('Projects exported as CSV');
+                                }}
+                                className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300"
+                            >
+                                <DownloadCloud size={16} /> Export CSV
+                            </button>
+                        </div>
+                    </div>
 
                     <button
                         onClick={() => setShowAnalyticsModal(true)}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 
-                                 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+                        className="hidden sm:flex px-4 py-3 sm:py-2 bg-white/5 hover:bg-white/10 border border-white/10 
+                                 rounded-lg text-sm font-medium transition-all items-center gap-2"
                     >
                         <BarChart3 size={16} /> Analytics
                     </button>
 
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 
+                        className="px-5 py-3 sm:px-6 sm:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 
                                  hover:to-purple-700 rounded-lg font-semibold transition-all shadow-lg 
-                                 shadow-blue-500/25 flex items-center gap-2"
+                                 shadow-indigo-500/25 flex items-center gap-2"
                     >
                         <Plus size={18} /> New Project
                     </button>
                 </div>
             }
         >
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6">
                 {/* Stats Dashboard */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
@@ -1707,13 +1776,15 @@ const ProjectManagerEnhanced = () => {
                             value: projects.length, 
                             icon: FileText, 
                             color: 'blue', 
+                            statFilter: 'all',
                             change: analytics?.totalGrowth || '+0%'
                         },
                         { 
-                            label: 'In Progress', 
-                            value: projects.filter(p => p.status === 'in-progress').length, 
-                            icon: Clock, 
+                            label: 'Active', 
+                            value: projects.filter(p => p.status === 'in-progress' || p.status === 'planning' || p.status === 'testing').length, 
+                            icon: Activity, 
                             color: 'amber', 
+                            statFilter: 'active',
                             change: analytics?.inProgressGrowth || '+0%'
                         },
                         { 
@@ -1721,13 +1792,15 @@ const ProjectManagerEnhanced = () => {
                             value: projects.filter(p => p.status === 'completed').length, 
                             icon: Check, 
                             color: 'green', 
+                            statFilter: 'completed',
                             change: analytics?.completedGrowth || '+0%'
                         },
                         { 
-                            label: 'Featured', 
-                            value: projects.filter(p => p.featured).length, 
-                            icon: Star, 
+                            label: 'Archived', 
+                            value: projects.filter(p => p.archived).length, 
+                            icon: Archive, 
                             color: 'purple', 
+                            statFilter: 'archived',
                             change: analytics?.featuredGrowth || '+0%'
                         }
                     ].map((stat, i) => (
@@ -1736,12 +1809,17 @@ const ProjectManagerEnhanced = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className="relative overflow-hidden bg-white/5 backdrop-blur-xl rounded-2xl p-6 
-                                     border border-white/10 hover:bg-white/10 transition-all group"
+                            onClick={() => setActiveStatFilter(prev => prev === stat.statFilter ? 'all' : stat.statFilter)}
+                            className={`relative overflow-hidden bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 
+                                     border transition-all duration-200 hover:shadow-xl group cursor-pointer ${
+                                activeStatFilter === stat.statFilter
+                                    ? 'border-indigo-500 ring-2 ring-indigo-500/30'
+                                    : 'border-gray-200 dark:border-gray-700'
+                            }`}
                         >
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-400 font-medium mb-1">{stat.label}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">{stat.label}</p>
                                     <h3 className={`text-3xl font-bold bg-gradient-to-r from-${stat.color}-400 to-${stat.color}-600 
                                                    bg-clip-text text-transparent`}>
                                         {stat.value}
@@ -1749,20 +1827,20 @@ const ProjectManagerEnhanced = () => {
                                     <div className="flex items-center gap-1 mt-2">
                                         <TrendingUp size={14} className="text-green-500" />
                                         <span className="text-xs text-green-500 font-semibold">{stat.change}</span>
-                                        <span className="text-xs text-gray-500">vs last month</span>
+                                        <span className="text-xs text-gray-600 dark:text-gray-400">vs last month</span>
                                     </div>
                                 </div>
                                 <div className={`p-3 bg-${stat.color}-500/10 rounded-xl group-hover:scale-110 transition-transform`}>
                                     <stat.icon className={`text-${stat.color}-500`} size={24} />
                                 </div>
                             </div>
-                            <div className={`absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-${stat.color}-400 to-${stat.color}-600`} />
+                            <div className={`absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-${stat.color}-400 to-${stat.color}-600`} />
                         </motion.div>
                     ))}
                 </div>
 
                 {/* Filters & Actions */}
-                <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/10">
+                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                     {/* Bulk Actions Bar */}
                     <AnimatePresence>
                         {selectedProjects.length > 0 && (
@@ -1770,22 +1848,22 @@ const ProjectManagerEnhanced = () => {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-between"
+                                className="mb-4 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                             >
                                 <div className="flex items-center gap-3">
-                                    <CheckSquare className="text-blue-500" size={20} />
-                                    <span className="font-semibold">{selectedProjects.length} selected</span>
+                                    <CheckSquare className="text-indigo-500" size={20} />
+                                    <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedProjects.length} selected</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <button
                                         onClick={() => {/* Bulk status update */}}
-                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+                                        className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-all"
                                     >
                                         Change Status
                                     </button>
                                     <button
                                         onClick={() => {/* Bulk export */}}
-                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+                                        className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-all"
                                     >
                                         Export Selected
                                     </button>
@@ -1797,7 +1875,7 @@ const ProjectManagerEnhanced = () => {
                                     </button>
                                     <button
                                         onClick={() => setSelectedProjects([])}
-                                        className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
+                                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all"
                                     >
                                         <X size={18} />
                                     </button>
@@ -1806,23 +1884,23 @@ const ProjectManagerEnhanced = () => {
                         )}
                     </AnimatePresence>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                         {/* Search */}
-                        <div className="relative lg:col-span-2">
+                        <div className="relative sm:col-span-2">
                             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search projects, technologies..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl 
-                                         text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 
-                                         focus:border-blue-500/50 transition-all placeholder-gray-500"
+                                className="w-full pl-11 pr-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl 
+                                         text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 
+                                         focus:border-indigo-500 transition-all placeholder-gray-500"
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg transition-all"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
                                 >
                                     <X size={14} />
                                 </button>
@@ -1833,8 +1911,8 @@ const ProjectManagerEnhanced = () => {
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
-                                     focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                            className="px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
+                                     text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                         >
                             <option value="all">All Status</option>
                             <option value="planning">Planning</option>
@@ -1847,8 +1925,8 @@ const ProjectManagerEnhanced = () => {
                         <select
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
-                            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
-                                     focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                            className="px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
+                                     text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                         >
                             <option value="all">All Categories</option>
                             <option value="Web">Web</option>
@@ -1860,13 +1938,27 @@ const ProjectManagerEnhanced = () => {
                             <option value="Other">Other</option>
                         </select>
 
+                        {/* Priority Filter */}
+                        <select
+                            value={filterPriority}
+                            onChange={(e) => setFilterPriority(e.target.value)}
+                            className="px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
+                                     text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                            <option value="all">All Priority</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+
                         {/* Sort */}
                         <div className="flex items-center gap-2">
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm 
-                                         focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                                className="flex-1 px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
+                                         text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                             >
                                 <option value="recent">Most Recent</option>
                                 <option value="oldest">Oldest First</option>
@@ -1876,18 +1968,34 @@ const ProjectManagerEnhanced = () => {
                             </select>
 
                             {/* View Toggle */}
-                            <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
+                            <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
                                 <button
                                     onClick={() => setViewMode('grid')}
-                                    className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'hover:bg-white/10'}`}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    title="Grid View"
                                 >
                                     <Grid size={16} />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('list')}
-                                    className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'hover:bg-white/10'}`}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    title="List View"
                                 >
                                     <List size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('timeline')}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'timeline' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    title="Timeline View"
+                                >
+                                    <Clock size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('board')}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'board' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    title="Board View"
+                                >
+                                    <Columns size={16} />
                                 </button>
                             </div>
                         </div>
@@ -1896,7 +2004,7 @@ const ProjectManagerEnhanced = () => {
                     {/* Tag Filters */}
                     {allTags.length > 0 && (
                         <div className="mt-4 flex items-center gap-2 flex-wrap">
-                            <Tag size={16} className="text-gray-400" />
+                            <Tag size={16} className="text-gray-600 dark:text-gray-400" />
                             {allTags.map(tag => (
                                 <button
                                     key={tag}
@@ -1905,8 +2013,8 @@ const ProjectManagerEnhanced = () => {
                                     )}
                                     className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                                         filterTags.includes(tag)
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                                            ? 'bg-indigo-500 text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
                                     }`}
                                 >
                                     {tag}
@@ -1928,23 +2036,25 @@ const ProjectManagerEnhanced = () => {
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="text-center">
-                            <Loader className="animate-spin mx-auto mb-4 text-blue-500" size={48} />
-                            <p className="text-gray-400">Loading projects...</p>
+                            <div className="animate-pulse">
+                                <div className="mx-auto mb-4 w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                            </div>
+                            <p className="text-gray-600 dark:text-gray-400">Loading projects...</p>
                         </div>
                     </div>
                 ) : filteredProjects.length === 0 ? (
-                    <div className="text-center py-20 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
-                        <FileText size={64} className="mx-auto mb-4 text-gray-600" />
-                        <h3 className="text-xl font-semibold mb-2">No projects found</h3>
-                        <p className="text-gray-400 mb-6">
+                    <div className="text-center py-12 px-4 bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
+                        <FileText size={64} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                        <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">No projects found</h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">
                             {searchQuery || filterStatus !== 'all' || filterCategory !== 'all'
                                 ? 'Try adjusting your filters'
                                 : 'Create your first project to get started'}
                         </p>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-semibold 
-                                     hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg shadow-blue-500/25"
+                            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-semibold 
+                                     hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25"
                         >
                             <Plus size={18} className="inline mr-2" />
                             Create Project
@@ -1953,11 +2063,11 @@ const ProjectManagerEnhanced = () => {
                 ) : (
                     <>
                         {/* Select All */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                             <button
                                 onClick={selectAllProjects}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 
-                                         border border-white/10 rounded-lg text-sm font-medium transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 
+                                         border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium transition-all text-gray-700 dark:text-gray-300"
                             >
                                 {selectedProjects.length === filteredProjects.length ? (
                                     <><CheckSquare size={16} /> Deselect All</>
@@ -1965,50 +2075,117 @@ const ProjectManagerEnhanced = () => {
                                     <><Square size={16} /> Select All</>
                                 )}
                             </button>
-                            <p className="text-sm text-gray-400">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Showing {filteredProjects.length} of {projects.length} projects
                             </p>
                         </div>
 
                         {/* Grid/List View */}
-                        <div className={viewMode === 'grid' 
-                            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30'
-                            : 'space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30'
-                        }>
-                            {filteredProjects.map((project, index) => (
-                                <ProjectCard
-                                    key={project.id}
-                                    project={project}
-                                    index={index}
-                                    viewMode={viewMode}
-                                    isSelected={selectedProjects.includes(project.id)}
-                                    onToggleSelect={() => toggleProjectSelection(project.id)}
-                                    onEdit={() => {
-                                        setSelectedProject(project);
-                                        setShowEditModal(true);
-                                    }}
-                                    onDelete={() => {
-                                        setProjectToDelete(project);
-                                        setShowDeleteConfirm(true);
-                                    }}
-                                    onToggleFeatured={() => handleToggleFeatured(project.id)}
-                                    onDuplicate={() => handleDuplicateProject(project)}
-                                    onViewImages={() => {
-                                        setSelectedProject(project);
-                                        setShowImageModal(true);
-                                    }}
-                                    onToggleVisibility={() => handleToggleVisibility(project.id)}
-                                    onToggleArchived={() => handleToggleArchived(project.id)}
-                                    onTogglePinned={() => handleTogglePinned(project.id)}
-                                    statusColors={statusColors}
-                                    priorityColors={priorityColors}
-                                    onViewProject={handleViewProject}
-                                    onToggleFavorite={handleToggleFavorite}
-                                    onImageClick={handleImageClick}
-                                    isFavorite={favorites.includes(project.id)}
-                                />
-                            ))}
-                        </div>
+                        {viewMode === 'grid' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-white/30">
+                                {filteredProjects.map((project, index) => (
+                                    <ProjectCard
+                                        key={project.id}
+                                        project={project}
+                                        index={index}
+                                        viewMode={viewMode}
+                                        isSelected={selectedProjects.includes(project.id)}
+                                        onToggleSelect={() => toggleProjectSelection(project.id)}
+                                        onEdit={() => {
+                                            setSelectedProject(project);
+                                            setShowEditModal(true);
+                                        }}
+                                        onDelete={() => {
+                                            setProjectToDelete(project);
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        onToggleFeatured={() => handleToggleFeatured(project.id)}
+                                        onDuplicate={() => handleDuplicateProject(project)}
+                                        onViewImages={() => {
+                                            setSelectedProject(project);
+                                            setShowImageModal(true);
+                                        }}
+                                        onToggleVisibility={() => handleToggleVisibility(project.id)}
+                                        onToggleArchived={() => handleToggleArchived(project.id)}
+                                        onTogglePinned={() => handleTogglePinned(project.id)}
+                                        statusColors={statusColors}
+                                        priorityColors={priorityColors}
+                                        onViewProject={handleViewProject}
+                                        onToggleFavorite={handleToggleFavorite}
+                                        onImageClick={handleImageClick}
+                                        isFavorite={favorites.includes(project.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {viewMode === 'list' && (
+                            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-white/30">
+                                {filteredProjects.map((project, index) => (
+                                    <ProjectCard
+                                        key={project.id}
+                                        project={project}
+                                        index={index}
+                                        viewMode={viewMode}
+                                        isSelected={selectedProjects.includes(project.id)}
+                                        onToggleSelect={() => toggleProjectSelection(project.id)}
+                                        onEdit={() => {
+                                            setSelectedProject(project);
+                                            setShowEditModal(true);
+                                        }}
+                                        onDelete={() => {
+                                            setProjectToDelete(project);
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        onToggleFeatured={() => handleToggleFeatured(project.id)}
+                                        onDuplicate={() => handleDuplicateProject(project)}
+                                        onViewImages={() => {
+                                            setSelectedProject(project);
+                                            setShowImageModal(true);
+                                        }}
+                                        onToggleVisibility={() => handleToggleVisibility(project.id)}
+                                        onToggleArchived={() => handleToggleArchived(project.id)}
+                                        onTogglePinned={() => handleTogglePinned(project.id)}
+                                        statusColors={statusColors}
+                                        priorityColors={priorityColors}
+                                        onViewProject={handleViewProject}
+                                        onToggleFavorite={handleToggleFavorite}
+                                        onImageClick={handleImageClick}
+                                        isFavorite={favorites.includes(project.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {viewMode === 'timeline' && (
+                            <TimelineView
+                                projects={filteredProjects}
+                                onEdit={(project) => {
+                                    setSelectedProject(project);
+                                    setShowEditModal(true);
+                                }}
+                                onDelete={(project) => {
+                                    setProjectToDelete(project);
+                                    setShowDeleteConfirm(true);
+                                }}
+                                onViewProject={handleViewProject}
+                            />
+                        )}
+
+                        {viewMode === 'board' && (
+                            <BoardView
+                                projects={filteredProjects}
+                                onEdit={(project) => {
+                                    setSelectedProject(project);
+                                    setShowEditModal(true);
+                                }}
+                                onDelete={(project) => {
+                                    setProjectToDelete(project);
+                                    setShowDeleteConfirm(true);
+                                }}
+                                onViewProject={handleViewProject}
+                            />
+                        )}
                     </>
                 )}
 
@@ -2099,7 +2276,7 @@ const ProjectManagerEnhanced = () => {
                             onClick={(e) => e.stopPropagation()}
                         />
                         <button
-                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all"
+                            className="absolute top-4 right-4 p-3 sm:p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all focus:ring-2 focus:ring-indigo-500"
                             onClick={() => setLightboxImage(null)}
                         >
                             <X size={24} />
@@ -2124,10 +2301,10 @@ const ProjectCard = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className={`relative group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden 
-                       hover:bg-white/10 hover:border-white/20 transition-all ${
-                isSelected ? 'ring-2 ring-blue-500' : ''
-            } ${viewMode === 'list' ? 'flex' : ''} ${
+            className={`relative group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden 
+                       shadow-lg transition-all duration-200 hover:shadow-xl ${
+                isSelected ? 'ring-2 ring-indigo-500' : ''
+            } ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''} ${
                 project.hidden ? 'opacity-60' : ''
             } ${project.archived ? 'grayscale-[50%]' : ''}`}
         >
@@ -2174,7 +2351,7 @@ const ProjectCard = ({
 
             {/* Image */}
             <div className={`relative overflow-hidden ${
-                viewMode === 'grid' ? 'h-48' : 'w-64 h-full'
+                viewMode === 'grid' ? 'h-48' : 'w-full sm:w-64 h-48 sm:h-full'
             }`}>
                 {project.images?.length > 0 ? (
                     <div
@@ -2209,9 +2386,9 @@ const ProjectCard = ({
             {/* Content */}
             <div className={`flex-1 ${viewMode === 'grid' ? '' : 'flex flex-col'}`}>
                 {/* Header */}
-                <div className="p-6 border-b border-white/10">
+                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-start justify-between gap-3 mb-3">
-                        <h3 className="text-lg font-bold text-white line-clamp-1">{project.title}</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1">{project.title}</h3>
                         <div className="relative">
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
@@ -2225,34 +2402,38 @@ const ProjectCard = ({
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
-                                        className="absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 
-                                                 rounded-xl shadow-xl overflow-hidden z-20"
+                                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+                                                 rounded-xl shadow-xl overflow-hidden z-50"
                                     >
                                         <button onClick={() => { onEdit(); setShowMenu(false); }}
-                                            className="w-full px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 text-sm">
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <Edit3 size={16} /> Edit
                                         </button>
                                         <button onClick={() => { onDuplicate(); setShowMenu(false); }}
-                                            className="w-full px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 text-sm">
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <Copy size={16} /> Duplicate
                                         </button>
                                         <button onClick={() => { onToggleFeatured(); setShowMenu(false); }}
-                                            className="w-full px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 text-sm">
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <Star size={16} /> {project.featured ? 'Unfeature' : 'Feature'}
                                         </button>
                                         <button onClick={() => { onTogglePinned(); setShowMenu(false); }}
-                                            className="w-full px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 text-sm">
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <MapPin size={16} /> {project.pinned ? 'Unpin' : 'Pin'}
                                         </button>
                                         <button onClick={() => { onToggleVisibility(); setShowMenu(false); }}
-                                            className="w-full px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 text-sm">
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <Eye size={16} /> {project.hidden ? 'Show' : 'Hide'}
                                         </button>
                                         <button onClick={() => { onToggleArchived(); setShowMenu(false); }}
-                                            className="w-full px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 text-sm">
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <Archive size={16} /> {project.archived ? 'Restore' : 'Archive'}
                                         </button>
-                                        <hr className="border-white/10" />
+                                        <button onClick={() => { onViewProject(project); setShowMenu(false); }}
+                                            className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                                            <Share2 size={16} /> Share
+                                        </button>
+                                        <hr className="border-gray-200 dark:border-gray-700" />
                                         <button onClick={() => { onDelete(); setShowMenu(false); }}
                                             className="w-full px-4 py-2.5 hover:bg-red-500/10 text-red-500 flex items-center gap-3 text-sm">
                                             <Trash2 size={16} /> Delete
@@ -2263,17 +2444,28 @@ const ProjectCard = ({
                         </div>
                     </div>
 
-                    <p className="text-sm text-gray-400 line-clamp-2 mb-4">{project.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">{project.description}</p>
 
                     <div className="flex flex-wrap gap-2">
                         <span className={`px-3 py-1 rounded-lg text-xs font-bold ${statusColors[project.status]}`}>
                             {project.status.replace('-', ' ').toUpperCase()}
                         </span>
-                        <span className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold">
+                        <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 rounded-lg text-xs font-bold">
                             {project.category}
                         </span>
                         {project.priority && (
-                            <span className={`px-3 py-1 rounded-lg text-xs font-bold ${priorityColors[project.priority]}`}>
+                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
+                                project.priority === 'urgent' ? 'bg-red-500/20 text-red-500' :
+                                project.priority === 'high' ? 'bg-orange-500/20 text-orange-500' :
+                                project.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-500' :
+                                'bg-green-500/20 text-green-500'
+                            }`}>
+                                <span className={`w-2 h-2 rounded-full ${
+                                    project.priority === 'urgent' ? 'bg-red-500 animate-pulse' :
+                                    project.priority === 'high' ? 'bg-orange-500' :
+                                    project.priority === 'medium' ? 'bg-yellow-500' :
+                                    'bg-green-500'
+                                }`} />
                                 {project.priority.toUpperCase()}
                             </span>
                         )}
@@ -2282,15 +2474,15 @@ const ProjectCard = ({
 
                 {/* Technologies */}
                 {project.technologies?.length > 0 && (
-                    <div className="px-6 py-4 border-b border-white/10">
+                    <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex flex-wrap gap-2">
                             {project.technologies.slice(0, 5).map((tech, i) => (
-                                <span key={`${tech}-${i}`} className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium">
+                                <span key={`${tech}-${i}`} className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300">
                                     {tech}
                                 </span>
                             ))}
                             {project.technologies.length > 5 && (
-                                <span key="more-tech" className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-400">
+                                <span key="more-tech" className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400">
                                     +{project.technologies.length - 5} more
                                 </span>
                             )}
@@ -2298,17 +2490,41 @@ const ProjectCard = ({
                     </div>
                 )}
 
+                {/* Tags */}
+                {project.tags?.length > 0 && (
+                    <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-wrap gap-1.5">
+                            {project.tags.map((tag, i) => {
+                                const tagColors = [
+                                    'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+                                    'bg-pink-500/10 text-pink-400 border-pink-500/20',
+                                    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                                    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+                                    'bg-rose-500/10 text-rose-400 border-rose-500/20',
+                                    'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                                ];
+                                const colorClass = tagColors[i % tagColors.length];
+                                return (
+                                    <span key={`tag-${tag}-${i}`} className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${colorClass}`}>
+                                        #{tag}
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Footer */}
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4">
                     {/* Links Row */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                             {project.links?.github && (
                                 <a
                                     href={project.links.github}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
                                     title="View on GitHub"
                                 >
                                     <Github size={16} />
@@ -2319,7 +2535,7 @@ const ProjectCard = ({
                                     href={project.links.live}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
                                     title="Live Demo"
                                 >
                                     <ExternalLink size={16} />
@@ -2330,7 +2546,7 @@ const ProjectCard = ({
                                     href={project.links.demo}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
                                     title="Video Demo"
                                 >
                                     <Video size={16} />
@@ -2341,7 +2557,7 @@ const ProjectCard = ({
                                     href={project.links.documentation}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
                                     title="Documentation"
                                 >
                                     <FileText size={16} />
@@ -2351,7 +2567,7 @@ const ProjectCard = ({
                             {/* New Action Buttons */}
                             <button
                                 onClick={() => onViewProject(project)}
-                                className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
                                 title="View Details"
                             >
                                 <Eye size={16} />
@@ -2362,17 +2578,17 @@ const ProjectCard = ({
                             
                             <button
                                 onClick={() => onToggleFavorite(project.id)}
-                                className={`p-2 ${isFavorite ? 'bg-red-500/20 border-red-500/30' : 'bg-white/5 hover:bg-white/10'} border rounded-lg transition-all`}
+                                className={`p-2 ${isFavorite ? 'bg-red-500/20 border-red-500/30' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'} border border-gray-300 dark:border-gray-600 rounded-lg transition-all`}
                                 title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
                             >
-                                <Heart size={16} className={isFavorite ? 'text-red-500 fill-red-500' : ''} />
+                                <Heart size={16} className={isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600 dark:text-gray-400'} />
                             </button>
                             {project.links?.api && (
                                 <a
                                     href={project.links.api}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
                                     title="API Documentation"
                                 >
                                     <Code size={16} />
@@ -2380,7 +2596,7 @@ const ProjectCard = ({
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs text-gray-400">
+                        <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
                             <div className="flex items-center gap-1">
                                 <Eye size={14} />
                                 <span>{project.views || 0}</span>
@@ -2389,7 +2605,7 @@ const ProjectCard = ({
                                 <Heart size={14} />
                                 <span>{project.likes || 0}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="hidden sm:flex items-center gap-1">
                                 <Clock size={14} />
                                 <span>{new Date(project.updatedAt || project.createdAt).toLocaleDateString()}</span>
                             </div>
@@ -2397,10 +2613,10 @@ const ProjectCard = ({
                     </div>
 
                     {/* Additional Info */}
-                    <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {project.client && (
-                                <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg">
+                                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300">
                                     {project.client}
                                 </span>
                             )}
@@ -2410,14 +2626,14 @@ const ProjectCard = ({
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {project.startDate && (
-                                <span className="text-gray-400">
+                                <span className="text-gray-600 dark:text-gray-400">
                                     Start: {new Date(project.startDate).toLocaleDateString()}
                                 </span>
                             )}
                             {project.endDate && (
-                                <span className="text-gray-400">
+                                <span className="text-gray-600 dark:text-gray-400">
                                     End: {new Date(project.endDate).toLocaleDateString()}
                                 </span>
                             )}
@@ -2440,17 +2656,17 @@ const ImageGalleryModal = ({ show, onClose, project, currentIndex, setCurrentInd
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative max-w-5xl w-full"
+                className="relative max-w-full sm:max-w-5xl w-full"
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg z-10"
+                    className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white p-3 sm:p-2 rounded-lg z-10 focus:ring-2 focus:ring-indigo-500"
                 >
-                    ✕
+                    <X size={20} />
                 </button>
                 
                 {images.length > 0 ? (
-                    <div className="bg-slate-800 rounded-xl p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                         <img
                             src={images[currentIndex]}
                             alt={`${project.title} - ${currentIndex + 1}`}
@@ -2460,22 +2676,22 @@ const ImageGalleryModal = ({ show, onClose, project, currentIndex, setCurrentInd
                             <button
                                 onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                                 disabled={currentIndex === 0}
-                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg"
+                                className="px-4 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-indigo-500"
                             >
                                 Previous
                             </button>
-                            <span className="text-white">{currentIndex + 1} / {images.length}</span>
+                            <span className="text-gray-900 dark:text-gray-100 font-medium">{currentIndex + 1} / {images.length}</span>
                             <button
                                 onClick={() => setCurrentIndex(Math.min(images.length - 1, currentIndex + 1))}
                                 disabled={currentIndex === images.length - 1}
-                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg"
+                                className="px-4 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-indigo-500"
                             >
                                 Next
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-slate-800 rounded-xl p-6 text-center text-slate-400">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 shadow-lg">
                         No images available
                     </div>
                 )}
@@ -2492,25 +2708,25 @@ const DeleteConfirmModal = ({ show, onClose, onConfirm, project }) => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-md w-full"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-full sm:max-w-md w-full shadow-lg border border-gray-200 dark:border-gray-700"
             >
-                <h3 className="text-2xl font-bold text-red-400 mb-4">Delete Project</h3>
-                <p className="text-slate-300 mb-6">
-                    Are you sure you want to delete <strong>{project.title}</strong>? This action cannot be undone.
+                <h3 className="text-2xl font-bold text-red-500 mb-4">Delete Project</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Are you sure you want to delete <strong className="text-gray-900 dark:text-gray-100">{project.title}</strong>? This action cannot be undone.
                 </p>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
                         onClick={() => {
                             onConfirm();
                             onClose();
                         }}
-                        className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+                        className="w-full sm:flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-red-500"
                     >
                         Delete
                     </button>
                     <button
                         onClick={onClose}
-                        className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg"
+                        className="w-full sm:flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     >
                         Cancel
                     </button>
@@ -2528,31 +2744,36 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-gray-200 dark:border-gray-700"
             >
-                <h3 className="text-2xl font-bold text-cyan-400 mb-4">Project Analytics</h3>
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-bold text-indigo-500">Project Analytics</h3>
+                    <button onClick={onClose} className="p-3 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500">
+                        <X size={20} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-slate-700 p-4 rounded-lg">
-                        <p className="text-slate-400 text-sm">Total Projects</p>
-                        <p className="text-3xl font-bold text-white">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">Total Projects</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                             {analytics?.totalProjects || projects.length}
                         </p>
                     </div>
-                    <div className="bg-slate-700 p-4 rounded-lg">
-                        <p className="text-slate-400 text-sm">Published</p>
-                        <p className="text-3xl font-bold text-green-400">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">Published</p>
+                        <p className="text-3xl font-bold text-green-500">
                             {analytics?.publishedProjects || projects.filter(p => p.status === 'published').length}
                         </p>
                     </div>
-                    <div className="bg-slate-700 p-4 rounded-lg">
-                        <p className="text-slate-400 text-sm">In Progress</p>
-                        <p className="text-3xl font-bold text-yellow-400">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">In Progress</p>
+                        <p className="text-3xl font-bold text-yellow-500">
                             {analytics?.inProgressProjects || projects.filter(p => p.status === 'in-progress').length}
                         </p>
                     </div>
-                    <div className="bg-slate-700 p-4 rounded-lg">
-                        <p className="text-slate-400 text-sm">Total Views</p>
-                        <p className="text-3xl font-bold text-cyan-400">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">Total Views</p>
+                        <p className="text-3xl font-bold text-indigo-500">
                             {analytics?.totalViews || projects.reduce((acc, p) => acc + (p.views || 0), 0)}
                         </p>
                     </div>
@@ -2560,28 +2781,28 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
                 
                 {/* Additional Analytics */}
                 {analytics && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div className="bg-slate-700 p-4 rounded-lg">
-                            <p className="text-slate-400 text-sm mb-2">Average Views per Project</p>
-                            <p className="text-2xl font-bold text-cyan-400">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Average Views per Project</p>
+                            <p className="text-2xl font-bold text-indigo-500">
                                 {analytics?.averageViews || Math.round(projects.reduce((acc, p) => acc + (p.views || 0), 0) / projects.length) || 0}
                             </p>
                         </div>
-                        <div className="bg-slate-700 p-4 rounded-lg">
-                            <p className="text-slate-400 text-sm mb-2">Most Popular Project</p>
-                            <p className="text-xl font-bold text-green-400 truncate">
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Most Popular Project</p>
+                            <p className="text-xl font-bold text-green-500 truncate">
                                 {analytics?.mostPopularProject || projects.reduce((max, p) => (p.views || 0) > (max.views || 0) ? p : max, projects[0])?.title || 'N/A'}
                             </p>
                         </div>
-                        <div className="bg-slate-700 p-4 rounded-lg">
-                            <p className="text-slate-400 text-sm mb-2">Completion Rate</p>
-                            <p className="text-2xl font-bold text-purple-400">
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Completion Rate</p>
+                            <p className="text-2xl font-bold text-purple-500">
                                 {analytics?.completionRate || Math.round((projects.filter(p => p.status === 'completed').length / projects.length) * 100) || 0}%
                             </p>
                         </div>
-                        <div className="bg-slate-700 p-4 rounded-lg">
-                            <p className="text-slate-400 text-sm mb-2">Featured Projects</p>
-                            <p className="text-2xl font-bold text-yellow-400">
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Featured Projects</p>
+                            <p className="text-2xl font-bold text-yellow-500">
                                 {analytics?.featuredProjects || projects.filter(p => p.featured).length}
                             </p>
                         </div>
@@ -2590,13 +2811,249 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
                 
                 <button
                     onClick={onClose}
-                    className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg"
+                    className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-colors"
                 >
                     Close
                 </button>
             </motion.div>
         </div>
     );
+};
+
+// Timeline View Component
+const TimelineView = ({ projects, onEdit, onDelete, onViewProject }) => {
+    if (!projects.length) return (
+        <div className="flex items-center justify-center py-20 text-gray-500 dark:text-gray-400">
+            <FileText size={48} className="mb-2" />
+            <p>No projects to display on timeline</p>
+        </div>
+    );
+
+    const now = new Date();
+    const sorted = [...projects].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const earliest = new Date(sorted[0]?.createdAt || now);
+    const timelineStart = new Date(earliest);
+    timelineStart.setMonth(timelineStart.getMonth() - 1);
+    const latest = new Date();
+    latest.setMonth(latest.getMonth() + 2);
+    const totalDays = (latest - timelineStart) / (1000 * 60 * 60 * 24);
+
+    const getProjectStart = (p) => new Date(p.startDate || p.createdAt || now);
+    const getProjectEnd = (p) => {
+        if (p.endDate) return new Date(p.endDate);
+        const days = p.duration ? parseInt(p.duration) * 30 : 90;
+        return new Date((p.startDate ? new Date(p.startDate) : new Date(p.createdAt || now)).getTime() + days * 86400000);
+    };
+
+    const statusBarColors = {
+        'idea': 'bg-gradient-to-r from-indigo-500 to-purple-600',
+        'planning': 'bg-gradient-to-r from-blue-500 to-cyan-500',
+        'in-progress': 'bg-gradient-to-r from-amber-500 to-orange-500',
+        'testing': 'bg-gradient-to-r from-yellow-500 to-amber-500',
+        'completed': 'bg-gradient-to-r from-green-500 to-emerald-500',
+        'archived': 'bg-gradient-to-r from-gray-500 to-slate-500',
+    };
+
+    return (
+        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-2">
+            <div className="min-w-[800px] space-y-2">
+                {/* Month headers */}
+                <div className="flex sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700">
+                    {Array.from({ length: Math.ceil(totalDays / 30) }, (_, i) => {
+                        const month = new Date(timelineStart);
+                        month.setMonth(month.getMonth() + i);
+                        const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+                        return (
+                            <div
+                                key={i}
+                                className="text-center py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 last:border-r-0"
+                                style={{ width: `${(daysInMonth / totalDays) * 100}%` }}
+                            >
+                                {month.toLocaleString('default', { month: 'short', year: '2-digit' })}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Timeline bars */}
+                <AnimatePresence>
+                    {sorted.map((project, idx) => {
+                        const start = getProjectStart(project);
+                        const end = getProjectEnd(project);
+                        const leftPct = Math.max(0, ((start - timelineStart) / (1000 * 60 * 60 * 24) / totalDays) * 100);
+                        const widthPct = Math.max(2, Math.min(100 - leftPct, ((end - start) / (1000 * 60 * 60 * 24) / totalDays) * 100));
+                        const isOngoing = !project.endDate;
+
+                        return (
+                            <motion.div
+                                key={project.id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: idx * 0.03 }}
+                                className="relative group flex items-center gap-3 py-1.5"
+                            >
+                                {/* Project label */}
+                                <div className="w-44 flex-shrink-0 truncate pr-2">
+                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate block">
+                                        {project.title}
+                                    </span>
+                                </div>
+
+                                {/* Timeline track */}
+                                <div className="flex-1 relative h-7 bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${widthPct}%` }}
+                                        transition={{ duration: 0.6, delay: idx * 0.05 }}
+                                        className={`absolute inset-y-0 left-0 rounded-full ${statusBarColors[project.status] || 'bg-gradient-to-r from-gray-400 to-gray-500'} 
+                                                    group-hover:opacity-80 transition-opacity cursor-pointer`}
+                                        style={{ marginLeft: `${leftPct}%` }}
+                                        onClick={() => onViewProject(project)}
+                                        title={`${project.title}: ${start.toLocaleDateString()} - ${isOngoing ? 'Ongoing' : end.toLocaleDateString()}`}
+                                    >
+                                        {/* Priority dot */}
+                                        <div className={`absolute right-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${
+                                            project.priority === 'urgent' ? 'bg-white animate-pulse' :
+                                            project.priority === 'high' ? 'bg-white/80' :
+                                            project.priority === 'medium' ? 'bg-white/60' :
+                                            'bg-white/40'
+                                        }`} />
+                                    </motion.div>
+                                    {isOngoing && (
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Date labels */}
+                                <div className="w-32 flex-shrink-0 text-[10px] text-gray-500 dark:text-gray-400 hidden sm:block text-right">
+                                    {start.toLocaleDateString()} {isOngoing ? '- Now' : `- ${end.toLocaleDateString()}`}
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
+            </div>
+        </div>
+    );
+};
+
+// Board View Component (Kanban-style)
+const BoardView = ({ projects, onEdit, onDelete, onViewProject }) => {
+    const columns = [
+        { key: 'planning', label: 'Planning', color: 'border-t-blue-500' },
+        { key: 'in-progress', label: 'In Progress', color: 'border-t-amber-500' },
+        { key: 'review', label: 'Review', color: 'border-t-violet-500' },
+        { key: 'completed', label: 'Completed', color: 'border-t-green-500' },
+        { key: 'archived', label: 'Archived', color: 'border-t-gray-500' },
+    ];
+
+    const getProjectsByStatus = (status) => {
+        if (status === 'review') {
+            return projects.filter(p => p.status === 'testing');
+        }
+        return projects.filter(p => p.status === status || (status === 'archived' && p.archived));
+    };
+
+    if (!projects.length) return (
+        <div className="flex items-center justify-center py-20 text-gray-500 dark:text-gray-400">
+            <LayoutDashboard size={48} className="mb-2" />
+            <p>No projects to display on board</p>
+        </div>
+    );
+
+    return (
+        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pb-2">
+            <div className="flex gap-4 min-w-[700px] h-full">
+                {columns.map(col => {
+                    const colProjects = getProjectsByStatus(col.key);
+                    return (
+                        <div key={col.key} className="flex-1 min-w-[180px]">
+                            <div className={`bg-white dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 border-t-4 ${col.color} shadow-lg overflow-hidden`}>
+                                <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                    <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{col.label}</h4>
+                                    <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+                                        {colProjects.length}
+                                    </span>
+                                </div>
+                                <div className="p-2 space-y-2 max-h-[55vh] overflow-y-auto">
+                                    <AnimatePresence>
+                                        {colProjects.map((project, idx) => (
+                                            <motion.div
+                                                key={project.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                transition={{ delay: idx * 0.03 }}
+                                                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600 
+                                                         hover:shadow-md transition-all cursor-pointer group"
+                                                onClick={() => onViewProject(project)}
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate flex-1">
+                                                        {project.title}
+                                                    </span>
+                                                    {/* Priority dot */}
+                                                    <span className={`ml-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                                                        project.priority === 'urgent' ? 'bg-red-500 animate-pulse' :
+                                                        project.priority === 'high' ? 'bg-orange-500' :
+                                                        project.priority === 'medium' ? 'bg-yellow-500' :
+                                                        'bg-green-500'
+                                                    }`} />
+                                                </div>
+                                                {project.technologies && (
+                                                    <div className="flex flex-wrap gap-1 mb-1.5">
+                                                        {project.technologies.slice(0, 3).map((tech, i) => (
+                                                            <span key={i} className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[9px] font-medium text-gray-600 dark:text-gray-400">
+                                                                {tech}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <Eye size={10} />
+                                                        <span>{project.views || 0}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <Clock size={10} />
+                                                        <span>{project.startDate ? new Date(project.startDate).toLocaleDateString() : '-'}</span>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+// Helper: convert projects array to CSV
+const projectsToCSV = (projects) => {
+    const headers = ['Title', 'Description', 'Category', 'Status', 'Priority', 'Tags', 'Technologies', 'Client', 'Budget', 'Start Date', 'End Date', 'Created At', 'Views', 'Likes'];
+    const rows = projects.map(p => [
+        `"${(p.title || '').replace(/"/g, '""')}"`,
+        `"${(p.description || '').replace(/"/g, '""')}"`,
+        `"${(p.category || '')}"`,
+        `"${(p.status || '')}"`,
+        `"${(p.priority || '')}"`,
+        `"${(p.tags || []).join('; ')}"`,
+        `"${(p.technologies || []).join('; ')}"`,
+        `"${(p.client || '')}"`,
+        p.budget || 0,
+        p.startDate ? new Date(p.startDate).toLocaleDateString() : '',
+        p.endDate ? new Date(p.endDate).toLocaleDateString() : '',
+        p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '',
+        p.views || 0,
+        p.likes || 0
+    ].join(','));
+    return [headers.join(','), ...rows].join('\n');
 };
 
 export default ProjectManagerEnhanced;

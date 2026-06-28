@@ -314,3 +314,151 @@ exports.syncGitHubMetrics = asyncHandler(async (req, res) => {
         throw new Error('Failed to sync GitHub metrics');
     }
 });
+
+// @desc    Like a project
+// @route   POST /api/projects/:id/like
+// @access  Public (rate limited)
+exports.likeProject = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    project.likes = (project.likes || 0) + 1;
+    await project.save();
+
+    res.json({ success: true, likes: project.likes });
+});
+
+// @desc    Unlike a project
+// @route   POST /api/projects/:id/unlike
+// @access  Public (rate limited)
+exports.unlikeProject = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    project.likes = Math.max((project.likes || 1) - 1, 0);
+    await project.save();
+
+    res.json({ success: true, likes: project.likes });
+});
+
+// @desc    Track project view
+// @route   POST /api/projects/:id/view
+// @access  Public (rate limited)
+exports.viewProject = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    project.views = (project.views || 0) + 1;
+    await project.save();
+
+    res.json({ success: true, views: project.views });
+});
+
+// @desc    Share a project
+// @route   POST /api/projects/:id/share
+// @access  Public (rate limited)
+exports.shareProject = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    const { platform } = req.body;
+    project.shares = (project.shares || 0) + 1;
+    if (platform) {
+        project.sharePlatforms = project.sharePlatforms || {};
+        project.sharePlatforms[platform] = (project.sharePlatforms[platform] || 0) + 1;
+    }
+    await project.save();
+
+    res.json({ success: true, shares: project.shares });
+});
+
+// @desc    Get project stats
+// @route   GET /api/projects/:id/stats
+// @access  Public (rate limited)
+exports.getProjectStats = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id)
+        .select('views likes shares sharePlatforms')
+        .lean();
+    
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    res.json({ 
+        success: true, 
+        stats: {
+            views: project.views || 0,
+            likes: project.likes || 0,
+            shares: project.shares || 0,
+            sharePlatforms: project.sharePlatforms || {}
+        }
+    });
+});
+
+// @desc    Toggle project favorite
+// @route   POST /api/projects/:id/favorite
+// @access  Private
+exports.toggleFavoriteProject = asyncHandler(async (req, res) => {
+    const User = require('../models/User.model');
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    const projectId = req.params.id;
+    const favorites = user.favorites || [];
+    const index = favorites.indexOf(projectId);
+    
+    let isFavorite;
+    if (index > -1) {
+        favorites.splice(index, 1);
+        isFavorite = false;
+    } else {
+        favorites.push(projectId);
+        isFavorite = true;
+    }
+    
+    user.favorites = favorites;
+    await user.save();
+
+    res.json({ success: true, isFavorite, favorites });
+});
+
+// @desc    Get favorite projects
+// @route   GET /api/projects/favorites
+// @access  Private
+exports.getFavoriteProjects = asyncHandler(async (req, res) => {
+    const User = require('../models/User.model');
+    const user = await User.findById(req.user.id).populate({
+        path: 'favorites',
+        model: 'Project',
+        match: { hidden: false, archived: false },
+        select: 'title description technologies category status featured tags views likes links images'
+    });
+    
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    res.json({ success: true, projects: user.favorites || [] });
+});

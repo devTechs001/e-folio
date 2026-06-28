@@ -205,8 +205,12 @@ class TrackingService {
             }, 1000);
         });
 
-        // Track clicks
+        // Track clicks (throttled to max 1 per second)
+        let lastClickTime = 0;
         document.addEventListener('click', (e) => {
+            const now = Date.now();
+            if (now - lastClickTime < 1000) return;
+            lastClickTime = now;
             const target = e.target;
             this.trackEvent('click', target.tagName, {
                 id: target.id,

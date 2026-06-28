@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import apiService from '../services/api.service';
+import cacheService, { CACHE_TTL } from '../services/cache.service';
 import '../styles/Testimonials.css';
 
 const Testimonials = () => {
@@ -21,28 +22,22 @@ const Testimonials = () => {
   const carouselRef = useRef(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
-  useEffect(() => {
-    loadTestimonials();
-    setAnimateCards(true);
-  }, []);
-
-  useEffect(() => {
-    if (viewMode === 'carousel') {
-      const interval = setInterval(() => {
-        nextSlide();
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [viewMode, activeCarouselIndex, testimonials.length]);
-
-  const loadTestimonials = async () => {
+  const loadTestimonials = useCallback(async () => {
     try {
+      const cached = cacheService.get('public_testimonials');
+      if (cached) {
+        setTestimonials(cached);
+        setLoading(false);
+        return;
+      }
+
       console.log('Fetching testimonials from API...');
       const response = await apiService.getTestimonials();
       console.log('Testimonials API response:', response);
 
       if (response.success && response.testimonials && response.testimonials.length > 0) {
         console.log(`Loaded ${response.testimonials.length} testimonials from database`);
+        cacheService.set('public_testimonials', response.testimonials, CACHE_TTL.TEN_MINUTES);
         setTestimonials(response.testimonials);
       } else {
         console.log('No testimonials from API, using fallback data');
@@ -55,7 +50,32 @@ const Testimonials = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setTestimonials, setLoading]);
+
+  useEffect(() => {
+    loadTestimonials();
+    setAnimateCards(true);
+  }, [loadTestimonials]);
+
+  useEffect(() => {
+    if (viewMode === 'carousel') {
+      const interval = setInterval(() => {
+        nextSlide();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [viewMode, activeCarouselIndex, testimonials.length]);
+
+  // Listen for settings changes from dashboard
+  useEffect(() => {
+    const handleSettingsChange = (e) => {
+      console.log('[Testimonials] Settings changed, refreshing data...');
+      cacheService.delete('public_testimonials');
+      loadTestimonials();
+    };
+    window.addEventListener('settingsChanged', handleSettingsChange);
+    return () => window.removeEventListener('settingsChanged', handleSettingsChange);
+  }, [loadTestimonials]);
 
   const getFallbackTestimonials = () => [
     {

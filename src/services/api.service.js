@@ -226,6 +226,46 @@ class ApiService {
         });
     }
 
+    // Project interaction APIs
+    async likeProject(projectId) {
+        return this.request(`/projects/${projectId}/like`, {
+            method: 'POST'
+        });
+    }
+
+    async unlikeProject(projectId) {
+        return this.request(`/projects/${projectId}/unlike`, {
+            method: 'POST'
+        });
+    }
+
+    async viewProject(projectId) {
+        return this.request(`/projects/${projectId}/view`, {
+            method: 'POST'
+        });
+    }
+
+    async shareProject(projectId, platform) {
+        return this.request(`/projects/${projectId}/share`, {
+            method: 'POST',
+            body: JSON.stringify({ platform })
+        });
+    }
+
+    async getProjectStats(projectId) {
+        return this.request(`/projects/${projectId}/stats`);
+    }
+
+    async toggleFavoriteProject(projectId) {
+        return this.request(`/projects/${projectId}/favorite`, {
+            method: 'POST'
+        });
+    }
+
+    async getFavoriteProjects() {
+        return this.request('/projects/favorites');
+    }
+
     // Webhooks APIs
     async getWebhooks() {
         return this.request('/webhooks');
@@ -473,19 +513,6 @@ class ApiService {
         return this.request(`/profile/export/${format}`);
     }
 
-    async updateSkill(skillData) {
-        return this.request('/profile/skills', {
-            method: 'POST',
-            body: JSON.stringify(skillData)
-        });
-    }
-
-    async deleteSkill(skillId) {
-        return this.request(`/profile/skills/${skillId}`, {
-            method: 'DELETE'
-        });
-    }
-
     async getPublicProfile(username) {
         return this.request(`/profile/public/${username}`);
     }
@@ -575,6 +602,29 @@ class ApiService {
         }
     }
 
+    async updateTask(taskId, data) {
+        try {
+            return await this.request(`/dashboard/tasks/${taskId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+        } catch (error) {
+            console.warn('Update task failed');
+            return { success: false, message: 'Failed to update task' };
+        }
+    }
+
+    async dismissNotification(notificationId) {
+        try {
+            return await this.request(`/notifications/${notificationId}/dismiss`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.warn('Dismiss notification failed');
+            return { success: false, message: 'Failed to dismiss notification' };
+        }
+    }
+
     async connectToDashboard() {
         // This is handled by Socket.io, no API call needed
         return { success: true };
@@ -649,7 +699,7 @@ class ApiService {
 
     // Education APIs
     async getEducation() {
-        return this.request('/education');
+        return this.request('/public/education');
     }
 
     async addEducation(educationData) {
@@ -674,7 +724,7 @@ class ApiService {
 
     // Interests APIs
     async getInterests() {
-        return this.request('/interests');
+        return this.request('/public/interests');
     }
 
     async addInterest(interestData) {
@@ -1177,7 +1227,12 @@ class ApiService {
     }
 
     async getVisitorDetails(id) {
-        return this.request(`/analytics/visitors/${id}`);
+        try {
+            return await this.request(`/analytics/visitors/${id}`);
+        } catch (error) {
+            console.warn('getVisitorDetails unavailable');
+            return { success: false, message: error.message };
+        }
     }
 
     // Settings APIs (Enhanced)
@@ -1519,7 +1574,7 @@ class ApiService {
     async getTestimonials(params = {}) {
         try {
             const query = new URLSearchParams(params);
-            return await this.request(`/testimonials?${query}`);
+            return await this.request(`/testimonials/public/testimonials?${query}`);
         } catch (error) {
             console.error('Error fetching testimonials:', error);
             return { success: false, message: error.message };
@@ -1606,7 +1661,7 @@ class ApiService {
 
     async getTestimonialPublicStats() {
         try {
-            return await this.request('/public/testimonials/stats');
+            return await this.request('/testimonials/public/testimonials/stats');
         } catch (error) {
             console.error('Error fetching public testimonial stats:', error);
             return { success: false, message: error.message };
@@ -1615,7 +1670,7 @@ class ApiService {
 
     async submitTestimonial(testimonialData) {
         try {
-            return await this.request('/public/testimonials/submit', {
+            return await this.request('/testimonials/public/testimonials/submit', {
                 method: 'POST',
                 body: JSON.stringify(testimonialData)
             });
@@ -1713,8 +1768,8 @@ class ApiService {
             const query = new URLSearchParams({ timeframe });
             return await this.request(`/projects/${projectId}/analytics?${query}`);
         } catch (error) {
-            console.error('Error fetching project analytics:', error);
-            return { success: false, message: error.message };
+            console.warn('getProjectAnalytics unavailable');
+            return { success: true, data: {} };
         }
     }
 
@@ -1761,7 +1816,7 @@ class ApiService {
     // Media upload methods for projects
     async uploadProjectImage(projectId, imageData) {
         try {
-            return await this.request(`/projects/${projectId}/upload-image`, {
+            return await this.request(`/projects/${projectId}/images`, {
                 method: 'POST',
                 body: imageData,
                 headers: {} // Don't set Content-Type so browser sets it with boundary
@@ -1777,8 +1832,8 @@ class ApiService {
             const query = new URLSearchParams(filters);
             return await this.request(`/projects/${projectId}/media?${query}`);
         } catch (error) {
-            console.error('Error fetching project media:', error);
-            return { success: false, data: [] };
+            console.warn('getProjectMedia unavailable');
+            return { success: true, data: [] };
         }
     }
 
@@ -1909,7 +1964,7 @@ class ApiService {
     async getReviewsByRating(rating, params = {}) {
         try {
             const query = new URLSearchParams({ rating, ...params });
-            return await this.request(`/reviews/rating?${query}`);
+            return await this.request(`/reviews?${query}`);
         } catch (error) {
             console.warn('Reviews by rating unavailable');
             return { success: true, data: [] };
@@ -1919,7 +1974,7 @@ class ApiService {
     async getReviewsByDate(startDate, endDate, params = {}) {
         try {
             const query = new URLSearchParams({ startDate, endDate, ...params });
-            return await this.request(`/reviews/date-range?${query}`);
+            return await this.request(`/reviews?${query}`);
         } catch (error) {
             console.warn('Reviews by date range unavailable');
             return { success: true, data: [] };
@@ -1928,7 +1983,7 @@ class ApiService {
 
     async getReviewsCount() {
         try {
-            return await this.request('/reviews/count');
+            return await this.request('/reviews?count=true');
         } catch (error) {
             console.warn('Reviews count unavailable');
             return { success: true, data: { total: 0, approved: 0, pending: 0, rejected: 0 } };
@@ -1937,7 +1992,7 @@ class ApiService {
 
     async getAverageReviewRating() {
         try {
-            return await this.request('/reviews/average-rating');
+            return await this.request('/reviews?average=true');
         } catch (error) {
             console.warn('Average review rating unavailable');
             return { success: true, data: { average: 0, totalReviews: 0 } };
@@ -1947,7 +2002,7 @@ class ApiService {
     async getRecentReviews(limit = 5) {
         try {
             const query = new URLSearchParams({ limit });
-            return await this.request(`/reviews/recent?${query}`);
+            return await this.request(`/reviews?${query}`);
         } catch (error) {
             console.warn('Recent reviews unavailable');
             return { success: true, data: [] };
@@ -2094,7 +2149,7 @@ class ApiService {
     // Progress Management
     async updateProgress(progressData) {
         try {
-            return await this.request('/learning/progress/update', {
+            return await this.request('/learning/progress', {
                 method: 'POST',
                 body: JSON.stringify(progressData)
             });

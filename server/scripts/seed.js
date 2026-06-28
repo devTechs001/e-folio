@@ -54,9 +54,14 @@ const seedOwner = async () => {
         // Hash the password
         const hashedPassword = await bcrypt.hash(process.env.OWNER_PASSWORD, 10);
 
+        // Generate username from email
+        const username = process.env.OWNER_USERNAME || 
+            (process.env.OWNER_EMAIL ? process.env.OWNER_EMAIL.split('@')[0].toLowerCase() : 'owner');
+
         // Create owner user
         const owner = new User({
             name: process.env.OWNER_NAME || 'Portfolio Owner',
+            username,
             email: process.env.OWNER_EMAIL,
             password: hashedPassword,
             role: 'owner',

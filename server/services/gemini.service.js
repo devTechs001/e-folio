@@ -16,6 +16,27 @@ class GeminiService {
         this.geminiBaseURL = 'https://generativelanguage.googleapis.com/v1beta';
         this.openaiBaseURL = 'https://api.openai.com/v1';
         
+        // Initialize Google AI models if API key is available
+        if (this.geminiApiKey) {
+            try {
+                const genAI = new GoogleGenerativeAI(this.geminiApiKey);
+                this.models = {};
+                const modelNames = ['gemini-pro', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro-vision'];
+                modelNames.forEach(m => {
+                    try {
+                        this.models[m] = genAI.getGenerativeModel({ model: m });
+                    } catch (e) {
+                        console.warn(`Failed to initialize model ${m}:`, e.message);
+                    }
+                });
+            } catch (e) {
+                console.warn('Failed to initialize Google AI:', e.message);
+                this.models = {};
+            }
+        } else {
+            this.models = {};
+        }
+        
         // Enhanced predefined responses for better AI-like interaction
         this.contextualResponses = {
             greeting: [

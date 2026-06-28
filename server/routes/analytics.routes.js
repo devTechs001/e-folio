@@ -3,12 +3,14 @@ const router = express.Router();
 const analyticsController = require('../controllers/analytics.controller');
 const { auth, isOwner } = require('../middleware/auth.middleware');
 
-// Apply authentication and ownership verification middleware for all analytics routes
+// Public: visitor tracking (no auth required)
+router.post('/track', analyticsController.trackVisitor);
+
+// Protected: all other analytics routes require auth + owner
 router.use(auth);
 router.use(isOwner);
 
 // Basic analytics endpoints
-router.post('/track', analyticsController.trackVisitor);
 router.get('/', analyticsController.getBasicAnalytics);
 
 // Enhanced analytics endpoints

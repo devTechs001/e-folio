@@ -8,24 +8,24 @@ router.use(auth);
 router.use(isOwner);
 
 // Portfolio configuration routes
-router.get('/config', portfolioController.getPortfolioConfig);
-router.post('/config', portfolioController.savePortfolioConfig);
+router.get('/config', portfolioController.getPortfolioConfig.bind(portfolioController));
+router.post('/config', portfolioController.savePortfolioConfig.bind(portfolioController));
 
 // Portfolio versions routes
-router.get('/versions', portfolioController.getPortfolioVersions);
-router.post('/versions/:versionId/restore', portfolioController.restorePortfolioVersion);
+router.get('/versions', portfolioController.getPortfolioVersions.bind(portfolioController));
+router.post('/versions/:versionId/restore', portfolioController.restorePortfolioVersion.bind(portfolioController));
 
 // Portfolio templates routes
-router.get('/templates', portfolioController.getTemplates);
-router.get('/templates/custom', portfolioController.getCustomTemplates);
-router.post('/templates', portfolioController.applyTemplate);
-router.post('/templates/custom', portfolioController.saveCustomTemplate);
+router.get('/templates', portfolioController.getTemplates.bind(portfolioController));
+router.get('/templates/custom', portfolioController.getCustomTemplates.bind(portfolioController));
+router.post('/templates', portfolioController.applyTemplate.bind(portfolioController));
+router.post('/templates/custom', portfolioController.saveCustomTemplate.bind(portfolioController));
 
 // Portfolio publishing routes
-router.post('/publish', portfolioController.publishPortfolio);
-router.post('/unpublish', portfolioController.unpublishPortfolio);
+router.post('/publish', portfolioController.publishPortfolio.bind(portfolioController));
+router.post('/unpublish', portfolioController.unpublishPortfolio.bind(portfolioController));
 
 // Portfolio duplication
-router.post('/duplicate', portfolioController.duplicatePortfolio);
+router.post('/duplicate', portfolioController.duplicatePortfolio.bind(portfolioController));
 
 module.exports = router;

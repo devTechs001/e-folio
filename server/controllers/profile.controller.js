@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const Project = require('../models/Project.model');
 const Analytics = require('../models/Analytics');
@@ -549,6 +550,211 @@ class ProfileController {
             settings_updated: 'Settings'
         };
         return icons[action] || 'Activity';
+    }
+
+    // Certifications
+    async getCertifications(req, res) {
+        try {
+            const userId = req.user.id;
+            const user = await User.findById(userId).select('certifications').lean();
+            res.json({ success: true, data: user?.certifications || [] });
+        } catch (error) {
+            console.error('Get certifications error:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch certifications' });
+        }
+    }
+
+    async addCertification(req, res) {
+        try {
+            const userId = req.user.id;
+            const cert = req.body;
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { $push: { certifications: cert } },
+                { new: true }
+            ).select('certifications').lean();
+            res.json({ success: true, data: user?.certifications?.pop() });
+        } catch (error) {
+            console.error('Add certification error:', error);
+            res.status(500).json({ success: false, message: 'Failed to add certification' });
+        }
+    }
+
+    async updateCertification(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            const updates = req.body;
+            const user = await User.findOneAndUpdate(
+                { _id: userId, 'certifications._id': id },
+                { $set: Object.keys(updates).reduce((acc, key) => {
+                    acc[`certifications.$.${key}`] = updates[key];
+                    return acc;
+                }, {}) },
+                { new: true }
+            ).select('certifications').lean();
+            res.json({ success: true, data: user?.certifications?.find(c => c._id.toString() === id) });
+        } catch (error) {
+            console.error('Update certification error:', error);
+            res.status(500).json({ success: false, message: 'Failed to update certification' });
+        }
+    }
+
+    async deleteCertification(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            await User.findByIdAndUpdate(userId, { $pull: { certifications: { _id: id } } });
+            res.json({ success: true, message: 'Certification deleted' });
+        } catch (error) {
+            console.error('Delete certification error:', error);
+            res.status(500).json({ success: false, message: 'Failed to delete certification' });
+        }
+    }
+
+    // Work Experience
+    async getWorkExperience(req, res) {
+        try {
+            const userId = req.user.id;
+            const user = await User.findById(userId).select('experience').lean();
+            res.json({ success: true, data: user?.experience || [] });
+        } catch (error) {
+            console.error('Get experience error:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch experience' });
+        }
+    }
+
+    async addWorkExperience(req, res) {
+        try {
+            const userId = req.user.id;
+            const exp = req.body;
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { $push: { experience: exp } },
+                { new: true }
+            ).select('experience').lean();
+            res.json({ success: true, data: user?.experience?.pop() });
+        } catch (error) {
+            console.error('Add experience error:', error);
+            res.status(500).json({ success: false, message: 'Failed to add experience' });
+        }
+    }
+
+    async updateWorkExperience(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            const updates = req.body;
+            const user = await User.findOneAndUpdate(
+                { _id: userId, 'experience._id': id },
+                { $set: Object.keys(updates).reduce((acc, key) => {
+                    acc[`experience.$.${key}`] = updates[key];
+                    return acc;
+                }, {}) },
+                { new: true }
+            ).select('experience').lean();
+            res.json({ success: true, data: user?.experience?.find(e => e._id.toString() === id) });
+        } catch (error) {
+            console.error('Update experience error:', error);
+            res.status(500).json({ success: false, message: 'Failed to update experience' });
+        }
+    }
+
+    async deleteWorkExperience(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            await User.findByIdAndUpdate(userId, { $pull: { experience: { _id: id } } });
+            res.json({ success: true, message: 'Experience deleted' });
+        } catch (error) {
+            console.error('Delete experience error:', error);
+            res.status(500).json({ success: false, message: 'Failed to delete experience' });
+        }
+    }
+
+    // Languages
+    async getLanguages(req, res) {
+        try {
+            const userId = req.user.id;
+            const user = await User.findById(userId).select('languages').lean();
+            res.json({ success: true, data: user?.languages || [] });
+        } catch (error) {
+            console.error('Get languages error:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch languages' });
+        }
+    }
+
+    async addLanguage(req, res) {
+        try {
+            const userId = req.user.id;
+            const lang = req.body;
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { $push: { languages: lang } },
+                { new: true }
+            ).select('languages').lean();
+            res.json({ success: true, data: user?.languages?.pop() });
+        } catch (error) {
+            console.error('Add language error:', error);
+            res.status(500).json({ success: false, message: 'Failed to add language' });
+        }
+    }
+
+    async updateLanguage(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            const updates = req.body;
+            const user = await User.findOneAndUpdate(
+                { _id: userId, 'languages._id': id },
+                { $set: Object.keys(updates).reduce((acc, key) => {
+                    acc[`languages.$.${key}`] = updates[key];
+                    return acc;
+                }, {}) },
+                { new: true }
+            ).select('languages').lean();
+            res.json({ success: true, data: user?.languages?.find(l => l._id.toString() === id) });
+        } catch (error) {
+            console.error('Update language error:', error);
+            res.status(500).json({ success: false, message: 'Failed to update language' });
+        }
+    }
+
+    async deleteLanguage(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            await User.findByIdAndUpdate(userId, { $pull: { languages: { _id: id } } });
+            res.json({ success: true, message: 'Language deleted' });
+        } catch (error) {
+            console.error('Delete language error:', error);
+            res.status(500).json({ success: false, message: 'Failed to delete language' });
+        }
+    }
+
+    // Export Resume
+    async exportResume(req, res) {
+        try {
+            const userId = req.user.id;
+            const { format } = req.params;
+            const user = await User.findById(userId)
+                .select('-password -twoFactorSecret -twoFactorBackupCodes')
+                .lean();
+
+            if (!user) {
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
+
+            if (format === 'json') {
+                return res.json({ success: true, data: user });
+            }
+
+            // For non-JSON formats, return the data and let the frontend handle rendering
+            res.json({ success: true, data: user, format });
+        } catch (error) {
+            console.error('Export resume error:', error);
+            res.status(500).json({ success: false, message: 'Failed to export resume' });
+        }
     }
 
     getTimeAgo(date) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/ProjectShare.css';
 
-const ProjectShare = ({ project }) => {
+const ProjectShare = ({ project, onShare }) => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -19,23 +19,38 @@ const ProjectShare = ({ project }) => {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      
+      // Call the onShare callback if provided
+      if (onShare) {
+        onShare(project.id, 'clipboard');
+      }
     } catch (err) {
       console.error('Failed to copy:', err);
     }
   };
 
-  const handleShare = (platform) => {
-    const urls = {
-      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-      reddit: `https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`,
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`,
-      telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`
-    };
+  const handleShare = async (platform) => {
+    try {
+      // Call the onShare callback if provided
+      if (onShare) {
+        await onShare(project.id, platform);
+      } else {
+        // Fallback to manual sharing
+        const urls = {
+          twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+          linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+          reddit: `https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`,
+          whatsapp: `https://wa.me/?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`,
+          telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`
+        };
 
-    if (urls[platform]) {
-      window.open(urls[platform], '_blank', 'width=600,height=400');
+        if (urls[platform]) {
+          window.open(urls[platform], '_blank', 'width=600,height=400');
+        }
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
     }
   };
 
@@ -47,6 +62,11 @@ const ProjectShare = ({ project }) => {
           text: shareText,
           url: shareUrl
         });
+        
+        // Call the onShare callback if provided
+        if (onShare) {
+          onShare(project.id, 'native');
+        }
       } catch (err) {
         console.error('Share failed:', err);
       }

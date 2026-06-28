@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import apiService from '../services/api.service';
+import cacheService, { CACHE_TTL } from '../services/cache.service';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
 import ProjectShare from './ProjectShare';
@@ -10,6 +12,7 @@ import '../styles/Projects.css';
 
 const Projects = () => {
     const { user } = useAuth();
+    const { socket, connected } = useSocket();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
@@ -22,18 +25,23 @@ const Projects = () => {
     const [selectedTechs, setSelectedTechs] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [projectLikes, setProjectLikes] = useState({});
+    const [projectsCollapsed, setProjectsCollapsed] = useState(false);
+    const [techShowcaseCollapsed, setTechShowcaseCollapsed] = useState(false);
 
-    useEffect(() => {
-        loadProjects();
-        loadFavorites();
-    }, []);
-
-    const loadProjects = async () => {
+    const loadProjects = useCallback(async () => {
         try {
+            const cached = cacheService.get('public_projects');
+            if (cached) {
+                setProjects(cached);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             const response = await apiService.request('/public/projects');
             
             if (response.success && response.projects && response.projects.length > 0) {
+                cacheService.set('public_projects', response.projects, CACHE_TTL.TEN_MINUTES);
                 setProjects(response.projects);
             } else {
                 setProjects(getFallbackProjects());
@@ -44,7 +52,7 @@ const Projects = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setProjects, setLoading]);
 
     const loadFavorites = () => {
         const saved = localStorage.getItem('favoriteProjects');
@@ -53,15 +61,34 @@ const Projects = () => {
         }
     };
 
-    const toggleFavorite = useCallback((projectId) => {
-        setFavorites(prev => {
-            const newFavorites = prev.includes(projectId)
-                ? prev.filter(id => id !== projectId)
-                : [...prev, projectId];
-            localStorage.setItem('favoriteProjects', JSON.stringify(newFavorites));
-            return newFavorites;
-        });
-    }, []);
+    const toggleFavorite = useCallback(async (projectId) => {
+        try {
+            // Try to toggle via API first
+            await apiService.toggleFavoriteProject(projectId);
+            
+            // Update local state regardless of API success
+            setFavorites(prev => {
+                const newFavorites = prev.includes(projectId)
+                    ? prev.filter(id => id !== projectId)
+                    : [...prev, projectId];
+                localStorage.setItem('favoriteProjects', JSON.stringify(newFavorites));
+                return newFavorites;
+            });
+            
+            // Show success feedback (could use a toast notification here)
+            console.log(`Project ${projectId} ${favorites.includes(projectId) ? 'removed from' : 'added to'} favorites`);
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            // Fallback to local state only
+            setFavorites(prev => {
+                const newFavorites = prev.includes(projectId)
+                    ? prev.filter(id => id !== projectId)
+                    : [...prev, projectId];
+                localStorage.setItem('favoriteProjects', JSON.stringify(newFavorites));
+                return newFavorites;
+            });
+        }
+    }, [favorites]);
 
     const incrementViews = useCallback(async (projectId) => {
         try {
@@ -71,17 +98,121 @@ const Projects = () => {
             setProjects(prev => prev.map(p => 
                 p.id === projectId ? { ...p, views: (p.views || 0) + 1 } : p
             ));
+            
+            // Emit socket event for real-time update
+            if (socket && connected) {
+                socket.emit('project:view', { projectId, userId: user?.id });
+            }
         } catch (error) {
             console.error('Error incrementing views:', error);
         }
-    }, []);
+    }, [socket, connected, user?.id]);
 
-    const incrementLikes = useCallback((projectId) => {
-        setProjectLikes(prev => ({
-            ...prev,
-            [projectId]: (prev[projectId] || 0) + 1
-        }));
-    }, []);
+    const incrementLikes = useCallback(async (projectId) => {
+        try {
+            // Check if user already liked this project
+            const currentLikes = projectLikes[projectId] || 0;
+            const hasLiked = currentLikes > 0 && currentLikes % 2 === 1; // Odd means liked
+            
+            if (hasLiked) {
+                // Unlike the project
+                await apiService.unlikeProject(projectId);
+                setProjectLikes(prev => ({
+                    ...prev,
+                    [projectId]: Math.max(0, (prev[projectId] || 0) - 1)
+                }));
+                
+                // Emit socket event for real-time update
+                if (socket && connected) {
+                    socket.emit('project:unlike', { projectId, userId: user?.id });
+                }
+            } else {
+                // Like the project
+                await apiService.likeProject(projectId);
+                setProjectLikes(prev => ({
+                    ...prev,
+                    [projectId]: (prev[projectId] || 0) + 1
+                }));
+                
+                // Emit socket event for real-time update
+                if (socket && connected) {
+                    socket.emit('project:like', { projectId, userId: user?.id });
+                }
+            }
+            
+            // Update the project's likes count
+            setProjects(prev => prev.map(p => 
+                p.id === projectId ? { 
+                    ...p, 
+                    likes: hasLiked ? Math.max(0, (p.likes || 0) - 1) : (p.likes || 0) + 1 
+                } : p
+            ));
+        } catch (error) {
+            console.error('Error toggling like:', error);
+            // Fallback to local state if API fails
+            setProjectLikes(prev => ({
+                ...prev,
+                [projectId]: (prev[projectId] || 0) + 1
+            }));
+        }
+    }, [projectLikes, socket, connected, user?.id]);
+
+    const shareProject = useCallback(async (projectId, platform = 'native') => {
+        try {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            const shareData = {
+                title: project.title,
+                text: project.description,
+                url: `${window.location.origin}/projects/${projectId}`
+            };
+
+            if (platform === 'native' && navigator.share) {
+                // Use native share API
+                await navigator.share(shareData);
+            } else {
+                // Fallback to API and manual sharing
+                await apiService.shareProject(projectId, platform);
+                
+                // Create share URL based on platform
+                let shareUrl = shareData.url;
+                switch (platform) {
+                    case 'twitter':
+                        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(shareData.url)}`;
+                        break;
+                    case 'linkedin':
+                        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareData.url)}`;
+                        break;
+                    case 'facebook':
+                        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`;
+                        break;
+                    default:
+                        // Copy to clipboard
+                        await navigator.clipboard.writeText(shareData.url);
+                        console.log('Project link copied to clipboard!');
+                        return;
+                }
+                
+                // Open share URL in new window
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+
+            // Update share count
+            setProjects(prev => prev.map(p => 
+                p.id === projectId ? { ...p, shares: (p.shares || 0) + 1 } : p
+            ));
+            
+        } catch (error) {
+            console.error('Error sharing project:', error);
+            // Fallback to copying link
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                await navigator.clipboard.writeText(`${window.location.origin}/projects/${projectId}`);
+                console.log('Project link copied to clipboard!');
+            }
+        }
+    }, [projects]);
 
     const getFallbackProjects = () => [
         {
@@ -313,6 +444,69 @@ const Projects = () => {
             achievements: ["5000+ registered users", "50,000+ movies streamed", "4.8/5 user rating"]
         }
     ];
+
+    useEffect(() => {
+        loadProjects();
+        loadFavorites();
+    }, [loadProjects]);
+
+    // Real-time socket listeners for project updates
+    useEffect(() => {
+        if (!connected || !socket) return;
+
+        const handleProjectUpdate = (data) => {
+            console.log('Project updated in real-time:', data);
+            setProjects(prev => prev.map(p =>
+                p.id === data.projectId ? { ...p, ...data.updates } : p
+            ));
+        };
+
+        const handleLikeUpdate = (data) => {
+            console.log('Like update in real-time:', data);
+            setProjects(prev => prev.map(p =>
+                p.id === data.projectId ? { ...p, likes: data.likes } : p
+            ));
+            setProjectLikes(prev => ({
+                ...prev,
+                [data.projectId]: data.userLikes
+            }));
+        };
+
+        const handleViewUpdate = (data) => {
+            console.log('View update in real-time:', data);
+            setProjects(prev => prev.map(p =>
+                p.id === data.projectId ? { ...p, views: data.views } : p
+            ));
+        };
+
+        const handleNewProject = (data) => {
+            console.log('New project added:', data);
+            setProjects(prev => [data.project, ...prev]);
+        };
+
+        socket.on('project:updated', handleProjectUpdate);
+        socket.on('project:liked', handleLikeUpdate);
+        socket.on('project:viewed', handleViewUpdate);
+        socket.on('project:created', handleNewProject);
+
+        return () => {
+            socket.off('project:updated', handleProjectUpdate);
+            socket.off('project:liked', handleLikeUpdate);
+            socket.off('project:viewed', handleViewUpdate);
+            socket.off('project:created', handleNewProject);
+        };
+    }, [connected, socket]);
+
+    // Listen for settings changes from dashboard
+    useEffect(() => {
+        const handleSettingsChange = (e) => {
+            console.log('[Projects] Settings changed, refreshing data...');
+            cacheService.delete('public_projects');
+            loadProjects();
+        };
+        window.addEventListener('settingsChanged', handleSettingsChange);
+        return () => window.removeEventListener('settingsChanged', handleSettingsChange);
+    }, [loadProjects]);
 
     // Enhanced filtering and sorting logic
     const filteredAndSortedProjects = useMemo(() => {
@@ -596,6 +790,23 @@ const Projects = () => {
 
             {/* Projects Grid */}
             <div className="max-w-7xl mx-auto">
+                {/* Section Toggle */}
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-bold text-textColor">
+                        All Projects
+                        <span className="text-mainColor text-lg ml-2">({filteredAndSortedProjects.length})</span>
+                    </h3>
+                    <button
+                        onClick={() => setProjectsCollapsed(!projectsCollapsed)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-mainColor/10 border border-mainColor/30 text-textColor hover:bg-mainColor/20 transition-all duration-300"
+                    >
+                        <i className={`fa-solid fa-chevron-${projectsCollapsed ? 'down' : 'up'} transition-transform duration-300`}></i>
+                        <span className="text-sm">{projectsCollapsed ? 'Show Projects' : 'Hide Projects'}</span>
+                    </button>
+                </div>
+
+                {!projectsCollapsed && (
+                    <>
                 {filteredAndSortedProjects.length === 0 ? (
                     <div className="no-results">
                         <i className="fa-solid fa-folder-open text-6xl text-mainColor/30 mb-4"></i>
@@ -638,9 +849,12 @@ const Projects = () => {
                                     viewMode={viewMode}
                                     likes={(projectLikes[project.id] || 0) + (project.likes || 0)}
                                     onIncrementLikes={() => incrementLikes(project.id)}
+                                    onShare={shareProject}
                                 />
                             ))}
                         </div>
+                    </>
+                )}
                     </>
                 )}
             </div>
@@ -648,9 +862,19 @@ const Projects = () => {
             {/* Tech Stack Showcase */}
             {allTechnologies.length > 0 && (
                 <div className="tech-showcase max-w-7xl mx-auto mt-20">
-                    <h3 className="text-3xl font-bold text-textColor text-center mb-8">
-                        Technologies I <span className="gradient-text">Master</span>
-                    </h3>
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-3xl font-bold text-textColor">
+                            Technologies I <span className="gradient-text">Master</span>
+                        </h3>
+                        <button
+                            onClick={() => setTechShowcaseCollapsed(!techShowcaseCollapsed)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-mainColor/10 border border-mainColor/30 text-textColor hover:bg-mainColor/20 transition-all duration-300"
+                        >
+                            <i className={`fa-solid fa-chevron-${techShowcaseCollapsed ? 'down' : 'up'} transition-transform duration-300`}></i>
+                            <span className="text-sm">{techShowcaseCollapsed ? 'Show' : 'Hide'}</span>
+                        </button>
+                    </div>
+                    {!techShowcaseCollapsed && (
                     <div className="tech-grid">
                         {allTechnologies.map((tech, index) => {
                             const projectCount = projects.filter(p => 
@@ -678,6 +902,7 @@ const Projects = () => {
                             );
                         })}
                     </div>
+                    )}
                 </div>
             )}
 
@@ -723,7 +948,13 @@ const Projects = () => {
                 <ProjectModal
                     project={selectedProject}
                     onClose={() => setSelectedProject(null)}
-                    onImageClick={setLightboxImage}
+                    onImageClick={(img) => setLightboxImage(img)}
+                    onProjectUpdate={(updatedProject) => {
+                        setProjects(prev => prev.map(p => 
+                            p.id === updatedProject.id ? updatedProject : p
+                        ));
+                        setSelectedProject(updatedProject);
+                    }}
                 />
             )}
 

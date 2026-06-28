@@ -4,6 +4,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 const {
     submitCollaborationRequest,
     getCollaborationRequests,
@@ -51,9 +52,9 @@ const upload = multer({
     }
 });
 
-// Public routes
-router.post('/submit', submitCollaborationRequest);
-router.post('/upload', upload.array('files', 5), uploadRequestFile);
+// Public routes (rate limited)
+router.post('/submit', rateLimiter(10), submitCollaborationRequest);
+router.post('/upload', rateLimiter(10), upload.array('files', 5), uploadRequestFile);
 
 // Protected routes (owner only)
 router.get('/requests', auth, isOwner, getCollaborationRequests);

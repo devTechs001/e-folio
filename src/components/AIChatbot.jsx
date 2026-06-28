@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { IoChatbubbleEllipses, IoClose, IoSend, IoSparkles, IoCodeSlash, IoLanguage, IoCog } from 'react-icons/io5';
-import { FaRobot, FaUser, FaCopy, FaThumbsUp, FaThumbsDown, FaExclamationTriangle } from 'react-icons/fa';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { IoChatbubbleEllipses, IoClose, IoSend, IoSparkles, IoCodeSlash, IoLanguage, IoCog, IoTrashBin, IoRefresh, IoCopy } from 'react-icons/io5';
+import { FaRobot, FaUser, FaThumbsUp, FaThumbsDown, FaExclamationTriangle, FaCheck, FaTimes, FaMagic } from 'react-icons/fa';
 import apiService from '../services/api.service';
 import '../styles/AIChatbot.css';
 
@@ -109,98 +109,113 @@ const AIChatbot = () => {
         { text: 'Tell me about your projects', action: 'projects' },
         { text: 'What skills do you have?', action: 'skills' },
         { text: 'How can we collaborate?', action: 'collaborate' },
-        { text: 'Explain your experience', action: 'experience' }
+        { text: 'Tell me about your experience', action: 'experience' },
+        { text: 'How can I contact you?', action: 'contact' }
     ];
 
-    const predefinedResponses = {
-        projects: {
-            general: "I've worked on over 50 diverse projects ranging from full-stack web applications and mobile apps to AI-powered solutions and enterprise systems. Each project demonstrates cutting-edge technology implementation and innovative problem-solving approaches. My portfolio includes e-commerce platforms, real-time collaboration tools, data analytics dashboards, and custom software solutions. I'd be happy to highlight specific projects that align with your interests - are you looking for web development, mobile apps, or AI solutions?",
-            code: "My technical portfolio spans across modern web technologies including React, Node.js, Python, and cloud architectures. I've built scalable microservices, real-time applications with WebSockets, RESTful APIs, and complex frontend interfaces. Recent projects include a real-time collaboration platform using Socket.io, an AI-powered content management system, and a distributed e-commerce solution with microservices. I follow clean code principles, implement comprehensive testing, and optimize for performance. What specific technologies or project types are you most interested in exploring?",
-            creative: "My projects blend technical excellence with creative design thinking. I've developed interactive data visualizations that make complex information intuitive, immersive user experiences that engage and delight, and innovative interfaces that push boundaries. One standout project is an AI-powered design assistant that helps users create professional layouts through natural language. Another is a collaborative storytelling platform that combines real-time editing with creative writing tools. I believe the best solutions emerge when technology serves human creativity. What kind of creative challenge are you working on?",
-            analyst: "Project performance metrics show exceptional results: 95% client satisfaction rate, 40% faster average delivery time compared to industry standards, and 92% of projects featuring measurable ROI improvements. My portfolio includes data-driven solutions that process millions of records, real-time analytics dashboards with sub-second response times, and predictive models with 85%+ accuracy. Key technical achievements include optimizing database queries by 300%, implementing caching strategies that reduced API response times by 60%, and building scalable architectures that handle 10x traffic spikes. What specific metrics or performance aspects would you like to dive deeper into?",
-            translator: "I've delivered multilingual projects for clients across 15+ countries, implementing comprehensive localization strategies that go beyond simple translation. My portfolio includes international e-commerce platforms supporting 12 languages, multilingual content management systems with RTL language support, and cross-cultural collaboration tools. I've implemented Unicode compliance, cultural adaptation of UI/UX elements, and region-specific features like payment gateways and date formats. Understanding cultural nuances is crucial - I ensure that translations maintain context, tone, and cultural appropriateness. Are you looking to expand your project to international markets?"
-        },
-        skills: {
-            general: "I bring comprehensive full-stack expertise with 5+ years of professional experience. My core competencies span frontend development (React, Vue, TypeScript), backend engineering (Node.js, Python, Java), cloud infrastructure (AWS, Docker, Kubernetes), and database management (PostgreSQL, MongoDB, Redis). I'm proficient in modern development practices including CI/CD pipelines, test-driven development, and agile methodologies. Beyond technical skills, I excel at system architecture design, team leadership, and translating complex business requirements into technical solutions. I'm continuously learning emerging technologies and best practices. What specific skills or technologies would you like to explore?",
-            code: "Technical expertise breakdown: Frontend (React, Vue.js, TypeScript, Tailwind CSS, WebGL), Backend (Node.js, Express, Python, Django, Java Spring), Databases (PostgreSQL, MongoDB, Redis, Elasticsearch), Cloud & DevOps (AWS, Docker, Kubernetes, CI/CD, Terraform), Testing (Jest, Cypress, PyTest), and Performance Optimization. I follow SOLID principles, implement design patterns, and maintain comprehensive documentation. Recent technical achievements include reducing bundle sizes by 40%, implementing zero-downtime deployments, and building distributed systems with 99.9% uptime. Are you interested in specific technical areas or architectural patterns?",
-            creative: "Beyond coding, I bring creative problem-solving, UX/UI design thinking, technical writing, and product management skills. I excel at creating user-centric solutions that balance functionality with aesthetics. My design experience includes creating responsive layouts, implementing micro-interactions, and building accessible interfaces. I've written comprehensive technical documentation, API specifications, and user guides. I also enjoy rapid prototyping and design sprints to iterate quickly on ideas. I believe technical solutions should not only work well but also provide delightful user experiences. What creative challenges or design problems are you facing?",
-            analyst: "Skills assessment based on project outcomes: Full-Stack Development (95%), System Architecture (92%), Performance Optimization (90%), Database Design (88%), Cloud Infrastructure (85%), API Design (93%), Testing & Quality Assurance (87%), Technical Leadership (82%). I've led teams of 5+ developers, mentored junior engineers, and delivered technical presentations to stakeholders. My analytical approach includes code review processes, performance profiling, security audits, and cost optimization strategies. I use data-driven decision making for technical choices and regularly conduct retrospectives to improve processes. What specific metrics or analytical approaches are you interested in?",
-            translator: "Multilingual capabilities: Fluent in English (native), Spanish (professional), and French (intermediate). Technical translation experience includes API documentation, user interfaces, error messages, and marketing materials. I've worked with international teams across North America, Europe, and Asia, adapting communication styles and technical approaches for different cultural contexts. I understand the challenges of international development including timezone coordination, cultural differences in design preferences, and localization best practices. I can bridge technical and business communication across languages and cultures. Are you working on international projects or need multilingual support?"
-        },
-        collaborate: {
-            general: "I'm excited about collaboration opportunities that combine technical innovation with meaningful impact! Whether you're a startup with a groundbreaking idea, an established company looking to modernize systems, or an open-source project seeking contributors, I bring valuable expertise and enthusiasm. I thrive in collaborative environments where I can contribute to architecture decisions, mentor team members, and deliver high-quality solutions. I'm flexible with engagement models - from short-term consulting to long-term partnerships. Let's discuss your vision and explore how we can create something exceptional together!",
-            code: "Seeking technical collaboration opportunities where I can contribute to challenging engineering problems. I can help with system architecture design, code reviews, technical leadership, and building scalable solutions. I'm experienced in agile methodologies, pair programming, and remote collaboration tools. I've mentored junior developers, conducted technical interviews, and led code review processes. Whether you need a technical co-founder, a senior developer to join your team, or a consultant to optimize your systems, I bring proven expertise and a collaborative mindset. What technical challenges or team dynamics are you working with?",
-            creative: "Creative collaborations energize me! I love working on projects that push the boundaries of what's possible with technology. Whether it's experimental digital art installations, innovative user experiences, or AI-powered creative tools, I bring both technical depth and creative thinking. I enjoy brainstorming sessions, rapid prototyping, and iterating based on user feedback. I've collaborated with designers, artists, and product managers to create experiences that delight and inspire. If you have a creative vision that needs technical implementation, or want to explore the intersection of technology and art, let's create something remarkable together!",
-            analyst: "Collaboration opportunities where data-driven insights can make a real impact: I can help with technical consulting, system audits, performance optimization, data strategy development, and analytics implementation. I provide detailed analysis of current systems, identify bottlenecks and improvement opportunities, and create actionable roadmaps. My analytical approach includes regular performance audits, user behavior analysis, and cost optimization strategies that reduced cloud expenses by 30%. What specific challenges or metrics are you looking to address through collaboration?",
-            translator: "Open to international collaborations that bridge cultural and technical gaps. I can help with localization projects, international market expansion, multilingual team coordination, and cross-cultural product development. I understand the challenges of working across time zones, cultural differences in user expectations, and technical requirements for global products. I've successfully coordinated with teams in North America, Europe, and Asia, adapting communication styles and development processes for different cultural contexts. Whether you're expanding to international markets or working with distributed teams, I can help ensure smooth collaboration and culturally appropriate solutions."
-        },
-        experience: {
-            general: "My professional journey spans 5+ years of progressive responsibility across startups, mid-size companies, and enterprise environments. I've grown from Junior Developer to Senior Full-Stack Engineer, taking on technical leadership roles and mentoring team members along the way. I've worked in fast-paced startup environments where rapid iteration is crucial, as well as structured enterprise settings with strict compliance requirements. This diverse experience has given me perspective on different development methodologies, team structures, and business challenges. Each role has taught me valuable lessons about communication, problem-solving, and delivering value through technology.",
-            code: "Technical career progression: Started with frontend development (HTML/CSS/JavaScript), expanded to full-stack (React, Node.js, databases), then specialized in system architecture and cloud technologies. Key milestones include leading the migration of a monolith to microservices, implementing real-time features affecting millions of users, and building developer tooling that improved team productivity by 40%. I've worked in various domains: fintech (security-critical applications), healthcare (HIPAA compliance), e-commerce (high-traffic systems), and SaaS (multi-tenant architectures). I've also contributed to open-source projects and spoken at technical meetups. What specific technical journey or expertise area interests you?",
-            creative: "My experience uniquely blends technical depth with creative direction. I've led product development from concept to market launch, combining user research, design thinking, and technical implementation. Creative highlights include designing an AI-powered content recommendation system, building interactive data visualizations that won design awards, and creating a collaborative storytelling platform used by thousands of writers. I've worked closely with UX designers, product managers, and stakeholders to translate creative visions into technical realities. This experience has taught me that the best products emerge at the intersection of technical excellence and human-centered design. What creative or design-focused challenges are you exploring?",
-            analyst: "Quantified professional achievements: Delivered 50+ projects with 95% on-time completion, led teams of 5-15 engineers, improved system performance by an average of 60%, reduced technical debt by 40% through refactoring initiatives, and maintained 99.9% uptime for critical systems. I've implemented monitoring and alerting systems that reduced incident response time by 70%, established code quality standards that improved developer productivity, and built automated testing suites that caught 85% of bugs before production. My analytical approach includes regular performance audits, user behavior analysis, and cost optimization strategies that reduced cloud expenses by 30%. What specific metrics or analytical insights would be most valuable for your context?",
-            translator: "Global experience spanning international markets and cross-cultural teams. I've worked with clients and teams across North America, Europe, and Asia, adapting to different business cultures and communication styles. International project highlights include launching a multilingual e-commerce platform in 8 countries, coordinating development across 5 time zones, and implementing localization strategies that increased international user engagement by 45%. I've navigated cultural differences in design preferences, business practices, and technical requirements. This global perspective has taught me to build flexible, culturally-aware systems that work seamlessly across borders. Are you looking to expand internationally or work with distributed teams?"
+    const sanitizeResponse = (text) => {
+        const sensitivePatterns = [
+            /src\/\w+/gi, /server\/\w+/gi, /routes\/\w+/gi, /controllers\/\w+/gi,
+            /models\/\w+/gi, /middleware\/\w+/gi, /config\/\w+/gi, /\.env\w*/gi,
+            /database\s+url/i, /mongodb\s+uri/i, /api\s+key/i, /secret\s+\w+/gi,
+            /password\s*[:=]\s*\S+/gi, /token\s*[:=]\s*\S+/gi, /jwt\s*[:=]\s*\S+/gi,
+            /endpoint[:=]\s*\S+/gi, /localhost:\d+/gi, /127\.0\.0\.1:\d+/gi,
+            /process\.env/i, /import\.meta\.env/i
+        ];
+        let sanitized = text;
+        sensitivePatterns.forEach(pattern => {
+            sanitized = sanitized.replace(pattern, '[REDACTED]');
+        });
+        return sanitized;
+    };
+
+    const fallbackResponses = {
+        greeting: [
+            "Hello! Welcome to my portfolio. I'm here to help you explore my work and skills. What would you like to know about?",
+            "Hi there! Thanks for visiting. I can tell you about my projects, skills, or how we can work together. What interests you?",
+            "Hey! Great to have you here. Feel free to ask me anything about my portfolio or experience!",
+            "Welcome! I'm your AI guide to this portfolio. Ask me about projects, skills, technologies I use, or collaboration opportunities."
+        ],
+        projects: [
+            "I've worked on a variety of projects including web applications, mobile apps, and software solutions. Each project showcases different technologies and problem-solving approaches. Would you like to see specific types of projects?",
+            "My portfolio includes several projects that demonstrate my skills in frontend and backend development. I enjoy building responsive, user-friendly applications. What kind of projects are you interested in?",
+            "I've created everything from interactive web apps to data visualization dashboards. Each project taught me something new. Would you like me to highlight some of my recent work?",
+            "The projects in my portfolio reflect my passion for clean code, good design, and solving real problems. Is there a particular type of project you'd like to learn more about?"
+        ],
+        skills: [
+            "I work with modern web technologies including React, Node.js, and various databases. I'm always learning new tools and frameworks. What skills are you curious about?",
+            "My skill set spans frontend development, backend engineering, and everything in between. I focus on writing clean, maintainable code. Any specific technology you'd like to discuss?",
+            "I specialize in full-stack web development with modern JavaScript frameworks, responsive design, and server-side technologies. Would you like to know more about any particular area?",
+            "I bring both technical and creative skills to the table - from coding to design thinking. I believe in building solutions that are both functional and elegant. What interests you most?"
+        ],
+        experience: [
+            "I have several years of experience in software development, working on diverse projects across different domains. Each project has helped me grow as a developer. Would you like to hear about specific experiences?",
+            "My journey in tech has been exciting and full of learning. I've worked on various projects that challenged me and helped me improve my skills. What would you like to know about my background?",
+            "I've gained experience working with different technologies, frameworks, and development methodologies. I enjoy taking on new challenges and solving complex problems. Ask me anything!",
+            "Through my work, I've developed strong problem-solving skills and a deep understanding of web technologies. I'm passionate about creating great user experiences. How can I help you today?"
+        ],
+        collaborate: [
+            "I'm always open to interesting collaboration opportunities! Whether you have a project idea, need technical help, or want to discuss a partnership, I'd love to hear about it.",
+            "Collaboration is at the heart of great work. If you have a project or idea you'd like to discuss, feel free to reach out through the contact section!",
+            "I enjoy working with others who share a passion for creating amazing things. If you'd like to collaborate, just let me know what you have in mind!",
+            "Looking for a collaborator? I'm excited about new opportunities and would be happy to discuss how we could work together on your next project."
+        ],
+        contact: [
+            "You can reach me through the contact form on this website, or connect with me via social media links in the about section. I'd love to hear from you!",
+            "Feel free to send me a message through the contact section below, or connect on social media. I typically respond within a day!",
+            "The best way to reach me is through the contact form on this site. I'm always open to new connections and conversations!"
+        ],
+        general: [
+            "That's a great question! I'd be happy to help you learn more about my work and experience. What specific area interests you?",
+            "Thanks for your interest! I can share insights about my projects, technical skills, or professional background. What would you like to explore?",
+            "I'm here to help you navigate this portfolio. Feel free to ask about projects, skills, experience, or anything else you're curious about!",
+            "Great question! My portfolio showcases my work in web development and software engineering. Is there something specific you'd like to know more about?",
+            "I appreciate your curiosity! I've worked on many interesting projects and learned a lot along the way. What aspect would you like to dive into?",
+            "Thanks for asking! My goal is to create useful, well-crafted digital solutions. I'd be happy to tell you more about specific projects or my approach."
+        ],
+        compliment: [
+            "Thank you so much! That means a lot. I put a lot of effort into my work and it's wonderful to hear that you appreciate it.",
+            "I really appreciate your kind words! It motivates me to keep creating and improving. Is there anything specific you'd like to know more about?",
+            "Thank you! Your feedback makes my day. If you have any questions about my work or experience, I'm here to help!",
+            "That's very kind of you to say! I'm glad you like what you see. Feel free to explore more or ask me anything!"
+        ],
+        farewell: [
+            "Thanks for chatting with me! Feel free to come back anytime if you have more questions. Have a great day!",
+            "It was great talking with you! If you ever need more information, just open this chat again. Take care!",
+            "Goodbye! I hope you enjoyed exploring my portfolio. If you have more questions later, I'll be right here. Cheers!",
+            "Thanks for stopping by! Don't hesitate to reach out through the contact form if you'd like to connect further. Have a wonderful day!"
+        ],
+        unknown: [
+            "That's an interesting topic! While I'm primarily here to help you explore my portfolio, I'd be happy to answer questions about my projects, skills, or experience.",
+            "I'm not sure I have the answer to that, but I can definitely tell you about my work! Would you like to hear about my projects or skills?",
+            "That's outside my main focus, but I'd love to help you learn more about my portfolio instead. What would you like to explore?",
+            "I specialize in discussing my portfolio and experience. Could you ask me about my projects, skills, or how we might collaborate?"
+        ]
+    };
+
+    const detectIntent = (message) => {
+        const lower = message.toLowerCase();
+        const categories = {
+            greeting: /^(hi|hello|hey|greetings|sup|yo|howdy|good\s*(morning|afternoon|evening))/i,
+            projects: /(project|portfolio|work|app|application|website|built|created|developed|showcase|demo)/i,
+            skills: /(skill|technology|tech\b|stack|framework|language|tool|know|languages|proficient|expertise|competenc)/i,
+            experience: /(experience|background|journey|career|years|worked\s*(as|at|on)|professional|history|bio|about\s*you)/i,
+            collaborate: /(collaborate|collaboration|hire|freelance|contract|work\s*together|partner|opportunit|job|position|team)/i,
+            contact: /(contact|email|message|reach|phone|call|social|connect|get\s*in\s*touch)/i,
+            compliment: /(great|awesome|amazing|nice|beautiful|impressive|love|wow|cool|fantastic|excellent|good\s*job|well\s*done)/i,
+            farewell: /(bye|goodbye|see\s*you|later|farewell|cya|peace|take\s*care)/i
+        };
+
+        for (const [category, pattern] of Object.entries(categories)) {
+            if (pattern.test(lower)) return category;
         }
+        return 'unknown';
     };
 
     const generateResponse = (userMessage, aiType) => {
-        const lowerMessage = userMessage.toLowerCase();
-        
-        // Check for predefined responses
-        for (const [key, responses] of Object.entries(predefinedResponses)) {
-            if (lowerMessage.includes(key)) {
-                return responses[aiType] || responses.general;
-            }
-        }
-
-        // Generate contextual responses based on AI type, device, and visitor status
-        const contextualResponses = {
-            general: [
-                isFirstTimeVisitor 
-                    ? `Welcome to my portfolio! I'm excited to guide you through my work. Since you're viewing this on ${deviceType}, I can highlight projects and features that work best on your device. What would you like to explore first - my projects, skills, or collaboration opportunities?`
-                    : `That's an excellent question! Based on my portfolio and experience, I'd be happy to provide detailed insights. I see you're browsing on ${deviceType}, so I can tailor my responses accordingly. What specific aspect interests you most?`,
-                deviceType === 'mobile' 
-                    ? "Great question! I notice you're browsing on mobile - I can highlight my responsive design projects and mobile-first development approach. My portfolio is fully optimized for mobile viewing. What would you like to know about my mobile development experience?"
-                    : deviceType === 'tablet'
-                    ? "Interesting question! Since you're on a tablet, I can share my experience with responsive design and touch-optimized interfaces. I've built several tablet-friendly applications. What aspect of my work interests you?"
-                    : "That's a thoughtful question! Since you're on desktop, I can showcase my full-stack projects and complex web applications. I have extensive experience with desktop-optimized solutions. What would you like to explore?",
-                `I appreciate your curiosity! My experience covers full-stack development, system architecture, and technical leadership across different domains. I enjoy discussing both technical challenges and business solutions. What particular area would you like to explore in depth?`
-            ],
-            code: [
-                deviceType === 'mobile'
-                    ? "From a technical perspective, I can dive deep into mobile-first development, responsive design, and performance optimization for mobile devices. My mobile projects include Progressive Web Apps, React Native applications, and highly optimized mobile websites. Are you interested in specific mobile technologies or responsive design techniques?"
-                    : deviceType === 'tablet'
-                    ? "Let me break this down technically. I specialize in responsive design and touch-optimized interfaces that work beautifully on tablets. My tablet projects include adaptive layouts, gesture-based interactions, and multi-resolution support. What technical challenges or tablet-specific features are you most curious about?"
-                    : "From a technical perspective, I can dive deep into architecture decisions, technology choices, and implementation strategies. My experience includes building scalable systems, optimizing performance, and implementing best practices. Are you interested in specific technologies, architectural patterns, or development methodologies?",
-                "Code-wise, I bring expertise across the full stack with a focus on clean architecture and maintainable solutions. I've implemented complex features like real-time collaboration, AI integrations, and high-performance systems. Would you like to discuss specific technologies, code patterns, or system designs?"
-            ],
-            creative: [
-                isFirstTimeVisitor
-                    ? "Creatively speaking, I love finding innovative solutions that bridge technology and human experience! Since this is your first visit, let me show you some of my most creative projects. I've developed interactive data visualizations, immersive user experiences, and innovative interfaces. What kind of creative challenges inspire you?"
-                    : "Creatively speaking, I love finding innovative solutions that bridge technology and human experience. My projects often combine technical excellence with thoughtful design thinking. I believe the best solutions emerge when we push boundaries while staying user-focused. What creative challenges or design problems are you exploring?",
-                deviceType === 'mobile'
-                    ? "Creatively, I specialize in mobile-first design and creating delightful mobile experiences. My mobile projects feature smooth animations, intuitive gestures, and beautiful responsive layouts. I believe great mobile design is about simplicity and elegance. What creative mobile experiences interest you?"
-                    : "Creativity is at the heart of what I do! I thrive on turning complex problems into elegant, intuitive solutions. My experience includes designing user interfaces, creating interactive experiences, and developing innovative features that engage users. What creative aspects of technology excite you most?"
-            ],
-            analyst: [
-                isFirstTimeVisitor
-                    ? "Analyzing your first visit, I can provide insights into my portfolio performance and project metrics. My work shows exceptional results: 95% client satisfaction, 40% faster delivery times, and 92% projects with measurable ROI improvements. Since you're new here, would you like me to highlight my most successful projects?"
-                    : "Analyzing your question, I can provide data-driven insights and metrics-based perspectives. My approach combines technical expertise with quantitative analysis to deliver measurable results. I focus on performance optimization, user metrics, and system efficiency. What specific metrics or analytical insights would be most valuable?",
-                deviceType === 'mobile'
-                    ? "From an analytical perspective, I excel at mobile performance optimization and user experience metrics. My mobile projects show 60% faster load times, 95% mobile usability scores, and 40% better engagement rates. I use tools like Lighthouse and real user monitoring to optimize mobile experiences. What mobile performance metrics interest you?"
-                    : "Data shows that the most successful projects balance innovation with measurable impact. I bring strong analytical skills to system design, performance optimization, and user experience improvements. I can provide insights on scalability, performance metrics, and ROI optimization. What analytical challenges are you facing?"
-            ],
-            translator: [
-                isFirstTimeVisitor
-                    ? "Welcome! I notice this might be your first visit. I have extensive experience with international projects and multilingual applications. My portfolio includes work with clients across 15+ countries, implementing comprehensive localization strategies. Are you interested in international development or multilingual solutions?"
-                    : "As a language specialist, I can help bridge communication gaps across cultures and languages. My experience with international teams and multilingual projects has taught me the importance of cultural context and nuanced communication. How can I assist with international or multilingual aspects of your project?",
-                deviceType === 'mobile'
-                    ? "From a mobile localization perspective, I've implemented multilingual mobile apps with RTL support, adaptive layouts for different languages, and culturally appropriate UI elements. My mobile projects support 12+ languages with seamless switching. Are you interested in mobile internationalization?"
-                    : "Language expertise allows me to facilitate global communication and ensure technical concepts translate effectively across cultures. I've coordinated with international teams and adapted solutions for different markets. How can I help with your multilingual or international needs?"
-            ]
-        };
-
-        return contextualResponses[aiType][Math.floor(Math.random() * contextualResponses[aiType].length)];
+        const intent = detectIntent(userMessage);
+        const responses = fallbackResponses[intent] || fallbackResponses.general;
+        return responses[Math.floor(Math.random() * responses.length)];
     };
 
     const handleSendMessage = async () => {
@@ -234,9 +249,10 @@ const AIChatbot = () => {
             });
 
             if (response.data.success) {
+                const safeText = sanitizeResponse(response.data.response || '');
                 const aiMessage = {
                     id: Date.now() + 1,
-                    text: response.data.response,
+                    text: safeText,
                     sender: 'ai',
                     model: response.data.model,
                     timestamp: new Date(),
@@ -251,23 +267,9 @@ const AIChatbot = () => {
         } catch (error) {
             console.error('Chatbot error:', error);
             
-            // Determine error type and provide appropriate fallback
-            let fallbackResponse = '';
-            let errorType = 'general';
+            const fallbackResponse = generateResponse(currentInput, selectedAI);
             
-            if (error.response?.status === 500) {
-                errorType = 'server';
-                fallbackResponse = 'I apologize, but the AI service is temporarily unavailable. This might be due to server maintenance. Please try again in a few moments.';
-            } else if (error.response?.status === 401) {
-                errorType = 'auth';
-                fallbackResponse = 'AI service authentication is not configured. Please contact the administrator to set up the API key.';
-            } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-                errorType = 'network';
-                fallbackResponse = 'Unable to connect to the AI service. Please check your internet connection and try again.';
-            } else {
-                // Use predefined response as fallback
-                fallbackResponse = generateResponse(currentInput, selectedAI);
-            }
+            const isConnectionIssue = error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.message?.includes('network');
             
             const aiMessage = {
                 id: Date.now() + 1,
@@ -275,8 +277,8 @@ const AIChatbot = () => {
                 sender: 'ai',
                 model: 'fallback',
                 timestamp: new Date(),
-                isError: true,
-                errorType: errorType
+                isError: isConnectionIssue,
+                errorType: isConnectionIssue ? 'network' : 'general'
             };
             
             setMessages(prev => [...prev, aiMessage]);
@@ -292,9 +294,18 @@ const AIChatbot = () => {
         }
     };
 
-    const copyMessage = (text) => {
+    const [copiedId, setCopiedId] = useState(null);
+
+    const copyMessage = (text, id) => {
         navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
     };
+
+    const clearChat = useCallback(() => {
+        setMessages([]);
+        sessionStorage.removeItem(`chat_messages_${sessionId}`);
+    }, [sessionId]);
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -329,10 +340,20 @@ const AIChatbot = () => {
                     </div>
                     <div className="header-info">
                         <h3>AI Assistant</h3>
-                        <p>{aiModels[selectedAI].name}</p>
+                        <p>{aiModels[selectedAI]?.name || 'AI Assistant'}</p>
                     </div>
                 </div>
                 <div className="header-actions">
+                    {messages.length > 0 && (
+                        <button
+                            className="header-btn clear-btn"
+                            onClick={clearChat}
+                            aria-label="Clear chat"
+                            title="Clear conversation"
+                        >
+                            <IoTrashBin />
+                        </button>
+                    )}
                     <button
                         className="header-btn minimize-btn"
                         onClick={() => setIsMinimized(!isMinimized)}
@@ -417,19 +438,16 @@ const AIChatbot = () => {
                                     </div>
                                     <div className="message-actions">
                                         <button
-                                            className="action-btn"
-                                            onClick={() => copyMessage(message.text)}
+                                            className={`action-btn ${copiedId === message.id ? 'copied' : ''}`}
+                                            onClick={() => copyMessage(message.text, message.id)}
                                             aria-label="Copy message"
                                         >
-                                            <FaCopy />
+                                            {copiedId === message.id ? <FaCheck className="text-green-400" /> : <IoCopy />}
                                         </button>
                                         {message.sender === 'ai' && !message.isError && (
                                             <>
                                                 <button className="action-btn" aria-label="Like">
                                                     <FaThumbsUp />
-                                                </button>
-                                                <button className="action-btn" aria-label="Dislike">
-                                                    <FaThumbsDown />
                                                 </button>
                                             </>
                                         )}

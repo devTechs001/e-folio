@@ -4,6 +4,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { auth } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 const {
     getRooms,
     createRoom,
@@ -14,14 +15,14 @@ const {
     updateMessage,
     deleteMessage,
     addReaction,
-    // removeReaction,
+    removeReaction,
     searchMessages,
     pinMessage,
-    // unpinMessage,
+    unpinMessage,
     markAsRead,
     getOnlineUsers,
     getDirectMessages,
-    // createDirectMessage,
+    createDirectMessage,
     uploadFile
 } = require('../controllers/chat.controller');
 
@@ -40,11 +41,10 @@ const upload = multer({
     storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|mp3|wav|mp4/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        const allowedExtensions = /jpeg|jpg|png|gif|pdf|doc|docx|txt|mp3|wav|mp4/;
+        const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
         
-        if (extname && mimetype) {
+        if (extname) {
             return cb(null, true);
         }
         cb(new Error('Invalid file type'));
@@ -59,16 +59,16 @@ router.delete('/rooms/:id', auth, deleteRoom);
 router.get('/rooms/:id/messages', auth, getRoomMessages);
 
 // Message routes
-router.post('/messages', auth, sendMessage);
+router.post('/messages', auth, rateLimiter(30), sendMessage);
 router.put('/messages/:id', auth, updateMessage);
 router.delete('/messages/:id', auth, deleteMessage);
 router.post('/messages/:id/read', auth, markAsRead);
 router.post('/messages/:id/pin', auth, pinMessage);
-// router.delete('/messages/:id/pin', auth, unpinMessage); // TODO: Implement unpinMessage
+router.delete('/messages/:id/pin', auth, unpinMessage);
 
 // Reaction routes
 router.post('/messages/:id/reactions', auth, addReaction);
-// router.delete('/messages/:id/reactions/:emoji', auth, removeReaction); // TODO: Implement
+router.delete('/messages/:id/reactions/:emoji', auth, removeReaction);
 
 // Search
 router.get('/search', auth, searchMessages);
@@ -78,7 +78,7 @@ router.get('/users/online', auth, getOnlineUsers);
 
 // Direct messages
 router.get('/direct-messages', auth, getDirectMessages);
-// router.post('/direct-messages', auth, createDirectMessage); // TODO: Implement
+router.post('/direct-messages', auth, createDirectMessage);
 
 // File upload
 router.post('/upload', auth, upload.single('file'), uploadFile);

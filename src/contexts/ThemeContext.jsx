@@ -350,6 +350,13 @@ export const ThemeProvider = ({ children }) => {
         root.style.setProperty('--theme-background', theme.background);
         root.style.setProperty('--theme-text', theme.text);
         
+        // Legacy CSS variable names used by public components (ProjectCard, Projects, etc.)
+        root.style.setProperty('--bgColor', theme.background);
+        root.style.setProperty('--textColor', theme.text);
+        root.style.setProperty('--mainColor', theme.primary);
+        root.style.setProperty('--accentColor', theme.accent);
+        root.style.setProperty('--gradientPrimary', `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`);
+        
     }, [currentTheme, theme]);
 
     const changeTheme = (themeId) => {

@@ -12,9 +12,10 @@ const {
     getStatistics
 } = require('../controllers/netlify-form.controller');
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 
-// Public route for form submission
-router.post('/submit', submitForm);
+// Public route for form submission (rate limited)
+router.post('/submit', rateLimiter(10), submitForm);
 
 // Protected admin routes
 router.use(auth);

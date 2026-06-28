@@ -9,8 +9,36 @@
 /* Mobile-specific positioning */
 @media (max-width: 768px) {
     .chatbot-fab-container {
-        bottom: 90px; /* Adjusted for mobile */
+        bottom: 20px;
         right: 20px;
+    }
+
+    .chatbot-container {
+        width: calc(100vw - 40px);
+        height: calc(100vh - 120px);
+        bottom: 20px;
+        right: 20px;
+        top: auto;
+        left: auto;
+        transform: none;
+        border-radius: 16px;
+    }
+
+    .chatbot-header {
+        border-radius: 16px 16px 0 0;
+    }
+
+    .model-tabs {
+        justify-content: space-between;
+    }
+
+    .model-tab {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    .quick-actions {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -87,24 +115,6 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Mobile-specific container positioning */
-@media (max-width: 768px) {
-    .chatbot-container {
-        width: calc(100vw - 20px); /* More width on mobile */
-        height: calc(100vh - 100px); /* Full height minus safe areas */
-        max-height: none; /* Remove max-height restriction */
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-radius: 16px; /* Slightly smaller radius for mobile */
-    }
-
-    .chatbot-fab {
-        width: 56px; /* Slightly smaller on mobile */
-        height: 56px;
-        font-size: 22px;
-    }
-}
 
 /* Tablet-specific container positioning */
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -546,38 +556,6 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-    .chatbot-fab-container {
-        bottom: 20px;
-        right: 20px;
-    }
-
-    .chatbot-container {
-        width: calc(100vw - 40px);
-        height: calc(100vh - 120px);
-        bottom: 20px;
-        right: 20px;
-        border-radius: 16px;
-    }
-
-    .chatbot-header {
-        border-radius: 16px 16px 0 0;
-    }
-
-    .model-tabs {
-        justify-content: space-between;
-    }
-
-    .model-tab {
-        font-size: 11px;
-        padding: 6px 10px;
-    }
-
-    .quick-actions {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 480px) {
     .chatbot-container {
         width: calc(100vw - 20px);

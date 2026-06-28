@@ -80,11 +80,17 @@ exports.getProjects = asyncHandler(async (req, res) => {
         .select('title description thumbnail technologies category links githubUrl demoUrl tags featured views likes status visibility createdAt')
         .limit(parseInt(limit))
         .lean();
+
+    // Add id field for frontend compatibility (lean queries don't include virtuals)
+    const formatted = projects.map(p => ({
+        ...p,
+        id: p._id.toString()
+    }));
     
     res.json({
         success: true,
-        projects,
-        count: projects.length
+        projects: formatted,
+        count: formatted.length
     });
 });
 

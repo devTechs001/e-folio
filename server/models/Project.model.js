@@ -155,8 +155,6 @@ projectSchema.index({ title: 'text', description: 'text', technologies: 'text' }
 projectSchema.index({ createdAt: -1 });
 projectSchema.index({ updatedAt: -1 });
 projectSchema.index({ featured: -1, createdAt: -1 });
-projectSchema.index({ status: 1 });
-projectSchema.index({ category: 1 });
 projectSchema.index({ priority: 1 });
 projectSchema.index({ currentStage: 1 });
 

@@ -45,7 +45,8 @@ import {
     BookOpen,
     Coffee,
     Sparkles,
-    Upload
+    Upload,
+    X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -189,13 +190,13 @@ const DashboardHome = () => {
                 deviceRes
             ] = await Promise.all([
                 apiService.getDashboardStats(),
-                apiService.getRecentActivity({ limit: 10 }),
-                apiService.getPerformanceData({ days: 7 }),
+                apiService.getRecentActivity(10),
+                apiService.getPerformanceData('7d'),
                 apiService.getUpcomingEvents(),
-                apiService.getTasks({ status: 'pending', limit: 5 }),
-                apiService.getRecentProjects({ limit: 4 }),
-                apiService.getNotifications({ limit: 5 }),
-                apiService.getTopSkills({ limit: 5 }),
+                apiService.getTasks(),
+                apiService.getRecentProjects(4),
+                apiService.getNotifications(5),
+                apiService.getTopSkills(5),
                 apiService.getDeviceStats()
             ]);
 

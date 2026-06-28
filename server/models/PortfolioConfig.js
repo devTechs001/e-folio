@@ -5,8 +5,7 @@ const portfolioConfigSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        unique: true,
-        index: true
+        unique: true
     },
     config: {
         sections: [{
@@ -60,7 +59,6 @@ const portfolioConfigSchema = new mongoose.Schema({
     timestamps: true
 });
 
-portfolioConfigSchema.index({ userId: 1 });
 portfolioConfigSchema.index({ isPublished: 1 });
 
 module.exports = mongoose.model('PortfolioConfig', portfolioConfigSchema);

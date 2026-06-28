@@ -14,13 +14,14 @@ const {
     exportAnalytics
 } = require('../controllers/tracking.controller');
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const { trackingLimiter } = require('../middleware/rateLimitMiddleware');
 
-// Public routes
-router.post('/session', initSession);
-router.post('/pageview', trackPageView);
-router.post('/event', trackEvent);
-router.post('/session/end', endSession);
-router.post('/review', trackEvent); // Reuse trackEvent for review submission
+// Public routes (rate limited)
+router.post('/session', trackingLimiter, initSession);
+router.post('/pageview', trackingLimiter, trackPageView);
+router.post('/event', trackingLimiter, trackEvent);
+router.post('/session/end', trackingLimiter, endSession);
+router.post('/review', trackingLimiter, trackEvent); // Reuse trackEvent for review submission
 
 // Protected routes (owner only)
 router.use(auth);

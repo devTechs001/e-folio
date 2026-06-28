@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const reviewsController = require('../controllers/reviews.controller');
 const { auth } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 
 // File upload configuration
 const storage = multer.diskStorage({
@@ -37,8 +38,8 @@ router.route('/')
     .get(reviewsController.getReviews)
     .post(auth, reviewsController.createReview);
 
-// Public review submission (no auth required)
-router.post('/submit', reviewsController.createReview);
+// Public review submission (no auth required, rate limited)
+router.post('/submit', rateLimiter(5), reviewsController.createReview);
 
 // Public reviews endpoint (no auth required)
 router.get('/public', reviewsController.getPublicReviews);
@@ -47,7 +48,7 @@ router.route('/featured')
     .get(reviewsController.getFeaturedReviews);
 
 router.route('/analytics')
-    .get(reviewsController.getReviewAnalytics);
+    .get(auth, reviewsController.getReviewAnalytics);
 
 router.route('/:id')
     .get(reviewsController.getReviewById)
@@ -98,8 +99,7 @@ router.post('/upload-attachment', upload.single('file'), (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Upload failed',
-            error: error.message
+            message: 'Upload failed'
         });
     }
 });

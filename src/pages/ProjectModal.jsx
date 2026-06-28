@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { Edit3, Save, X, ExternalLink, Github, Calendar, Tag, Users, Star, MapPin, Heart, Share2, Bookmark, ThumbsUp, Eye } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../components/NotificationSystem';
+import apiService from '../services/api.service';
 import '../styles/ProjectModal.css';
 
-const ProjectModal = ({ project, onClose, onImageClick }) => {
+const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
+    const { user } = useAuth();
+    const { success, error } = useNotifications();
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isClosing, setIsClosing] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        title: project.title || '',
+        description: project.description || '',
+        fullDescription: project.fullDescription || '',
+        technologies: project.technologies || [],
+        status: project.status || 'development',
+        featured: project.featured || false,
+        links: project.links || {},
+        tags: project.tags || [],
+        githubUrl: project.githubUrl || '',
+        liveUrl: project.liveUrl || ''
+    });
+    const [saving, setSaving] = useState(false);
 
     // Return null if no project is provided
     if (!project) {
@@ -48,6 +68,103 @@ const ProjectModal = ({ project, onClose, onImageClick }) => {
         setActiveImageIndex((prev) => 
             prev === 0 ? (project.images?.length || 1) - 1 : prev - 1
         );
+    };
+
+    const handleEdit = () => {
+        setIsEditing(true);
+        setEditForm({
+            title: project.title || '',
+            description: project.description || '',
+            fullDescription: project.fullDescription || '',
+            technologies: project.technologies || [],
+            status: project.status || 'development',
+            featured: project.featured || false,
+            links: project.links || {},
+            tags: project.tags || [],
+            githubUrl: project.githubUrl || '',
+            liveUrl: project.liveUrl || ''
+        });
+    };
+
+    const handleSave = async () => {
+        if (!editForm.title.trim()) {
+            error('Title is required');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            const response = await apiService.updateProject(project.id, editForm);
+            
+            // Update the project in the parent component
+            if (onProjectUpdate) {
+                onProjectUpdate(response.project);
+            }
+            
+            success('Project updated successfully!');
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Error saving project:', err);
+            error(err.response?.data?.message || 'Failed to save project');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+        setEditForm({
+            title: project.title || '',
+            description: project.description || '',
+            fullDescription: project.fullDescription || '',
+            technologies: project.technologies || [],
+            status: project.status || 'development',
+            featured: project.featured || false,
+            links: project.links || {},
+            tags: project.tags || [],
+            githubUrl: project.githubUrl || '',
+            liveUrl: project.liveUrl || ''
+        });
+    };
+
+    const handleLike = async () => {
+        try {
+            await apiService.likeProject(project.id);
+            success('Project liked!');
+            if (onProjectUpdate) {
+                onProjectUpdate({ ...project, likes: (project.likes || 0) + 1 });
+            }
+        } catch (err) {
+            console.error('Error liking project:', err);
+        }
+    };
+
+    const handleBookmark = async () => {
+        try {
+            await apiService.toggleFavoriteProject(project.id);
+            success('Project bookmarked!');
+        } catch (err) {
+            console.error('Error bookmarking project:', err);
+        }
+    };
+
+    const handleShare = async () => {
+        try {
+            const shareData = {
+                title: project.title,
+                text: project.description,
+                url: `${window.location.origin}/projects/${project.id}`
+            };
+            
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                success('Project link copied to clipboard!');
+            }
+        } catch (err) {
+            console.error('Error sharing project:', err);
+        }
     };
 
     return (
@@ -182,16 +299,117 @@ const ProjectModal = ({ project, onClose, onImageClick }) => {
                             )}
                         </div>
 
-                        {/* Description */}
-                        <div className="modal-section">
-                            <h3 className="section-title">
-                                <i className="fa-solid fa-align-left"></i>
-                                Description
-                            </h3>
-                            <p className="section-content">
-                                {project.fullDescription || project.description}
-                            </p>
-                        </div>
+                        {/* Edit Form - Only show when editing */}
+                        {isEditing && (
+                            <div className="edit-form">
+                                <div className="form-group">
+                                    <label>Project Title</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.title}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                                        className="form-input"
+                                        placeholder="Enter project title"
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Short Description</label>
+                                    <textarea
+                                        value={editForm.description}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                                        className="form-textarea"
+                                        placeholder="Brief project description"
+                                        rows={3}
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Full Description</label>
+                                    <textarea
+                                        value={editForm.fullDescription}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, fullDescription: e.target.value }))}
+                                        className="form-textarea"
+                                        placeholder="Detailed project description"
+                                        rows={6}
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Technologies (comma-separated)</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.technologies.join(', ')}
+                                        onChange={(e) => setEditForm(prev => ({ 
+                                            ...prev, 
+                                            technologies: e.target.value.split(',').map(t => t.trim()).filter(t => t)
+                                        }))}
+                                        className="form-input"
+                                        placeholder="React, Node.js, MongoDB"
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Status</label>
+                                    <select
+                                        value={editForm.status}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
+                                        className="form-select"
+                                    >
+                                        <option value="development">Development</option>
+                                        <option value="beta">Beta</option>
+                                        <option value="live">Live</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>GitHub URL</label>
+                                    <input
+                                        type="url"
+                                        value={editForm.githubUrl}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, githubUrl: e.target.value }))}
+                                        className="form-input"
+                                        placeholder="https://github.com/username/repo"
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Live Demo URL</label>
+                                    <input
+                                        type="url"
+                                        value={editForm.liveUrl}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, liveUrl: e.target.value }))}
+                                        className="form-input"
+                                        placeholder="https://example.com"
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={editForm.featured}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, featured: e.target.checked }))}
+                                        />
+                                        Featured Project
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Description - Only show when not editing */}
+                        {!isEditing && (
+                            <div className="modal-section">
+                                <h3 className="section-title">
+                                    <i className="fa-solid fa-align-left"></i>
+                                    Description
+                                </h3>
+                                <p className="section-content">
+                                    {project.fullDescription || project.description}
+                                </p>
+                            </div>
+                        )}
 
                         {/* Technologies */}
                         {project.technologies && project.technologies.length > 0 && (
@@ -258,28 +476,100 @@ const ProjectModal = ({ project, onClose, onImageClick }) => {
 
                         {/* Action Buttons */}
                         <div className="modal-actions">
-                            {project.links?.github && (
+                            {/* Edit Button */}
+                            {user?.role === 'owner' && (
+                                <button
+                                    onClick={isEditing ? handleSave : handleEdit}
+                                    className="modal-btn modal-btn-edit"
+                                    disabled={saving}
+                                >
+                                    {isEditing ? (
+                                        <>
+                                            <Save size={16} />
+                                            <span>{saving ? 'Saving...' : 'Save'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Edit3 size={16} />
+                                            <span>Edit Project</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                            
+                            {isEditing && user?.role === 'owner' && (
+                                <button
+                                    onClick={handleCancel}
+                                    className="modal-btn modal-btn-cancel"
+                                >
+                                    <X size={16} />
+                                    <span>Cancel</span>
+                                </button>
+                            )}
+                            
+                            {/* GitHub Link */}
+                            {(project.links?.github || project.githubUrl) && (
                                 <a
-                                    href={project.links.github}
+                                    href={project.links?.github || project.githubUrl}
                                     className="modal-btn modal-btn-github"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={() => apiService.shareProject(project.id, 'github')}
                                 >
-                                    <i className="fa-brands fa-github"></i>
+                                    <Github size={16} />
                                     <span>View Source Code</span>
                                 </a>
                             )}
-                            {project.links?.live && (
+                            
+                            {/* Live Demo */}
+                            {(project.links?.live || project.liveUrl) && (
                                 <a
-                                    href={project.links.live}
+                                    href={project.links?.live || project.liveUrl}
                                     className="modal-btn modal-btn-demo"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={() => apiService.shareProject(project.id, 'demo')}
                                 >
-                                    <i className="fa-solid fa-external-link-alt"></i>
+                                    <ExternalLink size={16} />
                                     <span>Live Demo</span>
                                 </a>
                             )}
+                            
+                            {/* Like Button */}
+                            <button
+                                onClick={handleLike}
+                                className="modal-btn modal-btn-like"
+                            >
+                                <Heart size={16} />
+                                <span>Like ({project.likes || 0})</span>
+                            </button>
+                            
+                            {/* Bookmark Button */}
+                            <button
+                                onClick={handleBookmark}
+                                className="modal-btn modal-btn-bookmark"
+                            >
+                                <Bookmark size={16} />
+                                <span>Bookmark</span>
+                            </button>
+                            
+                            {/* Share Button */}
+                            <button
+                                onClick={handleShare}
+                                className="modal-btn modal-btn-share"
+                            >
+                                <Share2 size={16} />
+                                <span>Share</span>
+                            </button>
+                            
+                            {/* View Stats */}
+                            <button
+                                onClick={() => apiService.viewProject(project.id)}
+                                className="modal-btn modal-btn-views"
+                            >
+                                <Eye size={16} />
+                                <span>Views ({project.views || 0})</span>
+                            </button>
                         </div>
 
                         {/* Project Info */}

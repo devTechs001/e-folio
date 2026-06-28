@@ -94,6 +94,10 @@ const Profile = lazy(() => import('../components/dashboard/Profile').catch(err =
     console.error('Failed to load Profile:', err);
     return { default: () => <div>Error loading Profile</div> };
 }));
+const HobbiesManager = lazy(() => import('../components/dashboard/HobbiesManager').catch(err => {
+    console.error('Failed to load HobbiesManager:', err);
+    return { default: () => <div>Error loading Hobbies Manager</div> };
+}));
 
 // Wrapper components to avoid primitive value error
 const LazyDashboardHome = () => {
@@ -273,6 +277,15 @@ const LazyProfile = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>}>
             <Profile />
+        </Suspense>
+    );
+};
+const LazyHobbiesManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <HobbiesManager />
         </Suspense>
     );
 };
@@ -487,6 +500,16 @@ const DashboardContent = () => {
             description: 'Tutorials and learning resources'
         },
         {
+            path: '/dashboard/hobbies',
+            icon: 'fas fa-heart',
+            label: 'Hobbies & Interests',
+            component: LazyHobbiesManager,
+            roles: ['owner'],
+            badge: 'New',
+            category: 'Content',
+            description: 'Manage your hobbies and interests'
+        },
+        {
             path: '/dashboard/profile',
             icon: 'fas fa-user',
             label: 'Profile',
@@ -606,10 +629,11 @@ const DashboardContent = () => {
             />
 
             {/* Main Content Area */}
-            <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+            <div className={`flex-1 flex flex-col h-screen transition-all duration-300 ${
                 sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[280px]'
             }`}>
                 {/* Top Navbar */}
+                <div className="sticky top-0 z-30">
                 <DashboardTopNavbar
                     onToggleSidebar={handleSidebarToggle}
                     onToggleMobileMenu={handleMobileMenuToggle}
@@ -620,9 +644,10 @@ const DashboardContent = () => {
                     showBreadcrumbs={true}
                     showSearch={true}
                 />
+                </div>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-hidden">
+                <main className="flex-1 overflow-y-auto">
                     <Routes location={location} key={location.pathname}>
                             {flatMenuItems.map((item, index) => {
                                 const Component = item.component;

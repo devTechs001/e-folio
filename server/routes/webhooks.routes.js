@@ -10,7 +10,7 @@ const {
     deleteWebhook,
     testWebhook
 } = require('../controllers/webhooks.controller');
-const { auth: protect } = require('../middleware/auth.middleware');
+const { auth: protect, isOwner } = require('../middleware/auth.middleware');
 
 // Validation rules
 const webhookValidation = [
@@ -20,8 +20,9 @@ const webhookValidation = [
     body('secret').optional().isLength({ min: 8 }).withMessage('Secret must be at least 8 characters')
 ];
 
-// All routes require authentication
+// All routes require authentication and owner privileges
 router.use(protect);
+router.use(isOwner);
 
 // Main routes
 router.route('/')

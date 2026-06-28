@@ -58,7 +58,6 @@ const inviteSchema = new mongoose.Schema({
 });
 
 // Index for faster lookups
-inviteSchema.index({ token: 1 });
 inviteSchema.index({ email: 1, status: 1 });
 inviteSchema.index({ expiresAt: 1 });
 

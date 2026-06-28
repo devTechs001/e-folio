@@ -11,10 +11,18 @@ const {
     bulkDeleteProjects,
     getAnalytics,
     uploadImage,
-    syncGitHubMetrics
+    syncGitHubMetrics,
+    likeProject,
+    unlikeProject,
+    viewProject,
+    shareProject,
+    getProjectStats,
+    toggleFavoriteProject,
+    getFavoriteProjects
 } = require('../controllers/projectController');
-const { auth: protect } = require('../middleware/auth.middleware');
+const { auth: protect, isOwner } = require('../middleware/auth.middleware');
 const { upload } = require('../middleware/uploadMiddleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 
 // Validation rules
 const projectValidation = [
@@ -60,17 +68,28 @@ router.use(protect);
 // Main routes
 router.route('/')
     .get(getProjects)
-    .post(projectValidation, createProject);
+    .post(isOwner, projectValidation, createProject);
 
 router.get('/analytics', getAnalytics);
-router.post('/bulk-delete', bulkDeleteProjects);
+router.post('/bulk-delete', isOwner, bulkDeleteProjects);
+router.get('/favorites', getFavoriteProjects);
 
 router.route('/:id')
     .get(getProject)
-    .put(projectValidation, updateProject)
-    .delete(deleteProject);
+    .put(isOwner, projectValidation, updateProject)
+    .delete(isOwner, deleteProject);
 
-router.post('/:id/images', upload.single('image'), uploadImage);
-router.post('/:id/sync-github', syncGitHubMetrics);
+// Project interactions (public access for portfolio visitors, rate limited)
+router.post('/:id/like', rateLimiter(30), likeProject);
+router.post('/:id/unlike', rateLimiter(30), unlikeProject);
+router.post('/:id/view', rateLimiter(60), viewProject);
+router.post('/:id/share', rateLimiter(20), shareProject);
+router.get('/:id/stats', rateLimiter(30), getProjectStats);
+
+// Favorites (authenticated user)
+router.post('/:id/favorite', toggleFavoriteProject);
+
+router.post('/:id/images', isOwner, upload.single('image'), uploadImage);
+router.post('/:id/sync-github', isOwner, syncGitHubMetrics);
 
 module.exports = router;

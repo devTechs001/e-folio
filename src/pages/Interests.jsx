@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import apiService from '../services/api.service';
 import '../styles/Interests.css';
 
@@ -7,6 +7,7 @@ const Interests = () => {
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('all');
     const [hoveredIndex, setHoveredIndex] = useState(null);
+    const cardRefs = useRef([]);
 
     useEffect(() => {
         loadInterests();
@@ -163,6 +164,26 @@ const Interests = () => {
         }
     ];
 
+    // 3D tilt effect handler
+    const handleMouseMove = (e, index) => {
+        const card = cardRefs.current[index];
+        if (!card) return;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -10;
+        const rotateY = ((x - centerX) / centerX) * 10;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-15px) scale(1.02)`;
+    };
+
+    const handleMouseLeave = (index) => {
+        const card = cardRefs.current[index];
+        if (!card) return;
+        card.style.transform = '';
+    };
+
     // Get unique categories
     const categories = ['all', ...new Set(interests.map(int => int.category).filter(Boolean))];
 
@@ -273,16 +294,34 @@ const Interests = () => {
                             data-aos="fade-up"
                             data-aos-delay={index * 50}
                             onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
+                            onMouseLeave={() => { setHoveredIndex(null); handleMouseLeave(index); }}
+                            onMouseMove={(e) => handleMouseMove(e, index)}
                         >
-                            <div className={`interest-card interest-card-${interest.color || 'blue'}`}>
+                            <div
+                                ref={el => cardRefs.current[index] = el}
+                                className={`interest-card interest-card-${interest.color || 'blue'}`}
+                            >
                                 {/* Shine Effect */}
                                 <div className="card-shine"></div>
+
+                                {/* Hover Particle Burst */}
+                                <div className="hover-particles">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className="hover-particle"></div>
+                                    ))}
+                                </div>
 
                                 {/* Category Badge */}
                                 {interest.category && (
                                     <div className={`interest-badge interest-badge-${interest.color || 'blue'}`}>
                                         {interest.category}
+                                    </div>
+                                )}
+
+                                {/* Level Badge */}
+                                {interest.level >= 90 && (
+                                    <div className="interest-badge interest-badge-top" style={{ top: '1rem', left: '1rem', right: 'auto' }}>
+                                        <i className="fas fa-crown mr-1"></i> Top
                                     </div>
                                 )}
 
@@ -299,7 +338,8 @@ const Interests = () => {
 
                                 {/* Content */}
                                 <div className="card-content">
-                                    <h3 className="text-xl md:text-2xl font-bold text-textColor mb-3 group-hover:text-mainColor transition-colors duration-300">
+                                    <h3 className="text-xl md:text-2xl font-bold text-textColor mb-3 transition-colors duration-300"
+                                        style={{ color: hoveredIndex === index ? `var(--mainColor)` : '' }}>
                                         {interest.title}
                                     </h3>
 
@@ -311,10 +351,11 @@ const Interests = () => {
                                     {interest.level && (
                                         <div className="mb-4">
                                             <div className="flex justify-between items-center mb-2">
-                                                <span className="text-xs text-textColor/60 font-semibold">
+                                                <span className="text-xs text-textColor/60 font-semibold uppercase tracking-wider">
                                                     Proficiency
                                                 </span>
-                                                <span className="text-sm text-mainColor font-bold">
+                                                <span className="text-sm font-bold"
+                                                    style={{ color: `var(--mainColor)` }}>
                                                     {interest.level}%
                                                 </span>
                                             </div>
@@ -337,6 +378,10 @@ const Interests = () => {
                                                 <span
                                                     key={idx}
                                                     className="interest-tag"
+                                                    style={{ 
+                                                        transitionDelay: hoveredIndex === index ? `${idx * 0.05}s` : '0s',
+                                                        transform: hoveredIndex === index ? 'translateY(-2px)' : ''
+                                                    }}
                                                 >
                                                     {tag}
                                                 </span>
@@ -347,14 +392,17 @@ const Interests = () => {
                                     {/* Related Technologies */}
                                     {interest.relatedTech && interest.relatedTech.length > 0 && (
                                         <div className="pt-4 border-t border-mainColor/20">
-                                            <p className="text-xs text-textColor/50 mb-2 font-semibold">
-                                                Related Technologies:
+                                            <p className="text-xs text-textColor/50 mb-2 font-semibold uppercase tracking-wider">
+                                                Tech Stack
                                             </p>
                                             <div className="flex flex-wrap gap-1">
                                                 {interest.relatedTech.map((tech, idx) => (
                                                     <span
                                                         key={idx}
                                                         className="tech-pill"
+                                                        style={{ 
+                                                            transitionDelay: hoveredIndex === index ? `${idx * 0.03}s` : '0s'
+                                                        }}
                                                     >
                                                         {tech}
                                                     </span>
