@@ -1589,11 +1589,11 @@ const AIAssistant = () => {
                 </div>
             }
         >
-            <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-slate-950' : 'flex flex-1 h-[calc(100vh-8rem)] bg-slate-950 shadow-lg rounded-xl border border-slate-700/50 gap-0 overflow-hidden'}`}>
+            <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-slate-950' : 'flex flex-1 h-[calc(100vh-8rem)] h-[calc(100dvh-8rem)] bg-slate-950 shadow-lg rounded-xl border border-slate-700/50 gap-0 overflow-hidden'}`}>
                 {/* Mobile sidebar toggle button */}
                 <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="fixed top-20 left-4 z-[60] sm:hidden p-2.5 bg-slate-800/90 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-lg hover:bg-slate-700 transition-all"
+                    className="fixed top-4 left-4 z-[60] sm:hidden p-2.5 bg-slate-800/90 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-lg hover:bg-slate-700 transition-all"
                     title="Toggle conversation history"
                 >
                     <Menu size={20} className="text-slate-200" />

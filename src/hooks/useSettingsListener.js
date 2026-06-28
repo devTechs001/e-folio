@@ -3,7 +3,15 @@ import { useSocket } from '../contexts/SocketContext';
 
 export const useSettingsListener = () => {
     const [settings, setSettings] = useState(null);
-    const { socket, connected } = useSocket();
+    let socket, connected;
+    try {
+        const ctx = useSocket();
+        socket = ctx.socket;
+        connected = ctx.connected;
+    } catch {
+        socket = null;
+        connected = false;
+    }
 
     useEffect(() => {
         // Listen for window events (for local component communication)

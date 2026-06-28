@@ -125,6 +125,14 @@ const SkillsEditorEnhanced = () => {
         loadSkillGroups();
     }, []);
 
+    const normalizeSkills = (skills) => {
+        let idCounter = Date.now();
+        return skills.map(s => ({
+            ...s,
+            id: s.id || s._id || `fallback_${idCounter++}`
+        }));
+    };
+
     const loadSkills = async () => {
         try {
             setLoading(true);
@@ -132,22 +140,22 @@ const SkillsEditorEnhanced = () => {
             const response = await ApiService.request('/public/skills');
             
             if (response.success && response.skills && response.skills.length > 0) {
-                const skills = response.skills;
+                const skills = normalizeSkills(response.skills);
                 setTechnicalSkills(skills.filter(s => s.type === 'technical'));
                 setProfessionalSkills(skills.filter(s => s.type === 'professional'));
                 markSynced();
             } else {
                 // Use fallback skills if no skills from API
-                const fallbackTechnical = getFallbackTechnicalSkills();
-                const fallbackProfessional = getFallbackProfessionalSkills();
+                const fallbackTechnical = normalizeSkills(getFallbackTechnicalSkills());
+                const fallbackProfessional = normalizeSkills(getFallbackProfessionalSkills());
                 setTechnicalSkills(fallbackTechnical);
                 setProfessionalSkills(fallbackProfessional);
             }
         } catch (err) {
             error('Failed to load skills, using fallback data');
             console.error(err);
-            const fallbackTechnical = getFallbackTechnicalSkills();
-            const fallbackProfessional = getFallbackProfessionalSkills();
+            const fallbackTechnical = normalizeSkills(getFallbackTechnicalSkills());
+            const fallbackProfessional = normalizeSkills(getFallbackProfessionalSkills());
             setTechnicalSkills(fallbackTechnical);
             setProfessionalSkills(fallbackProfessional);
         } finally {
@@ -236,6 +244,11 @@ const SkillsEditorEnhanced = () => {
     };
 
     // CRUD Operations
+    const normalizeSkill = (s) => ({
+        ...s,
+        id: s.id || s._id || `skill_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+    });
+
     const handleAddSkill = async () => {
         if (!newSkill.name.trim()) {
             error('Please enter a skill name');
@@ -244,14 +257,11 @@ const SkillsEditorEnhanced = () => {
 
         try {
             const skillData = { ...newSkill, type: activeTab };
-            console.log('Adding skill with data:', skillData);
             
             const response = await ApiService.addSkill(skillData);
-            console.log('Add skill response:', response);
             
             // Handle different response structures
-            const addedSkill = response.skill || response.data || skillData;
-            console.log('Added skill:', addedSkill);
+            const addedSkill = normalizeSkill(response.skill || response.data || skillData);
             
             if (activeTab === 'technical') {
                 setTechnicalSkills([...technicalSkills, addedSkill]);
@@ -331,13 +341,14 @@ const SkillsEditorEnhanced = () => {
                 ...skill,
                 name: `${skill.name} (Copy)`,
                 id: undefined,
+                _id: undefined,
                 createdAt: undefined
             };
             
             const response = await ApiService.addSkill(duplicated);
             
             // Handle different response structures
-            const addedSkill = response.skill || response.data || duplicated;
+            const addedSkill = normalizeSkill(response.skill || response.data || duplicated);
             
             if (activeTab === 'technical') {
                 setTechnicalSkills([...technicalSkills, addedSkill]);

@@ -6,7 +6,7 @@ import {
     Pin, Check, CheckCheck, Download, Plus, Settings,
     UserPlus, Hash, Lock, Bell, BellOff, Mic, Camera,
     ChevronDown, AtSign, ThumbsUp, Heart, Laugh, AlertCircle,
-    MessageSquare
+    MessageSquare, Reply
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -146,51 +146,53 @@ const ChatSystem = () => {
     }, [connected, activeRoom, user, notificationsEnabled]);
 
     // API Functions
-    const fetchRooms = async () => {
+    const chatApiFetch = async (url, options = {}) => {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
         try {
-            const response = await fetch('/api/chat/rooms', {
+            const response = await fetch(url, {
+                ...options,
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    ...options.headers
                 }
             });
-            const data = await response.json();
-            if (data.success) {
-                setRooms(data.rooms);
+            if (!response.ok) {
+                console.warn(`Chat API ${url} returned ${response.status}`);
+                return null;
             }
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {
+                console.warn(`Chat API ${url} returned HTML`);
+                return null;
+            }
+            const data = await response.json();
+            return data;
         } catch (error) {
-            showError('Failed to fetch rooms');
+            console.warn(`Chat API ${url} failed:`, error.message);
+            return null;
+        }
+    };
+
+    const fetchRooms = async () => {
+        const data = await chatApiFetch('/api/chat/rooms');
+        if (data && data.success) {
+            setRooms(data.rooms);
         }
     };
 
     const fetchOnlineUsers = async () => {
-        try {
-            const response = await fetch('/api/chat/users/online', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                setOnlineUsers(data.users);
-            }
-        } catch (error) {
-            showError('Failed to fetch online users');
+        const data = await chatApiFetch('/api/chat/users/online');
+        if (data && data.success) {
+            setOnlineUsers(data.users);
         }
     };
 
     const fetchDirectMessages = async () => {
-        try {
-            const response = await fetch('/api/chat/direct-messages', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                setDirectMessages(data.conversations);
-            }
-        } catch (error) {
-            showError('Failed to fetch direct messages');
+        const data = await chatApiFetch('/api/chat/direct-messages');
+        if (data && data.success) {
+            setDirectMessages(data.conversations);
         }
     };
 
@@ -201,107 +203,52 @@ const ChatSystem = () => {
         }
         
         setIsSearching(true);
-        try {
-            const response = await fetch(`/api/chat/search?q=${encodeURIComponent(query)}&room=${activeRoom}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                setSearchResults(data.results);
-            }
-        } catch (error) {
-            showError('Search failed');
-        } finally {
-            setIsSearching(false);
+        const data = await chatApiFetch(`/api/chat/search?q=${encodeURIComponent(query)}&room=${activeRoom}`);
+        if (data && data.success) {
+            setSearchResults(data.results);
         }
+        setIsSearching(false);
     };
 
     const markMessageAsRead = async (messageId) => {
-        try {
-            await fetch(`/api/chat/messages/${messageId}/read`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-        } catch (error) {
-            console.error('Failed to mark message as read');
-        }
+        await chatApiFetch(`/api/chat/messages/${messageId}/read`, { method: 'POST' });
     };
 
     const createRoom = async (roomData) => {
-        try {
-            const response = await fetch('/api/chat/rooms', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(roomData)
-            });
-            const data = await response.json();
-            if (data.success) {
-                setRooms(prev => [...prev, data.room]);
-                success('Room created successfully');
-                setShowCreateRoom(false);
-            }
-        } catch (error) {
-            showError('Failed to create room');
+        const data = await chatApiFetch('/api/chat/rooms', {
+            method: 'POST',
+            body: JSON.stringify(roomData)
+        });
+        if (data && data.success) {
+            setRooms(prev => [...prev, data.room]);
+            success('Room created successfully');
+            setShowCreateRoom(false);
         }
     };
 
     const deleteMessage = async (messageId) => {
-        try {
-            const response = await fetch(`/api/chat/messages/${messageId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                success('Message deleted');
-            }
-        } catch (error) {
-            showError('Failed to delete message');
+        const data = await chatApiFetch(`/api/chat/messages/${messageId}`, { method: 'DELETE' });
+        if (data && data.success) {
+            success('Message deleted');
         }
     };
 
     const updateMessage = async (messageId, content) => {
-        try {
-            const response = await fetch(`/api/chat/messages/${messageId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ content })
-            });
-            const data = await response.json();
-            if (data.success) {
-                success('Message updated');
-                setEditingMessage(null);
-            }
-        } catch (error) {
-            showError('Failed to update message');
+        const data = await chatApiFetch(`/api/chat/messages/${messageId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ content })
+        });
+        if (data && data.success) {
+            success('Message updated');
+            setEditingMessage(null);
         }
     };
 
     const addReaction = async (messageId, emoji) => {
-        try {
-            await fetch(`/api/chat/messages/${messageId}/reactions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ emoji })
-            });
-        } catch (error) {
-            showError('Failed to add reaction');
-        }
+        await chatApiFetch(`/api/chat/messages/${messageId}/reactions`, {
+            method: 'POST',
+            body: JSON.stringify({ emoji })
+        });
     };
 
     const uploadFile = async (file) => {
@@ -309,18 +256,21 @@ const ChatSystem = () => {
         formData.append('file', file);
         formData.append('room', activeRoom);
 
+        const token = localStorage.getItem('token');
+        if (!token) return null;
         try {
             const response = await fetch('/api/chat/upload', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: formData
             });
+            if (!response.ok) return null;
             const data = await response.json();
             return data.fileUrl;
         } catch (error) {
-            showError('File upload failed');
+            console.warn('File upload failed:', error.message);
             return null;
         }
     };
@@ -482,7 +432,7 @@ const ChatSystem = () => {
 
     return (
         <DashboardLayout title="Chat System" subtitle="Collaborate with your team in real-time">
-            <div className="flex flex-col md:flex-row flex-1 h-[calc(100vh-8rem)] bg-slate-950">
+            <div className="flex flex-col md:flex-row flex-1 h-[calc(100vh-8rem)] h-[calc(100dvh-8rem)] bg-slate-950">
                 {/* Mobile Tab Bar */}
                 <div className="flex border-b border-slate-700/50 md:hidden">
                     <button
@@ -807,10 +757,10 @@ const ChatSystem = () => {
                                                 )}
 
                                                 {/* Message Actions */}
-                                                <div className={`absolute ${msg.isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity flex gap-1 px-2`}>
+                                                <div className={`flex mt-2 gap-1 ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
                                                     <button
                                                         onClick={() => setReplyingTo(msg)}
-                                                        className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                        className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
                                                         title="Reply"
                                                     >
                                                         <Reply size={14} />
@@ -822,14 +772,14 @@ const ChatSystem = () => {
                                                                     setEditingMessage(msg);
                                                                     setNewMessage(msg.message);
                                                                 }}
-                                                                className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                                className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
                                                                 title="Edit"
                                                             >
                                                                 <Edit2 size={14} />
                                                             </button>
                                                             <button
                                                                 onClick={() => deleteMessage(msg.id)}
-                                                                className="p-1 rounded bg-red-600 hover:bg-red-500 text-white focus:outline-none focus:ring-2 focus:ring-red-400"
+                                                                className="p-1.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
                                                                 title="Delete"
                                                             >
                                                                 <Trash2 size={14} />
@@ -838,7 +788,7 @@ const ChatSystem = () => {
                                                     )}
                                                     <button
                                                         onClick={() => addReaction(msg.id, '👍')}
-                                                        className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                        className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
                                                         title="React"
                                                     >
                                                         <Smile size={14} />
