@@ -56,17 +56,6 @@ class KeyRotator {
     this.primaryDead = false;
     this.currentFallbackIndex = -1;
     process.env.OPENAI_API_KEY = key;
-    try {
-      let env = fs.readFileSync(ENV_PATH, 'utf8');
-      if (/^OPENAI_API_KEY=/m.test(env)) {
-        env = env.replace(/^OPENAI_API_KEY=.*/m, `OPENAI_API_KEY=${key}`);
-      } else {
-        env += `\nOPENAI_API_KEY=${key}\n`;
-      }
-      fs.writeFileSync(ENV_PATH, env, 'utf8');
-    } catch (e) {
-      // non-critical
-    }
     if (model) console.log(`🔑 Rotated to ${model}`);
   }
 
@@ -197,7 +186,7 @@ class KeyRotator {
               : { 'Content-Type': 'application/json' },
             timeout: 15000
           });
-          if (testRes.status === 200) {
+          if (testRes.status >= 200 && testRes.status < 300) {
             this.currentFallbackIndex = i;
             console.log(`🔄 Switched to fallback endpoint: ${ep.url}`);
             this.isRotating = false;

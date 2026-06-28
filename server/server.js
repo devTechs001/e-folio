@@ -7,12 +7,21 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 
+// Prevent unhandled rejections from crashing the server
+process.on('unhandledRejection', (reason) => {
+    console.warn('⚠️ Unhandled Rejection:', reason?.message || reason);
+});
+process.on('uncaughtException', (err) => {
+    console.warn('⚠️ Uncaught Exception:', err?.message || err);
+});
+
 // Load environment variables
 dotenv.config();
 
 // Import handlers
 const chatHandler = require('./socket/chat.handler.enhanced');
 const connectDB = require('./config/database');
+const keyRotator = require('./services/keyRotator.service');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -178,12 +187,21 @@ connectDB().then(() => {
         console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
         console.log(`💾 Database: ${process.env.MONGODB_URI ? 'Atlas/Local (with fallback)' : 'Local Only'}`);
         console.log(`🔌 Socket.io: Ready`);
+        keyRotator.start();
+        console.log(`🔑 Free LLM API key rotator started (checking every 30 min)`);
         console.log('=====================================\n');
     });
 });
 
 process.on('SIGTERM', () => {
     console.log('Server closed');
+    server.close(() => {
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('Server shutting down');
     server.close(() => {
         process.exit(0);
     });
