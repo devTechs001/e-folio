@@ -231,10 +231,10 @@ const AIChatbot = () => {
       "I appreciate your curiosity! I've worked on many interesting projects and learned a lot along the way. What aspect would you like to dive into?"
     ],
     personal: [
-      `Hey${userName ? ' ' + userName : ''}! I'm Daniel Mukula, also known as Dev. I'm a full-stack developer passionate about building modern web applications and solving real-world problems. Want to know about my skills, projects, or what I do for fun?`,
-      `I'm Daniel Mukula (Dev for short) — a developer who loves creating things for the web. I work with React, Node.js, Python, and various other technologies. Ask me about my journey, skills, or what inspires me!`,
-      `My name is Daniel Mukula, and I go by Dev online. I've been building web applications and exploring new technologies. Feel free to ask about my experience, education, or interests — I'm an open book!`,
-      `Dev here! I'm a developer focused on full-stack web development with a love for clean code and great user experiences. I'm always learning and building. What would you like to know about me?`
+      `Hey${userName ? ' ' + userName : ''}! I'm Dev Techs — a full-stack developer passionate about building modern web applications and solving real-world problems. Want to know about my skills, projects, or what I do for fun?`,
+      `I'm Dev Techs, a developer who loves creating things for the web. I work with React, Node.js, Python, and various other technologies. Ask me about my journey, skills, or what inspires me!`,
+      `My name is Dev Techs (Daniel Mukula for formal introductions). I've been building web applications and exploring new technologies. Feel free to ask about my experience, education, or interests — I'm an open book!`,
+      `Dev Techs here! I'm a developer focused on full-stack web development with a love for clean code and great user experiences. I'm always learning and building. What would you like to know about me?`
     ],
     education: [
       "I've studied and trained in software development, focusing on modern web technologies. I believe in continuous learning and staying up to date with the latest tools and practices. Want to know about specific courses or certifications?",

@@ -196,7 +196,7 @@ const About = () => {
 
                         {/* Main Heading */}
                         <h1 className="main-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-textColor mb-4 leading-tight">
-                            {profileData.name ? profileData.name.split(' ')[0] : 'Danie'} <span className="gradient-text-animated">{profileData.name ? profileData.name.split(' ')[1] || 'Tech' : 'Tech'}</span>
+                            {profileData.name ? profileData.name.split(' ')[0] : 'Dev'} <span className="gradient-text-animated">{profileData.name ? profileData.name.split(' ')[1] || 'Techs' : 'Techs'}</span>
                         </h1>
 
                         {/* Typed Text */}

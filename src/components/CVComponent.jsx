@@ -12,7 +12,7 @@ const CVComponent = () => {
     const [isGenerating, setIsGenerating] = useState(false);
 
     const personalInfo = {
-        name: "Daniel Mukula",
+        name: "Dev Techs",
         title: "Full Stack Developer & AI Engineer",
         email: "devtechs842@gmail.com",
         phone: "+254 758 175 275",
