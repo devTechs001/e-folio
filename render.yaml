@@ -16,7 +16,15 @@ services:
       - key: CLIENT_URL
         value: https://e-folio-pro.netlify.app
       - key: MONGODB_URI
-        
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        value: AIzaSyA7IS5Auefu-2Y2L3P2ooEfNTGbD8LpYn8
+      - key: GOOGLE_API_KEY
+        value: AIzaSyA7IS5Auefu-2Y2L3P2ooEfNTGbD8LpYn8
 
 # ============================================
 # DEPLOYMENT NOTES
