@@ -103,11 +103,13 @@ const CVComponent = () => {
             const element = cvRef.current;
             const canvas = await html2canvas(element, {
                 scale: 2,
-                useCORS: true,
+                useCORS: false,
                 backgroundColor: '#ffffff',
                 logging: false,
                 width: element.scrollWidth,
-                height: element.scrollHeight
+                height: element.scrollHeight,
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight
             });
             
             const link = document.createElement('a');
@@ -119,6 +121,151 @@ const CVComponent = () => {
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    const downloadAsHtml = () => {
+        const inlineCss = `
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; background: #fff; line-height: 1.6; }
+            .cv-print { max-width: 900px; margin: 0 auto; padding: 40px; }
+            .cv-header { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; padding: 40px; border-radius: 12px 12px 0 0; }
+            .profile-section { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
+            .profile-avatar { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; }
+            .profile-info h1 { font-size: 28px; margin-bottom: 4px; }
+            .profile-info h2 { font-size: 16px; opacity: 0.9; font-weight: 400; margin-bottom: 8px; }
+            .profile-info .bio { font-size: 13px; opacity: 0.85; line-height: 1.5; }
+            .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
+            .contact-item { display: flex; align-items: center; gap: 8px; opacity: 0.9; }
+            .cv-main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; padding: 30px; background: #fff; }
+            .cv-section { margin-bottom: 28px; }
+            .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #2563eb; }
+            .section-header h3 { font-size: 18px; color: #2563eb; }
+            .experience-item, .project-item, .education-item { margin-bottom: 20px; }
+            .exp-header, .project-header, .edu-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+            .exp-title h4, .project-header h4, .edu-header h4 { font-size: 16px; color: #1e293b; }
+            .company, .institution { font-size: 13px; color: #64748b; display: block; }
+            .exp-meta, .edu-meta { text-align: right; font-size: 12px; color: #94a3b8; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+            .responsibilities, .achievements { list-style: none; padding: 0; }
+            .responsibilities li, .achievements li { font-size: 13px; color: #475569; padding: 3px 0 3px 20px; position: relative; }
+            .responsibilities li::before, .achievements li::before { content: '\\2022'; position: absolute; left: 4px; color: #2563eb; }
+            .technologies { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+            .tech-tag { font-size: 11px; background: #eef2ff; color: #4338ca; padding: 3px 10px; border-radius: 12px; }
+            .skills-grid { display: flex; flex-direction: column; gap: 16px; }
+            .skill-category h4 { font-size: 13px; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .skill-list { display: flex; flex-wrap: wrap; gap: 6px; }
+            .skill-item { font-size: 12px; background: #f8fafc; color: #334155; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+            .project-description { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+            .project-highlights { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+            .highlight-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #475569; }
+            .achievement-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #475569; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        `;
+
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${personalInfo.name} - CV</title>
+<style>${inlineCss}</style>
+</head>
+<body>
+<div class="cv-print">
+    <div class="cv-header">
+        <div class="profile-section">
+            <div class="profile-avatar">${personalInfo.name.charAt(0)}</div>
+            <div class="profile-info">
+                <h1>${personalInfo.name}</h1>
+                <h2>${personalInfo.title}</h2>
+                <p class="bio">${personalInfo.bio}</p>
+            </div>
+        </div>
+        <div class="contact-grid">
+            <div class="contact-item">${personalInfo.email}</div>
+            <div class="contact-item">${personalInfo.phone}</div>
+            <div class="contact-item">${personalInfo.location}</div>
+            <div class="contact-item">${personalInfo.website}</div>
+            <div class="contact-item">${personalInfo.github}</div>
+            <div class="contact-item">${personalInfo.linkedin}</div>
+        </div>
+    </div>
+    <div class="cv-main">
+        <div class="left-column">
+            <div class="cv-section">
+                <div class="section-header"><h3>Professional Experience</h3></div>
+                ${experience.map(exp => `
+                <div class="experience-item">
+                    <div class="exp-header">
+                        <div class="exp-title">
+                            <h4>${exp.title}</h4>
+                            <span class="company">${exp.company}</span>
+                        </div>
+                        <div class="exp-meta">
+                            <span>${exp.period}</span>
+                            <span>${exp.location}</span>
+                        </div>
+                    </div>
+                    <ul class="responsibilities">
+                        ${exp.responsibilities.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                    <div class="technologies">${exp.technologies.map(t => `<span class="tech-tag">${t}</span>`).join('')}</div>
+                </div>`).join('')}
+            </div>
+            <div class="cv-section">
+                <div class="section-header"><h3>Featured Projects</h3></div>
+                ${projects.map(p => `
+                <div class="project-item">
+                    <div class="project-header">
+                        <h4>${p.name}</h4>
+                    </div>
+                    <p class="project-description">${p.description}</p>
+                    <div class="project-highlights">${p.highlights.map(h => `<span class="highlight-item">${h}</span>`).join('')}</div>
+                    <div class="technologies">${p.technologies.map(t => `<span class="tech-tag">${t}</span>`).join('')}</div>
+                </div>`).join('')}
+            </div>
+        </div>
+        <div class="right-column">
+            <div class="cv-section">
+                <div class="section-header"><h3>Technical Skills</h3></div>
+                <div class="skills-grid">
+                    ${Object.entries(skills).map(([cat, list]) => `
+                    <div class="skill-category">
+                        <h4>${cat}</h4>
+                        <div class="skill-list">${list.map(s => `<span class="skill-item">${s}</span>`).join('')}</div>
+                    </div>`).join('')}
+                </div>
+            </div>
+            <div class="cv-section">
+                <div class="section-header"><h3>Education</h3></div>
+                ${education.map(edu => `
+                <div class="education-item">
+                    <div class="edu-header">
+                        <h4>${edu.degree}</h4>
+                        <span class="institution">${edu.institution}</span>
+                    </div>
+                    <div class="edu-meta">
+                        <span>${edu.period}</span>
+                        <span>${edu.location}</span>
+                    </div>
+                    <ul class="achievements">${edu.achievements.map(a => `<li>${a}</li>`).join('')}</ul>
+                </div>`).join('')}
+            </div>
+            <div class="cv-section">
+                <div class="section-header"><h3>Achievements</h3></div>
+                ${achievements.map(a => `<div class="achievement-item">${a}</div>`).join('')}
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>`;
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const link = document.createElement('a');
+        link.download = `${personalInfo.name.replace(' ', '_')}_CV.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
     };
 
     return (
@@ -140,6 +287,13 @@ const CVComponent = () => {
                             Download as Image
                         </>
                     )}
+                </button>
+                <button 
+                    onClick={downloadAsHtml}
+                    className="download-btn html-btn"
+                >
+                    <FileText size={20} />
+                    Download as HTML
                 </button>
             </div>
 

@@ -11,7 +11,18 @@
 .cv-actions {
     display: flex;
     justify-content: center;
+    gap: 12px;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.html-btn {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+}
+
+.html-btn:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.6);
 }
 
 .download-btn {
