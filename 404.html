@@ -5,8 +5,12 @@
   <title>Page Not Found</title>
   <script type="text/javascript">
     // redirect to the SPA route if not on a static asset
-    if (window.location.pathname !== '/' && !window.location.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico)$/)) {
-      window.location.pathname = '/';
+    // Handle GitHub Pages base path
+    const segmentCount = window.location.pathname.split('/').length - 1;
+    const basePath = segmentCount > 1 ? '/e-folio/' : '/';
+    
+    if (window.location.pathname !== basePath && !window.location.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf)$/)) {
+      window.location.href = basePath + '#' + window.location.pathname;
     }
   </script>
 </head>

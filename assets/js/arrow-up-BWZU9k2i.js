@@ -1,0 +1,1 @@
+import{g as a}from"./index-DS9GDf1A.js";const e=a("arrow-down",[["path",{d:"M12 5v14",key:"s699le"}],["path",{d:"m19 12-7 7-7-7",key:"1idqje"}]]),r=a("arrow-up",[["path",{d:"m5 12 7-7 7 7",key:"hav0vg"}],["path",{d:"M12 19V5",key:"x0mq9r"}]]);export{r as A,e as a};
