@@ -7,7 +7,7 @@
   base = ""
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NPM_VERSION = "9"
   GITHUB_PAGES = "false"
 
