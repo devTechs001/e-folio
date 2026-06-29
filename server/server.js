@@ -65,7 +65,8 @@ const socketAllowedOrigins = [
     'http://localhost:5174',
     'http://localhost:3000',
     'https://e-folio-pro.netlify.app',
-    'https://e-folio-pro.netlify.app/'
+    'https://e-folio-pro.netlify.app/',
+    'https://devtechs001.github.io'
 ].filter(Boolean);
 
 const io = socketIo(server, {
@@ -75,7 +76,8 @@ const io = socketIo(server, {
             'http://localhost:5173',
             'http://localhost:5174',
             'http://localhost:3000',
-            'https://e-folio-pro.netlify.app'
+            'https://e-folio-pro.netlify.app',
+            'https://devtechs001.github.io'
         ].filter(Boolean),
         methods: ["GET", "POST"],
         credentials: true
@@ -92,7 +94,8 @@ const allowedOrigins = [
     'http://localhost:5174',
     'http://localhost:3000',
     'https://e-folio-pro.netlify.app',
-    'https://e-folio-pro.netlify.app/'
+    'https://e-folio-pro.netlify.app/',
+    'https://devtechs001.github.io'
 ].filter(Boolean); // Remove undefined values
 
 // Middleware
