@@ -52,6 +52,8 @@ const contactRoutes = require('./routes/contact.routes');
 const netlifyFormRoutes = require('./routes/netlify-form.routes');
 const notificationsRoutes = require('./routes/notifications.routes');
 const workspaceRoutes = require('./routes/workspace.routes');
+const cvRoutes = require('./routes/cv.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 // Create Express app and server
 const app = express();
@@ -79,6 +81,7 @@ const io = socketIo(server, {
         credentials: true
     }
 });
+global.io = io;
 
 const PORT = process.env.PORT || 5000;
 
@@ -144,6 +147,8 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/netlify-form', netlifyFormRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/workspace', workspaceRoutes);
+app.use('/api/cv', cvRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 // API Routes

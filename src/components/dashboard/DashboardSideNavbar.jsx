@@ -11,7 +11,7 @@ import {
     Wrench, User, GraduationCap, Activity, PieChart,
     Star, ChevronDown, ChevronRight, Circle,
     Zap, Shield, Crown, Sparkles, Bell, HelpCircle,
-    Bookmark, Calendar, Clock, Globe, Award, Code
+    Bookmark, Calendar, Clock, Globe, Award, Code, FileText
 } from 'lucide-react';
 
 const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMenuOpen, setMobileMenuOpen }) => {
@@ -54,7 +54,8 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
         'fas fa-award': Award,
         'fas fa-clock': Clock,
         'fas fa-bell': Bell,
-        'fas fa-help-circle': HelpCircle
+        'fas fa-help-circle': HelpCircle,
+        'fas fa-file-alt': FileText
     };
 
     const getIcon = (iconClass) => iconMap[iconClass] || Home;

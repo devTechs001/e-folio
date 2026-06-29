@@ -98,6 +98,14 @@ const HobbiesManager = lazy(() => import('../components/dashboard/HobbiesManager
     console.error('Failed to load HobbiesManager:', err);
     return { default: () => <div>Error loading Hobbies Manager</div> };
 }));
+const CVEditor = lazy(() => import('../components/dashboard/CVEditorStyled').catch(err => {
+    console.error('Failed to load CVEditor:', err);
+    return { default: () => <div>Error loading CV Editor</div> };
+}));
+const AdminPanel = lazy(() => import('../components/dashboard/AdminPanel').catch(err => {
+    console.error('Failed to load AdminPanel:', err);
+    return { default: () => <div>Error loading Admin Panel</div> };
+}));
 
 // Wrapper components to avoid primitive value error
 const LazyDashboardHome = () => {
@@ -289,6 +297,24 @@ const LazyHobbiesManager = () => {
         </Suspense>
     );
 };
+const LazyCVEditor = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+        </div>}>
+            <CVEditor />
+        </Suspense>
+    );
+};
+const LazyAdminPanel = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+        </div>}>
+            <AdminPanel />
+        </Suspense>
+    );
+};
 
 const Dashboard = () => {
     return (
@@ -364,10 +390,20 @@ const DashboardContent = () => {
             icon: 'fas fa-edit',
             label: 'Portfolio Editor',
             component: LazyPortfolioEditor,
-            roles: ['owner'],
+            roles: ['owner', 'user'],
             badge: null,
             category: 'Content',
             description: 'Edit your portfolio content'
+        },
+        {
+            path: '/dashboard/cv-editor',
+            icon: 'fas fa-file-alt',
+            label: 'CV Editor',
+            component: LazyCVEditor,
+            roles: ['owner', 'user'],
+            badge: 'New',
+            category: 'Content',
+            description: 'Create and manage your CV'
         },
         {
             path: '/dashboard/skills',
@@ -478,6 +514,16 @@ const DashboardContent = () => {
             badge: null,
             category: 'Advanced',
             description: 'AI-powered visitor tracking'
+        },
+        {
+            path: '/dashboard/admin',
+            icon: 'fas fa-shield-alt',
+            label: 'Admin Panel',
+            component: LazyAdminPanel,
+            roles: ['owner'],
+            badge: null,
+            category: 'Advanced',
+            description: 'User management and system settings'
         },
         {
             path: '/dashboard/theme',

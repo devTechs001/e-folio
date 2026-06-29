@@ -136,14 +136,6 @@ exports.trackPageView = asyncHandler(async (req, res) => {
 // @route   POST /api/tracking/event
 // @access  Public
 exports.trackEvent = asyncHandler(async (req, res) => {
-    // Temporarily return success to prevent frontend errors
-    return res.json({
-        success: true,
-        message: 'Event tracking temporarily disabled'
-    });
-    
-    // Original code commented out to prevent errors
-    /*
     const { sessionId, eventType, eventData } = req.body;
 
     if (!sessionId) {
@@ -220,7 +212,6 @@ exports.trackEvent = asyncHandler(async (req, res) => {
         success: true,
         message: 'Event tracked successfully'
     });
-    */
 });
 
 // @desc    End session

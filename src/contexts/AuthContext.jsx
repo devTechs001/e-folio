@@ -121,10 +121,69 @@ const AuthProvider = ({ children }) => {
         localStorage.removeItem('efolio_role');
     };
 
+    const register = async (userData) => {
+        try {
+            setLoading(true);
+            const response = await apiService.register(userData);
+            if (response.success && response.token) {
+                const data = {
+                    id: response.user.id,
+                    name: response.user.name,
+                    username: response.user.username,
+                    email: response.user.email,
+                    avatar: null,
+                    loginTime: new Date().toISOString()
+                };
+                setUser(data);
+                setUserRole('user');
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('efolio_user', JSON.stringify(data));
+                localStorage.setItem('efolio_role', 'user');
+                setLoading(false);
+                return { success: true, user: data, role: 'user' };
+            }
+            setLoading(false);
+            return { success: false, error: 'Registration failed' };
+        } catch (error) {
+            setLoading(false);
+            return { success: false, error: error.message || 'Registration failed' };
+        }
+    };
+
+    const googleSignIn = async (credential, username) => {
+        try {
+            setLoading(true);
+            const response = await apiService.googleSignIn(credential, username);
+            if (response.success && response.token) {
+                const data = {
+                    id: response.user.id,
+                    name: response.user.name,
+                    username: response.user.username,
+                    email: response.user.email,
+                    avatar: response.user.avatar || null,
+                    loginTime: new Date().toISOString()
+                };
+                setUser(data);
+                setUserRole('user');
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('efolio_user', JSON.stringify(data));
+                localStorage.setItem('efolio_role', 'user');
+                setLoading(false);
+                return { success: true, user: data, role: 'user' };
+            }
+            setLoading(false);
+            return { success: false, error: response.message || 'Google sign-in failed' };
+        } catch (error) {
+            setLoading(false);
+            return { success: false, error: error.message || 'Google sign-in failed' };
+        }
+    };
+
     const isOwner = () => userRole === 'owner';
     const isCollaborator = () => userRole === 'collaborator';
+    const isUser = () => userRole === 'user';
     const isAuthenticated = () => user !== null;
-    const canEdit = () => userRole === 'owner' || userRole === 'collaborator';
+    const canEdit = () => userRole === 'owner' || userRole === 'collaborator' || userRole === 'user';
 
     const value = {
         user,
@@ -132,8 +191,11 @@ const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        register,
+        googleSignIn,
         isOwner,
         isCollaborator,
+        isUser,
         isAuthenticated,
         canEdit
     };

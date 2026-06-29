@@ -79,7 +79,7 @@ const LoginPage = ({ collaborator = false }) => {
                 setSuccess('Login successful! Redirecting...');
                 
                 setTimeout(() => {
-                    if (result.role === 'owner' || result.role === 'collaborator') {
+                    if (result.role === 'owner' || result.role === 'collaborator' || result.role === 'user') {
                         navigate('/dashboard');
                     } else {
                         navigate('/');

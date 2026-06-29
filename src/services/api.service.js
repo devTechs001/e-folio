@@ -67,6 +67,20 @@ class ApiService {
         });
     }
 
+    async register(userData) {
+        return this.request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(userData)
+        });
+    }
+
+    async googleSignIn(credential, username) {
+        return this.request('/auth/google', {
+            method: 'POST',
+            body: JSON.stringify({ credential, username })
+        });
+    }
+
     async verifyToken() {
         return this.request('/auth/verify');
     }
@@ -1360,6 +1374,67 @@ class ApiService {
                     { id: 3, name: 'Minimal Resume', category: 'simple', preview: '/placeholder-template3.jpg' }
                 ]
             };
+        }
+    }
+
+    // CV APIs
+    async getCV() {
+        try {
+            return await this.request('/cv');
+        } catch (error) {
+            console.warn('CV API unavailable');
+            return { success: false, message: 'Failed to fetch CV' };
+        }
+    }
+
+    async saveCV(data) {
+        try {
+            return await this.request('/cv', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+        } catch (error) {
+            console.warn('CV save unavailable');
+            return { success: false, error: error.message };
+        }
+    }
+
+    async createCVVersion(name) {
+        try {
+            return await this.request('/cv/versions', {
+                method: 'POST',
+                body: JSON.stringify({ name })
+            });
+        } catch (error) {
+            console.warn('CV version creation unavailable');
+            return { success: false, message: 'Failed to create version' };
+        }
+    }
+
+    async getCVVersions() {
+        try {
+            return await this.request('/cv/versions');
+        } catch (error) {
+            console.warn('CV versions unavailable');
+            return { success: false, message: 'Failed to fetch versions' };
+        }
+    }
+
+    async restoreCVVersion(versionId) {
+        try {
+            return await this.request(`/cv/versions/${versionId}/restore`, { method: 'POST' });
+        } catch (error) {
+            console.warn('CV version restore unavailable');
+            return { success: false, message: 'Failed to restore version' };
+        }
+    }
+
+    async deleteCVVersion(versionId) {
+        try {
+            return await this.request(`/cv/versions/${versionId}`, { method: 'DELETE' });
+        } catch (error) {
+            console.warn('CV version delete unavailable');
+            return { success: false, message: 'Failed to delete version' };
         }
     }
 

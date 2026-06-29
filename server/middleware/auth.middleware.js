@@ -79,9 +79,9 @@ exports.isOwner = (req, res, next) => {
     next();
 };
 
-// Check if user is authorized (owner or collaborator)
+// Check if user is authorized (owner, collaborator, or user)
 exports.isAuthorized = (req, res, next) => {
-    if (!['owner', 'collaborator'].includes(req.user?.role)) {
+    if (!['owner', 'collaborator', 'user'].includes(req.user?.role)) {
         return res.status(403).json({
             success: false,
             message: 'Access denied. Insufficient permissions.'

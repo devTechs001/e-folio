@@ -246,15 +246,15 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-gray-200 dark:border-gray-700"
+                className="bg-[var(--surface-color)] rounded-xl p-6 max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-[var(--border-color)]"
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h3>
+                    <h3 className="text-2xl font-bold text-[var(--text-color)]">{title}</h3>
                     <button
                         onClick={onClose}
                         className="p-3 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500"
                     >
-                        <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <X className="w-5 h-5 text-[var(--text-secondary)]" />
                     </button>
                 </div>
                 
@@ -262,28 +262,28 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     {/* Basic Information */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Title *
                             </label>
                             <input
                                 type="text"
                                 value={project.title || ''}
                                 onChange={(e) => handleChange('title', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Enter project title"
                                 required
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Client/Company
                             </label>
                             <input
                                 type="text"
                                 value={project.client || ''}
                                 onChange={(e) => handleChange('client', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Client name or company"
                             />
                         </div>
@@ -291,13 +291,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Description */}
                     <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                         Description *
                     </label>
                     <textarea
                         value={project.description || ''}
                         onChange={(e) => handleChange('description', e.target.value)}
-                        className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="Enter project description"
                         rows={4}
                         required
@@ -307,13 +307,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     {/* Category, Status, Priority */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Category
                             </label>
                             <select
                                 value={project.category || 'Web'}
                                 onChange={(e) => handleChange('category', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="Web">Web Application</option>
                                 <option value="Mobile">Mobile App</option>
@@ -329,13 +329,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Status
                             </label>
                             <select
                                 value={project.status || 'planning'}
                                 onChange={(e) => handleChange('status', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="idea">Idea</option>
                                 <option value="planning">Planning</option>
@@ -348,13 +348,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Priority
                             </label>
                             <select
                                 value={project.priority || 'medium'}
                                 onChange={(e) => handleChange('priority', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
@@ -367,38 +367,38 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     {/* Dates */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Start Date
                             </label>
                             <input
                                 type="date"
                                 value={project.startDate || ''}
                                 onChange={(e) => handleChange('startDate', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 End Date
                             </label>
                             <input
                                 type="date"
                                 value={project.endDate || ''}
                                 onChange={(e) => handleChange('endDate', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                 Budget ($)
                             </label>
                             <input
                                 type="number"
                                 value={project.budget || ''}
                                 onChange={(e) => handleChange('budget', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="0"
                                 min="0"
                             />
@@ -407,10 +407,10 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Technologies Multi-select */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                             Technologies
                         </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 bg-[var(--surface-color)]/80 rounded-lg border border-[var(--border-color)]">
                             {technologyOptions.map((tech, index) => (
                                 <label key={`${tech}-${index}`} className="flex items-center space-x-2 text-sm">
                                     <input
@@ -426,7 +426,7 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                                         }}
                                         className="rounded text-indigo-500 focus:ring-indigo-500"
                                     />
-                                    <span className="text-gray-600 dark:text-gray-400">{tech}</span>
+                                    <span className="text-[var(--text-secondary)]">{tech}</span>
                                 </label>
                             ))}
                         </div>
@@ -434,21 +434,21 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Tags */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                             Tags (comma separated)
                         </label>
                         <input
                             type="text"
                             value={(project.tags || []).join(', ')}
                             onChange={(e) => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(t => t))}
-                            className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="frontend, backend, fullstack"
                         />
                     </div>
                     
                     {/* Links */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                             Project Links
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -456,28 +456,28 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                                 type="url"
                                 value={project.links?.github || ''}
                                 onChange={(e) => handleLinkChange('github', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="GitHub URL"
                             />
                             <input
                                 type="url"
                                 value={project.links?.live || ''}
                                 onChange={(e) => handleLinkChange('live', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Live Demo URL"
                             />
                             <input
                                 type="url"
                                 value={project.links?.documentation || ''}
                                 onChange={(e) => handleLinkChange('documentation', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Documentation URL"
                             />
                             <input
                                 type="url"
                                 value={project.links?.api || ''}
                                 onChange={(e) => handleLinkChange('api', e.target.value)}
-                                className="w-full px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="API Documentation URL"
                             />
                         </div>
@@ -485,7 +485,7 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                     
                     {/* Images */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                             Project Images
                         </label>
                         <div className="space-y-3">
@@ -495,14 +495,14 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                                         type="url"
                                         value={image.url || ''}
                                         onChange={(e) => handleImageChange(index, 'url', e.target.value)}
-                                        className="flex-1 px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="flex-1 px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Image URL"
                                     />
                                     <input
                                         type="text"
                                         value={image.caption || ''}
                                         onChange={(e) => handleImageChange(index, 'caption', e.target.value)}
-                                        className="flex-1 px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="flex-1 px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Image caption"
                                     />
                                     <button
@@ -534,7 +534,7 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                             onChange={(e) => handleChange('featured', e.target.checked)}
                             className="rounded text-indigo-500 focus:ring-indigo-500"
                         />
-                        <label htmlFor="featured" className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        <label htmlFor="featured" className="text-sm font-medium text-[var(--text-secondary)]">
                             Featured Project
                         </label>
                     </div>
@@ -544,7 +544,7 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                         <button
                             type="button"
                             onClick={onClose}
-                            className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500"
+                            className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-color)] rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500"
                         >
                             Cancel
                         </button>
@@ -1718,7 +1718,7 @@ const ProjectManagerEnhanced = () => {
                         >
                             <Download size={16} /> Export
                         </button>
-                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+                        <div className="absolute right-0 mt-2 w-40 bg-[var(--surface-color)] border border-[var(--border-color)] 
                                     rounded-xl shadow-xl overflow-hidden z-50 opacity-0 invisible group-hover/export:opacity-100 
                                     group-hover/export:visible transition-all duration-200">
                             <button
@@ -1810,16 +1810,16 @@ const ProjectManagerEnhanced = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
                             onClick={() => setActiveStatFilter(prev => prev === stat.statFilter ? 'all' : stat.statFilter)}
-                            className={`relative overflow-hidden bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 
+                            className={`relative overflow-hidden bg-[var(--surface-color)] shadow-lg rounded-xl p-6 
                                      border transition-all duration-200 hover:shadow-xl group cursor-pointer ${
                                 activeStatFilter === stat.statFilter
                                     ? 'border-indigo-500 ring-2 ring-indigo-500/30'
-                                    : 'border-gray-200 dark:border-gray-700'
+                                    : 'border-[var(--border-color)]'
                             }`}
                         >
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">{stat.label}</p>
+                                    <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">{stat.label}</p>
                                     <h3 className={`text-3xl font-bold bg-gradient-to-r from-${stat.color}-400 to-${stat.color}-600 
                                                    bg-clip-text text-transparent`}>
                                         {stat.value}
@@ -1827,7 +1827,7 @@ const ProjectManagerEnhanced = () => {
                                     <div className="flex items-center gap-1 mt-2">
                                         <TrendingUp size={14} className="text-green-500" />
                                         <span className="text-xs text-green-500 font-semibold">{stat.change}</span>
-                                        <span className="text-xs text-gray-600 dark:text-gray-400">vs last month</span>
+                                        <span className="text-xs text-[var(--text-secondary)]">vs last month</span>
                                     </div>
                                 </div>
                                 <div className={`p-3 bg-${stat.color}-500/10 rounded-xl group-hover:scale-110 transition-transform`}>
@@ -1840,7 +1840,7 @@ const ProjectManagerEnhanced = () => {
                 </div>
 
                 {/* Filters & Actions */}
-                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-5 border border-gray-200 dark:border-gray-700">
+                <div className="bg-[var(--surface-color)] shadow-lg rounded-xl p-5 border border-[var(--border-color)]">
                     {/* Bulk Actions Bar */}
                     <AnimatePresence>
                         {selectedProjects.length > 0 && (
@@ -1852,7 +1852,7 @@ const ProjectManagerEnhanced = () => {
                             >
                                 <div className="flex items-center gap-3">
                                     <CheckSquare className="text-indigo-500" size={20} />
-                                    <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedProjects.length} selected</span>
+                                    <span className="font-semibold text-[var(--text-color)]">{selectedProjects.length} selected</span>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <button
@@ -1893,8 +1893,8 @@ const ProjectManagerEnhanced = () => {
                                 placeholder="Search projects, technologies..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl 
-                                         text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 
+                                className="w-full pl-11 pr-4 py-3 sm:py-2.5 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-xl 
+                                         text-sm text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500 
                                          focus:border-indigo-500 transition-all placeholder-gray-500"
                             />
                             {searchQuery && (
@@ -1911,8 +1911,8 @@ const ProjectManagerEnhanced = () => {
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
-                                     text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                            className="px-4 py-3 sm:py-2.5 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-xl text-sm 
+                                     text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                         >
                             <option value="all">All Status</option>
                             <option value="planning">Planning</option>
@@ -1925,8 +1925,8 @@ const ProjectManagerEnhanced = () => {
                         <select
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
-                            className="px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
-                                     text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                            className="px-4 py-3 sm:py-2.5 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-xl text-sm 
+                                     text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                         >
                             <option value="all">All Categories</option>
                             <option value="Web">Web</option>
@@ -1942,8 +1942,8 @@ const ProjectManagerEnhanced = () => {
                         <select
                             value={filterPriority}
                             onChange={(e) => setFilterPriority(e.target.value)}
-                            className="px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
-                                     text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                            className="px-4 py-3 sm:py-2.5 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-xl text-sm 
+                                     text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                         >
                             <option value="all">All Priority</option>
                             <option value="urgent">Urgent</option>
@@ -1957,8 +1957,8 @@ const ProjectManagerEnhanced = () => {
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="flex-1 px-4 py-3 sm:py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm 
-                                         text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                                className="flex-1 px-4 py-3 sm:py-2.5 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-xl text-sm 
+                                         text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                             >
                                 <option value="recent">Most Recent</option>
                                 <option value="oldest">Oldest First</option>
@@ -1968,31 +1968,31 @@ const ProjectManagerEnhanced = () => {
                             </select>
 
                             {/* View Toggle */}
-                            <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                            <div className="flex items-center gap-1 p-1 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg">
                                 <button
                                     onClick={() => setViewMode('grid')}
-                                    className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-secondary)]'}`}
                                     title="Grid View"
                                 >
                                     <Grid size={16} />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('list')}
-                                    className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-secondary)]'}`}
                                     title="List View"
                                 >
                                     <List size={16} />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('timeline')}
-                                    className={`p-1.5 rounded transition-all ${viewMode === 'timeline' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'timeline' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-secondary)]'}`}
                                     title="Timeline View"
                                 >
                                     <Clock size={16} />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('board')}
-                                    className={`p-1.5 rounded transition-all ${viewMode === 'board' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                                    className={`p-1.5 rounded transition-all ${viewMode === 'board' ? 'bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-secondary)]'}`}
                                     title="Board View"
                                 >
                                     <Columns size={16} />
@@ -2004,7 +2004,7 @@ const ProjectManagerEnhanced = () => {
                     {/* Tag Filters */}
                     {allTags.length > 0 && (
                         <div className="mt-4 flex items-center gap-2 flex-wrap">
-                            <Tag size={16} className="text-gray-600 dark:text-gray-400" />
+                            <Tag size={16} className="text-[var(--text-secondary)]" />
                             {allTags.map(tag => (
                                 <button
                                     key={tag}
@@ -2014,7 +2014,7 @@ const ProjectManagerEnhanced = () => {
                                     className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                                         filterTags.includes(tag)
                                             ? 'bg-indigo-500 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] text-[var(--text-secondary)]'
                                     }`}
                                 >
                                     {tag}
@@ -2039,14 +2039,14 @@ const ProjectManagerEnhanced = () => {
                             <div className="animate-pulse">
                                 <div className="mx-auto mb-4 w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
                             </div>
-                            <p className="text-gray-600 dark:text-gray-400">Loading projects...</p>
+                            <p className="text-[var(--text-secondary)]">Loading projects...</p>
                         </div>
                     </div>
                 ) : filteredProjects.length === 0 ? (
-                    <div className="text-center py-12 px-4 bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div className="text-center py-12 px-4 bg-[var(--surface-color)] shadow-lg rounded-xl border border-[var(--border-color)]">
                         <FileText size={64} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                        <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">No projects found</h3>
-                        <p className="text-gray-600 dark:text-gray-400 mb-6">
+                        <h3 className="text-xl font-semibold mb-2 text-[var(--text-color)]">No projects found</h3>
+                        <p className="text-[var(--text-secondary)] mb-6">
                             {searchQuery || filterStatus !== 'all' || filterCategory !== 'all'
                                 ? 'Try adjusting your filters'
                                 : 'Create your first project to get started'}
@@ -2067,7 +2067,7 @@ const ProjectManagerEnhanced = () => {
                             <button
                                 onClick={selectAllProjects}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 
-                                         border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium transition-all text-gray-700 dark:text-gray-300"
+                                         border border-[var(--border-color)] rounded-lg text-sm font-medium transition-all text-gray-700 dark:text-gray-300"
                             >
                                 {selectedProjects.length === filteredProjects.length ? (
                                     <><CheckSquare size={16} /> Deselect All</>
@@ -2075,7 +2075,7 @@ const ProjectManagerEnhanced = () => {
                                     <><Square size={16} /> Select All</>
                                 )}
                             </button>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-[var(--text-secondary)]">
                                 Showing {filteredProjects.length} of {projects.length} projects
                             </p>
                         </div>
@@ -2301,7 +2301,7 @@ const ProjectCard = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className={`relative group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden 
+            className={`relative group bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl overflow-hidden 
                        shadow-lg transition-all duration-200 hover:shadow-xl ${
                 isSelected ? 'ring-2 ring-indigo-500' : ''
             } ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''} ${
@@ -2386,9 +2386,9 @@ const ProjectCard = ({
             {/* Content */}
             <div className={`flex-1 ${viewMode === 'grid' ? '' : 'flex flex-col'}`}>
                 {/* Header */}
-                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="p-4 sm:p-6 border-b border-[var(--border-color)]">
                     <div className="flex items-start justify-between gap-3 mb-3">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1">{project.title}</h3>
+                        <h3 className="text-lg font-bold text-[var(--text-color)] line-clamp-1">{project.title}</h3>
                         <div className="relative">
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
@@ -2402,7 +2402,7 @@ const ProjectCard = ({
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
-                                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+                                        className="absolute right-0 mt-2 w-48 bg-[var(--surface-color)] border border-[var(--border-color)] 
                                                  rounded-xl shadow-xl overflow-hidden z-50"
                                     >
                                         <button onClick={() => { onEdit(); setShowMenu(false); }}
@@ -2433,7 +2433,7 @@ const ProjectCard = ({
                                             className="w-full px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                                             <Share2 size={16} /> Share
                                         </button>
-                                        <hr className="border-gray-200 dark:border-gray-700" />
+                                        <hr className="border-[var(--border-color)]" />
                                         <button onClick={() => { onDelete(); setShowMenu(false); }}
                                             className="w-full px-4 py-2.5 hover:bg-red-500/10 text-red-500 flex items-center gap-3 text-sm">
                                             <Trash2 size={16} /> Delete
@@ -2444,7 +2444,7 @@ const ProjectCard = ({
                         </div>
                     </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">{project.description}</p>
+                    <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-4">{project.description}</p>
 
                     <div className="flex flex-wrap gap-2">
                         <span className={`px-3 py-1 rounded-lg text-xs font-bold ${statusColors[project.status]}`}>
@@ -2474,15 +2474,15 @@ const ProjectCard = ({
 
                 {/* Technologies */}
                 {project.technologies?.length > 0 && (
-                    <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="px-4 sm:px-6 py-4 border-b border-[var(--border-color)]">
                         <div className="flex flex-wrap gap-2">
                             {project.technologies.slice(0, 5).map((tech, i) => (
-                                <span key={`${tech}-${i}`} className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300">
+                                <span key={`${tech}-${i}`} className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 border border-[var(--border-color)] rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300">
                                     {tech}
                                 </span>
                             ))}
                             {project.technologies.length > 5 && (
-                                <span key="more-tech" className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400">
+                                <span key="more-tech" className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 border border-[var(--border-color)] rounded-lg text-xs font-medium text-[var(--text-secondary)]">
                                     +{project.technologies.length - 5} more
                                 </span>
                             )}
@@ -2492,7 +2492,7 @@ const ProjectCard = ({
 
                 {/* Tags */}
                 {project.tags?.length > 0 && (
-                    <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <div className="px-4 sm:px-6 py-3 border-b border-[var(--border-color)]">
                         <div className="flex flex-wrap gap-1.5">
                             {project.tags.map((tag, i) => {
                                 const tagColors = [
@@ -2524,7 +2524,7 @@ const ProjectCard = ({
                                     href={project.links.github}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
                                     title="View on GitHub"
                                 >
                                     <Github size={16} />
@@ -2535,7 +2535,7 @@ const ProjectCard = ({
                                     href={project.links.live}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
                                     title="Live Demo"
                                 >
                                     <ExternalLink size={16} />
@@ -2546,7 +2546,7 @@ const ProjectCard = ({
                                     href={project.links.demo}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
                                     title="Video Demo"
                                 >
                                     <Video size={16} />
@@ -2557,7 +2557,7 @@ const ProjectCard = ({
                                     href={project.links.documentation}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
                                     title="Documentation"
                                 >
                                     <FileText size={16} />
@@ -2567,7 +2567,7 @@ const ProjectCard = ({
                             {/* New Action Buttons */}
                             <button
                                 onClick={() => onViewProject(project)}
-                                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
+                                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
                                 title="View Details"
                             >
                                 <Eye size={16} />
@@ -2578,17 +2578,17 @@ const ProjectCard = ({
                             
                             <button
                                 onClick={() => onToggleFavorite(project.id)}
-                                className={`p-2 ${isFavorite ? 'bg-red-500/20 border-red-500/30' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'} border border-gray-300 dark:border-gray-600 rounded-lg transition-all`}
+                                className={`p-2 ${isFavorite ? 'bg-red-500/20 border-red-500/30' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'} border border-[var(--border-color)] rounded-lg transition-all`}
                                 title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
                             >
-                                <Heart size={16} className={isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600 dark:text-gray-400'} />
+                                <Heart size={16} className={isFavorite ? 'text-red-500 fill-red-500' : 'text-[var(--text-secondary)]'} />
                             </button>
                             {project.links?.api && (
                                 <a
                                     href={project.links.api}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-all text-gray-600 dark:text-gray-400"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
                                     title="API Documentation"
                                 >
                                     <Code size={16} />
@@ -2596,7 +2596,7 @@ const ProjectCard = ({
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
                             <div className="flex items-center gap-1">
                                 <Eye size={14} />
                                 <span>{project.views || 0}</span>
@@ -2616,7 +2616,7 @@ const ProjectCard = ({
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-2 flex-wrap">
                             {project.client && (
-                                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300">
+                                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-[var(--border-color)] rounded-lg text-gray-700 dark:text-gray-300">
                                     {project.client}
                                 </span>
                             )}
@@ -2628,12 +2628,12 @@ const ProjectCard = ({
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                             {project.startDate && (
-                                <span className="text-gray-600 dark:text-gray-400">
+                                <span className="text-[var(--text-secondary)]">
                                     Start: {new Date(project.startDate).toLocaleDateString()}
                                 </span>
                             )}
                             {project.endDate && (
-                                <span className="text-gray-600 dark:text-gray-400">
+                                <span className="text-[var(--text-secondary)]">
                                     End: {new Date(project.endDate).toLocaleDateString()}
                                 </span>
                             )}
@@ -2666,7 +2666,7 @@ const ImageGalleryModal = ({ show, onClose, project, currentIndex, setCurrentInd
                 </button>
                 
                 {images.length > 0 ? (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div className="bg-[var(--surface-color)] rounded-xl p-4 sm:p-6 shadow-lg border border-[var(--border-color)]">
                         <img
                             src={images[currentIndex]}
                             alt={`${project.title} - ${currentIndex + 1}`}
@@ -2676,22 +2676,22 @@ const ImageGalleryModal = ({ show, onClose, project, currentIndex, setCurrentInd
                             <button
                                 onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                                 disabled={currentIndex === 0}
-                                className="px-4 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                className="px-4 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-[var(--text-color)] rounded-lg focus:ring-2 focus:ring-indigo-500"
                             >
                                 Previous
                             </button>
-                            <span className="text-gray-900 dark:text-gray-100 font-medium">{currentIndex + 1} / {images.length}</span>
+                            <span className="text-[var(--text-color)] font-medium">{currentIndex + 1} / {images.length}</span>
                             <button
                                 onClick={() => setCurrentIndex(Math.min(images.length - 1, currentIndex + 1))}
                                 disabled={currentIndex === images.length - 1}
-                                className="px-4 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                className="px-4 py-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-[var(--text-color)] rounded-lg focus:ring-2 focus:ring-indigo-500"
                             >
                                 Next
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 shadow-lg">
+                    <div className="bg-[var(--surface-color)] rounded-xl p-8 text-center text-[var(--text-secondary)] border border-[var(--border-color)] shadow-lg">
                         No images available
                     </div>
                 )}
@@ -2708,11 +2708,11 @@ const DeleteConfirmModal = ({ show, onClose, onConfirm, project }) => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-full sm:max-w-md w-full shadow-lg border border-gray-200 dark:border-gray-700"
+                className="bg-[var(--surface-color)] rounded-xl p-6 max-w-full sm:max-w-md w-full shadow-lg border border-[var(--border-color)]"
             >
                 <h3 className="text-2xl font-bold text-red-500 mb-4">Delete Project</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Are you sure you want to delete <strong className="text-gray-900 dark:text-gray-100">{project.title}</strong>? This action cannot be undone.
+                <p className="text-[var(--text-secondary)] mb-6">
+                    Are you sure you want to delete <strong className="text-[var(--text-color)]">{project.title}</strong>? This action cannot be undone.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
@@ -2726,7 +2726,7 @@ const DeleteConfirmModal = ({ show, onClose, onConfirm, project }) => {
                     </button>
                     <button
                         onClick={onClose}
-                        className="w-full sm:flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full sm:flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-color)] px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     >
                         Cancel
                     </button>
@@ -2744,35 +2744,35 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-gray-200 dark:border-gray-700"
+                className="bg-[var(--surface-color)] rounded-xl p-6 max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-[var(--border-color)]"
             >
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-bold text-indigo-500">Project Analytics</h3>
                     <button onClick={onClose} className="p-3 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500">
-                        <X size={20} className="text-gray-600 dark:text-gray-400" />
+                        <X size={20} className="text-[var(--text-secondary)]" />
                     </button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">Total Projects</p>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-[var(--text-secondary)] text-sm">Total Projects</p>
+                        <p className="text-3xl font-bold text-[var(--text-color)]">
                             {analytics?.totalProjects || projects.length}
                         </p>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">Published</p>
+                    <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-[var(--text-secondary)] text-sm">Published</p>
                         <p className="text-3xl font-bold text-green-500">
                             {analytics?.publishedProjects || projects.filter(p => p.status === 'published').length}
                         </p>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">In Progress</p>
+                    <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-[var(--text-secondary)] text-sm">In Progress</p>
                         <p className="text-3xl font-bold text-yellow-500">
                             {analytics?.inProgressProjects || projects.filter(p => p.status === 'in-progress').length}
                         </p>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">Total Views</p>
+                    <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p className="text-[var(--text-secondary)] text-sm">Total Views</p>
                         <p className="text-3xl font-bold text-indigo-500">
                             {analytics?.totalViews || projects.reduce((acc, p) => acc + (p.views || 0), 0)}
                         </p>
@@ -2782,26 +2782,26 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
                 {/* Additional Analytics */}
                 {analytics && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Average Views per Project</p>
+                        <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-[var(--text-secondary)] text-sm mb-2">Average Views per Project</p>
                             <p className="text-2xl font-bold text-indigo-500">
                                 {analytics?.averageViews || Math.round(projects.reduce((acc, p) => acc + (p.views || 0), 0) / projects.length) || 0}
                             </p>
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Most Popular Project</p>
+                        <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-[var(--text-secondary)] text-sm mb-2">Most Popular Project</p>
                             <p className="text-xl font-bold text-green-500 truncate">
                                 {analytics?.mostPopularProject || projects.reduce((max, p) => (p.views || 0) > (max.views || 0) ? p : max, projects[0])?.title || 'N/A'}
                             </p>
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Completion Rate</p>
+                        <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-[var(--text-secondary)] text-sm mb-2">Completion Rate</p>
                             <p className="text-2xl font-bold text-purple-500">
                                 {analytics?.completionRate || Math.round((projects.filter(p => p.status === 'completed').length / projects.length) * 100) || 0}%
                             </p>
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Featured Projects</p>
+                        <div className="bg-[var(--surface-color)]/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p className="text-[var(--text-secondary)] text-sm mb-2">Featured Projects</p>
                             <p className="text-2xl font-bold text-yellow-500">
                                 {analytics?.featuredProjects || projects.filter(p => p.featured).length}
                             </p>
@@ -2811,7 +2811,7 @@ const AnalyticsModal = ({ show, onClose, analytics, projects }) => {
                 
                 <button
                     onClick={onClose}
-                    className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-[var(--text-color)] px-4 py-3 sm:py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-colors"
                 >
                     Close
                 </button>
@@ -2858,7 +2858,7 @@ const TimelineView = ({ projects, onEdit, onDelete, onViewProject }) => {
         <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-2">
             <div className="min-w-[800px] space-y-2">
                 {/* Month headers */}
-                <div className="flex sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-[var(--border-color)]">
                     {Array.from({ length: Math.ceil(totalDays / 30) }, (_, i) => {
                         const month = new Date(timelineStart);
                         month.setMonth(month.getMonth() + i);
@@ -2866,7 +2866,7 @@ const TimelineView = ({ projects, onEdit, onDelete, onViewProject }) => {
                         return (
                             <div
                                 key={i}
-                                className="text-center py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 last:border-r-0"
+                                className="text-center py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-r border-[var(--border-color)] last:border-r-0"
                                 style={{ width: `${(daysInMonth / totalDays) * 100}%` }}
                             >
                                 {month.toLocaleString('default', { month: 'short', year: '2-digit' })}
@@ -2970,8 +2970,8 @@ const BoardView = ({ projects, onEdit, onDelete, onViewProject }) => {
                     const colProjects = getProjectsByStatus(col.key);
                     return (
                         <div key={col.key} className="flex-1 min-w-[180px]">
-                            <div className={`bg-white dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 border-t-4 ${col.color} shadow-lg overflow-hidden`}>
-                                <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                            <div className={`bg-[var(--surface-color)]/80 rounded-xl border border-[var(--border-color)] border-t-4 ${col.color} shadow-lg overflow-hidden`}>
+                                <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center justify-between">
                                     <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{col.label}</h4>
                                     <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
                                         {colProjects.length}
@@ -2986,12 +2986,12 @@ const BoardView = ({ projects, onEdit, onDelete, onViewProject }) => {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, scale: 0.95 }}
                                                 transition={{ delay: idx * 0.03 }}
-                                                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600 
+                                                className="bg-[var(--surface-color)]/80/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600 
                                                          hover:shadow-md transition-all cursor-pointer group"
                                                 onClick={() => onViewProject(project)}
                                             >
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate flex-1">
+                                                    <span className="text-xs font-semibold text-[var(--text-color)] truncate flex-1">
                                                         {project.title}
                                                     </span>
                                                     {/* Priority dot */}
@@ -3005,7 +3005,7 @@ const BoardView = ({ projects, onEdit, onDelete, onViewProject }) => {
                                                 {project.technologies && (
                                                     <div className="flex flex-wrap gap-1 mb-1.5">
                                                         {project.technologies.slice(0, 3).map((tech, i) => (
-                                                            <span key={i} className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[9px] font-medium text-gray-600 dark:text-gray-400">
+                                                            <span key={i} className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[9px] font-medium text-[var(--text-secondary)]">
                                                                 {tech}
                                                             </span>
                                                         ))}

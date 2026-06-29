@@ -164,6 +164,32 @@ const LandingPage = () => {
                                 ))}
                             </div>
 
+                            {/* Portfolio Builder CTA */}
+                            <div className="flex flex-wrap items-center justify-center gap-4 mb-6" data-aos="zoom-in" data-aos-delay="150">
+                                <Link
+                                    to="/register"
+                                    className="hero-cta-btn group"
+                                >
+                                    <div className="btn-glow"></div>
+                                    <i className="fas fa-magic text-2xl group-hover:animate-bounce"></i>
+                                    <span className="font-black text-lg tracking-wide">
+                                        Create Your Portfolio
+                                    </span>
+                                    <i className="fas fa-sparkles sparkle-1"></i>
+                                    <i className="fas fa-sparkles sparkle-2"></i>
+                                    <i className="fas fa-arrow-right arrow-icon"></i>
+                                    <div className="btn-shine"></div>
+                                </Link>
+                                <Link
+                                    to="/register"
+                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 backdrop-blur-sm border-2 border-white/10 text-white font-bold text-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 group"
+                                >
+                                    <i className="fas fa-file-alt text-2xl text-cyan-400"></i>
+                                    <span>Build Your CV</span>
+                                    <i className="fas fa-arrow-right text-sm opacity-0 group-hover:opacity-100 -ml-4 group-hover:ml-0 transition-all"></i>
+                                </Link>
+                            </div>
+
                             {/* CTA Button */}
                             <Link
                                 to="/collaborate"

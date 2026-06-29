@@ -16,12 +16,16 @@ import './index.css';
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const PublicReviews = lazy(() => import('./components/PublicReviews'));
 const CollaborationRequest = lazy(() => import('./components/CollaborationRequestStyled'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Sitemap = lazy(() => import('./pages/Sitemap'));
 const CVPage = lazy(() => import('./pages/CVPage'));
+const UserPortfolioPage = lazy(() => import('./pages/UserPortfolioPage'));
+const UserCVPage = lazy(() => import('./pages/UserCVPage'));
+const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
 const CollaboratorWorkspace = lazy(() => import('./components/CollaboratorWorkspace'));
 
 // Component to handle hash navigation
@@ -57,6 +61,8 @@ const AppContent = () => {
                     </LandingPageThemeProvider>
                 } />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
                 <Route path="/collaborate" element={<CollaborationRequest />} />
                 <Route path="/reviews" element={<PublicReviews />} />
@@ -69,6 +75,8 @@ const AppContent = () => {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/sitemap" element={<Sitemap />} />
                 <Route path="/cv" element={<CVPage />} />
+                <Route path="/portfolio/:username" element={<UserPortfolioPage />} />
+                <Route path="/cv/:username" element={<UserCVPage />} />
                 <Route 
                     path="/dashboard/*" 
                     element={

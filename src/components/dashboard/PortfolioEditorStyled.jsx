@@ -592,7 +592,7 @@ const TemplatePreset = ({ onApply, onClose }) => {
 
 // Main Portfolio Editor Component
 const PortfolioEditor = () => {
-  const { isOwner, user } = useAuth();
+  const { user } = useAuth();
   const { theme } = useTheme();
   const { success, error: showError, warning } = useNotifications();
 
@@ -1183,12 +1183,10 @@ const PortfolioEditor = () => {
   );
 
   useEffect(() => {
-    if (isOwner()) {
-      loadPortfolioConfig();
-      loadVersions();
-      loadCustomTemplates();
-    }
-  }, [isOwner]);
+    loadPortfolioConfig();
+    loadVersions();
+    loadCustomTemplates();
+  }, []);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -1589,22 +1587,6 @@ const PortfolioEditor = () => {
       showError('Failed to optimize performance');
     }
   };
-
-  if (!isOwner()) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center p-12 bg-red-500/10 border-2 border-red-500/50 rounded-2xl max-w-md">
-            <Lock size={48} className="text-red-400 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-red-400 mb-2">Access Restricted</h3>
-            <p className="text-slate-400">
-              Portfolio Editor is only available to the owner.
-            </p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   if (loading) {
     return (

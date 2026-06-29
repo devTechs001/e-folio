@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import {
   User, Mail, Phone, MapPin, Github, Linkedin, Globe,
   Calendar, Briefcase, GraduationCap, Award, Code,
-  Download, FileText, ExternalLink, CheckCircle
+  Download, FileText, File, ExternalLink, CheckCircle
 } from 'lucide-react';
 import '../styles/CVComponent.css';
 
@@ -256,6 +256,9 @@ ${achievements.map(a => `<div class="achieve">${a}</div>`).join('')}
         <button onClick={downloadAsHtml} className="download-btn html-btn">
           <FileText size={20} /> Download as HTML
         </button>
+        <a href={`${import.meta.env.BASE_URL}CV2.pdf`} download className="download-btn pdf-btn">
+          <File size={20} /> Download as PDF
+        </a>
       </div>
 
       <div ref={cvRef} className="cv-content">

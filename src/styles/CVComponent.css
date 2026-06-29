@@ -50,6 +50,17 @@
   box-shadow: 0 6px 20px rgba(5, 150, 105, 0.5);
 }
 
+.pdf-btn {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+  text-decoration: none;
+  display: inline-flex;
+}
+
+.pdf-btn:hover {
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+}
+
 .spinner {
   width: 16px;
   height: 16px;
