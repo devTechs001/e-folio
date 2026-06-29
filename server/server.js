@@ -22,6 +22,9 @@ dotenv.config();
 const chatHandler = require('./socket/chat.handler.enhanced');
 const connectDB = require('./config/database');
 const keyRotator = require('./services/keyRotator.service');
+const Education = require('./models/Education');
+const Interests = require('./models/Interests');
+const UserModel = require('./models/User.model');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -188,7 +191,51 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-connectDB().then(() => {
+connectDB().then(async () => {
+    // Auto-seed education & interests if empty
+    try {
+        const eduCount = await Education.countDocuments();
+        const intCount = await Interests.countDocuments();
+        if (eduCount === 0 || intCount === 0) {
+            const owner = await UserModel.findOne({ role: 'owner' }).lean();
+            if (owner) {
+                const userId = owner._id;
+                const educationData = [
+                    { institution: 'Bungoma National Polytechnic', degree: 'Diploma in Computer Science', fieldOfStudy: 'Computer Science', startDate: new Date('2023-09-01'), endDate: null, currentlyStudying: true, description: 'Specializing in software development, web technologies, and computer systems.', grade: 'Ongoing', location: 'Bungoma, Kenya' },
+                    { institution: 'Ayes Consults Ltd.', degree: 'ICT Essentials', fieldOfStudy: 'Information Technology', startDate: new Date('2023-03-01'), endDate: new Date('2023-07-01'), description: 'Comprehensive training in Microsoft Office Suite, computer maintenance, and essential IT skills.', grade: 'Distinction', location: 'Nairobi, Kenya' },
+                    { institution: 'Google Africa', degree: 'Digital Skills Training', fieldOfStudy: 'Digital Marketing', startDate: new Date('2023-01-01'), endDate: new Date('2023-03-01'), description: 'Mastered digital marketing, online presence management, and web analytics.', grade: 'Certified', location: 'Online' },
+                    { institution: 'FreeCodeCamp', degree: 'Certificate in Web Development', fieldOfStudy: 'Web Development', startDate: new Date('2022-01-01'), endDate: new Date('2023-01-01'), description: 'Full-stack web development covering HTML5, CSS3, JavaScript, React, and Node.js.', grade: 'Certified', location: 'Online' },
+                    { institution: 'Coursera', degree: 'Python Programming Certification', fieldOfStudy: 'Computer Science', startDate: new Date('2022-01-01'), endDate: new Date('2022-12-01'), description: 'Advanced Python programming concepts including data structures and algorithms.', grade: 'Certified', location: 'Online' },
+                    { institution: 'Musingu High School', degree: 'Secondary Education', fieldOfStudy: 'General Education', startDate: new Date('2019-01-01'), endDate: new Date('2022-11-01'), description: 'Completed secondary education with excellent grades in Mathematics, Physics, and Computer Studies.', grade: 'B+ (Plus)', location: 'Kakamega, Kenya' }
+                ];
+                const interestsData = [
+                    { name: 'Programming', category: 'technical', level: 'expert', description: 'Passionate about solving complex problems through code.', icon: 'fas fa-code', color: 'blue' },
+                    { name: 'Web Design', category: 'creative', level: 'expert', description: 'Creating visually appealing and user-friendly interfaces.', icon: 'fas fa-palette', color: 'purple' },
+                    { name: 'Mobile Development', category: 'technical', level: 'advanced', description: 'Exploring mobile applications and responsive solutions.', icon: 'fas fa-mobile-alt', color: 'cyan' },
+                    { name: 'AI & Machine Learning', category: 'technical', level: 'advanced', description: 'Fascinated by AI applications in solving real-world problems.', icon: 'fas fa-robot', color: 'green' },
+                    { name: 'Blockchain Technology', category: 'technical', level: 'advanced', description: 'Interested in decentralized systems.', icon: 'fas fa-link', color: 'orange' },
+                    { name: 'Continuous Learning', category: 'personal', level: 'expert', description: 'Committed to staying updated with latest technologies.', icon: 'fas fa-book-reader', color: 'indigo' },
+                    { name: 'Community Building', category: 'social', level: 'advanced', description: 'Enjoy participating in tech communities.', icon: 'fas fa-users', color: 'pink' },
+                    { name: 'Innovation', category: 'creative', level: 'expert', description: 'Passionate about creating new solutions.', icon: 'fas fa-lightbulb', color: 'yellow' },
+                    { name: 'Game Development', category: 'creative', level: 'advanced', description: 'Creating interactive experiences through code.', icon: 'fas fa-gamepad', color: 'red' },
+                    { name: 'Cloud Computing', category: 'technical', level: 'advanced', description: 'Building scalable cloud-based solutions.', icon: 'fas fa-cloud', color: 'teal' },
+                    { name: 'Cybersecurity', category: 'technical', level: 'advanced', description: 'Ensuring digital safety in application development.', icon: 'fas fa-shield-alt', color: 'gray' },
+                    { name: 'Content Creation', category: 'social', level: 'advanced', description: 'Sharing knowledge through tutorials and blogs.', icon: 'fas fa-video', color: 'rose' }
+                ];
+                if (eduCount === 0) {
+                    await Education.insertMany(educationData.map(e => ({ ...e, userId })));
+                    console.log(`🌱 Auto-seeded ${educationData.length} education entries`);
+                }
+                if (intCount === 0) {
+                    await Interests.insertMany(interestsData.map(i => ({ ...i, userId })));
+                    console.log(`🌱 Auto-seeded ${interestsData.length} interests`);
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Auto-seed skipped:', err.message);
+    }
+
     server.listen(PORT, () => {
         console.log('\n🚀 ===================================');
         console.log(`✅ E-Folio Server Running`);
