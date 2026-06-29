@@ -18,7 +18,7 @@ services:
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
-        sync: false
+        value: efolio_jwt_secret_placeholder
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_BASE_URL

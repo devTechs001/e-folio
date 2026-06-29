@@ -69,7 +69,7 @@ router.post('/register', registerLimiter, async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'efolio_secret',
             { expiresIn: '7d' }
         );
 
@@ -110,7 +110,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         if (email === process.env.OWNER_EMAIL && password === process.env.OWNER_PASSWORD) {
             const token = jwt.sign(
                 { email, role: 'owner', id: 'owner_001' },
-                process.env.JWT_SECRET,
+                process.env.JWT_SECRET || 'efolio_secret',
                 { expiresIn: '7d' }
             );
 
@@ -146,7 +146,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'efolio_secret',
             { expiresIn: '7d' }
         );
 
@@ -308,7 +308,7 @@ router.post('/google', async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'efolio_secret',
             { expiresIn: '7d' }
         );
 

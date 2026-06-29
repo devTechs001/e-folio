@@ -95,7 +95,7 @@ class AIWebSocketServer {
 
     async authenticateClient(ws, token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'efolio_secret');
             ws.userId = decoded.id;
             ws.authenticated = true;
 

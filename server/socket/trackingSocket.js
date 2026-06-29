@@ -56,7 +56,7 @@ class TrackingWebSocket {
 
     async authenticateClient(ws, token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'efolio_secret');
             
             if (decoded.role === 'owner') {
                 ws.isOwner = true;
