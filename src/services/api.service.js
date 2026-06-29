@@ -2881,6 +2881,25 @@ class ApiService {
             return { success: false, message: error.message };
         }
     }
+
+    async getTemplates(type) {
+        try {
+            const params = type ? `?type=${type}` : '';
+            return await this.request(`/templates${params}`);
+        } catch (error) {
+            console.warn('Failed to fetch templates:', error);
+            return { success: false, data: [] };
+        }
+    }
+
+    async getTemplate(type, slug) {
+        try {
+            return await this.request(`/templates/${type}/${slug}`);
+        } catch (error) {
+            console.warn('Failed to fetch template:', error);
+            return { success: false, data: null };
+        }
+    }
 }
 
 export default new ApiService();

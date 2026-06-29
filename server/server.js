@@ -57,6 +57,7 @@ const notificationsRoutes = require('./routes/notifications.routes');
 const workspaceRoutes = require('./routes/workspace.routes');
 const cvRoutes = require('./routes/cv.routes');
 const adminRoutes = require('./routes/admin.routes');
+const templateRoutes = require('./routes/template.routes');
 
 // Create Express app and server
 const app = express();
@@ -156,6 +157,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/workspace', workspaceRoutes);
 app.use('/api/cv', cvRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/templates', templateRoutes);
 
 
 // API Routes
@@ -234,6 +236,19 @@ connectDB().then(async () => {
         }
     } catch (err) {
         console.warn('Auto-seed skipped:', err.message);
+    }
+
+    // Auto-seed premium templates if empty
+    try {
+        const PremiumTemplate = require('./models/PremiumTemplate');
+        const templateCount = await PremiumTemplate.countDocuments();
+        if (templateCount === 0) {
+            const templateData = require('./seed/portfolioTemplates');
+            await PremiumTemplate.insertMany(templateData);
+            console.log(`🌱 Auto-seeded ${templateData.length} premium templates`);
+        }
+    } catch (err) {
+        console.warn('Template auto-seed skipped:', err.message);
     }
 
     server.listen(PORT, () => {
