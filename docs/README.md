@@ -2,7 +2,7 @@
 
 A modern, feature-rich portfolio platform built with React and Vite, designed for developers who want more than just a static portfolio.
 
-*Last updated: GitHub Pages deployment with base path fix*
+*Last updated: Multi-tenant SaaS with user registration, admin panel, and premium templates*
 
 ##  Features
 
@@ -13,9 +13,9 @@ A modern, feature-rich portfolio platform built with React and Vite, designed fo
 - **Dynamic Content**: All sections are dynamically loaded
 
 ###  Authentication System
-- **Multi-Role Access**: Owner, Collaborator, and Visitor roles
-- **Protected Routes**: Dashboard access based on user permissions
-- **Demo Credentials**: Easy testing with predefined accounts
+- **Multi-Role Access**: Owner, User, and Visitor roles with Google OAuth
+- **User Registration**: Email/password signup with Google sign-in option
+- **Protected Routes**: Dashboard access for authenticated users
 
 ###  Comprehensive Dashboard
 - **Role-Based Navigation**: Different menu items based on user role
@@ -36,21 +36,29 @@ A modern, feature-rich portfolio platform built with React and Vite, designed fo
 - **Skill Categories**: Frontend, Backend, Tools, Database
 - **Custom Icons**: FontAwesome integration
 
-###  Theme Management (Owner Only)
+###  Admin Panel
+- **User Management**: View, suspend, or delete registered users
+- **Registration Analytics**: Daily signup charts and growth metrics
+- **Online Users**: Real-time view of active users
+- **Activity Log**: Track registrations and logins
+- **System Health**: Server uptime, memory, database status
+- **Access Control**: Toggle maintenance mode and registration
+
+###  Theme Management
 - **Predefined Themes**: 6 beautiful color schemes
 - **Custom Theme Builder**: Create your own color palette
 - **Live Preview**: See changes in real-time
 - **Import/Export**: Save and share theme configurations
 - **CSS Variables**: Seamless theme switching
 
-###  Analytics Dashboard (Owner Only)
+###  Analytics Dashboard
 - **Visitor Tracking**: Total views, unique visitors, page views
 - **Interactive Charts**: Visual data representation
 - **Traffic Sources**: Referral tracking and analysis
 - **Time Range Filters**: 7, 30, and 90-day views
 - **Performance Metrics**: Engagement and conversion tracking
 
-###  Collaboration Management (Owner Only)
+###  Collaboration Management
 - **Team Invitations**: Send collaboration invites via email
 - **Permission Control**: Granular access management
 - **Access Codes**: Secure collaboration links
@@ -65,25 +73,27 @@ A modern, feature-rich portfolio platform built with React and Vite, designed fo
 
 ##  Access Levels
 
-###  Owner
-- Full access to all features
-- Dashboard management
+###  Owner (Admin)
+- Full system access
+- Admin panel with user management, analytics, health monitoring
 - Theme customization
-- Analytics and reporting
+- System settings (maintenance mode, registration toggle)
 - Collaborator management
-- All CRUD operations
+- All content management
 
-###  Collaborator
-- Project management
-- Skills editing
-- Limited settings access
-- Collaboration features
-- Content creation
+###  Registered User
+- Portfolio editor (own portfolio)
+- CV/Resume builder (own CV)
+- Project management (own projects)
+- Skills editor (own skills)
+- Public profile pages (`/portfolio/:username`, `/cv/:username`)
+- Theme and settings customization
 
-### Visitor
-- View portfolio content
+###  Visitor (Unauthenticated)
+- View public portfolio content
 - Request collaboration
 - Contact form access
+- Browse public user pages
 - Public information only
 
 ##  Getting Started
@@ -108,6 +118,10 @@ npm run dev
 **Owner Access:**
 - Email: `owner@efolio.com`
 - Password: `owner123`
+
+**Registered User Access:**
+- Register at `/register`
+- Or sign in with Google
 
 **Collaborator Access:**
 - Use collaboration link: `/collaborate`
@@ -212,7 +226,7 @@ For support, email devtechs842@gmail.com or create an issue on GitHub.
 
 ---
 
-**Built with ❤️ by [Your Name]**
+**Built with ❤️ by Dev Techs**
 
 ## Expanding the ESLint configuration
 

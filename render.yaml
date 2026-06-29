@@ -21,6 +21,8 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_BASE_URL
+        value: https://aiapiv2.pekpik.com/v1
       - key: GEMINI_API_KEY
         value: AIzaSyA7IS5Auefu-2Y2L3P2ooEfNTGbD8LpYn8
       - key: GOOGLE_API_KEY
