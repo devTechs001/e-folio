@@ -224,7 +224,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support, email devtechs842@gmail.com or create an issue on GitHub.
 
----
 
 **Built with ❤️ by Dev Techs**
 

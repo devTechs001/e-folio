@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import apiService from '../services/api.service';
 import { useSocket } from './SocketContext';
+import { useAuth } from './AuthContext';
 import cacheService from '../services/cache.service';
 
 const SettingsContext = createContext(null);
@@ -19,9 +20,15 @@ export const SettingsProvider = ({ children }) => {
     const [isDirty, setIsDirty] = useState(false);
     const [lastSynced, setLastSynced] = useState(null);
     const socket = useSocket();
+    const { user } = useAuth();
 
     const fetchSettings = useCallback(async () => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
             const cached = cacheService.get(CACHE_KEY);
             if (cached) {
                 setSettings(cached);

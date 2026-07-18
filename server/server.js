@@ -9,10 +9,10 @@ const path = require('path');
 
 // Prevent unhandled rejections from crashing the server
 process.on('unhandledRejection', (reason) => {
-    console.warn('⚠️ Unhandled Rejection:', reason?.message || reason);
+    console.warn(' Unhandled Rejection:', reason?.message || reason);
 });
 process.on('uncaughtException', (err) => {
-    console.warn('⚠️ Uncaught Exception:', err?.message || err);
+    console.warn('Uncaught Exception:', err?.message || err);
 });
 
 // Load environment variables
@@ -252,14 +252,14 @@ connectDB().then(async () => {
     }
 
     server.listen(PORT, () => {
-        console.log('\n🚀 ===================================');
-        console.log(`✅ E-Folio Server Running`);
-        console.log(`📡 Port: ${PORT}`);
-        console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-        console.log(`💾 Database: ${process.env.MONGODB_URI ? 'Atlas/Local (with fallback)' : 'Local Only'}`);
-        console.log(`🔌 Socket.io: Ready`);
+        console.log('\n ===================================');
+        console.log(` E-Folio Server Running`);
+        console.log(` Port: ${PORT}`);
+        console.log(` Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
+        console.log(` Database: ${process.env.MONGODB_URI ? 'Atlas/Local (with fallback)' : 'Local Only'}`);
+        console.log(` Socket.io: Ready`);
         keyRotator.start();
-        console.log(`🔑 Free LLM API key rotator started (checking every 30 min)`);
+        console.log(` Free LLM API key rotator started (checking every 30 min)`);
         console.log('=====================================\n');
     });
 });

@@ -80,7 +80,7 @@ const DashboardLayout = ({ children, title, subtitle, actions, breadcrumbs = [] 
             </div>
 
             {/* Main Content */}
-            <div className="p-0">
+            <div className="p-2 sm:p-4 md:p-0">
                 {children}
             </div>
         </div>

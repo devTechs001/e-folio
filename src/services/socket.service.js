@@ -11,6 +11,9 @@ class SocketService {
 
     // Connect to Socket.io server
     connect(userData) {
+        if (this.socket?.connected) {
+            return this.socket;
+        }
         if (this.socket) {
             this.disconnect();
         }

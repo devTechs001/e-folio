@@ -175,6 +175,12 @@ const DashboardHome = () => {
 
     const loadDashboardData = async (silent = false) => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                if (!silent) setLoading(false);
+                setRefreshing(false);
+                return;
+            }
             if (!silent) setLoading(true);
             setRefreshing(true);
 
@@ -347,7 +353,7 @@ const DashboardHome = () => {
                 </div>
             }
         >
-            <div className="p-6 space-y-6">
+                <div className="p-4 sm:p-6 space-y-6">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {statCards.map((stat, index) => (
@@ -357,15 +363,16 @@ const DashboardHome = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                             onClick={() => stat.link && (window.location.href = stat.link)}
-                            className="group relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-cyan-500/50 transition-all cursor-pointer overflow-hidden"
+                            className="group relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50 hover:border-cyan-500/50 transition-all cursor-pointer overflow-hidden touch-manipulation"
                         >
                             {/* Gradient Background */}
                             <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
 
                             <div className="relative">
                                 <div className="flex items-center justify-between mb-4">
-                                    <div className={`w-14 h-14 rounded-xl bg-${stat.color}-500/20 border border-${stat.color}-500/30 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                        <stat.icon size={28} className={`text-${stat.color}-400`} />
+                                    <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-${stat.color}-500/20 border border-${stat.color}-500/30 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                        <stat.icon size={20} className={`sm:hidden text-${stat.color}-400`} />
+                                        <stat.icon size={28} className={`hidden sm:block text-${stat.color}-400`} />
                                     </div>
                                     <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
                                         stat.change >= 0
@@ -377,7 +384,7 @@ const DashboardHome = () => {
                                     </div>
                                 </div>
                                 <p className="text-slate-400 text-sm mb-2">{stat.label}</p>
-                                <h3 className="text-4xl font-bold text-white mb-1">
+                                <h3 className="text-2xl sm:text-4xl font-bold text-white mb-1">
                                     {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                                 </h3>
                                 <p className="text-slate-500 text-xs">vs. last period</p>
@@ -392,7 +399,7 @@ const DashboardHome = () => {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {quickActions.map((action, index) => (
                         <motion.button
                             key={index}
@@ -402,19 +409,20 @@ const DashboardHome = () => {
                             onClick={action.action}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className={`p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-${action.color}-500/50 transition-all group`}
+                            className={`p-3 sm:p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-${action.color}-500/50 transition-all group`}
                         >
-                            <action.icon size={24} className={`text-${action.color}-400 mx-auto mb-2 group-hover:scale-110 transition-transform`} />
-                            <span className="text-white text-sm font-medium">{action.label}</span>
+                            <action.icon size={20} className={`sm:hidden text-${action.color}-400 mx-auto mb-1 group-hover:scale-110 transition-transform`} />
+                            <action.icon size={24} className={`hidden sm:block text-${action.color}-400 mx-auto mb-2 group-hover:scale-110 transition-transform`} />
+                            <span className="text-white text-xs sm:text-sm font-medium">{action.label}</span>
                         </motion.button>
                     ))}
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Performance Chart - 2 columns */}
-                    <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-                        <div className="flex items-center justify-between mb-6">
+                    <div className="md:col-span-2 lg:col-span-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                             <div>
                                 <h3 className="text-xl font-semibold text-white mb-1">Performance Overview</h3>
                                 <p className="text-slate-400 text-sm">Last 7 days activity</p>
@@ -458,7 +466,7 @@ const DashboardHome = () => {
                     </div>
 
                     {/* Recent Activity - 1 column */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                    <div className="md:col-span-2 lg:col-span-1 bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-white">Recent Activity</h3>
                             <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
@@ -501,9 +509,9 @@ const DashboardHome = () => {
                 </div>
 
                 {/* Secondary Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                     {/* Upcoming Events */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                                 <Calendar size={24} className="text-cyan-400" />
@@ -525,8 +533,8 @@ const DashboardHome = () => {
                                         key={event._id || index}
                                         className="flex items-center gap-4 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900/70 transition-colors"
                                     >
-                                        <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/30 rounded-lg flex flex-col items-center justify-center">
-                                            <span className="text-cyan-400 font-bold text-xl">
+                                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-cyan-500/20 border border-cyan-500/30 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+                                            <span className="text-cyan-400 font-bold text-sm sm:text-xl">
                                                 {(() => {
                                                     const dt = safeDate(event.date);
                                                     return dt ? format(dt, 'dd') : '--';
@@ -559,7 +567,7 @@ const DashboardHome = () => {
                     </div>
 
                     {/* Tasks */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                                 <CheckCircle size={24} className="text-cyan-400" />
@@ -618,9 +626,9 @@ const DashboardHome = () => {
                 </div>
 
                 {/* Bottom Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
                     {/* Recent Projects */}
-                    <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                    <div className="md:col-span-2 lg:col-span-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-white">Recent Projects</h3>
                             <button className="text-cyan-400 hover:text-cyan-300 text-sm font-medium flex items-center gap-2">
@@ -674,7 +682,7 @@ const DashboardHome = () => {
                     </div>
 
                     {/* Device Stats */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
                         <h3 className="text-xl font-semibold text-white mb-6">Device Breakdown</h3>
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
@@ -713,7 +721,7 @@ const DashboardHome = () => {
 
                 {/* Notifications */}
                 {notifications.length > 0 && (
-                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                                 <Bell size={24} className="text-cyan-400" />

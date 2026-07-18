@@ -19,12 +19,12 @@ const seedOwner = async () => {
         // Try Atlas connection first (if URI is provided)
         if (atlasURI) {
             try {
-                console.log('📡 Attempting connection to MongoDB Atlas for seeding...');
+                console.log(' Attempting connection to MongoDB Atlas for seeding...');
                 await mongoose.connect(atlasURI, options);
-                console.log('✅ MongoDB Atlas Connected for seeding');
+                console.log(' MongoDB Atlas Connected for seeding');
             } catch (atlasError) {
-                console.error('❌ MongoDB Atlas connection failed:', atlasError.message);
-                console.log('⚠️  Attempting fallback to local MongoDB for seeding...');
+                console.error(' MongoDB Atlas connection failed:', atlasError.message);
+                console.log('  Attempting fallback to local MongoDB for seeding...');
                 
                 // If Atlas fails, try local connection
                 await mongoose.connect(localURI, { 

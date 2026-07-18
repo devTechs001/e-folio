@@ -44,6 +44,7 @@ const DashboardTopNavbar = ({
 
     // Fetch real notifications from the API
     useEffect(() => {
+        if (!localStorage.getItem('token')) return;
         apiService.getNotifications(10).then(res => {
             if (res.success && res.notifications) {
                 setNotifications(res.notifications.map(n => ({

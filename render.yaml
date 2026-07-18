@@ -31,11 +31,11 @@ services:
 # ============================================
 # DEPLOYMENT NOTES
 # ============================================
-# Frontend: https://e-folio-pro.netlify.app (Netlify) ✅
-# Backend: https://e-folio-backend-server.onrender.com (Render) ✅
+# Frontend: https://e-folio-pro.netlify.app (Netlify) 
+# Backend: https://e-folio-backend-server.onrender.com (Render) 
 #
-# 📋 Full deployment guide: See DEPLOYMENT_GUIDE.md
-# 📦 Using pnpm for dependency management to match project setup
+#  Full deployment guide: See DEPLOYMENT_GUIDE.md
+#  Using pnpm for dependency management to match project setup
 #
-# 🚀 Deploy Command:
+# Deploy Command:
 # git add . && git commit -m "Deploy" && git push origin main

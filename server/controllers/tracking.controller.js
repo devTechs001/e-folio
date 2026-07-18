@@ -117,8 +117,12 @@ exports.trackPageView = asyncHandler(async (req, res) => {
         { upsert: true, new: true }
     );
 
-    // Update page analytics with normalized path
-    await updatePageAnalytics(pagePath, pageTitle, timeSpent, scrollDepth);
+    // Update page analytics with normalized path (non-critical)
+    try {
+        await updatePageAnalytics(pagePath, pageTitle, timeSpent, scrollDepth);
+    } catch (analyticsError) {
+        console.warn('Failed to update page analytics:', analyticsError.message);
+    }
 
     // Broadcast to WebSocket if high engagement (AI analysis service disabled)
     if (session.aiInsights && session.aiInsights.engagementLevel && 
@@ -542,6 +546,8 @@ function parseUserAgent(userAgent) {
 }
 
 async function updatePageAnalytics(page, title, timeSpent, scrollDepth) {
+    if (!page) return;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -675,13 +681,16 @@ function generateCSV(sessions) {
 }
 
 function broadcastHighEngagement(session) {
-    // This will be handled by WebSocket server
-    if (global.io) {
-        global.io.emit('high_engagement', {
-            type: 'high_engagement',
-            message: `High engagement detected from ${session.location?.country || 'unknown location'}`,
-            visitor: session
-        });
+    try {
+        if (global.io) {
+            global.io.emit('high_engagement', {
+                type: 'high_engagement',
+                message: `High engagement detected from ${session?.location?.country || 'unknown location'}`,
+                visitor: session
+            });
+        }
+    } catch (e) {
+        // non-critical
     }
 }
 

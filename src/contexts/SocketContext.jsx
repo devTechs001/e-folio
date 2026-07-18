@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import socketService from '../services/socket.service';
 import { useNotifications } from '../components/NotificationSystem';
@@ -14,21 +14,21 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = ({ children }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user } = useAuth();
     const { info, success, error, warning } = useNotifications();
     const [connected, setConnected] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState([]);
+    const userRef = useRef(user);
+    userRef.current = user;
 
     useEffect(() => {
-        // Connect to socket when user is authenticated
-        if (isAuthenticated && user) {
-            const socket = socketService.connect({
+        if (user) {
+            socketService.connect({
                 userId: user.id,
                 name: user.name,
                 role: user.role
             });
 
-            // Listen for connection status
             socketService.on('connect', () => {
                 setConnected(true);
                 console.log('🔌 Real-time connection established');
@@ -41,19 +41,16 @@ export const SocketProvider = ({ children }) => {
                 warning('🔌 Real-time connection lost');
             });
 
-            // Listen for online users updates
             socketService.on('online_users', (users) => {
                 setOnlineUsers(users);
                 console.log(`👥 Online users updated: ${users.length} users`);
             });
 
-            // Enhanced notification handling
             socketService.on('notification', (data) => {
                 console.log('🔔 Received notification:', data);
                 handleRealTimeNotification(data);
             });
 
-            // Listen for new collaboration requests (owner only)
             socketService.on('new_collaboration_request', (request) => {
                 if (user.role === 'owner') {
                     info(`📩 New collaboration request from ${request.name}`, {
@@ -66,7 +63,6 @@ export const SocketProvider = ({ children }) => {
                 }
             });
 
-            // Listen for request approval/rejection
             socketService.on('request_approved', (data) => {
                 success(`✅ Your collaboration request has been approved!`, {
                     title: 'Request Approved',
@@ -84,7 +80,6 @@ export const SocketProvider = ({ children }) => {
                 });
             });
 
-            // Listen for project updates
             socketService.on('project_updated', (projectData) => {
                 success(`🔄 Project "${projectData.name}" has been updated`, {
                     title: 'Project Updated',
@@ -95,7 +90,6 @@ export const SocketProvider = ({ children }) => {
                 });
             });
 
-            // Listen for system alerts
             socketService.on('system_alert', (alertData) => {
                 const severity = alertData.severity || 'info';
                 const notificationFn = severity === 'error' ? error : 
@@ -108,7 +102,6 @@ export const SocketProvider = ({ children }) => {
                 });
             });
 
-            // Listen for new messages
             socketService.on('new_message', (messageData) => {
                 info(`💬 New message from ${messageData.sender}`, {
                     title: 'New Message',
@@ -120,22 +113,31 @@ export const SocketProvider = ({ children }) => {
                 });
             });
 
-            // Listen for typing indicators
             socketService.on('user_typing', (data) => {
-                // Handle typing indicators in chat components
                 console.log(`⌨️ ${data.userName} is typing in room ${data.roomId}`);
             });
 
-            // Listen for user status updates
             socketService.on('user_status_update', (data) => {
                 console.log(`🔄 User status updated: ${data.userName} is now ${data.status}`);
             });
 
             return () => {
-                socketService.disconnect();
+                if (!userRef.current) {
+                    socketService.disconnect();
+                    setConnected(false);
+                }
             };
+        } else {
+            socketService.disconnect();
+            setConnected(false);
         }
-    }, [isAuthenticated, user]);
+    }, [user]);
+
+    useEffect(() => {
+        return () => {
+            socketService.disconnect();
+        };
+    }, []);
 
     // Handle real-time notifications
     const handleRealTimeNotification = (data) => {
