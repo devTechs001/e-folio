@@ -1,0 +1,1 @@
+import{h as a}from"./index-CXYtAuU9.js";const e=a("chart-no-axes-column-increasing",[["path",{d:"M5 21v-6",key:"1hz6c0"}],["path",{d:"M12 21V9",key:"uvy0l4"}],["path",{d:"M19 21V3",key:"11j9sm"}]]);export{e as C};
