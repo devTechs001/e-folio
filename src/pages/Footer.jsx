@@ -69,7 +69,7 @@ const Footer = () => {
         resources: [
             { name: 'Blog', href: '/blog', icon: 'fas fa-blog' },
             { name: 'Portfolio', href: '#projects', icon: 'fas fa-briefcase' },
-            { name: 'Resume', href: '/assets/cv/CV2.pdf', icon: 'fas fa-file-pdf', download: true },
+            { name: 'Resume', href: '/CV2.pdf', icon: 'fas fa-file-pdf', download: true },
             { name: 'Collaborate', href: '/collaborate', icon: 'fas fa-users' }
         ]
     };

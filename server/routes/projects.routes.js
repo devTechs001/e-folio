@@ -62,7 +62,14 @@ router.get('/public', async (req, res) => {
     }
 });
 
-// All routes require authentication
+// Public project interactions (rate limited, no auth required for portfolio visitors)
+router.post('/:id/like', rateLimiter(30), likeProject);
+router.post('/:id/unlike', rateLimiter(30), unlikeProject);
+router.post('/:id/view', rateLimiter(60), viewProject);
+router.post('/:id/share', rateLimiter(20), shareProject);
+router.get('/:id/stats', rateLimiter(30), getProjectStats);
+
+// All routes below require authentication
 router.use(protect);
 
 // Main routes
@@ -78,13 +85,6 @@ router.route('/:id')
     .get(getProject)
     .put(isOwner, projectValidation, updateProject)
     .delete(isOwner, deleteProject);
-
-// Project interactions (public access for portfolio visitors, rate limited)
-router.post('/:id/like', rateLimiter(30), likeProject);
-router.post('/:id/unlike', rateLimiter(30), unlikeProject);
-router.post('/:id/view', rateLimiter(60), viewProject);
-router.post('/:id/share', rateLimiter(20), shareProject);
-router.get('/:id/stats', rateLimiter(30), getProjectStats);
 
 // Favorites (authenticated user)
 router.post('/:id/favorite', toggleFavoriteProject);

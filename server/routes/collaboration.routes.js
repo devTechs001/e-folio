@@ -24,55 +24,32 @@ const {
     getRequestActivity
 } = require('../controllers/collaboration.controller');
 
-// Public routes (rate limited)
+// Public routes (rate limited) - most frequently accessed first
 router.post('/submit', rateLimiter(10), submitCollaborationRequest);
 router.post('/upload', rateLimiter(10), uploadRequestFile);
 
-// All routes require authentication and owner role
-router.use(auth, isOwner);
+// Collaborator-facing routes (auth only, accessible by collaborators)
+router.get('/collaborators', auth, getCollaborators);
+router.get('/invites/pending', auth, getPendingInvites);
+router.get('/activity', auth, getCollaboratorActivity);
 
-// Get requests with filtering
-router.get('/requests', getCollaborationRequests);
+// Owner-only routes below
+router.get('/export', auth, isOwner, exportRequests);
+router.get('/stats', auth, isOwner, getCollaborationStats);
 
-// Get statistics
-router.get('/stats', getCollaborationStats);
+// Bulk operations before /:id to prevent :id from catching "bulk"
+router.post('/requests/bulk/approve', auth, isOwner, bulkApproveRequests);
+router.post('/requests/bulk/reject', auth, isOwner, bulkRejectRequests);
 
-// Get single request details
-router.get('/requests/:id', getRequestById);
-router.get('/requests/:id/activity', getRequestActivity);
-
-// Approve request
-router.post('/requests/:id/approve', approveRequest);
-
-// Reject request
-router.post('/requests/:id/reject', rejectRequest);
-
-// Bulk operations
-router.post('/requests/bulk/approve', bulkApproveRequests);
-router.post('/requests/bulk/reject', bulkRejectRequests);
-
-// Archive request
-router.post('/requests/:id/archive', archiveRequest);
-
-// Add note to request
-router.post('/requests/:id/notes', addRequestNote);
-
-// Update request status
-router.put('/requests/:id/status', updateRequestStatus);
-
-// Resend invite
-router.post('/requests/:id/resend', resendInvite);
-
-// Export requests
-router.get('/export', exportRequests);
-
-// Get collaborators
-router.get('/collaborators', getCollaborators);
-
-// Get pending invites
-router.get('/invites/pending', getPendingInvites);
-
-// Get collaborator activity
-router.get('/activity', getCollaboratorActivity);
+// Single request routes
+router.get('/requests', auth, isOwner, getCollaborationRequests);
+router.get('/requests/:id', auth, isOwner, getRequestById);
+router.get('/requests/:id/activity', auth, isOwner, getRequestActivity);
+router.post('/requests/:id/approve', auth, isOwner, approveRequest);
+router.post('/requests/:id/reject', auth, isOwner, rejectRequest);
+router.post('/requests/:id/archive', auth, isOwner, archiveRequest);
+router.post('/requests/:id/notes', auth, isOwner, addRequestNote);
+router.put('/requests/:id/status', auth, isOwner, updateRequestStatus);
+router.post('/requests/:id/resend', auth, isOwner, resendInvite);
 
 module.exports = router;

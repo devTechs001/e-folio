@@ -26,7 +26,7 @@ const Projects = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [projectLikes, setProjectLikes] = useState({});
     const [projectsCollapsed, setProjectsCollapsed] = useState(false);
-    const [techShowcaseCollapsed, setTechShowcaseCollapsed] = useState(false);
+    const [techShowcaseCollapsed, setTechShowcaseCollapsed] = useState(true);
 
     const loadProjects = useCallback(async () => {
         try {

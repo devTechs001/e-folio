@@ -11,17 +11,23 @@
   NPM_VERSION = "9"
   GITHUB_PAGES = "false"
 
-# SPA Redirect
+# Serve CV2.pdf directly before SPA catch-all
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/CV2.pdf"
+  to = "/CV2.pdf"
   status = 200
-  force = true
 
 # API Proxy to Render backend
 [[redirects]]
   from = "/api/*"
   to = "https://e-folio-backend-server.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA Redirect (all other routes)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
   force = true
 

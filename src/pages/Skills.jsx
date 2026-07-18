@@ -7,6 +7,7 @@ const Skills = () => {
     const [technicalSkills, setTechnicalSkills] = useState([]);
     const [professionalSkills, setProfessionalSkills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isCollapsed, setIsCollapsed] = useState(true);
 
     const loadSkills = useCallback(async () => {
         try {
@@ -141,8 +142,19 @@ const Skills = () => {
                 </div>
             </div>
             
+            {/* Toggle Button */}
+            <div className="text-center mb-8">
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--mainColor)]/10 hover:bg-[var(--mainColor)]/20 text-[var(--mainColor)] rounded-full transition-all duration-300 font-medium"
+                >
+                    <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'} transition-transform duration-300`}></i>
+                    {isCollapsed ? 'Show Technologies' : 'Hide Technologies'}
+                </button>
+            </div>
+
             {/* Skills Container */}
-            <div className="relative z-10 max-w-[1600px] mx-auto">
+            <div className={`relative z-10 max-w-[1600px] mx-auto transition-all duration-500 overflow-hidden ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100'}`}>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8 lg:gap-12">
                     
                     {/* Technical Skills Section */}

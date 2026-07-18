@@ -2,8 +2,7 @@ import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import {
   User, Mail, Phone, MapPin, Github, Linkedin, Globe,
-  Calendar, Briefcase, GraduationCap, Award, Code,
-  Download, FileText, File, ExternalLink, CheckCircle
+  Download, File
 } from 'lucide-react';
 import '../styles/CVComponent.css';
 
@@ -105,144 +104,6 @@ const CVComponent = () => {
     }
   };
 
-  const downloadAsHtml = () => {
-    const css = `
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter','Segoe UI',system-ui,sans-serif;color:#0f172a;background:#f1f5f9;line-height:1.5}
-.cv{max-width:900px;margin:20px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.08)}
-header{background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:32px 40px}
-.header-inner{display:flex;gap:32px;align-items:center}
-.avatar{width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:3px solid rgba(255,255,255,0.2);font-size:36px;color:rgba(255,255,255,0.5)}
-.info{flex:1}
-.info h1{font-size:28px;font-weight:700;margin:0 0 4px;letter-spacing:-0.5px}
-.info .title{font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 8px}
-.info .bio{font-size:13px;color:rgba(255,255,255,0.65);margin:0;line-height:1.5;max-width:500px}
-.contact-bar{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)}
-.contact-bar span{font-size:12px;color:rgba(255,255,255,0.8)}
-main{display:grid;grid-template-columns:1.4fr 1fr}
-.left{padding:32px;border-right:1px solid #e2e8f0}
-.right{padding:32px;background:#fafbfc}
-.section{margin-bottom:28px}
-.section:last-child{margin-bottom:0}
-.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#2563eb;margin:0 0 16px;display:flex;align-items:center;gap:8px}
-.section-title:after{content:'';flex:1;height:1px;background:#e2e8f0}
-.exp{margin-bottom:20px}
-.exp:last-child{margin-bottom:0}
-.exp-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:12px}
-.exp-h h4{font-size:15px;font-weight:600;color:#0f172a;margin:0}
-.exp-h .company{font-size:13px;color:#2563eb;font-weight:500;display:block}
-.exp-meta{text-align:right;font-size:12px;color:#94a3b8;white-space:nowrap}
-.exp-desc{font-size:13px;color:#475569;line-height:1.6;margin:0 0 8px}
-.tech{display:flex;flex-wrap:wrap;gap:4px}
-.tech span{font-size:11px;background:#eef2ff;color:#4338ca;padding:2px 10px;border-radius:20px;font-weight:500}
-.project{margin-bottom:20px}
-.project:last-child{margin-bottom:0}
-.project h4{font-size:15px;font-weight:600;color:#0f172a;margin:0 0 4px}
-.project p{font-size:13px;color:#475569;margin:0 0 6px;line-height:1.5}
-.edu{margin-bottom:16px}
-.edu:last-child{margin-bottom:0}
-.edu h4{font-size:14px;font-weight:600;color:#0f172a;margin:0 0 2px}
-.edu .inst{font-size:13px;color:#64748b;margin:0 0 2px}
-.edu .per{font-size:12px;color:#94a3b8}
-.skill-b{margin-bottom:16px}
-.skill-b:last-child{margin-bottom:0}
-.skill-b h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin:0 0 8px}
-.skill-tags{display:flex;flex-wrap:wrap;gap:6px}
-.skill-tags span{font-size:12px;background:#fff;color:#334155;padding:4px 12px;border-radius:6px;border:1px solid #e2e8f0;font-weight:500}
-.achieve{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:8px;border-left:3px solid #2563eb;margin-bottom:8px;font-size:13px;color:#475569}
-.achieve:last-child{margin-bottom:0}
-@media(max-width:768px){main{grid-template-columns:1fr}.header-inner{flex-direction:column;text-align:center}.left{border-right:none;border-bottom:1px solid #e2e8f0}}
-@media print{body{background:#fff}.cv{box-shadow:none;border-radius:0;margin:0}}
-`;
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${personalInfo.name} - CV</title>
-<style>${css}</style>
-</head>
-<body>
-<div class="cv">
-<header>
-<div class="header-inner">
-<div class="avatar">${personalInfo.name.charAt(0)}</div>
-<div class="info">
-<h1>${personalInfo.name}</h1>
-<div class="title">${personalInfo.title}</div>
-<div class="bio">${personalInfo.bio}</div>
-</div>
-</div>
-<div class="contact-bar">
-<span>${personalInfo.email}</span>
-<span>${personalInfo.phone}</span>
-<span>${personalInfo.location}</span>
-<span>${personalInfo.website}</span>
-<span>${personalInfo.github}</span>
-<span>${personalInfo.linkedin}</span>
-</div>
-</header>
-<main>
-<div class="left">
-<div class="section">
-<div class="section-title">Experience</div>
-${experience.map(e => `
-<div class="exp">
-<div class="exp-h">
-<div><h4>${e.title}</h4><span class="company">${e.company}</span></div>
-<div class="exp-meta">${e.period}<br>${e.location}</div>
-</div>
-<div class="exp-desc">${e.description}</div>
-<div class="tech">${e.technologies.map(t => `<span>${t}</span>`).join('')}</div>
-</div>`).join('')}
-</div>
-<div class="section">
-<div class="section-title">Projects</div>
-${projects.map(p => `
-<div class="project">
-<h4>${p.name}</h4>
-<p>${p.description}</p>
-<div class="tech">${p.technologies.map(t => `<span>${t}</span>`).join('')}</div>
-</div>`).join('')}
-</div>
-</div>
-<div class="right">
-<div class="section">
-<div class="section-title">Skills</div>
-${Object.entries(skills).map(([cat, list]) => `
-<div class="skill-b">
-<h4>${cat}</h4>
-<div class="skill-tags">${list.map(s => `<span>${s}</span>`).join('')}</div>
-</div>`).join('')}
-</div>
-<div class="section">
-<div class="section-title">Education</div>
-${education.map(e => `
-<div class="edu">
-<h4>${e.degree}</h4>
-<div class="inst">${e.institution}</div>
-<div class="per">${e.period} — ${e.details}</div>
-</div>`).join('')}
-</div>
-<div class="section">
-<div class="section-title">Achievements</div>
-${achievements.map(a => `<div class="achieve">${a}</div>`).join('')}
-</div>
-</div>
-</main>
-</div>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: 'text/html' });
-    const link = document.createElement('a');
-    link.download = 'Dev_Techs_CV.html';
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
-
   return (
     <div className="cv-container">
       <div className="cv-actions">
@@ -252,9 +113,6 @@ ${achievements.map(a => `<div class="achieve">${a}</div>`).join('')}
           ) : (
             <><Download size={20} /> Download as Image</>
           )}
-        </button>
-        <button onClick={downloadAsHtml} className="download-btn html-btn">
-          <FileText size={20} /> Download as HTML
         </button>
         <a href={`${import.meta.env.BASE_URL}CV2.pdf`} download className="download-btn pdf-btn">
           <File size={20} /> Download as PDF

@@ -1,1 +1,3 @@
+# Serve CV2.pdf directly before the SPA catch-all
+/CV2.pdf /CV2.pdf 200
 /* /index.html 200

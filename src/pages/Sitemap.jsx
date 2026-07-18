@@ -74,7 +74,7 @@ const Sitemap = () => {
             title: 'Resources',
             icon: BookOpen,
             links: [
-                { name: 'Resume/CV', href: '/assets/cv/CV2.pdf', description: 'Download professional resume', download: true },
+                { name: 'Resume/CV', href: '/CV2.pdf', description: 'Download professional resume', download: true },
                 { name: 'GitHub Profile', href: 'https://github.com/devTechs001', description: 'View code repositories', external: true },
                 { name: 'LinkedIn Profile', href: 'https://www.linkedin.com/in/daniel-mukula', description: 'Professional network profile', external: true },
                 { name: 'Portfolio', href: '#projects', description: 'View project portfolio' }

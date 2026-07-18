@@ -52,34 +52,32 @@ const upload = multer({
     }
 });
 
-// Public routes (rate limited)
+// Public routes (rate limited) - most frequently accessed first
 router.post('/submit', rateLimiter(10), submitCollaborationRequest);
 router.post('/upload', rateLimiter(10), upload.array('files', 5), uploadRequestFile);
 
-// Protected routes (owner only)
-router.get('/requests', auth, isOwner, getCollaborationRequests);
+// Collaborator-facing routes (auth only, accessible by collaborators)
+router.get('/collaborators', auth, getCollaborators);
+router.get('/invites/pending', auth, getPendingInvites);
+router.get('/activity', auth, getCollaboratorActivity);
+
+// Owner-only routes below
+router.get('/export', auth, isOwner, exportRequests);
 router.get('/stats', auth, isOwner, getCollaborationStats);
+
+// Bulk operations before /:id to prevent :id from catching "bulk"
+router.post('/bulk/approve', auth, isOwner, bulkApproveRequests);
+router.post('/bulk/reject', auth, isOwner, bulkRejectRequests);
+
+// Single request routes
+router.get('/requests', auth, isOwner, getCollaborationRequests);
 router.get('/requests/:id', auth, isOwner, getRequestById);
 router.get('/requests/:id/activity', auth, isOwner, getRequestActivity);
-
-// Request actions
 router.post('/requests/:id/approve', auth, isOwner, approveRequest);
 router.post('/requests/:id/reject', auth, isOwner, rejectRequest);
 router.post('/requests/:id/archive', auth, isOwner, archiveRequest);
 router.post('/requests/:id/notes', auth, isOwner, addRequestNote);
 router.put('/requests/:id/status', auth, isOwner, updateRequestStatus);
 router.post('/requests/:id/resend', auth, isOwner, resendInvite);
-
-// Bulk actions
-router.post('/bulk/approve', auth, isOwner, bulkApproveRequests);
-router.post('/bulk/reject', auth, isOwner, bulkRejectRequests);
-
-// Export
-router.get('/export', auth, isOwner, exportRequests);
-
-// Collaborators endpoints (for CollaboratorsStyled component)
-router.get('/collaborators', auth, getCollaborators);
-router.get('/invites/pending', auth, getPendingInvites);
-router.get('/activity', auth, getCollaboratorActivity);
 
 module.exports = router;

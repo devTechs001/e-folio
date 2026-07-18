@@ -262,7 +262,7 @@ const About = () => {
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                             <a 
-                                href="/assets/cv/CV2.pdf" 
+                                href="/CV2.pdf" 
                                 className="btn-primary group"
                                 download
                                 data-aos="fade-up"

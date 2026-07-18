@@ -17,7 +17,6 @@ import AIChatbot from '../components/AIChatbot';
 import '../styles/LandingPage.css';
 
 const LandingPage = () => {
-    const { isOwner } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [showBanner, setShowBanner] = useState(true);
     const [scrollProgress, setScrollProgress] = useState(0);
@@ -317,13 +316,6 @@ const LandingPage = () => {
                 </a>
             </div>
 
-            {/* Notification Toast (if needed) */}
-            {isOwner && (
-                <div className="owner-badge" data-aos="fade-left">
-                    <i className="fas fa-crown"></i>
-                    <span>Admin View</span>
-                </div>
-            )}
         </div>
     );
 };

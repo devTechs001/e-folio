@@ -33,52 +33,22 @@ const upload = multer({
     }
 });
 
-// Main reviews routes
-router.route('/')
-    .get(reviewsController.getReviews)
-    .post(auth, reviewsController.createReview);
-
-// Public review submission (no auth required, rate limited)
-router.post('/submit', rateLimiter(5), reviewsController.createReview);
-
-// Public reviews endpoint (no auth required)
+// Public/review endpoints (no auth required, accessible by public/collaborators)
 router.get('/public', reviewsController.getPublicReviews);
+router.post('/submit', rateLimiter(5), reviewsController.createReview);
 
 router.route('/featured')
     .get(reviewsController.getFeaturedReviews);
 
-router.route('/analytics')
-    .get(auth, reviewsController.getReviewAnalytics);
+// Like/unlike review endpoints (public actions, rate limited)
+router.post('/:id/like', rateLimiter(30), reviewsController.likeReview);
+router.delete('/:id/like', rateLimiter(30), reviewsController.unlikeReview);
 
-router.route('/:id')
-    .get(reviewsController.getReviewById)
-    .put(auth, reviewsController.updateReview)
-    .delete(auth, reviewsController.deleteReview);
-
-router.route('/:id/approve')
-    .post(auth, reviewsController.moderateReview);
-
-router.route('/:id/moderate')
-    .patch(auth, reviewsController.moderateReview);
-
-// Like/unlike review endpoints
-router.post('/:id/like', reviewsController.likeReview);
-router.delete('/:id/like', reviewsController.unlikeReview);
-
-// Reply to review
-router.post('/:id/reply', auth, reviewsController.replyToReview);
-
-// Toggle featured status
-router.put('/:id/featured', auth, reviewsController.toggleFeaturedReview);
-
-// Toggle visibility
-router.put('/:id/visibility', auth, reviewsController.toggleReviewVisibility);
-
-// Export reviews
+// Export before /:id to prevent :id from catching "export"
 router.get('/export', auth, reviewsController.exportReviews);
 
-// Upload attachment endpoint
-router.post('/upload-attachment', upload.single('file'), (req, res) => {
+// Upload attachment (requires auth)
+router.post('/upload-attachment', auth, upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({
@@ -87,7 +57,6 @@ router.post('/upload-attachment', upload.single('file'), (req, res) => {
             });
         }
 
-        // Return full URL
         const fullUrl = `${req.protocol}://${req.get('host')}/uploads/reviews/${req.file.filename}`;
 
         res.json({
@@ -103,5 +72,33 @@ router.post('/upload-attachment', upload.single('file'), (req, res) => {
         });
     }
 });
+
+// Admin/protected routes (require auth)
+router.route('/')
+    .get(reviewsController.getReviews)
+    .post(auth, reviewsController.createReview);
+
+router.route('/analytics')
+    .get(auth, reviewsController.getReviewAnalytics);
+
+router.route('/:id')
+    .get(reviewsController.getReviewById)
+    .put(auth, reviewsController.updateReview)
+    .delete(auth, reviewsController.deleteReview);
+
+router.route('/:id/approve')
+    .post(auth, reviewsController.moderateReview);
+
+router.route('/:id/moderate')
+    .patch(auth, reviewsController.moderateReview);
+
+// Reply to review
+router.post('/:id/reply', auth, reviewsController.replyToReview);
+
+// Toggle featured status
+router.put('/:id/featured', auth, reviewsController.toggleFeaturedReview);
+
+// Toggle visibility
+router.put('/:id/visibility', auth, reviewsController.toggleReviewVisibility);
 
 module.exports = router;
