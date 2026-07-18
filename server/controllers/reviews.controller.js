@@ -779,7 +779,7 @@ exports.deleteReview = async (req, res) => {
             });
         }
 
-        await review.remove();
+        await review.deleteOne();
 
         // Log activity
         await ActivityLog.create({

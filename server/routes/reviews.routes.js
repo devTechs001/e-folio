@@ -73,6 +73,10 @@ router.post('/upload-attachment', auth, upload.single('file'), (req, res) => {
     }
 });
 
+// Bulk actions (must be before /:id to prevent route conflict)
+router.post('/bulk/moderate', auth, reviewsController.bulkModerateReviews);
+router.post('/bulk/delete', auth, reviewsController.bulkDeleteReviews);
+
 // Admin/protected routes (require auth)
 router.route('/')
     .get(reviewsController.getReviews)

@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit');
 const User = require('../models/User.model');
 const AppSettings = require('../models/AppSettings');
 
+const crypto = require('crypto');
+
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
@@ -17,6 +19,16 @@ const registerLimiter = rateLimit({
     max: 5,
     message: { success: false, message: 'Too many registration attempts, please try again later.' }
 });
+
+function sanitizeString(val) {
+    if (typeof val !== 'string') return null;
+    return val.trim();
+}
+
+function constantTimeCompare(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return false;
+    return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 // Register new user
 router.post('/register', registerLimiter, async (req, res) => {
@@ -36,7 +48,10 @@ router.post('/register', registerLimiter, async (req, res) => {
             });
         }
 
-        const { name, username, email, password } = req.body;
+        const name = sanitizeString(req.body.name);
+        const username = sanitizeString(req.body.username);
+        const email = sanitizeString(req.body.email);
+        const password = sanitizeString(req.body.password);
 
         if (!name || !username || !email || !password) {
             return res.status(400).json({
@@ -69,7 +84,7 @@ router.post('/register', registerLimiter, async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET || 'efolio_secret',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -94,10 +109,20 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 });
 
+// Cache for owner password hash (set on first comparison)
+let ownerPasswordHash = null;
+
+async function getOwnerPasswordHash() {
+    if (ownerPasswordHash) return ownerPasswordHash;
+    ownerPasswordHash = await bcrypt.hash(process.env.OWNER_PASSWORD, 10);
+    return ownerPasswordHash;
+}
+
 // Login
 router.post('/login', loginLimiter, async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const email = sanitizeString(req.body.email);
+        const password = sanitizeString(req.body.password);
 
         if (!email || !password) {
             return res.status(400).json({ 
@@ -106,25 +131,29 @@ router.post('/login', loginLimiter, async (req, res) => {
             });
         }
 
-        // Owner login
-        if (email === process.env.OWNER_EMAIL && password === process.env.OWNER_PASSWORD) {
-            const token = jwt.sign(
-                { email, role: 'owner', id: 'owner_001' },
-                process.env.JWT_SECRET || 'efolio_secret',
-                { expiresIn: '7d' }
-            );
+        // Owner login (with bcrypt comparison)
+        if (email === process.env.OWNER_EMAIL) {
+            const hash = await getOwnerPasswordHash();
+            const isOwnerMatch = await bcrypt.compare(password, hash);
+            if (isOwnerMatch) {
+                const token = jwt.sign(
+                    { email, role: 'owner', id: 'owner_001' },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '7d' }
+                );
 
-            return res.json({
-                success: true,
-                message: 'Login successful',
-                user: {
-                    id: 'owner_001',
-                    name: process.env.OWNER_NAME || 'Portfolio Owner',
-                    email,
-                    role: 'owner'
-                },
-                token
-            });
+                return res.json({
+                    success: true,
+                    message: 'Login successful',
+                    user: {
+                        id: 'owner_001',
+                        name: process.env.OWNER_NAME || 'Portfolio Owner',
+                        email,
+                        role: 'owner'
+                    },
+                    token
+                });
+            }
         }
 
         // Regular user login
@@ -146,7 +175,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET || 'efolio_secret',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -219,38 +248,24 @@ router.get('/verify', async (req, res) => {
 router.post('/google', async (req, res) => {
     try {
         const { credential, username: preferredUsername } = req.body;
-        if (!credential) {
+        if (typeof credential !== 'string' || !credential) {
             return res.status(400).json({ success: false, message: 'Google credential is required' });
         }
 
         let googlePayload;
-        try {
-            const verifyResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-            if (!verifyResp.ok) {
-                // Try alternative verification endpoint
-                const altResp = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${credential}`);
-                if (!altResp.ok) {
-                    // For development, try decoding without verification
-                    const parts = credential.split('.');
-                    if (parts.length === 3) {
-                        googlePayload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-                    } else {
-                        return res.status(401).json({ success: false, message: 'Invalid Google credential' });
-                    }
-                } else {
-                    googlePayload = await altResp.json();
-                }
-            } else {
-                googlePayload = await verifyResp.json();
-            }
-        } catch (verifyErr) {
-            console.warn('Google token verification failed, trying local decode:', verifyErr.message);
-            const parts = credential.split('.');
-            if (parts.length === 3) {
-                googlePayload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-            } else {
+        const verifyResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+        if (!verifyResp.ok) {
+            const altResp = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${credential}`);
+            if (!altResp.ok) {
                 return res.status(401).json({ success: false, message: 'Invalid Google credential' });
             }
+            googlePayload = await altResp.json();
+        } else {
+            googlePayload = await verifyResp.json();
+        }
+
+        if (!googlePayload || !googlePayload.sub) {
+            return res.status(401).json({ success: false, message: 'Invalid Google credential' });
         }
 
         const googleId = googlePayload.sub;
@@ -308,7 +323,7 @@ router.post('/google', async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET || 'efolio_secret',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 

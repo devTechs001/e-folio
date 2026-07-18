@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X, Send, ThumbsUp, Share2, CheckCircle, Heart } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
-import trackingService from '../services/tracking.service';
+import apiService from '../services/api.service';
 
 const ReviewFloatingButton = () => {
     const { theme } = useTheme();
@@ -87,7 +87,7 @@ const ReviewFloatingButton = () => {
 
         try {
             setSubmitting(true);
-            const response = await trackingService.submitReview({
+            const response = await apiService.createReview({
                 name: formData.name,
                 email: formData.email,
                 rating,

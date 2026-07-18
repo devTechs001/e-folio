@@ -55,7 +55,7 @@ class AuthController {
                     role: user.role, 
                     id: user._id 
                 },
-                process.env.JWT_SECRET || 'efolio_secret',
+                process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
 
@@ -91,7 +91,7 @@ class AuthController {
                 });
             }
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'efolio_secret');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             return res.json({
                 success: true,

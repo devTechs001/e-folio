@@ -38,13 +38,9 @@ const ReviewsManager = () => {
     const [replyText, setReplyText] = useState('');
     const [showTemplates, setShowTemplates] = useState(false);
     const [ratingFilter, setRatingFilter] = useState('all');
-    const [sourceFilter, setSourceFilter] = useState('all');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
-    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [analytics, setAnalytics] = useState(null);
-    const [replyTemplates, setReplyTemplates] = useState([]);
-    const [showBulkActions, setShowBulkActions] = useState(false);
     const [featuredReviews, setFeaturedReviews] = useState([]);
     const [pagination, setPagination] = useState({
         currentPage: 1,
@@ -81,25 +77,27 @@ const ReviewsManager = () => {
     const loadReviews = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await apiService.getReviews({
+            const params = {
                 status: filter,
                 sortBy,
                 sortOrder,
                 page: currentPage,
                 limit: reviewsPerPage,
                 search: searchQuery,
-                rating: ratingFilter,
-                dateRange: dateRange,
-                source: sourceFilter
-            });
+                rating: ratingFilter
+            };
+            if (dateRange.start) params.startDate = dateRange.start;
+            if (dateRange.end) params.endDate = dateRange.end;
+            const response = await apiService.getReviews(params);
             
             setReviews(response.reviews || []);
-            setPagination(response.pagination || {
-                currentPage: 1,
-                totalPages: 1,
-                totalReviews: 0,
-                hasNext: false,
-                hasPrev: false
+            const p = response.pagination || {};
+            setPagination({
+                currentPage: p.page || p.currentPage || 1,
+                totalPages: p.pages || p.totalPages || 1,
+                totalReviews: p.total || p.totalReviews || 0,
+                hasNext: p.hasNext !== undefined ? p.hasNext : (p.page || 1) < (p.pages || 1),
+                hasPrev: p.hasPrev !== undefined ? p.hasPrev : (p.page || 1) > 1
             });
         } catch (err) {
             console.error('Error loading reviews:', err);
@@ -107,7 +105,7 @@ const ReviewsManager = () => {
         } finally {
             setLoading(false);
         }
-    }, [filter, sortBy, sortOrder, currentPage, reviewsPerPage, searchQuery, ratingFilter, dateRange, sourceFilter, error]);
+    }, [filter, sortBy, sortOrder, currentPage, reviewsPerPage, searchQuery, ratingFilter, dateRange, error]);
 
     const loadAnalytics = useCallback(async () => {
         try {
@@ -341,32 +339,9 @@ const ReviewsManager = () => {
         setShowTemplates(false);
     };
 
-    // Filtered and sorted reviews
-    const filteredReviews = reviews.filter(review => {
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            if (
-                !review.name.toLowerCase().includes(query) &&
-                !review.comment.toLowerCase().includes(query) &&
-                !review.email?.toLowerCase().includes(query)
-            ) {
-                return false;
-            }
-        }
-
-        if (ratingFilter !== 'all' && review.rating !== parseInt(ratingFilter)) {
-            return false;
-        }
-
-        return true;
-    });
-
-    // Pagination
-    const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
-    const paginatedReviews = filteredReviews.slice(
-        (currentPage - 1) * reviewsPerPage,
-        currentPage * reviewsPerPage
-    );
+    // Use server-side data directly — no client-side re-filtering to avoid
+    // conflicts with server pagination. The server already applies search + rating.
+    const paginatedReviews = reviews;
 
     // Access check
     if (!isOwner()) {
@@ -436,7 +411,7 @@ const ReviewsManager = () => {
                         <CheckCircle className="text-green-600 dark:text-green-400" size={24} />
                     </div>
                     <div className="text-3xl font-bold text-green-900 dark:text-green-100">
-                        {reviews.filter(r => r.status === 'approved').length}
+                        {stats?.approvedReviews || 0}
                     </div>
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">Published</p>
                 </motion.div>
@@ -452,7 +427,7 @@ const ReviewsManager = () => {
                         <Clock className="text-purple-600 dark:text-purple-400" size={24} />
                     </div>
                     <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
-                        {reviews.filter(r => r.status === 'pending').length}
+                        {stats?.pendingReviews || 0}
                     </div>
                     <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Awaiting review</p>
                 </motion.div>
@@ -717,7 +692,7 @@ const ReviewsManager = () => {
                                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <span className="text-sm text-gray-600 dark:text-gray-400">
-                                Select all {reviews.length} reviews
+                                Select all {paginatedReviews.length} reviews on this page
                             </span>
                         </div>
 
@@ -904,24 +879,24 @@ const ReviewsManager = () => {
                 )}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
+            {/* Pagination — uses server-side pagination */}
+            {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Showing {(currentPage - 1) * reviewsPerPage + 1} to{' '}
-                        {Math.min(currentPage * reviewsPerPage, filteredReviews.length)} of{' '}
-                        {filteredReviews.length} reviews
+                        Showing {(pagination.currentPage - 1) * reviewsPerPage + 1} to{' '}
+                        {Math.min(pagination.currentPage * reviewsPerPage, pagination.totalReviews)} of{' '}
+                        {pagination.totalReviews} reviews
                     </span>
 
                     <div className="flex gap-2">
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                            disabled={currentPage === 1}
+                            disabled={!pagination.hasPrev}
                             className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
                         >
                             Previous
                         </button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
                             <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
@@ -935,8 +910,8 @@ const ReviewsManager = () => {
                             </button>
                         ))}
                         <button
-                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                            disabled={!pagination.hasNext}
                             className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
                         >
                             Next

@@ -129,8 +129,8 @@ const DashboardHome = () => {
             case 'new_activity':
                 setRecentActivity(prev => [data.activity, ...prev.slice(0, 9)]);
                 break;
-            case 'new_notification':
-                setNotifications(prev => [data.notification, ...prev]);
+            case 'notification':
+                setNotifications(prev => [data.notification || data, ...prev]);
                 break;
             case 'visitor_online':
                 setOnlineUsers(data.count);
@@ -152,7 +152,7 @@ const DashboardHome = () => {
         if (socket && connected) {
             socket.on('stats_update', handleRealtimeUpdate);
             socket.on('new_activity', handleRealtimeUpdate);
-            socket.on('new_notification', handleRealtimeUpdate);
+            socket.on('notification', handleRealtimeUpdate);
             socket.on('visitor_online', handleRealtimeUpdate);
             socket.on('new_message', handleRealtimeUpdate);
         }
@@ -166,7 +166,7 @@ const DashboardHome = () => {
             if (socket) {
                 socket.off('stats_update', handleRealtimeUpdate);
                 socket.off('new_activity', handleRealtimeUpdate);
-                socket.off('new_notification', handleRealtimeUpdate);
+                socket.off('notification', handleRealtimeUpdate);
                 socket.off('visitor_online', handleRealtimeUpdate);
                 socket.off('new_message', handleRealtimeUpdate);
             }

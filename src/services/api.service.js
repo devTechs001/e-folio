@@ -771,8 +771,13 @@ class ApiService {
     }
 
     // Reviews APIs
-    async getReviews() {
-        return this.request('/reviews');
+    async getReviews(params = {}) {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') query.set(k, v);
+        });
+        const qs = query.toString();
+        return this.request(`/reviews${qs ? `?${qs}` : ''}`);
     }
 
     async approveReview(id) {
@@ -1031,15 +1036,6 @@ class ApiService {
         return this.request(`/reviews/public?${query}`);
     }
 
-    async getFeaturedReviews() {
-        try {
-            return await this.request('/reviews/featured');
-        } catch (error) {
-            console.warn('Featured reviews unavailable');
-            return { success: true, data: [] };
-        }
-    }
-
     async uploadReviewAttachment(file) {
         const formData = new FormData();
         formData.append('file', file);
@@ -1065,6 +1061,20 @@ class ApiService {
         return this.request(`/reviews/${id}/approve`, {
             method: 'POST',
             body: JSON.stringify(data)
+        });
+    }
+
+    async bulkModerateReviews(ids, status) {
+        return this.request('/reviews/bulk/moderate', {
+            method: 'POST',
+            body: JSON.stringify({ ids, status })
+        });
+    }
+
+    async bulkDeleteReviews(ids) {
+        return this.request('/reviews/bulk/delete', {
+            method: 'POST',
+            body: JSON.stringify({ ids })
         });
     }
 
@@ -1507,21 +1517,21 @@ class ApiService {
     }
 
     // Reviews APIs
+    async getFeaturedReviews() {
+        try {
+            return await this.request('/reviews/featured');
+        } catch (error) {
+            console.warn('Featured reviews unavailable');
+            return { success: true, reviews: [] };
+        }
+    }
+
     async getReviewAnalytics() {
         try {
             return await this.request('/reviews/analytics');
         } catch (error) {
             console.warn('Review analytics unavailable');
             return { success: true, data: {} };
-        }
-    }
-
-    async getFeaturedReviews() {
-        try {
-            return await this.request('/reviews/featured');
-        } catch (error) {
-            console.warn('Featured reviews unavailable');
-            return { success: true, data: [] };
         }
     }
 

@@ -15,6 +15,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import apiService from '../../services/api.service';
 
 const DashboardTopNavbar = ({ 
     onToggleSidebar, 
@@ -37,54 +38,27 @@ const DashboardTopNavbar = ({
     const [quickActionsOpen, setQuickActionsOpen] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(3);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const searchInputRef = useRef(null);
 
-    // Sample notifications
+    // Fetch real notifications from the API
     useEffect(() => {
-        setNotifications([
-            {
-                id: 1,
-                type: 'success',
-                title: 'Project Published',
-                message: 'Your project has been published successfully',
-                time: new Date(Date.now() - 5 * 60 * 1000),
-                read: false,
-                icon: CheckCircle,
-                link: '/dashboard/projects'
-            },
-            {
-                id: 2,
-                type: 'info',
-                title: 'New Collaborator',
-                message: 'John Doe joined your project',
-                time: new Date(Date.now() - 30 * 60 * 1000),
-                read: false,
-                icon: User,
-                link: '/dashboard/collaborators'
-            },
-            {
-                id: 3,
-                type: 'warning',
-                title: 'Deadline Approaching',
-                message: 'Project deadline is in 2 days',
-                time: new Date(Date.now() - 2 * 60 * 60 * 1000),
-                read: true,
-                icon: Clock,
-                link: '/dashboard/projects'
-            },
-            {
-                id: 4,
-                type: 'message',
-                title: 'New Message',
-                message: 'You have 3 unread messages',
-                time: new Date(Date.now() - 3 * 60 * 60 * 1000),
-                read: true,
-                icon: MessageSquare,
-                link: '/dashboard/messages'
+        apiService.getNotifications(10).then(res => {
+            if (res.success && res.notifications) {
+                setNotifications(res.notifications.map(n => ({
+                    id: n._id,
+                    type: n.type || 'info',
+                    title: n.title,
+                    message: n.message,
+                    time: new Date(n.createdAt),
+                    read: n.read,
+                    icon: n.type === 'success' ? CheckCircle : n.type === 'warning' ? AlertCircle : n.type === 'error' ? XCircle : Info,
+                    link: n.link || null
+                })));
+                setUnreadCount(res.notifications.filter(n => !n.read).length);
             }
-        ]);
+        }).catch(() => {});
     }, []);
 
     // Keyboard shortcuts
