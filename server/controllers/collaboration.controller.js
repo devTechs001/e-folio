@@ -152,6 +152,12 @@ exports.approveRequest = async (req, res) => {
             id: request._id,
             status: 'approved'
         });
+        req.app.get('io').emit('request_approved', {
+            id: request._id,
+            name: request.name,
+            email: request.email,
+            processedAt: request.processedAt
+        });
 
         res.json({
             success: true,
@@ -211,6 +217,13 @@ exports.rejectRequest = async (req, res) => {
         req.app.get('io').emit('collaboration_request_updated', {
             id: request._id,
             status: 'rejected'
+        });
+        req.app.get('io').emit('request_rejected', {
+            id: request._id,
+            name: request.name,
+            email: request.email,
+            rejectedAt: request.processedAt,
+            reason: reason || null
         });
 
         res.json({
@@ -376,7 +389,13 @@ exports.getRequestDetails = async (req, res) => {
 // Add note to request
 exports.addRequestNote = async (req, res) => {
     try {
-        const { content } = req.body;
+        const { content, note } = req.body;
+        const noteContent = content || note;
+
+        if (!noteContent) {
+            return res.status(400).json({ success: false, message: 'Note content is required' });
+        }
+
         const request = await CollaborationRequest.findById(req.params.id);
 
         if (!request) {
@@ -384,7 +403,7 @@ exports.addRequestNote = async (req, res) => {
         }
 
         request.notes.push({
-            content,
+            content: noteContent,
             addedBy: req.user.id,
             addedAt: new Date()
         });
@@ -513,6 +532,18 @@ exports.submitCollaborationRequest = async (req, res) => {
 
         await request.save();
 
+        // Emit real-time socket events for the dashboard
+        if (req.app.get('io')) {
+            req.app.get('io').emit('new_collaboration_request', {
+                id: request._id,
+                name: request.name,
+                email: request.email,
+                company: request.company,
+                role: request.role,
+                submittedAt: request.submittedAt
+            });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Collaboration request submitted successfully',
@@ -556,7 +587,9 @@ exports.getRequestById = async (req, res) => {
 // Upload request file
 exports.uploadRequestFile = async (req, res) => {
     try {
-        if (!req.file) {
+        const files = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
+
+        if (files.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: 'No file uploaded'
@@ -565,11 +598,12 @@ exports.uploadRequestFile = async (req, res) => {
 
         res.json({
             success: true,
-            file: {
-                filename: req.file.filename,
-                path: req.file.path,
-                size: req.file.size
-            }
+            files: files.map(f => ({
+                filename: f.filename,
+                originalname: f.originalname,
+                path: f.path,
+                size: f.size
+            }))
         });
     } catch (error) {
         console.error('Upload file error:', error);

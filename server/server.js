@@ -88,6 +88,7 @@ const io = socketIo(server, {
     }
 });
 global.io = io;
+app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 
@@ -125,6 +126,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/portfolios', express.static(path.join(__dirname, 'public/portfolios')));
 
 // Mount routes
 app.use('/api/auth', authRoutes);

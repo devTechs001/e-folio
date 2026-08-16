@@ -420,3 +420,37 @@
     background: #fafbfc;
   }
 }
+
+.cv-actions {
+  position: relative;
+  min-height: 44px;
+}
+
+.cv-loading {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.cv-hint {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: #b45309;
+  max-width: 480px;
+}
+
+@media (max-width: 600px) {
+  .cv-hint, .cv-loading {
+    position: static;
+    transform: none;
+    margin-bottom: 8px;
+    display: block;
+  }
+}

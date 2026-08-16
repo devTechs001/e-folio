@@ -54,7 +54,14 @@ const portfolioConfigSchema = new mongoose.Schema({
     lastEditedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    customTemplates: [{
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+        name: String,
+        description: String,
+        config: mongoose.Schema.Types.Mixed,
+        createdAt: { type: Date, default: Date.now }
+    }]
 }, {
     timestamps: true
 });

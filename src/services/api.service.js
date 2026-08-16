@@ -24,12 +24,19 @@ class ApiService {
     // Generic request method
     async request(endpoint, options = {}) {
         try {
+            const headers = {
+                ...this.getHeaders(),
+                ...options.headers
+            };
+
+            // Let the browser set the multipart boundary for FormData uploads
+            if (typeof FormData !== 'undefined' && options.body instanceof FormData) {
+                delete headers['Content-Type'];
+            }
+
             const response = await fetch(`${this.baseURL}${endpoint}`, {
                 ...options,
-                headers: {
-                    ...this.getHeaders(),
-                    ...options.headers
-                }
+                headers
             });
 
             // Check if response is HTML (indicates error page)
@@ -64,6 +71,13 @@ class ApiService {
         return this.request('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password })
+        });
+    }
+
+    async collaboratorLogin(email, password, accessCode) {
+        return this.request('/auth/login/collaborator', {
+            method: 'POST',
+            body: JSON.stringify({ email, password, accessCode })
         });
     }
 
@@ -798,9 +812,11 @@ class ApiService {
     }
 
     async updateSettings(settings) {
+        const formData = new FormData();
+        formData.append('settings', JSON.stringify(settings));
         return this.request('/settings', {
             method: 'PUT',
-            body: JSON.stringify(settings)
+            body: formData
         });
     }
 
@@ -1168,6 +1184,74 @@ class ApiService {
         return this.request(`/workspace/${workspaceId}/analytics`);
     }
 
+    async getWorkspaceMessages(workspaceId) {
+        try {
+            return await this.request(`/workspace/${workspaceId}/messages`);
+        } catch (error) {
+            console.warn('Workspace messages unavailable');
+            return { success: false, message: 'Failed to load messages' };
+        }
+    }
+
+    async sendWorkspaceMessage(workspaceId, content) {
+        return this.request(`/workspace/${workspaceId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({ content })
+        });
+    }
+
+    async addWorkspaceResource(workspaceId, resourceData) {
+        return this.request(`/workspace/${workspaceId}/resources`, {
+            method: 'POST',
+            body: JSON.stringify(resourceData)
+        });
+    }
+
+    async deleteWorkspaceResource(workspaceId, resourceId) {
+        return this.request(`/workspace/${workspaceId}/resources/${resourceId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async getWorkspaceCommits(workspaceId) {
+        try {
+            return await this.request(`/workspace/${workspaceId}/commits`);
+        } catch (error) {
+            console.warn('Workspace commits unavailable');
+            return { success: false, message: 'Failed to load commits' };
+        }
+    }
+
+    async addWorkspaceCommit(workspaceId, commitData) {
+        return this.request(`/workspace/${workspaceId}/commits`, {
+            method: 'POST',
+            body: JSON.stringify(commitData)
+        });
+    }
+
+    async getWorkspaceBuilds(workspaceId) {
+        try {
+            return await this.request(`/workspace/${workspaceId}/builds`);
+        } catch (error) {
+            console.warn('Workspace builds unavailable');
+            return { success: false, message: 'Failed to load builds' };
+        }
+    }
+
+    async triggerWorkspaceBuild(workspaceId, buildData = {}) {
+        return this.request(`/workspace/${workspaceId}/builds`, {
+            method: 'POST',
+            body: JSON.stringify(buildData)
+        });
+    }
+
+    async updateWorkspaceBuild(workspaceId, buildId, updateData = {}) {
+        return this.request(`/workspace/${workspaceId}/builds/${buildId}`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+    }
+
     // Learning Center APIs
     async getLearningVideos(params = {}) {
         const query = new URLSearchParams(params);
@@ -1264,10 +1348,10 @@ class ApiService {
         return this.request('/settings');
     }
 
-    async updateUserSettings(settings) {
+    async updateUserSettings(formData) {
         return this.request('/settings', {
             method: 'PUT',
-            body: JSON.stringify(settings)
+            body: formData
         });
     }
 
@@ -1361,7 +1445,11 @@ class ApiService {
         try {
             const response = await this.request('/portfolio/templates/custom');
             if (response && typeof response === 'object') {
-                return response;
+                // Server may return { templates } or { data }; normalize to { data }
+                const templates = Array.isArray(response.data)
+                    ? response.data
+                    : (Array.isArray(response.templates) ? response.templates : []);
+                return { success: true, data: templates };
             } else {
                 console.warn('Custom templates returned unexpected data, using mock data');
                 return {
@@ -1384,6 +1472,185 @@ class ApiService {
                     { id: 3, name: 'Minimal Resume', category: 'simple', preview: '/placeholder-template3.jpg' }
                 ]
             };
+        }
+    }
+
+    async saveCustomTemplate(data) {
+        try {
+            return await this.request('/portfolio/templates/custom', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+        } catch (error) {
+            console.warn('Save custom template unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getTemplateData(templateId) {
+        try {
+            // Check custom templates first
+            const custom = await this.getCustomTemplates();
+            if (custom && custom.success) {
+                const found = (custom.data || []).find(t =>
+                    String(t.id) === String(templateId) || String(t._id) === String(templateId)
+                );
+                if (found) return { success: true, data: found.config || found };
+            }
+            // Fall back to built-in templates
+            const all = await this.request('/portfolio/templates');
+            if (all && all.success && Array.isArray(all.data)) {
+                const found = all.data.find(t => String(t.id) === String(templateId));
+                if (found) return { success: true, data: found.config || found };
+            }
+            return { success: false, message: 'Template not found' };
+        } catch (error) {
+            console.warn('Template load unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async publishPortfolio() {
+        try {
+            return await this.request('/portfolio/publish', { method: 'POST' });
+        } catch (error) {
+            console.warn('Portfolio publish unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async unpublishPortfolio() {
+        try {
+            return await this.request('/portfolio/unpublish', { method: 'POST' });
+        } catch (error) {
+            console.warn('Portfolio unpublish unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async restorePortfolioVersion(versionId) {
+        try {
+            return await this.request(`/portfolio/versions/${versionId}/restore`, { method: 'POST' });
+        } catch (error) {
+            console.warn('Portfolio version restore unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    async generateAIContent({ sectionType, prompt }) {
+        try {
+            const response = await this.request('/ai/chat', {
+                method: 'POST',
+                body: JSON.stringify({
+                    message: prompt || `Generate professional portfolio content for the "${sectionType}" section. Respond with a list of suggestions, one per line.`,
+                    stream: false
+                })
+            });
+            if (response && response.success && response.message) {
+                const content = response.message.content || '';
+                const lines = content
+                    .split('\n')
+                    .map(l => l.replace(/^\s*[-*•\d.)]+\s*/, '').trim())
+                    .filter(l => l.length > 3)
+                    .slice(0, 6);
+                return { success: true, data: lines.length ? lines : [content.trim()] };
+            }
+            return { success: false, message: 'AI generation failed' };
+        } catch (error) {
+            console.warn('AI content generation unavailable');
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Lightweight client-side accessibility audit of the portfolio config
+    async checkAccessibility(config) {
+        const issues = [];
+        const suggestions = [];
+        const sections = config?.sections || [];
+
+        if (!sections.length) {
+            issues.push('No sections defined in the portfolio.');
+        }
+
+        const textColor = config?.theme?.textColor || '';
+        const bgColor = config?.theme?.backgroundColor || '';
+        if (textColor && bgColor) {
+            suggestions.push('Verify the text/background contrast meets WCAG AA standards (4.5:1 for body text).');
+        }
+
+        if (config?.seo?.title) {
+            suggestions.push('SEO title is set. Great!');
+        } else {
+            issues.push('SEO title is empty. Add one for better search visibility.');
+        }
+
+        sections.forEach(section => {
+            const title = section?.content?.title;
+            const desc = section?.content?.description;
+            if (section?.visible !== false) {
+                if (!title) issues.push(`Section "${section.name || section.id}" has no visible heading.`);
+                if (!desc) suggestions.push(`Section "${section.name || section.id}" could include a description.`);
+            }
+        });
+
+        return {
+            success: true,
+            score: Math.max(0, Math.min(100, 100 - issues.length * 15)),
+            issues,
+            suggestions
+        };
+    }
+
+    // Lightweight client-side optimizer for the portfolio config
+    async optimizePortfolio(config) {
+        const suggestions = [];
+
+        if (config?.theme?.fontFamily) {
+            suggestions.push('Consider using a standard web font stack for better load performance.');
+        }
+
+        const images = [];
+        (config?.sections || []).forEach(section => {
+            const data = section?.content?.data;
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    if (item?.imageUrl || item?.thumbnail) {
+                        images.push(item.imageUrl || item.thumbnail);
+                    }
+                });
+            }
+        });
+        if (images.length > 5) {
+            suggestions.push('More than 5 images detected. Consider lazy loading them for faster page load.');
+        }
+
+        if (config?.settings?.animations) {
+            suggestions.push('Animations are enabled. Consider disabling them on mobile for smoother scrolling.');
+        }
+
+        suggestions.push('Ensure all external links open in a new tab with rel="noopener noreferrer".');
+
+        return {
+            success: true,
+            suggestions
+        };
+    }
+
+    async getOwnerPublicProfile() {
+        try {
+            return await this.request('/public/profile');
+        } catch (error) {
+            console.warn('Owner public profile unavailable');
+            return { success: false, message: 'Failed to fetch profile' };
+        }
+    }
+
+    async getPublicCV(username) {
+        try {
+            return await this.request(`/public/cv/${encodeURIComponent(username)}`);
+        } catch (error) {
+            console.warn('Public CV unavailable');
+            return { success: false, message: 'Failed to fetch CV' };
         }
     }
 
@@ -1851,7 +2118,7 @@ class ApiService {
     async getProjectAnalytics(projectId, timeframe = '30d') {
         try {
             const query = new URLSearchParams({ timeframe });
-            return await this.request(`/projects/${projectId}/analytics?${query}`);
+            return await this.request(`/projects/${projectId}/stats?${query}`);
         } catch (error) {
             console.warn('getProjectAnalytics unavailable');
             return { success: true, data: {} };
@@ -1915,7 +2182,7 @@ class ApiService {
     async getProjectMedia(projectId, filters = {}) {
         try {
             const query = new URLSearchParams(filters);
-            return await this.request(`/projects/${projectId}/media?${query}`);
+            return await this.request(`/projects/${projectId}/stats?${query}`);
         } catch (error) {
             console.warn('getProjectMedia unavailable');
             return { success: true, data: [] };

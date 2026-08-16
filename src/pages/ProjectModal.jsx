@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Save, X, ExternalLink, Github, Calendar, Tag, Users, Star, MapPin, Heart, Share2, Bookmark, ThumbsUp, Eye } from 'lucide-react';
+import { Edit3, Save, X, ExternalLink, Github, Calendar, Tag, Users, Star, MapPin, Heart, Share2, Bookmark, ThumbsUp, Eye, Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../components/NotificationSystem';
 import apiService from '../services/api.service';
@@ -16,12 +16,13 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
         description: project.description || '',
         fullDescription: project.fullDescription || '',
         technologies: project.technologies || [],
-        status: project.status || 'development',
+        status: project.status || 'in-progress',
         featured: project.featured || false,
         links: project.links || {},
         tags: project.tags || [],
-        githubUrl: project.githubUrl || '',
-        liveUrl: project.liveUrl || ''
+        githubUrl: project.links?.github || '',
+        liveUrl: project.links?.live || '',
+        netlifyUrl: project.links?.netlify || ''
     });
     const [saving, setSaving] = useState(false);
 
@@ -77,12 +78,13 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
             description: project.description || '',
             fullDescription: project.fullDescription || '',
             technologies: project.technologies || [],
-            status: project.status || 'development',
+            status: project.status || 'in-progress',
             featured: project.featured || false,
             links: project.links || {},
             tags: project.tags || [],
-            githubUrl: project.githubUrl || '',
-            liveUrl: project.liveUrl || ''
+            githubUrl: project.links?.github || '',
+            liveUrl: project.links?.live || '',
+            netlifyUrl: project.links?.netlify || ''
         });
     };
 
@@ -94,7 +96,17 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
 
         try {
             setSaving(true);
-            const response = await apiService.updateProject(project.id, editForm);
+            const { githubUrl, liveUrl, netlifyUrl, ...rest } = editForm;
+            const payload = {
+                ...rest,
+                links: {
+                    ...(editForm.links || {}),
+                    github: githubUrl || undefined,
+                    live: liveUrl || undefined,
+                    netlify: netlifyUrl || undefined
+                }
+            };
+            const response = await apiService.updateProject(project.id, payload);
             
             // Update the project in the parent component
             if (onProjectUpdate) {
@@ -118,12 +130,13 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
             description: project.description || '',
             fullDescription: project.fullDescription || '',
             technologies: project.technologies || [],
-            status: project.status || 'development',
+            status: project.status || 'in-progress',
             featured: project.featured || false,
             links: project.links || {},
             tags: project.tags || [],
-            githubUrl: project.githubUrl || '',
-            liveUrl: project.liveUrl || ''
+            githubUrl: project.links?.github || '',
+            liveUrl: project.links?.live || '',
+            netlifyUrl: project.links?.netlify || ''
         });
     };
 
@@ -356,8 +369,12 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
                                         onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                                         className="form-select"
                                     >
-                                        <option value="development">Development</option>
-                                        <option value="beta">Beta</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="planning">Planning</option>
+                                        <option value="testing">Testing</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="on-hold">On Hold</option>
+                                        <option value="archived">Archived</option>
                                         <option value="live">Live</option>
                                         <option value="archived">Archived</option>
                                     </select>
@@ -375,7 +392,18 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
                                 </div>
                                 
                                 <div className="form-group">
-                                    <label>Live Demo URL</label>
+                                    <label>Netlify / Live Demo URL</label>
+                                    <input
+                                        type="url"
+                                        value={editForm.netlifyUrl}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, netlifyUrl: e.target.value }))}
+                                        className="form-input"
+                                        placeholder="https://project.netlify.app"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Alternate Demo URL</label>
                                     <input
                                         type="url"
                                         value={editForm.liveUrl}
@@ -521,14 +549,14 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
                                 </a>
                             )}
                             
-                            {/* Live Demo */}
-                            {(project.links?.live || project.liveUrl) && (
+                            {/* Live Demo - prefers the Netlify link */}
+                            {(project.links?.netlify || project.links?.live || project.liveUrl) && (
                                 <a
-                                    href={project.links?.live || project.liveUrl}
+                                    href={project.links?.netlify || project.links?.live || project.liveUrl}
                                     className="modal-btn modal-btn-demo"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    onClick={() => apiService.shareProject(project.id, 'demo')}
+                                    onClick={() => apiService.shareProject(project.id, 'netlify')}
                                 >
                                     <ExternalLink size={16} />
                                     <span>Live Demo</span>

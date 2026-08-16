@@ -8,6 +8,7 @@ import Skills from './Skills';
 import Education from './Education';
 import Interests from './Interests';
 import Projects from './Projects';
+import Lab from './Lab';
 import Testimonials from './Testimonials';
 import Contact from './Contact';
 import Footer from './Footer';
@@ -31,11 +32,17 @@ const LandingPage = () => {
             setIsLoading(false);
         }, 1000);
 
-        // Track scroll progress
+        // Track scroll progress (rAF-throttled to avoid re-render on every pixel)
+        let ticking = false;
         const handleScroll = () => {
-            const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const progress = (window.scrollY / totalHeight) * 100;
-            setScrollProgress(progress);
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
+                setScrollProgress(prev => (Math.abs(prev - progress) < 0.5 ? prev : progress));
+                ticking = false;
+            });
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -278,6 +285,13 @@ const LandingPage = () => {
                     <div className="divider-dot"></div>
                 </div>
 
+                <Lab />
+                
+                <div className="section-divider">
+                    <div className="divider-line"></div>
+                    <div className="divider-dot"></div>
+                </div>
+
                 <Testimonials />
                 
                 <div className="section-divider">
@@ -309,6 +323,10 @@ const LandingPage = () => {
                 <a href="#projects" className="quick-access-item" aria-label="Jump to Projects">
                     <i className="fas fa-project-diagram"></i>
                     <span className="quick-access-tooltip">Projects</span>
+                </a>
+                <a href="#lab" className="quick-access-item" aria-label="Jump to My Lab">
+                    <i className="fas fa-flask"></i>
+                    <span className="quick-access-tooltip">My Lab</span>
                 </a>
                 <a href="#contact" className="quick-access-item" aria-label="Jump to Contact">
                     <i className="fas fa-envelope"></i>

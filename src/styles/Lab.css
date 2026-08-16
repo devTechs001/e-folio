@@ -1,0 +1,391 @@
+.lab-section {
+  background: var(--bgColor);
+  padding: 80px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lab-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.lab-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mainColor);
+  background: color-mix(in srgb, var(--mainColor) 12%, transparent);
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--mainColor), #00d4ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.lab-card {
+  background: color-mix(in srgb, var(--bgColor) 92%, #ffffff 8%);
+  border: 1px solid color-mix(in srgb, var(--textColor) 12%, transparent);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: labFadeUp 0.5s ease both;
+}
+
+.lab-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+}
+
+.lab-thumb {
+  position: relative;
+  height: 180px;
+  background: linear-gradient(135deg, var(--mainColor), #00d4ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lab-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lab-thumb-placeholder {
+  font-size: 56px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lab-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.lab-status-live { background: #10b981; }
+.lab-status-beta { background: #f59e0b; }
+.lab-status-development { background: #3b82f6; }
+.lab-status-experimental { background: #8b5cf6; }
+
+.lab-body {
+  padding: 20px;
+}
+
+.lab-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--textColor);
+  margin-bottom: 8px;
+}
+
+.lab-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--textColor) 70%, transparent);
+  margin-bottom: 14px;
+}
+
+.lab-tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.lab-tech-pill {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mainColor) 12%, transparent);
+  color: var(--mainColor);
+  font-weight: 600;
+}
+
+.lab-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.lab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.25s ease;
+}
+
+.lab-btn-demo {
+  background: linear-gradient(135deg, var(--mainColor), color-mix(in srgb, var(--mainColor) 60%, #00d4ff));
+  color: #fff;
+}
+
+.lab-btn-demo:hover { opacity: 0.9; transform: translateY(-2px); }
+
+.lab-btn-code {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--textColor) 22%, transparent);
+  color: var(--textColor);
+}
+
+.lab-btn-code:hover {
+  background: color-mix(in srgb, var(--textColor) 8%, transparent);
+  border-color: var(--mainColor);
+}
+
+.lab-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mainColor), color-mix(in srgb, var(--mainColor) 55%, #00d4ff));
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--mainColor) 35%, transparent);
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.lab-cta-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--mainColor) 45%, transparent);
+}
+
+.lab-header-meta {
+  margin-top: 14px;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.lab-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+  background: color-mix(in srgb, #10b981 12%, transparent);
+  border: 1px solid color-mix(in srgb, #10b981 30%, transparent);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+
+.lab-live-refresh {
+  color: var(--mainColor);
+  background: color-mix(in srgb, var(--mainColor) 12%, transparent);
+  border-color: color-mix(in srgb, var(--mainColor) 30%, transparent);
+}
+
+.lab-live-refresh-spin {
+  animation: labSpin 1s linear infinite;
+}
+
+@keyframes labSpin {
+  to { transform: rotate(360deg); }
+}
+
+.lab-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: labStatusPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes labStatusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+.lab-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.lab-metric {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bgColor) 92%, #ffffff 8%);
+  border: 1px solid color-mix(in srgb, var(--textColor) 12%, transparent);
+  color: var(--mainColor);
+}
+
+.lab-metric div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.lab-metric strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--textColor);
+}
+
+.lab-metric span {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--textColor) 60%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lab-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.lab-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--textColor) 75%, transparent);
+  background: color-mix(in srgb, var(--bgColor) 92%, #ffffff 8%);
+  border: 1px solid color-mix(in srgb, var(--textColor) 14%, transparent);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.lab-filter:hover {
+  border-color: var(--mainColor);
+  color: var(--textColor);
+}
+
+.lab-filter-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--textColor) 12%, transparent);
+}
+
+.lab-filter-active {
+  background: linear-gradient(135deg, var(--mainColor), color-mix(in srgb, var(--mainColor) 60%, #00d4ff));
+  border-color: transparent;
+  color: #fff;
+}
+
+.lab-filter-active .lab-filter-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lab-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.35), transparent 55%);
+  pointer-events: none;
+}
+
+.lab-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lab-status-live { background: #10b981; }
+.lab-status-live svg { animation: labStatusPulse 1.5s ease-in-out infinite; }
+
+.lab-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lab-meta-item {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--textColor) 55%, transparent);
+}
+
+.lab-empty {
+  text-align: center;
+  color: color-mix(in srgb, var(--textColor) 55%, transparent);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.lab-cta-hint {
+  margin-top: 10px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--textColor) 60%, transparent);
+}
+
+@media (max-width: 640px) {
+  .lab-section { padding: 56px 16px; }
+  .lab-metric { flex: 1 1 40%; justify-content: center; }
+}
+
+.lab-loader {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lab-svg-loader {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--mainColor), #00d4ff);
+  animation: labPulse 1s ease-in-out infinite;
+}
+
+@keyframes labFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes labPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.85); opacity: 0.6; }
+}
+
+@media (max-width: 640px) {
+  .lab-section { padding: 56px 16px; }
+}

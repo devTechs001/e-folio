@@ -10,7 +10,7 @@ const crypto = require('crypto');
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: 40,
     message: { success: false, message: 'Too many login attempts, please try again later.' }
 });
 
@@ -173,6 +173,11 @@ router.post('/login', loginLimiter, async (req, res) => {
             });
         }
 
+        // Persist last login
+        user.lastLoginAt = new Date();
+        user.loginCount = (user.loginCount || 0) + 1;
+        await user.save();
+
         const token = jwt.sign(
             { id: user._id, email: user.email, role: 'user' },
             process.env.JWT_SECRET,
@@ -200,15 +205,101 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 });
 
+// Collaborator login (validates against an existing collaborator/user account)
+router.post('/login/collaborator', loginLimiter, async (req, res) => {
+    try {
+        const email = sanitizeString(req.body.email);
+        const password = sanitizeString(req.body.password);
+        const accessCode = sanitizeString(req.body.accessCode);
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
+
+        // If an access code is configured, require it
+        if (process.env.COLLAB_ACCESS_CODE) {
+            if (!accessCode || !constantTimeCompare(process.env.COLLAB_ACCESS_CODE, accessCode)) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid collaboration access code'
+                });
+            }
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials'
+            });
+        }
+
+        if (user.role === 'owner') {
+            return res.status(403).json({
+                success: false,
+                message: 'Use the owner login instead'
+            });
+        }
+
+        if (user.isActive === false) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been suspended'
+            });
+        }
+
+        const isMatch = await user.matchPassword(password);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials'
+            });
+        }
+
+        user.lastLoginAt = new Date();
+        user.loginCount = (user.loginCount || 0) + 1;
+        await user.save();
+
+        const token = jwt.sign(
+            { id: user._id, email: user.email, role: 'collaborator' },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            success: true,
+            message: 'Login successful',
+            user: {
+                id: user._id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                role: 'collaborator'
+            },
+            token
+        });
+    } catch (error) {
+        console.error('Collaborator login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during collaborator login'
+        });
+    }
+});
+
 // Verify token
 router.get('/verify', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
 
         if (!token) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'No token provided' 
+            return res.status(401).json({
+                success: false,
+                message: 'No token provided'
             });
         }
 
@@ -216,15 +307,16 @@ router.get('/verify', async (req, res) => {
 
         let user = { id: decoded.id, email: decoded.email, role: decoded.role };
 
-        if (decoded.role === 'user' && decoded.id !== 'owner_001') {
-            const dbUser = await User.findById(decoded.id).select('name username email role isPremium');
+        if (['user', 'collaborator'].includes(decoded.role) && decoded.id !== 'owner_001') {
+            const dbUser = await User.findById(decoded.id).select('name username email role isPremium avatar isActive');
             if (dbUser) {
                 user = {
                     id: dbUser._id,
                     name: dbUser.name,
                     username: dbUser.username,
                     email: dbUser.email,
-                    role: 'user',
+                    avatar: dbUser.avatar,
+                    role: decoded.role === 'collaborator' ? 'collaborator' : 'user',
                     isPremium: dbUser.isPremium
                 };
             }

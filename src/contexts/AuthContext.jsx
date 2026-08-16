@@ -30,8 +30,26 @@ const AuthProvider = ({ children }) => {
                     // Verify token with backend
                     const response = await apiService.verifyToken();
                     if (response.success) {
-                        setUser(JSON.parse(savedUser));
-                        setUserRole(savedRole);
+                        // Use the fresh profile data returned by the server
+                        const verifiedUser = response.user;
+                        if (verifiedUser && verifiedUser.id) {
+                            const data = {
+                                id: verifiedUser.id,
+                                name: verifiedUser.name,
+                                username: verifiedUser.username,
+                                email: verifiedUser.email,
+                                avatar: verifiedUser.avatar || null,
+                                role: verifiedUser.role || savedRole,
+                                loginTime: new Date().toISOString()
+                            };
+                            setUser(data);
+                            setUserRole(data.role || savedRole);
+                            localStorage.setItem('efolio_user', JSON.stringify(data));
+                            localStorage.setItem('efolio_role', data.role || savedRole);
+                        } else {
+                            setUser(JSON.parse(savedUser));
+                            setUserRole(savedRole);
+                        }
                     } else {
                         // Token invalid, clear session
                         localStorage.removeItem('token');
@@ -82,26 +100,36 @@ const AuthProvider = ({ children }) => {
                 }
             }
             
-            // Collaborator authentication (with approved invite code)
-            if (role === 'collaborator' && credentials.inviteCode) {
-                // TODO: Implement collaborator API endpoint
-                const userData = {
-                    id: Date.now(),
-                    name: credentials.name || 'Collaborator',
-                    email: credentials.email,
-                    avatar: null,
-                    loginTime: new Date().toISOString(),
-                    inviteCode: credentials.inviteCode
-                };
+            // Collaborator authentication via backend invite-based login
+            if (role === 'collaborator' && credentials.email && credentials.password) {
+                const response = await apiService.collaboratorLogin(
+                    credentials.email,
+                    credentials.password,
+                    credentials.accessCode
+                );
 
-                setUser(userData);
-                setUserRole('collaborator');
-                
-                localStorage.setItem('efolio_user', JSON.stringify(userData));
-                localStorage.setItem('efolio_role', 'collaborator');
-                
+                if (response.success && response.token) {
+                    const userData = {
+                        id: response.user.id,
+                        name: response.user.name,
+                        email: response.user.email,
+                        avatar: response.user.avatar || null,
+                        loginTime: new Date().toISOString()
+                    };
+
+                    setUser(userData);
+                    setUserRole('collaborator');
+
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('efolio_user', JSON.stringify(userData));
+                    localStorage.setItem('efolio_role', 'collaborator');
+
+                    setLoading(false);
+                    return { success: true, user: userData, role: 'collaborator' };
+                }
+
                 setLoading(false);
-                return { success: true, user: userData, role: 'collaborator' };
+                return { success: false, error: response.message || 'Invalid credentials' };
             }
             
             setLoading(false);

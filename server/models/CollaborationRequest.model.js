@@ -87,6 +87,10 @@ const collaborationRequestSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    terms: {
+        type: Boolean,
+        default: false
+    },
     
     // Status & Processing
     status: {

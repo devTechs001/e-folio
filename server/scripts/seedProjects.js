@@ -70,7 +70,8 @@ const seedProjects = async () => {
                 links: {
                     github: "https://github.com/yourusername/ecommerce",
                     live: "https://demo-ecommerce.com",
-                    demo: "https://demo-ecommerce.com"
+                    demo: "https://demo-ecommerce.com",
+                    netlify: "https://bizsolutionz.netlify.app/"
                 }
             },
             {

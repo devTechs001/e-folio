@@ -2,6 +2,7 @@
 const User = require('../models/User.model');
 const Invite = require('../models/Invite.model');
 const ActivityLog = require('../models/ActivityLog');
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendEmail } = require('../services/email.service');
 const { Parser } = require('json2csv');
@@ -76,18 +77,18 @@ exports.getCollaboratorStats = async (req, res) => {
         const total = await User.countDocuments({ _id: { $ne: req.user.id } });
         const active = await User.countDocuments({ 
             _id: { $ne: req.user.id },
-            status: 'active'
+            isActive: true
         });
         const inactive = await User.countDocuments({ 
             _id: { $ne: req.user.id },
             $or: [
-                { status: 'inactive' },
-                { lastActive: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
+                { isActive: false },
+                { lastLoginAt: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
             ]
         });
         const suspended = await User.countDocuments({ 
             _id: { $ne: req.user.id },
-            status: 'suspended'
+            isActive: false
         });
         const pending = await Invite.countDocuments({ 
             status: 'pending',
@@ -506,7 +507,7 @@ exports.removeCollaborator = async (req, res) => {
             });
         }
 
-        await collaborator.remove();
+        await User.deleteOne({ _id: collaborator._id });
 
         // Log activity
         await ActivityLog.create({
@@ -555,6 +556,7 @@ exports.suspendCollaborator = async (req, res) => {
         }
 
         collaborator.status = 'suspended';
+        collaborator.isActive = false;
         await collaborator.save();
 
         // Log activity
@@ -592,6 +594,7 @@ exports.reactivateCollaborator = async (req, res) => {
         }
 
         collaborator.status = 'active';
+        collaborator.isActive = true;
         await collaborator.save();
 
         // Log activity
@@ -913,15 +916,27 @@ exports.acceptInvite = async (req, res) => {
             });
         }
 
+        // Generate a unique username from the invite email
+        let username = (name || invite.email.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30);
+        let baseUsername = username || 'collaborator';
+        let counter = 1;
+        let usernameExists = await User.findOne({ username: baseUsername });
+        username = baseUsername;
+        while (usernameExists) {
+            username = `${baseUsername}${counter}`;
+            usernameExists = await User.findOne({ username });
+            counter++;
+        }
+
         // Create user
         const user = await User.create({
             name,
+            username,
             email: invite.email,
             password,
             role: invite.role,
             permissions: invite.permissions || [],
-            invitedBy: invite.invitedBy,
-            status: 'active'
+            isActive: true
         });
 
         // Update invite
@@ -957,7 +972,11 @@ exports.acceptInvite = async (req, res) => {
         });
 
         // Generate auth token
-        const authToken = user.getSignedJwtToken();
+        const authToken = jwt.sign(
+            { id: user._id, email: user.email, role: user.role || 'collaborator' },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
 
         res.json({
             success: true,
@@ -966,6 +985,7 @@ exports.acceptInvite = async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
+                username: user.username,
                 email: user.email,
                 role: user.role
             }

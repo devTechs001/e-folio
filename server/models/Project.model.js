@@ -25,7 +25,7 @@ const projectSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['idea', 'planning', 'in-progress', 'testing', 'completed', 'on-hold', 'archived'],
+        enum: ['idea', 'planning', 'in-progress', 'testing', 'completed', 'on-hold', 'archived', 'live', 'beta', 'development', 'experimental'],
         default: 'in-progress',
         index: true
     },
@@ -39,6 +39,7 @@ const projectSchema = new mongoose.Schema({
         github: { type: String, trim: true },
         live: { type: String, trim: true },
         demo: { type: String, trim: true },
+        netlify: { type: String, trim: true },
         documentation: { type: String, trim: true },
         staging: { type: String, trim: true },
         analytics: { type: String, trim: true },

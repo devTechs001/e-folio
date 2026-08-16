@@ -28,10 +28,12 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     avatar: String,
+    coverImage: String,
     bio: {
         type: String,
         maxlength: 500
     },
+    tagline: String,
     role: String,
     company: String,
     location: String,
@@ -45,6 +47,8 @@ const userSchema = new mongoose.Schema({
         twitter: String,
         facebook: String,
         instagram: String,
+        telegram: String,
+        whatsapp: String,
         youtube: String
     },
 

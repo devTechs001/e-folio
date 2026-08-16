@@ -5,9 +5,7 @@
 ### 1. **Owner** (Full Access)
 The portfolio owner has complete control over all aspects of the platform.
 
-**Login Credentials:**
-- Email: `owner@efolio.com`
-- Password: `owner123`
+*
 
 ### 2. **Collaborator** (Limited Access)
 Team members with permission to contribute to specific areas.

@@ -93,6 +93,19 @@ exports.createProject = asyncHandler(async (req, res) => {
         userId: req.user.id
     });
 
+    if (req.app.get('io')) {
+        req.app.get('io').emit('project_updated', {
+            projectId: project._id,
+            title: project.title,
+            status: project.status,
+            action: 'created'
+        });
+        req.app.get('io').emit('project_changed', {
+            action: 'created',
+            project: project.toObject()
+        });
+    }
+
     res.status(201).json({ success: true, project });
 });
 
@@ -120,6 +133,20 @@ exports.updateProject = asyncHandler(async (req, res) => {
     Object.assign(project, req.body);
     await project.save();
 
+    // Emit real-time socket event
+    if (req.app.get('io')) {
+        req.app.get('io').emit('project_updated', {
+            projectId: project._id,
+            title: project.title,
+            status: project.status,
+            updatedAt: project.updatedAt
+        });
+        req.app.get('io').emit('project_changed', {
+            action: 'updated',
+            project: project.toObject()
+        });
+    }
+
     res.json({ success: true, project });
 });
 
@@ -137,7 +164,15 @@ exports.deleteProject = asyncHandler(async (req, res) => {
         throw new Error('Project not found');
     }
 
+    const projectId = project._id;
     await project.deleteOne();
+
+    if (req.app.get('io')) {
+        req.app.get('io').emit('project_changed', {
+            action: 'deleted',
+            projectId
+        });
+    }
 
     res.json({ success: true, message: 'Project deleted' });
 });

@@ -261,9 +261,10 @@ class MediaController {
         try {
             const userId = req.user.id;
             const { fileId } = req.params;
-            const { name } = req.body;
+            const { name, newName } = req.body;
+            const cleanName = (name || newName || '').trim();
 
-            if (!name || !name.trim()) {
+            if (!cleanName) {
                 return res.status(400).json({
                     success: false,
                     message: 'Name is required'
@@ -272,7 +273,7 @@ class MediaController {
 
             const file = await Media.findOneAndUpdate(
                 { _id: fileId, userId },
-                { name: name.trim() },
+                { name: cleanName },
                 { new: true }
             );
 

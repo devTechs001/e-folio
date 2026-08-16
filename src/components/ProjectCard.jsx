@@ -77,6 +77,17 @@ const ProjectCard = ({ project, index, onClick }) => {
                         <Globe size={16} />
                     </a>
                 )}
+                {links.netlify && (
+                    <a
+                        href={links.netlify}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="project-external-link"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <i className="fa-solid fa-globe"></i>
+                    </a>
+                )}
             </div>
 
             <div className="project-card-content">
@@ -152,6 +163,18 @@ const ProjectCard = ({ project, index, onClick }) => {
                         >
                             <ExternalLink size={16} />
                             Live Demo
+                        </a>
+                    )}
+                    {links.netlify && (
+                        <a
+                            href={links.netlify}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="project-link-btn primary"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <Globe size={16} />
+                            Netlify
                         </a>
                     )}
                 </div>

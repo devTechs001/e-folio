@@ -21,8 +21,9 @@ const projects = [
         likes: 42,
         links: {
             github: "https://github.com/devTechs001/ecommerce-platform",
-            live: "https://devtechs001.github.io/omnibiz/",
-            demo: "https://devtechs001.github.io/omnibiz/"
+            live: "https://bizsolutionz.netlify.app/",
+            demo: "https://bizsolutionz.netlify.app/",
+            netlify: "https://bizsolutionz.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d", caption: "Main E-commerce View" },
@@ -30,7 +31,7 @@ const projects = [
             { url: "https://images.unsplash.com/photo-1556740738-b6a82e8bfca5", caption: "Shopping Cart" },
             { url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3", caption: "Checkout Process" }
         ],
-        completionDate: new Date("2024-01-15"),
+        completionDate: new Date("2025-11-15"),
         teamSize: 1,
         challenges: "Implementing real-time inventory updates, secure payment processing, and scalable architecture",
         achievements: ["99.9% uptime", "Sub-second load times", "1000+ daily active users"],
@@ -50,8 +51,9 @@ const projects = [
         likes: 34,
         links: {
             github: "https://github.com/devTechs001/GB-chat",
-            live: "https://devtechs001.github.io/GB-chat/",
-            demo: "https://devtechs001.github.io/GB-chat/"
+            live: "https://gbchat.netlify.app/",
+            demo: "https://gbchat.netlify.app/",
+            netlify: "https://gbchat.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3", caption: "Chat Interface" },
@@ -59,7 +61,7 @@ const projects = [
             { url: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0", caption: "Mobile View" },
             { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "File Sharing" }
         ],
-        completionDate: new Date("2024-02-15"),
+        completionDate: new Date("2026-02-15"),
         teamSize: 2,
         challenges: "Implementing real-time messaging, file uploads, and scalable socket connections",
         achievements: ["1000+ active users", "99.9% uptime", "Sub-second message delivery"],
@@ -67,7 +69,7 @@ const projects = [
         visibility: "public"
     },
     {
-        title: "Moview Watch",
+        title: "CinemaFlix",
         description: "Movie streaming platform with personalized recommendations, watchlists, and social features.",
         fullDescription: "A comprehensive movie streaming platform that provides users with a vast library of films and TV shows. Features include personalized recommendations based on viewing history, watchlist management, user ratings and reviews, social sharing, genre filtering, search functionality, and responsive design for optimal viewing on any device.",
         technologies: ["React", "Redux", "TMDB API", "Node.js", "Express", "MongoDB", "JWT", "CSS3", "Video.js"],
@@ -79,8 +81,9 @@ const projects = [
         likes: 56,
         links: {
             github: "https://github.com/devTechs001/moview-watch",
-            live: "https://devtechs001.github.io/moview-watch/",
-            demo: "https://devtechs001.github.io/moview-watch/"
+            live: "https://cinemaflx.netlify.app/",
+            demo: "https://cinemaflx.netlify.app/",
+            netlify: "https://cinemaflx.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1536440136628-849c177e76a1", caption: "Movie Library" },

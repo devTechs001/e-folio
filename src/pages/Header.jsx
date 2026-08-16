@@ -20,9 +20,7 @@ const Header = () => {
     const { isDarkMode, toggleTheme } = useTheme();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [scrollPosition, setScrollPosition] = useState(0);
     const [visible, setVisible] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
     const [isMobile, setIsMobile] = useState(getIsMobile);
     const [activeSection, setActiveSection] = useState(NAV_SECTIONS[0].id);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -72,15 +70,15 @@ const Header = () => {
             }
         };
 
+        let ticking = false;
         const handleScroll = () => {
             if (typeof window === 'undefined') return;
-            const currentScrollY = window.scrollY;
-
-            setIsScrolled(currentScrollY > 20);
-
-            setVisible(true);
-            setLastScrollY(currentScrollY);
-            setScrollPosition(currentScrollY);
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                setIsScrolled(prev => (prev === (window.scrollY > 20) ? prev : window.scrollY > 20));
+                ticking = false;
+            });
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -90,7 +88,7 @@ const Header = () => {
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleResize);
         };
-    }, [isMobile, lastScrollY, isMenuOpen]);
+    }, [isMobile, isMenuOpen]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;

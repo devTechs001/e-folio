@@ -44,10 +44,16 @@ class ProfileController {
             const userId = req.user.id;
             const profile = JSON.parse(req.body.profile || '{}');
 
-            // Handle avatar upload
+            // Handle avatar / cover upload (fields: avatar, cover)
             let avatarUrl = null;
-            if (req.file) {
-                avatarUrl = await this.processAvatar(req.file, userId);
+            let coverUrl = null;
+            const avatarFile = req.files?.avatar?.[0];
+            const coverFile = req.files?.cover?.[0];
+            if (avatarFile) {
+                avatarUrl = await this.processAvatar(avatarFile, userId);
+            }
+            if (coverFile) {
+                coverUrl = await this.processCover(coverFile, userId);
             }
 
             // Validate username uniqueness
@@ -85,6 +91,7 @@ class ProfileController {
                 username: profile.username,
                 email: profile.email,
                 bio: profile.bio,
+                tagline: profile.tagline,
                 location: profile.location,
                 role: profile.role,
                 company: profile.company,
@@ -95,13 +102,22 @@ class ProfileController {
                 updatedAt: new Date()
             };
 
+            const oldUser = await User.findById(userId);
+
             if (avatarUrl) {
                 // Delete old avatar
-                const oldUser = await User.findById(userId);
-                if (oldUser.avatar && oldUser.avatar.startsWith('/uploads')) {
+                if (oldUser?.avatar && oldUser.avatar.startsWith('/uploads')) {
                     await this.deleteFile(oldUser.avatar);
                 }
                 updateData.avatar = avatarUrl;
+            }
+
+            if (coverUrl) {
+                // Delete old cover
+                if (oldUser?.coverImage && oldUser.coverImage.startsWith('/uploads')) {
+                    await this.deleteFile(oldUser.coverImage);
+                }
+                updateData.coverImage = coverUrl;
             }
 
             const user = await User.findByIdAndUpdate(
@@ -408,6 +424,30 @@ class ProfileController {
         } catch (error) {
             console.error('Avatar processing error:', error);
             throw new Error('Failed to process avatar');
+        }
+    }
+
+    async processCover(file, userId) {
+        try {
+            const uploadDir = path.join(__dirname, '../uploads/covers');
+            await fs.mkdir(uploadDir, { recursive: true });
+
+            const filename = `${userId}_${Date.now()}.jpg`;
+            const filepath = path.join(uploadDir, filename);
+
+            // Process image with sharp
+            await sharp(file.buffer)
+                .resize(1920, 1080, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .jpeg({ quality: 82 })
+                .toFile(filepath);
+
+            return `/uploads/covers/${filename}`;
+        } catch (error) {
+            console.error('Cover processing error:', error);
+            throw new Error('Failed to process cover');
         }
     }
 

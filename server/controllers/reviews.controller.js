@@ -249,8 +249,23 @@ exports.getReviews = async (req, res) => {
             page = 1,
             limit = 10,
             startDate,
-            endDate
+            endDate,
+            count,
+            average
         } = req.query;
+
+        if (count === 'true') {
+            const total = await Review.countDocuments({});
+            return res.json({ success: true, count: total });
+        }
+
+        if (average === 'true') {
+            const result = await Review.aggregate([
+                { $group: { _id: null, avg: { $avg: '$rating' }, total: { $sum: 1 } } }
+            ]);
+            const data = result[0] || { avg: 0, total: 0 };
+            return res.json({ success: true, average: data.avg, count: data.total });
+        }
 
         let query = {};
 
@@ -621,10 +636,18 @@ exports.replyToReview = async (req, res) => {
 // Bulk moderate reviews
 exports.bulkModerateReviews = async (req, res) => {
     try {
-        const { reviewIds, status } = req.body;
+        const { reviewIds, ids, status } = req.body;
+        const targetIds = (Array.isArray(reviewIds) ? reviewIds : ids) || [];
+
+        if (targetIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No reviews selected'
+            });
+        }
 
         await Review.updateMany(
-            { _id: { $in: reviewIds } },
+            { _id: { $in: targetIds } },
             {
                 status,
                 moderatedBy: req.user.id,
@@ -634,7 +657,7 @@ exports.bulkModerateReviews = async (req, res) => {
 
         res.json({
             success: true,
-            message: `${reviewIds.length} reviews ${status}`
+            message: `${targetIds.length} reviews ${status}`
         });
     } catch (error) {
         console.error('Bulk moderate error:', error);
@@ -649,13 +672,21 @@ exports.bulkModerateReviews = async (req, res) => {
 // Bulk delete reviews
 exports.bulkDeleteReviews = async (req, res) => {
     try {
-        const { reviewIds } = req.body;
+        const { reviewIds, ids } = req.body;
+        const targetIds = (Array.isArray(reviewIds) ? reviewIds : ids) || [];
 
-        await Review.deleteMany({ _id: { $in: reviewIds } });
+        if (targetIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No reviews selected'
+            });
+        }
+
+        await Review.deleteMany({ _id: { $in: targetIds } });
 
         res.json({
             success: true,
-            message: `${reviewIds.length} reviews deleted`
+            message: `${targetIds.length} reviews deleted`
         });
     } catch (error) {
         console.error('Bulk delete error:', error);

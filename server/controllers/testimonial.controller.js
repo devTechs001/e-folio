@@ -438,6 +438,40 @@ exports.toggleVerified = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * @desc    Bulk reorder testimonials
+ * @route   PUT /api/testimonials/reorder
+ * @access  Private/Admin
+ */
+exports.reorderTestimonials = asyncHandler(async (req, res, next) => {
+    const { testimonials } = req.body;
+
+    if (!testimonials || !Array.isArray(testimonials) || testimonials.length === 0) {
+        return next(new ErrorResponse('Please provide an array of testimonials', 400));
+    }
+
+    const bulkOps = testimonials.map((item, index) => ({
+        updateOne: {
+            filter: { _id: typeof item === 'object' ? (item.id || item._id) : item },
+            update: {
+                $set: {
+                    displayOrder: typeof item === 'object' && typeof item.displayOrder === 'number'
+                        ? item.displayOrder
+                        : index + 1
+                }
+            }
+        }
+    }));
+
+    const result = await Testimonial.bulkWrite(bulkOps);
+
+    res.status(200).json({
+        success: true,
+        message: 'Testimonials reordered successfully',
+        modified: result.modifiedCount || result.nModified || 0
+    });
+});
+
+/**
  * @desc    Update display order
  * @route   PATCH /api/testimonials/:id/reorder
  * @access  Private/Admin

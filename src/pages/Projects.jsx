@@ -230,7 +230,8 @@ const Projects = () => {
             ],
             links: {
                 github: "https://github.com/devTechs001/ecommerce-platform",
-                live: "https://devtechs001.github.io/omnibiz/"
+                live: "https://devtechs001.github.io/omnibiz/",
+                netlify: "https://bizsolutionz.netlify.app/"
             },
             technologies: ["React", "Node.js", "MongoDB", "Stripe", "Express", "Redux", "JWT", "Socket.io"],
             category: "Web",
@@ -398,7 +399,8 @@ const Projects = () => {
             ],
             links: {
                 github: "https://github.com/devTechs001/GB-chat",
-                live: "https://devtechs001.github.io/GB-chat/"
+                live: "https://devtechs001.github.io/GB-chat/",
+                netlify: "https://gbchat.netlify.app/"
             },
             technologies: ["React", "Socket.io", "Node.js", "Express", "MongoDB", "JWT", "Tailwind CSS", "WebRTC"],
             category: "Web",
@@ -428,7 +430,8 @@ const Projects = () => {
             ],
             links: {
                 github: "https://github.com/devTechs001/moview-watch",
-                live: "https://devtechs001.github.io/moview-watch/"
+                live: "https://devtechs001.github.io/moview-watch/",
+                netlify: "https://cinemaflx.netlify.app/"
             },
             technologies: ["React", "Redux", "TMDB API", "Node.js", "Express", "MongoDB", "JWT", "CSS3", "Video.js"],
             category: "Web",

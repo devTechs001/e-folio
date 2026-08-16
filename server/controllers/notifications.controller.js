@@ -1,79 +1,37 @@
-const crypto = require('crypto');
+const Notification = require('../models/Notifications');
 
-let notifications = [
-    {
-        id: crypto.randomUUID(),
-        type: 'message',
-        title: 'New message from John',
-        message: 'John sent you a message regarding the portfolio project.',
-        read: false,
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-        icon: 'message'
-    },
-    {
-        id: crypto.randomUUID(),
-        type: 'review',
-        title: 'New review received',
-        message: 'Your project "E-Commerce Platform" received a 5-star review.',
-        read: false,
-        createdAt: new Date(Date.now() - 7200000).toISOString(),
-        icon: 'star'
-    },
-    {
-        id: crypto.randomUUID(),
-        type: 'project',
-        title: 'Project milestone completed',
-        message: 'The "Dashboard Redesign" project has reached 75% completion.',
-        read: true,
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        icon: 'project'
-    },
-    {
-        id: crypto.randomUUID(),
-        type: 'collaboration',
-        title: 'Collaboration request accepted',
-        message: 'Sarah has accepted your collaboration request for the mobile app.',
-        read: true,
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        icon: 'users'
-    },
-    {
-        id: crypto.randomUUID(),
-        type: 'system',
-        title: 'System maintenance',
-        message: 'Scheduled maintenance will occur on Sunday at 2:00 AM UTC.',
-        read: true,
-        createdAt: new Date(Date.now() - 259200000).toISOString(),
-        icon: 'settings'
-    },
-    {
-        id: crypto.randomUUID(),
-        type: 'update',
-        title: 'New feature available',
-        message: 'AI-powered project suggestions are now available in your dashboard.',
-        read: false,
-        createdAt: new Date(Date.now() - 43200000).toISOString(),
-        icon: 'bell'
-    }
-];
+const validTypes = ['message', 'review', 'project', 'collaboration', 'system', 'update', 'success', 'warning', 'error', 'info'];
 
 const getNotifications = async (req, res) => {
     try {
-        let result = [...notifications];
         const { type, limit, offset } = req.query;
+        const userId = req.user.id;
 
-        if (type) {
-            result = result.filter(n => n.type === type);
+        const query = { userId };
+        if (type && validTypes.includes(type)) {
+            query.type = type;
         }
 
-        const total = result.length;
         const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
         const offsetNum = Math.max(parseInt(offset, 10) || 0, 0);
-        const paginated = result.slice(offsetNum, offsetNum + limitNum);
+
+        const [total, notifications] = await Promise.all([
+            Notification.countDocuments(query),
+            Notification.find(query)
+                .sort({ createdAt: -1 })
+                .limit(limitNum)
+                .skip(offsetNum)
+                .lean()
+        ]);
+
+        const data = notifications.map(n => ({
+            ...n,
+            id: n._id
+        }));
 
         res.json({
             success: true,
-            data: paginated,
+            data,
             pagination: {
                 total,
                 limit: limitNum,
@@ -92,12 +50,16 @@ const getNotifications = async (req, res) => {
 
 const getUnreadNotifications = async (req, res) => {
     try {
-        const unread = notifications.filter(n => !n.read);
+        const userId = req.user.id;
+        const unread = await Notification.find({ userId, read: false })
+            .sort({ createdAt: -1 })
+            .lean();
+
         res.json({
             success: true,
             data: {
                 count: unread.length,
-                notifications: unread
+                notifications: unread.map(n => ({ ...n, id: n._id }))
             }
         });
     } catch (error) {
@@ -112,7 +74,13 @@ const getUnreadNotifications = async (req, res) => {
 const markAsRead = async (req, res) => {
     try {
         const { notificationId } = req.params;
-        const notification = notifications.find(n => n.id === notificationId);
+        const userId = req.user.id;
+
+        const notification = await Notification.findOneAndUpdate(
+            { _id: notificationId, userId },
+            { read: true },
+            { new: true }
+        );
 
         if (!notification) {
             return res.status(404).json({
@@ -121,7 +89,6 @@ const markAsRead = async (req, res) => {
             });
         }
 
-        notification.read = true;
         res.json({
             success: true,
             data: notification,
@@ -138,7 +105,9 @@ const markAsRead = async (req, res) => {
 
 const markAllAsRead = async (req, res) => {
     try {
-        notifications.forEach(n => { n.read = true; });
+        const userId = req.user.id;
+        await Notification.updateMany({ userId, read: false }, { read: true });
+
         res.json({
             success: true,
             message: 'All notifications marked as read'
@@ -155,16 +124,17 @@ const markAllAsRead = async (req, res) => {
 const deleteNotification = async (req, res) => {
     try {
         const { notificationId } = req.params;
-        const index = notifications.findIndex(n => n.id === notificationId);
+        const userId = req.user.id;
 
-        if (index === -1) {
+        const notification = await Notification.findOneAndDelete({ _id: notificationId, userId });
+
+        if (!notification) {
             return res.status(404).json({
                 success: false,
                 message: 'Notification not found'
             });
         }
 
-        notifications.splice(index, 1);
         res.json({
             success: true,
             message: 'Notification deleted successfully'
@@ -178,9 +148,28 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+const deleteAllNotifications = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await Notification.deleteMany({ userId });
+
+        res.json({
+            success: true,
+            message: 'All notifications deleted'
+        });
+    } catch (error) {
+        console.error('Error deleting all notifications:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete all notifications'
+        });
+    }
+};
+
 const createNotification = async (req, res) => {
     try {
         const { type, title, message, icon } = req.body;
+        const userId = req.user.id;
 
         if (!type || !title || !message) {
             return res.status(400).json({
@@ -189,7 +178,6 @@ const createNotification = async (req, res) => {
             });
         }
 
-        const validTypes = ['message', 'review', 'project', 'collaboration', 'system', 'update'];
         if (!validTypes.includes(type)) {
             return res.status(400).json({
                 success: false,
@@ -197,17 +185,24 @@ const createNotification = async (req, res) => {
             });
         }
 
-        const notification = {
-            id: crypto.randomUUID(),
+        const notification = await Notification.create({
+            userId,
             type,
             title,
             message,
-            read: false,
-            createdAt: new Date().toISOString(),
-            icon: icon || 'bell'
-        };
+            icon,
+            read: false
+        });
 
-        notifications.unshift(notification);
+        // Emit real-time socket event for the current user
+        if (req.app.get('io')) {
+            const payload = {
+                ...notification.toObject(),
+                id: notification._id
+            };
+            req.app.get('io').emit('notification', payload);
+        }
+
         res.status(201).json({
             success: true,
             data: notification,
@@ -225,7 +220,13 @@ const createNotification = async (req, res) => {
 const dismissNotification = async (req, res) => {
     try {
         const { notificationId } = req.params;
-        const notification = notifications.find(n => n.id === notificationId);
+        const userId = req.user.id;
+
+        const notification = await Notification.findOneAndUpdate(
+            { _id: notificationId, userId },
+            { read: true, dismissed: true },
+            { new: true }
+        );
 
         if (!notification) {
             return res.status(404).json({
@@ -234,7 +235,6 @@ const dismissNotification = async (req, res) => {
             });
         }
 
-        notification.read = true;
         res.json({
             success: true,
             data: notification,
@@ -255,6 +255,7 @@ module.exports = {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    deleteAllNotifications,
     createNotification,
     dismissNotification
 };

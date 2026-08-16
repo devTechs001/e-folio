@@ -103,6 +103,60 @@ const workspaceSchema = new mongoose.Schema({
             default: 'all'
         }
     }],
+    // Workspace chat messages
+    messages: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        name: String,
+        avatar: String,
+        content: {
+            type: String,
+            trim: true,
+            maxlength: 2000
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    // Commit history (development workspaces)
+    commits: [{
+        message: String,
+        author: String,
+        authorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        branch: {
+            type: String,
+            default: 'main'
+        },
+        filesChanged: { type: Number, default: 0 },
+        additions: { type: Number, default: 0 },
+        deletions: { type: Number, default: 0 },
+        sha: String,
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    // Build pipeline history (development workspaces)
+    builds: [{
+        branch: { type: String, default: 'main' },
+        commitMessage: String,
+        commitSha: String,
+        status: {
+            type: String,
+            enum: ['queued', 'running', 'passed', 'failed', 'cancelled'],
+            default: 'queued'
+        },
+        startedAt: Date,
+        finishedAt: Date,
+        duration: Number, // seconds
+        logs: [String]
+    }],
     // Workspace settings
     settings: {
         allowCollaboratorInteraction: { type: Boolean, default: false }, // Can collaborators see each other

@@ -45,8 +45,8 @@ exports.auth = async (req, res, next) => {
             });
         }
 
-        // Check if user is suspended
-        if (user.status === 'suspended') {
+        // Check if user is suspended/inactive
+        if (user.isActive === false) {
             return res.status(403).json({
                 success: false,
                 message: 'Your account has been suspended'
@@ -55,9 +55,13 @@ exports.auth = async (req, res, next) => {
 
         req.user = user;
 
-        // Update last active
-        req.user.lastActive = Date.now();
-        await req.user.save();
+        // Update last active (throttled to avoid a DB write on every request)
+        const now = Date.now();
+        const lastSeen = user.lastLoginAt ? user.lastLoginAt.getTime() : 0;
+        if (now - lastSeen > 2 * 60 * 1000) {
+            req.user.lastLoginAt = new Date(now);
+            req.user.save().catch(() => {});
+        }
 
         next();
     } catch (error) {
@@ -97,8 +101,8 @@ exports.hasPermission = (...permissions) => {
             return next(); // Owner has all permissions
         }
 
-        const hasRequiredPermission = permissions.some(permission =>
-            req.user.permissions.includes(permission)
+        const hasRequiredPermission = (req.user.permissions || []).some(permission =>
+            permissions.includes(permission)
         );
 
         if (!hasRequiredPermission) {

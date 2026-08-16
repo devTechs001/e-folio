@@ -135,10 +135,35 @@ const Profile = () => {
             
             // Update profile data if changed
             if (newSettings.profile) {
+                const p = newSettings.profile;
                 setProfile(prev => ({
                     ...prev,
-                    ...newSettings.profile
+                    ...(p.name !== undefined && { name: p.name }),
+                    ...(p.email !== undefined && { email: p.email }),
+                    ...(p.username !== undefined && { username: p.username }),
+                    ...(p.bio !== undefined && { bio: p.bio }),
+                    ...(p.tagline !== undefined && { tagline: p.tagline }),
+                    ...(p.role !== undefined && { role: p.role }),
+                    ...(p.company !== undefined && { company: p.company }),
+                    ...(p.location !== undefined && { location: p.location }),
+                    ...(p.website !== undefined && { website: p.website }),
+                    ...(p.phone !== undefined && { phone: p.phone }),
+                    ...(p.avatar && { avatar: p.avatar }),
+                    ...(p.coverImage && { coverImage: p.coverImage }),
+                    socialLinks: {
+                        ...prev.socialLinks,
+                        ...(p.github !== undefined && { github: p.github }),
+                        ...(p.linkedin !== undefined && { linkedin: p.linkedin }),
+                        ...(p.twitter !== undefined && { twitter: p.twitter }),
+                        ...(p.facebook !== undefined && { facebook: p.facebook }),
+                        ...(p.instagram !== undefined && { instagram: p.instagram }),
+                        ...(p.telegram !== undefined && { telegram: p.telegram }),
+                        ...(p.whatsapp !== undefined && { whatsapp: p.whatsapp }),
+                        ...(p.youtube !== undefined && { youtube: p.youtube })
+                    }
                 }));
+                if (p.avatar) setAvatarPreview(p.avatar);
+                if (p.coverImage) setCoverPreview(p.coverImage);
             }
         };
         
@@ -237,7 +262,7 @@ const Profile = () => {
             const [
                 statsRes, activityRes, projectsRes, skillsRes,
                 achievementsRes, certsRes, experienceRes, educationRes,
-                testimonialsRes, languagesRes, interestsRes
+                testimonialsRes, languagesRes, interestsRes, settingsRes
             ] = await Promise.all([
                 apiService.getProfileStats(),
                 apiService.getRecentActivity(),
@@ -249,7 +274,8 @@ const Profile = () => {
                 apiService.getEducation(),
                 apiService.getTestimonials(),
                 apiService.getLanguages(),
-                apiService.getInterests()
+                apiService.getInterests(),
+                apiService.getUserSettings()
             ]);
 
             if (statsRes.success) setProfileStats(statsRes.data);
@@ -263,6 +289,36 @@ const Profile = () => {
             if (testimonialsRes.success) setTestimonials(testimonialsRes.data);
             if (languagesRes.success) setLanguages(languagesRes.data);
             if (interestsRes.success) setInterests(interestsRes.data);
+
+            // Merge real settings profile so the dashboard mirrors the About page / any editor
+            if (settingsRes.success && settingsRes.data?.profile) {
+                const p = settingsRes.data.profile;
+                setProfile(prev => ({
+                    ...prev,
+                    name: p.name || prev.name,
+                    email: p.email || prev.email,
+                    username: p.username || prev.username,
+                    bio: p.bio ?? prev.bio,
+                    tagline: p.tagline ?? prev.tagline,
+                    role: p.role ?? prev.role,
+                    company: p.company ?? prev.company,
+                    location: p.location ?? prev.location,
+                    website: p.website ?? prev.website,
+                    phone: p.phone ?? prev.phone,
+                    avatar: p.avatar || prev.avatar,
+                    socialLinks: {
+                        github: p.github ?? prev.socialLinks.github,
+                        linkedin: p.linkedin ?? prev.socialLinks.linkedin,
+                        twitter: p.twitter ?? prev.socialLinks.twitter,
+                        facebook: p.facebook ?? prev.socialLinks.facebook,
+                        instagram: p.instagram ?? prev.socialLinks.instagram,
+                        telegram: p.telegram ?? prev.socialLinks.telegram,
+                        whatsapp: p.whatsapp ?? prev.socialLinks.whatsapp,
+                        youtube: p.youtube ?? prev.socialLinks.youtube
+                    }
+                }));
+                if (p.avatar) setAvatarPreview(p.avatar);
+            }
         } catch (err) {
             console.error('Failed to load profile data:', err);
         } finally {
@@ -343,12 +399,31 @@ const Profile = () => {
                     });
                 }
                 
-                // Emit settings change event for other components
-                window.dispatchEvent(new CustomEvent('settingsChanged', { 
-                    detail: { 
-                        profile: profile,
-                        user: response.user 
-                    } 
+                // Emit settings change event for other components (About page etc.)
+                const flatProfile = {
+                    name: profile.name,
+                    email: profile.email,
+                    username: profile.username,
+                    bio: profile.bio,
+                    tagline: profile.tagline,
+                    role: profile.role,
+                    company: profile.company,
+                    location: profile.location,
+                    website: profile.website,
+                    phone: profile.phone,
+                    avatar: response.user?.avatar || profile.avatar,
+                    coverImage: profile.coverImage,
+                    github: profile.socialLinks?.github,
+                    linkedin: profile.socialLinks?.linkedin,
+                    twitter: profile.socialLinks?.twitter,
+                    facebook: profile.socialLinks?.facebook,
+                    instagram: profile.socialLinks?.instagram,
+                    telegram: profile.socialLinks?.telegram,
+                    whatsapp: profile.socialLinks?.whatsapp,
+                    youtube: profile.socialLinks?.youtube
+                };
+                window.dispatchEvent(new CustomEvent('settingsChanged', {
+                    detail: { profile: flatProfile }
                 }));
                 setCoverPreview(response.user.coverImage);
                 setIsEditing(false);

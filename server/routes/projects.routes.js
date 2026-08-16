@@ -29,7 +29,7 @@ const projectValidation = [
     body('title').trim().isLength({ min: 1, max: 100 }).withMessage('Title is required'),
     body('description').trim().isLength({ min: 1, max: 2000 }).withMessage('Description is required'),
     body('category').optional().isIn(['Web', 'Mobile', 'Desktop', 'AI/ML', 'Blockchain', 'DevOps', 'Data', 'Game', 'IoT', 'Other']),
-    body('status').optional().isIn(['idea', 'planning', 'in-progress', 'testing', 'completed', 'on-hold', 'archived']),
+    body('status').optional().isIn(['idea', 'planning', 'in-progress', 'testing', 'completed', 'on-hold', 'archived', 'live', 'beta', 'development']),
     body('priority').optional().isIn(['low', 'medium', 'high', 'urgent']),
     body('visibility').optional().isIn(['public', 'private', 'unlisted'])
 ];

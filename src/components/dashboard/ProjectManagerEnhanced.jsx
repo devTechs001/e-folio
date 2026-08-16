@@ -344,6 +344,10 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                                 <option value="completed">Completed</option>
                                 <option value="on-hold">On Hold</option>
                                 <option value="archived">Archived</option>
+                                <option value="live">Live (Lab)</option>
+                                <option value="beta">Beta (Lab)</option>
+                                <option value="development">In Development (Lab)</option>
+                                <option value="experimental">Experimental (Lab)</option>
                             </select>
                         </div>
                         
@@ -465,6 +469,13 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
                                 onChange={(e) => handleLinkChange('live', e.target.value)}
                                 className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Live Demo URL"
+                            />
+                            <input
+                                type="url"
+                                value={project.links?.netlify || ''}
+                                onChange={(e) => handleLinkChange('netlify', e.target.value)}
+                                className="w-full px-4 py-3 sm:py-2 bg-[var(--surface-color)]/80 border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Netlify URL (featured in Lab)"
                             />
                             <input
                                 type="url"
@@ -621,6 +632,7 @@ const ProjectManagerEnhanced = () => {
             github: '',
             live: '',
             demo: '',
+            netlify: '',
             documentation: '',
             staging: '',
             analytics: '',
@@ -760,6 +772,7 @@ const ProjectManagerEnhanced = () => {
                 github: "https://github.com/yourusername/ecommerce",
                 live: "https://demo-ecommerce.com",
                 demo: "",
+                netlify: "https://bizsolutionz.netlify.app/",
                 documentation: "",
                 staging: "",
                 analytics: "",
@@ -2539,6 +2552,17 @@ const ProjectCard = ({
                                     title="Live Demo"
                                 >
                                     <ExternalLink size={16} />
+                                </a>
+                            )}
+                            {project.links?.netlify && (
+                                <a
+                                    href={project.links.netlify}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[var(--border-color)] rounded-lg transition-all text-[var(--text-secondary)]"
+                                    title="Netlify"
+                                >
+                                    <Globe size={16} />
                                 </a>
                             )}
                             {project.links?.demo && (

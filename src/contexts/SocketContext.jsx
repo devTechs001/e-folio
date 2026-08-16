@@ -102,17 +102,6 @@ export const SocketProvider = ({ children }) => {
                 });
             });
 
-            socketService.on('new_message', (messageData) => {
-                info(`💬 New message from ${messageData.sender}`, {
-                    title: 'New Message',
-                    action: {
-                        label: 'Open Chat',
-                        onClick: () => window.location.href = '/dashboard/chat'
-                    },
-                    duration: 5000
-                });
-            });
-
             socketService.on('user_typing', (data) => {
                 console.log(`⌨️ ${data.userName} is typing in room ${data.roomId}`);
             });

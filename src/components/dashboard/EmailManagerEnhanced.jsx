@@ -15,9 +15,15 @@ import {
     Loader
 } from 'lucide-react';
 import DashboardLayout from './DashboardLayout';
+import { useSocket } from '../../contexts/SocketContext';
+import { useNotifications } from '../NotificationSystem';
+import api from '../../services/api.service';
 
 const EmailManagerEnhanced = () => {
+    const { connected, on, off } = useSocket();
+    const { success: notifySuccess } = useNotifications();
     const [emails, setEmails] = useState([]);
+    const [realEmailsLoaded, setRealEmailsLoaded] = useState(false);
     const [drafts, setDrafts] = useState([]);
     const [selectedEmail, setSelectedEmail] = useState(null);
     const [selectedEmails, setSelectedEmails] = useState([]);
@@ -97,7 +103,7 @@ const EmailManagerEnhanced = () => {
 
     // Seed mock emails
     useEffect(() => {
-        if (emails.length === 0) {
+        if (emails.length === 0 && !realEmailsLoaded) {
             setEmails([
                 {
                     id: 'e_1',
@@ -148,6 +154,56 @@ const EmailManagerEnhanced = () => {
             ]);
         }
     }, []);
+
+    // Fetch real emails from the API + live-refresh on email_sent
+    useEffect(() => {
+        if (!localStorage.getItem('token')) return;
+        let cancelled = false;
+
+        const mapApiEmail = (e) => {
+            const fromEmail = typeof e.from === 'string' ? e.from : (e.from?.email || '');
+            return {
+                id: e.id || e._id,
+                subject: e.subject || '(no subject)',
+                from: { name: fromEmail.split('@')[0] || 'Unknown', email: fromEmail },
+                preview: e.preview || (e.body || '').substring(0, 150),
+                body: e.body || '',
+                timestamp: new Date(e.timestamp || Date.now()).getTime(),
+                unread: !e.read,
+                starred: !!e.starred,
+                attachments: (e.attachments || []).map(a => ({ name: a.name, size: a.size || 0, type: a.type || 'file' })),
+                priority: e.priority || 'normal',
+                labels: Array.isArray(e.labels) ? e.labels.map(l => typeof l === 'string' ? l : l?.name).filter(Boolean) : [],
+                folder: e.folder || 'inbox',
+                archived: !!e.archived,
+                hasAttachment: !!(e.attachments && e.attachments.length)
+            };
+        };
+
+        const refresh = async () => {
+            try {
+                const res = await api.request('/emails?folder=inbox&limit=20');
+                if (!cancelled && res.success && Array.isArray(res.emails)) {
+                    setEmails(prev => {
+                        const real = res.emails.map(mapApiEmail);
+                        const others = prev.filter(p => !real.some(r => r.id === p.id));
+                        return [...real, ...others];
+                    });
+                    setRealEmailsLoaded(true);
+                    notifySuccess(`📥 Inbox synced — ${res.emails.length} email(s) loaded`, { duration: 2500, type: 'info' });
+                }
+            } catch (e) {
+                // Keep the sample inbox when the API is unavailable
+            }
+        };
+
+        refresh();
+        if (connected) on('email_sent', refresh);
+        return () => {
+            cancelled = true;
+            if (connected) off('email_sent', refresh);
+        };
+    }, [connected, on, off, notifySuccess]);
 
     const isOwner = () => true;
 

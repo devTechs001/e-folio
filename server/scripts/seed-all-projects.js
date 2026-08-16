@@ -42,7 +42,8 @@ const allProjects = [
         links: {
             github: "https://github.com/devtechs001/enterprise-ecommerce-platform",
             live: "https://enterprise-ecommerce-platform.netlify.app",
-            demo: "https://enterprise-ecommerce-platform.netlify.app/demo"
+            demo: "https://enterprise-ecommerce-platform.netlify.app/demo",
+            netlify: "https://bizsolutionz.netlify.app/"
         },
         technologies: ["React", "Vite", "Node.js", "MongoDB", "Stripe", "PayPal", "TailwindCSS"],
         category: "Web",
@@ -357,7 +358,8 @@ const allProjects = [
         links: {
             github: "https://github.com/devtechs001/world-tourist-virtual",
             live: "https://world-tourist-virtual.netlify.app",
-            demo: "https://world-tourist-virtual.netlify.app/demo"
+            demo: "https://world-tourist-virtual.netlify.app/",
+            netlify: "https://virtualtourist.netlify.app/"
         },
         technologies: ["React", "Three.js", "WebGL", "VR"],
         category: "Web",

@@ -51,7 +51,10 @@ const langValidation = [
 
 // Profile routes
 router.get('/', auth, profileController.getProfile.bind(profileController));
-router.put('/', auth, upload.single('avatar'), profileController.updateProfile.bind(profileController));
+router.put('/', auth, upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'cover', maxCount: 1 }
+]), profileController.updateProfile.bind(profileController));
 
 // Stats & Activity
 router.get('/stats', auth, profileController.getProfileStats.bind(profileController));

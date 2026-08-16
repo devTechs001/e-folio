@@ -726,10 +726,12 @@ class PortfolioEditorController {
         try {
             const userId = req.user.id;
 
-            // For now, return empty array - can be extended to fetch from database
+            const config = await PortfolioConfig.findOne({ userId }).lean();
+            const templates = (config && config.customTemplates) || [];
+
             res.json({
                 success: true,
-                templates: []
+                data: templates
             });
         } catch (error) {
             console.error('Get custom templates error:', error);
@@ -753,16 +755,31 @@ class PortfolioEditorController {
                 });
             }
 
-            // For now, just return success - can be extended to save to database
+            let portfolioConfig = await PortfolioConfig.findOne({ userId });
+            if (!portfolioConfig) {
+                portfolioConfig = await PortfolioConfig.create({ userId, config: {} });
+            }
+
+            const template = {
+                name,
+                description: description || '',
+                config,
+                createdAt: new Date()
+            };
+            portfolioConfig.customTemplates.push(template);
+            await portfolioConfig.save();
+
+            const saved = portfolioConfig.customTemplates[portfolioConfig.customTemplates.length - 1];
+
             res.json({
                 success: true,
                 message: 'Custom template saved successfully',
                 template: {
-                    id: Date.now().toString(),
-                    name,
-                    description,
-                    config,
-                    createdAt: new Date()
+                    id: saved._id,
+                    name: saved.name,
+                    description: saved.description,
+                    config: saved.config,
+                    createdAt: saved.createdAt
                 }
             });
         } catch (error) {

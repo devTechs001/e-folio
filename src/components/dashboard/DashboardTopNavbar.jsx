@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
+import { useSocket } from '../../contexts/SocketContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import apiService from '../../services/api.service';
@@ -28,6 +29,7 @@ const DashboardTopNavbar = ({
     const { user, logout } = useAuth();
     const { theme, toggleTheme, isDark } = useTheme();
     const { notifications: systemNotifications } = useNotifications();
+    const { connected, on, off } = useSocket();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -45,22 +47,33 @@ const DashboardTopNavbar = ({
     // Fetch real notifications from the API
     useEffect(() => {
         if (!localStorage.getItem('token')) return;
-        apiService.getNotifications(10).then(res => {
-            if (res.success && res.notifications) {
-                setNotifications(res.notifications.map(n => ({
-                    id: n._id,
-                    type: n.type || 'info',
-                    title: n.title,
-                    message: n.message,
-                    time: new Date(n.createdAt),
-                    read: n.read,
-                    icon: n.type === 'success' ? CheckCircle : n.type === 'warning' ? AlertCircle : n.type === 'error' ? XCircle : Info,
-                    link: n.link || null
-                })));
-                setUnreadCount(res.notifications.filter(n => !n.read).length);
-            }
-        }).catch(() => {});
-    }, []);
+        const fetchNotifications = () => {
+            apiService.getNotifications(10).then(res => {
+                if (res.success && res.notifications) {
+                    setNotifications(res.notifications.map(n => ({
+                        id: n._id,
+                        type: n.type || 'info',
+                        title: n.title,
+                        message: n.message,
+                        time: new Date(n.createdAt),
+                        read: n.read,
+                        icon: n.type === 'success' ? CheckCircle : n.type === 'warning' ? AlertCircle : n.type === 'error' ? XCircle : Info,
+                        link: n.link || null
+                    })));
+                    setUnreadCount(res.notifications.filter(n => !n.read).length);
+                }
+            }).catch(() => {});
+        };
+
+        fetchNotifications();
+
+        // Live-refresh the bell when the server broadcasts a new notification
+        const handleNotification = () => fetchNotifications();
+        if (connected) on('notification', handleNotification);
+        return () => {
+            if (connected) off('notification', handleNotification);
+        };
+    }, [connected, on, off]);
 
     // Keyboard shortcuts
     useEffect(() => {

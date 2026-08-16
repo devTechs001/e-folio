@@ -45,20 +45,21 @@ exports.getProjects = asyncHandler(async (req, res) => {
     const { 
         category, 
         featured, 
-        status = 'completed', 
+        status, 
         search, 
         sortBy = 'order', 
         order = 'asc',
         limit = 50 
     } = req.query;
     
-    // Build filter for public projects
+    // Build filter for public projects (show all visible, non-archived ones by default)
     const filter = { 
-        status,
         visibility: 'public',
-        featured: { $ne: false }
+        hidden: { $ne: true },
+        archived: { $ne: true }
     };
     
+    if (status && status !== 'all' && status !== 'completed') filter.status = status;
     if (category && category !== 'all') filter.category = category;
     if (featured !== undefined) filter.featured = featured === 'true';
     
@@ -73,11 +74,15 @@ exports.getProjects = asyncHandler(async (req, res) => {
     
     // Build sort options
     const sortOptions = {};
-    sortOptions[sortBy] = order === 'desc' ? -1 : 1;
+    if (['order', 'title', 'createdAt', 'views', 'likes', 'updatedAt'].includes(sortBy)) {
+        sortOptions[sortBy] = order === 'desc' ? -1 : 1;
+    } else {
+        sortOptions.createdAt = -1;
+    }
     
     const projects = await Project.find(filter)
         .sort(sortOptions)
-        .select('title description thumbnail technologies category links githubUrl demoUrl tags featured views likes status visibility createdAt')
+        .select('title description thumbnail technologies category links tags featured views likes status visibility createdAt images fullDescription completionDate teamSize challenges achievements metrics pinned')
         .limit(parseInt(limit))
         .lean();
 
@@ -100,7 +105,7 @@ exports.getProjects = asyncHandler(async (req, res) => {
 exports.getProfile = asyncHandler(async (req, res) => {
     // Get the first user (assuming single portfolio setup)
     const user = await User.findOne({ role: 'owner' })
-        .select('name email bio avatar location website github linkedin twitter')
+        .select('name email bio avatar location website github linkedin twitter username')
         .lean();
 
     if (!user) {
@@ -113,6 +118,29 @@ exports.getProfile = asyncHandler(async (req, res) => {
     res.json({
         success: true,
         profile: user
+    });
+});
+
+// @desc    Refresh public projects cache signal (returns fresh stats)
+// @route   POST /api/public/projects/refresh
+// @access  Public
+exports.refreshProjects = asyncHandler(async (req, res) => {
+    const total = await Project.countDocuments({
+        visibility: 'public',
+        hidden: { $ne: true },
+        archived: { $ne: true }
+    });
+    const featured = await Project.countDocuments({
+        visibility: 'public',
+        featured: true,
+        hidden: { $ne: true },
+        archived: { $ne: true }
+    });
+
+    res.json({
+        success: true,
+        message: 'Projects refreshed',
+        stats: { total, featured }
     });
 });
 

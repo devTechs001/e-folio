@@ -35,6 +35,7 @@ router.post('/public/testimonials/:id/helpful', publicLimiter, testimonialContro
 router.get('/stats', protect, isOwner, testimonialController.getDetailedStats);
 router.get('/export/json', protect, isOwner, testimonialController.exportAsJSON);
 router.get('/export/csv', protect, isOwner, testimonialController.exportAsCSV);
+router.put('/reorder', protect, isOwner, testimonialController.reorderTestimonials);
 router.post('/bulk-delete', protect, isOwner, testimonialController.bulkDelete);
 router.post('/bulk-update', protect, isOwner, testimonialController.bulkUpdate);
 

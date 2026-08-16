@@ -61,16 +61,9 @@ const LoginPage = ({ collaborator = false }) => {
         setSuccess('');
 
         try {
-            let role = 'visitor';
-            
-            // Determine user role
-            if (collaborator && formData.accessCode === 'COLLAB2024') {
-                role = 'collaborator';
-            } else if (collaborator && formData.accessCode) {
-                setError('Invalid collaboration access code. Please check and try again.');
-                setLoading(false);
-                return;
-            }
+            // For the collaborator login screen, always authenticate via the
+            // collaborator endpoint (the server validates the access code).
+            const role = collaborator ? 'collaborator' : 'visitor';
 
             // Attempt login via backend API
             const result = await login(formData, role);
@@ -97,8 +90,18 @@ const LoginPage = ({ collaborator = false }) => {
 
     const handleSocialLogin = (provider) => {
         setError('');
-        setSuccess(`Redirecting to ${provider} login...`);
-        // Implement social login logic here
+        if (provider === 'Google') {
+            const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+            if (!googleClientId) {
+                setError('Google sign-in is not configured.');
+                return;
+            }
+            const redirectUri = `${window.location.origin}/auth/google/callback`;
+            const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token id_token&scope=openid%20profile%20email&nonce=${Date.now()}`;
+            window.location.href = url;
+            return;
+        }
+        setSuccess(`${provider} sign-in is not available yet.`);
         setTimeout(() => {
             setSuccess('');
         }, 2000);

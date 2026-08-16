@@ -29,4 +29,21 @@ router.put('/:workspaceId/collaborators/:collaboratorId/permissions', isOwner, w
 router.post('/:workspaceId/tasks', workspaceController.addTask);
 router.put('/:workspaceId/tasks/:taskId/status', workspaceController.updateTaskStatus);
 
+// Workspace chat
+router.get('/:workspaceId/messages', workspaceController.getWorkspaceMessages);
+router.post('/:workspaceId/messages', workspaceController.sendWorkspaceMessage);
+
+// Workspace resources (files/links/notes)
+router.post('/:workspaceId/resources', workspaceController.addWorkspaceResource);
+router.delete('/:workspaceId/resources/:resourceId', workspaceController.deleteWorkspaceResource);
+
+// Workspace commits (development workspaces)
+router.get('/:workspaceId/commits', workspaceController.getWorkspaceCommits);
+router.post('/:workspaceId/commits', workspaceController.addWorkspaceCommit);
+
+// Workspace builds (development workspaces)
+router.get('/:workspaceId/builds', workspaceController.getWorkspaceBuilds);
+router.post('/:workspaceId/builds', workspaceController.triggerWorkspaceBuild);
+router.put('/:workspaceId/builds/:buildId', workspaceController.updateWorkspaceBuild);
+
 module.exports = router;

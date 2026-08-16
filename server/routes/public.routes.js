@@ -10,7 +10,8 @@ const {
     getProjects,
     getProfile,
     incrementProjectView,
-    toggleProjectLike
+    toggleProjectLike,
+    refreshProjects
 } = require('../controllers/public.controller');
 const { getPublicTestimonials } = require('../controllers/public-testimonials.controller');
 const { getPublicEducation } = require('../controllers/education.controller');
@@ -67,6 +68,7 @@ router.get('/cv/:username', async (req, res) => {
 });
 
 // Project interactions (public, rate limited)
+router.post('/projects/refresh', refreshProjects);
 router.post('/projects/:id/view', interactionLimiter, incrementProjectView);
 router.post('/projects/:id/like', interactionLimiter, toggleProjectLike);
 

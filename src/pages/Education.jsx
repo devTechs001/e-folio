@@ -387,7 +387,7 @@ const Education = () => {
                     <div className="stat-label">Certifications</div>
                 </div>
                 <div className="stat-box" data-aos="zoom-in" data-aos-delay="300">
-                    <div className="stat-number">
+                    <div className="stat-number">1
                         {new Set(educationData.flatMap(e => e.skills || [])).size}
                     </div>
                     <div className="stat-label">Skills Acquired</div>

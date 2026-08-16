@@ -37,6 +37,7 @@ const ProjectCard = ({
                     <img
                         src={project.thumbnail || project.imageUrl}
                         alt={project.title}
+                        loading="lazy"
                         className={`list-image ${imageLoaded ? 'loaded' : ''}`}
                         onLoad={() => setImageLoaded(true)}
                         onError={(e) => {
@@ -82,7 +83,7 @@ const ProjectCard = ({
                                 className="clickable-stat"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    incrementLikes(project.id);
+                                    onIncrementLikes();
                                 }}
                                 title="Like this project"
                             >
@@ -115,9 +116,9 @@ const ProjectCard = ({
                                 </a>
                             )}
                             
-                            {project.links?.live && (
+                            {(project.links?.netlify || project.links?.live || project.links?.demo) && (
                                 <a
-                                    href={project.links.live}
+                                    href={project.links?.netlify || project.links?.live || project.links?.demo}
                                     className="action-btn"
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -262,17 +263,18 @@ const ProjectCard = ({
                                     <i className="fa-brands fa-github"></i>
                                 </a>
                             )}
-                            {project.links?.live && (
+                            {project.links?.netlify || project.links?.live || project.links?.demo ? (
                                 <a
-                                    href={project.links.live}
+                                    href={project.links?.netlify || project.links?.live || project.links?.demo}
                                     className="quick-action-btn"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
+                                    title="View live demo"
                                 >
                                     <i className="fa-solid fa-external-link-alt"></i>
                                 </a>
-                            )}
+                            ) : null}
                             <ProjectShare project={project} onShare={onShare} />
                             <button className="quick-action-btn primary">
                                 <span>View Details</span>
