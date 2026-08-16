@@ -54,7 +54,7 @@
 
 ```bash
 # Database
-MONGODB_URI=mongodb+srv://devtechs842_db_user:20051117dan@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_URI=mongodb+srv://danielmukula8_db_user:YOUR_MONGODB_PASSWORD@cluster0.joo25jc.mongodb.net/?appName=Cluster0
 
 # Client Configuration
 CLIENT_URL=https://e-folio-pro.netlify.app
@@ -222,7 +222,7 @@ If you see:
 2. Check MongoDB Atlas IP whitelist includes `0.0.0.0/0`
 3. Test connection string locally:
    ```bash
-   mongosh "mongodb+srv://danielmk:20051117dan@cluster1.1frrfrb.mongodb.net/e-folio"
+   mongosh "mongodb+srv://danielmk:YOUR_MONGODB_PASSWORD@cluster1.1frrfrb.mongodb.net/e-folio"
    ```
 
 ### CORS Errors

@@ -156,7 +156,7 @@ Created three new documentation files:
 4. Verify these exist:
 
 ```
-MONGODB_URI=mongodb+srv://devtechs842_db_user:20051117dan@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_URI=mongodb+srv://danielmukula8_db_user:YOUR_MONGODB_PASSWORD@cluster0.joo25jc.mongodb.net/?appName=Cluster0
 CLIENT_URL=https://e-folio-pro.netlify.app
 JWT_SECRET=(should exist)
 OWNER_PASSWORD=pass1234

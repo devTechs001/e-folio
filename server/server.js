@@ -259,6 +259,9 @@ connectDB().then(async () => {
         console.log(` Port: ${PORT}`);
         console.log(` Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
         console.log(` Database: ${process.env.MONGODB_URI ? 'Atlas/Local (with fallback)' : 'Local Only'}`);
+        if (!process.env.JWT_SECRET) {
+            console.warn(' WARNING: JWT_SECRET is not set — login/verify will fail with 500. Set it in env (Render dashboard).');
+        }
         console.log(` Socket.io: Ready`);
         keyRotator.start();
         console.log(` Free LLM API key rotator started (checking every 30 min)`);

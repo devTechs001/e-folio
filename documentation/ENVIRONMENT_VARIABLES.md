@@ -19,7 +19,7 @@
 
 ```bash
 # Database
-MONGODB_URI=mongodb+srv://devtechs842_db_user:20051117dan@cluster0.kparor6.mongodb.net/e-folio?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_URI=mongodb+srv://danielmukula8_db_user:YOUR_MONGODB_PASSWORD@cluster0.joo25jc.mongodb.net/?appName=Cluster0
 
 # Client
 CLIENT_URL=https://e-folio-pro.netlify.app
@@ -141,7 +141,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Test MongoDB connection
 ```bash
-mongosh "mongodb+srv://danielmk:20051117dan@cluster1.1frrfrb.mongodb.net/e-folio"
+mongosh "mongodb+srv://danielmk:YOUR_MONGODB_PASSWORD@cluster1.1frrfrb.mongodb.net/e-folio"
 ```
 
 ---

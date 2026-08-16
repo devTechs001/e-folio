@@ -6,7 +6,7 @@ Your `.env` file contained an **exposed email password**. This has been removed 
 
 **Old (INSECURE):**
 ```
-EMAIL_PASS=20051117dan  ❌ Real password exposed!
+EMAIL_PASS=your-password-here  ❌ Real password exposed!
 ```
 
 **New (SECURE):**
