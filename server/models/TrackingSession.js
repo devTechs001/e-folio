@@ -107,11 +107,11 @@ const trackingSessionSchema = new mongoose.Schema({
         }
     },
     // Events
-    events: [{
+    events: [new mongoose.Schema({
         type: String,
         data: mongoose.Schema.Types.Mixed,
         timestamp: Date
-    }],
+    }, { _id: false })],
     // Conversion
     converted: {
         type: Boolean,
