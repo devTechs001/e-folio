@@ -82,7 +82,7 @@ const Testimonials = () => {
       name: "Sarah Johnson",
       position: "CEO",
       company: "TechStart Inc.",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3",
+      avatar: "https://images.unsplash.com/photo-1494790108756-2616b612b786?ixlib=rb-4.0.3",
       rating: 5,
       content: "Working with this developer was an absolute pleasure. They delivered our e-commerce platform ahead of schedule and exceeded all our expectations. The attention to detail and technical expertise is unmatched.",
       featured: true,
