@@ -144,6 +144,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/emails', emailRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/learning', learningRoutes);

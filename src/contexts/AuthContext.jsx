@@ -73,34 +73,8 @@ const AuthProvider = ({ children }) => {
     const login = async (credentials, role = 'visitor') => {
         try {
             setLoading(true);
-            
-            // Owner authentication via backend API
-            if (credentials.email && credentials.password) {
-                const response = await apiService.login(credentials.email, credentials.password);
-                
-                if (response.success && response.token) {
-                    const userData = {
-                        id: response.user.id,
-                        name: response.user.name,
-                        email: response.user.email,
-                        avatar: response.user.avatar || null,
-                        loginTime: new Date().toISOString()
-                    };
-                    
-                    setUser(userData);
-                    setUserRole(response.user.role);
-                    
-                    // Store token and user data
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('efolio_user', JSON.stringify(userData));
-                    localStorage.setItem('efolio_role', response.user.role);
-                    
-                    setLoading(false);
-                    return { success: true, user: userData, role: response.user.role };
-                }
-            }
-            
-            // Collaborator authentication via backend invite-based login
+
+            // Collaborator authentication via backend invite/collaborator endpoint
             if (role === 'collaborator' && credentials.email && credentials.password) {
                 const response = await apiService.collaboratorLogin(
                     credentials.email,
@@ -131,9 +105,38 @@ const AuthProvider = ({ children }) => {
                 setLoading(false);
                 return { success: false, error: response.message || 'Invalid credentials' };
             }
+
+            // General / Owner / User authentication via backend API
+            if (credentials.email && credentials.password) {
+                const response = await apiService.login(credentials.email, credentials.password);
+                
+                if (response.success && response.token) {
+                    const userData = {
+                        id: response.user.id,
+                        name: response.user.name,
+                        email: response.user.email,
+                        avatar: response.user.avatar || null,
+                        loginTime: new Date().toISOString()
+                    };
+                    
+                    setUser(userData);
+                    setUserRole(response.user.role);
+                    
+                    // Store token and user data
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('efolio_user', JSON.stringify(userData));
+                    localStorage.setItem('efolio_role', response.user.role);
+                    
+                    setLoading(false);
+                    return { success: true, user: userData, role: response.user.role };
+                }
+
+                setLoading(false);
+                return { success: false, error: response.message || 'Invalid credentials' };
+            }
             
             setLoading(false);
-            return { success: false, error: 'Access Denied. Invalid credentials.' };
+            return { success: false, error: 'Email and password are required' };
         } catch (error) {
             console.error('Login error:', error);
             setLoading(false);

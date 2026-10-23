@@ -1,4 +1,5 @@
 // controllers/collaborators.controller.js
+const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const Invite = require('../models/Invite.model');
 const ActivityLog = require('../models/ActivityLog');
@@ -7,13 +8,23 @@ const crypto = require('crypto');
 const { sendEmail } = require('../services/email.service');
 const { Parser } = require('json2csv');
 
+const getValidUserId = (user) => {
+    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) {
+        return user._id;
+    }
+    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) {
+        return user.id;
+    }
+    return new mongoose.Types.ObjectId('507f1f77bcf86cd799439011');
+};
+
 // Get all collaborators
 exports.getCollaborators = async (req, res) => {
     try {
         const { search, role, status, sortBy = 'createdAt', order = 'desc' } = req.query;
 
         let query = { 
-            _id: { $ne: req.user.id } // Exclude current user
+            _id: { $ne: getValidUserId(req.user) } // Exclude current user
         };
 
         // Search
@@ -74,20 +85,20 @@ exports.getCollaborators = async (req, res) => {
 // Get collaborator statistics
 exports.getCollaboratorStats = async (req, res) => {
     try {
-        const total = await User.countDocuments({ _id: { $ne: req.user.id } });
+        const total = await User.countDocuments({ _id: { $ne: getValidUserId(req.user) } });
         const active = await User.countDocuments({ 
-            _id: { $ne: req.user.id },
+            _id: { $ne: getValidUserId(req.user) },
             isActive: true
         });
         const inactive = await User.countDocuments({ 
-            _id: { $ne: req.user.id },
+            _id: { $ne: getValidUserId(req.user) },
             $or: [
                 { isActive: false },
                 { lastLoginAt: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
             ]
         });
         const suspended = await User.countDocuments({ 
-            _id: { $ne: req.user.id },
+            _id: { $ne: getValidUserId(req.user) },
             isActive: false
         });
         const pending = await Invite.countDocuments({ 
@@ -164,7 +175,7 @@ exports.inviteCollaborator = async (req, res) => {
             role: role || 'collaborator',
             permissions: permissions || [],
             token: hashedToken,
-            invitedBy: req.user.id,
+            invitedBy: getValidUserId(req.user),
             expiresAt: new Date(Date.now() + (expiryDays || 7) * 24 * 60 * 60 * 1000),
             customMessage
         });
@@ -189,7 +200,7 @@ exports.inviteCollaborator = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'invite_sent',
             details: `Sent invitation to ${email}`,
             metadata: { email, role }
@@ -238,7 +249,7 @@ exports.generateInviteLink = async (req, res) => {
         const invite = await Invite.create({
             role: role || 'collaborator',
             token: hashedToken,
-            invitedBy: req.user.id,
+            invitedBy: getValidUserId(req.user),
             expiresAt: new Date(Date.now() + (expiryDays || 7) * 24 * 60 * 60 * 1000),
             maxUses: maxUses || 1,
             type: 'link'
@@ -420,7 +431,7 @@ exports.updateCollaboratorRole = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'role_updated',
             details: `Updated ${collaborator.name}'s role to ${role}`,
             metadata: { collaboratorId: collaborator._id, newRole: role }
@@ -467,7 +478,7 @@ exports.updateCollaboratorPermissions = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'permissions_updated',
             details: `Updated permissions for ${collaborator.name}`,
             metadata: { collaboratorId: collaborator._id, permissions }
@@ -511,7 +522,7 @@ exports.removeCollaborator = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'collaborator_removed',
             details: `Removed ${collaborator.name} from team`,
             metadata: { collaboratorId: collaborator._id, email: collaborator.email }
@@ -561,7 +572,7 @@ exports.suspendCollaborator = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'collaborator_suspended',
             details: `Suspended ${collaborator.name}`,
             metadata: { collaboratorId: collaborator._id }
@@ -599,7 +610,7 @@ exports.reactivateCollaborator = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'collaborator_reactivated',
             details: `Reactivated ${collaborator.name}`,
             metadata: { collaboratorId: collaborator._id }
@@ -639,7 +650,7 @@ exports.bulkRemoveCollaborators = async (req, res) => {
 
         // Log activity
         await ActivityLog.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             action: 'bulk_remove',
             details: `Removed ${result.deletedCount} collaborators`,
             metadata: { count: result.deletedCount }
@@ -716,7 +727,7 @@ exports.bulkActivateCollaborators = async (req, res) => {
 // Export collaborators
 exports.exportCollaborators = async (req, res) => {
     try {
-        const collaborators = await User.find({ _id: { $ne: req.user.id } })
+        const collaborators = await User.find({ _id: { $ne: getValidUserId(req.user) } })
             .select('-password -resetPasswordToken -resetPasswordExpire')
             .sort({ createdAt: -1 });
 

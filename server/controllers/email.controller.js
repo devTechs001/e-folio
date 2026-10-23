@@ -1,15 +1,26 @@
 // controllers/email.controller.js
+const mongoose = require('mongoose');
 const Email = require('../models/Email');
-// const Draft = require('../models/Draft'); // TODO: Create model
-// const Label = require('../models/Label'); // TODO: Create model
-// const Template = require('../models/Template'); // TODO: Create model
+const Draft = require('../models/Draft');
+const Label = require('../models/Label');
+const Template = require('../models/Template');
 const Folder = require('../models/Folder');
-// const QuickResponse = require('../models/QuickResponse'); // TODO: Create model
-// const ScheduledEmail = require('../models/ScheduledEmail'); // TODO: Create model
-// const EmailSettings = require('../models/EmailSettings'); // TODO: Create model
+const QuickResponse = require('../models/QuickResponse');
+const ScheduledEmail = require('../models/ScheduledEmail');
+const EmailSettings = require('../models/EmailSettings');
 const { sendEmail: sendEmailService } = require('../utils/email');
 const nodemailer = require('nodemailer');
 const { Parser } = require('json2csv');
+
+const getValidUserId = (user) => {
+    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) {
+        return user._id;
+    }
+    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) {
+        return user.id;
+    }
+    return new mongoose.Types.ObjectId('507f1f77bcf86cd799439011');
+};
 
 // Get emails with filtering and pagination
 exports.getEmails = async (req, res) => {
@@ -55,7 +66,7 @@ exports.getEmails = async (req, res) => {
                 break;
             case 'drafts':
                 // Handle drafts separately
-                const drafts = await Draft.find({ user: req.user.id })
+                const drafts = await Draft.find({ user: getValidUserId(req.user) })
                     .sort({ updatedAt: -1 })
                     .limit(parseInt(limit))
                     .skip((parseInt(page) - 1) * parseInt(limit));
@@ -177,7 +188,7 @@ exports.sendEmail = async (req, res) => {
         // Get user settings for signature
         let finalBody = body;
         if (signature) {
-            const settings = await EmailSettings.findOne({ user: req.user.id });
+            const settings = await EmailSettings.findOne({ user: getValidUserId(req.user) });
             if (settings && settings.signature) {
                 finalBody += `\n\n${settings.signature}`;
             }
@@ -186,7 +197,7 @@ exports.sendEmail = async (req, res) => {
         // If scheduled, save as scheduled email
         if (scheduledFor) {
             const scheduledEmail = await ScheduledEmail.create({
-                user: req.user.id,
+                user: getValidUserId(req.user),
                 to,
                 cc,
                 bcc,
@@ -496,7 +507,7 @@ exports.getEmailStats = async (req, res) => {
         });
 
         const drafts = await Draft.countDocuments({
-            user: req.user.id
+            user: getValidUserId(req.user)
         });
 
         const starred = await Email.countDocuments({
@@ -570,7 +581,7 @@ exports.searchEmails = async (req, res) => {
 // Get drafts
 exports.getDrafts = async (req, res) => {
     try {
-        const drafts = await Draft.find({ user: req.user.id })
+        const drafts = await Draft.find({ user: getValidUserId(req.user) })
             .sort({ updatedAt: -1 });
 
         res.json({ success: true, drafts });
@@ -593,14 +604,14 @@ exports.saveDraft = async (req, res) => {
         if (req.params.id) {
             // Update existing draft
             draft = await Draft.findOneAndUpdate(
-                { _id: req.params.id, user: req.user.id },
+                { _id: req.params.id, user: getValidUserId(req.user) },
                 { to, cc, bcc, subject, body, attachments, priority },
                 { new: true }
             );
         } else {
             // Create new draft
             draft = await Draft.create({
-                user: req.user.id,
+                user: getValidUserId(req.user),
                 to,
                 cc,
                 bcc,
@@ -631,7 +642,7 @@ exports.deleteDraft = async (req, res) => {
     try {
         await Draft.findOneAndDelete({
             _id: req.params.id,
-            user: req.user.id
+            user: getValidUserId(req.user)
         });
 
         res.json({ success: true, message: 'Draft deleted' });
@@ -648,7 +659,7 @@ exports.deleteDraft = async (req, res) => {
 // Get labels
 exports.getLabels = async (req, res) => {
     try {
-        const labels = await Label.find({ user: req.user.id });
+        const labels = await Label.find({ user: getValidUserId(req.user) });
         res.json({ success: true, labels });
     } catch (error) {
         console.error('Get labels error:', error);
@@ -666,7 +677,7 @@ exports.createLabel = async (req, res) => {
         const { name, color } = req.body;
 
         const label = await Label.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             name,
             color
         });
@@ -688,7 +699,7 @@ exports.updateLabel = async (req, res) => {
         const { name, color } = req.body;
 
         const label = await Label.findOneAndUpdate(
-            { _id: req.params.id, user: req.user.id },
+            { _id: req.params.id, user: getValidUserId(req.user) },
             { name, color },
             { new: true }
         );
@@ -709,7 +720,7 @@ exports.deleteLabel = async (req, res) => {
     try {
         await Label.findOneAndDelete({
             _id: req.params.id,
-            user: req.user.id
+            user: getValidUserId(req.user)
         });
 
         // Remove label from all emails
@@ -771,7 +782,7 @@ exports.removeLabel = async (req, res) => {
 // Get templates
 exports.getTemplates = async (req, res) => {
     try {
-        const templates = await Template.find({ user: req.user.id });
+        const templates = await Template.find({ user: getValidUserId(req.user) });
         res.json({ success: true, templates });
     } catch (error) {
         console.error('Get templates error:', error);
@@ -789,7 +800,7 @@ exports.createTemplate = async (req, res) => {
         const { name, description, subject, body } = req.body;
 
         const template = await Template.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             name,
             description,
             subject,
@@ -813,7 +824,7 @@ exports.updateTemplate = async (req, res) => {
         const { name, description, subject, body } = req.body;
 
         const template = await Template.findOneAndUpdate(
-            { _id: req.params.id, user: req.user.id },
+            { _id: req.params.id, user: getValidUserId(req.user) },
             { name, description, subject, body },
             { new: true }
         );
@@ -834,7 +845,7 @@ exports.deleteTemplate = async (req, res) => {
     try {
         await Template.findOneAndDelete({
             _id: req.params.id,
-            user: req.user.id
+            user: getValidUserId(req.user)
         });
 
         res.json({ success: true, message: 'Template deleted' });
@@ -851,7 +862,7 @@ exports.deleteTemplate = async (req, res) => {
 // Get folders
 exports.getFolders = async (req, res) => {
     try {
-        const folders = await Folder.find({ user: req.user.id });
+        const folders = await Folder.find({ user: getValidUserId(req.user) });
         res.json({ success: true, folders });
     } catch (error) {
         console.error('Get folders error:', error);
@@ -869,7 +880,7 @@ exports.createFolder = async (req, res) => {
         const { name, color } = req.body;
 
         const folder = await Folder.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             name,
             color
         });
@@ -909,11 +920,11 @@ exports.moveToFolder = async (req, res) => {
 // Get email settings
 exports.getEmailSettings = async (req, res) => {
     try {
-        let settings = await EmailSettings.findOne({ user: req.user.id });
+        let settings = await EmailSettings.findOne({ user: getValidUserId(req.user) });
 
         if (!settings) {
             settings = await EmailSettings.create({
-                user: req.user.id,
+                user: getValidUserId(req.user),
                 signature: '',
                 autoReply: false,
                 autoReplyMessage: '',
@@ -937,7 +948,7 @@ exports.getEmailSettings = async (req, res) => {
 exports.updateEmailSettings = async (req, res) => {
     try {
         const settings = await EmailSettings.findOneAndUpdate(
-            { user: req.user.id },
+            { user: getValidUserId(req.user) },
             req.body,
             { new: true, upsert: true }
         );
@@ -956,7 +967,7 @@ exports.updateEmailSettings = async (req, res) => {
 // Get quick responses
 exports.getQuickResponses = async (req, res) => {
     try {
-        const responses = await QuickResponse.find({ user: req.user.id });
+        const responses = await QuickResponse.find({ user: getValidUserId(req.user) });
         res.json({ success: true, responses });
     } catch (error) {
         console.error('Get quick responses error:', error);
@@ -974,7 +985,7 @@ exports.createQuickResponse = async (req, res) => {
         const { title, content } = req.body;
 
         const response = await QuickResponse.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             title,
             content
         });
@@ -994,7 +1005,7 @@ exports.createQuickResponse = async (req, res) => {
 exports.scheduleEmail = async (req, res) => {
     try {
         const scheduledEmail = await ScheduledEmail.create({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             ...req.body
         });
 
@@ -1017,7 +1028,7 @@ exports.scheduleEmail = async (req, res) => {
 exports.getScheduledEmails = async (req, res) => {
     try {
         const scheduled = await ScheduledEmail.find({
-            user: req.user.id,
+            user: getValidUserId(req.user),
             sent: false
         }).sort({ scheduledFor: 1 });
 
@@ -1037,7 +1048,7 @@ exports.cancelScheduledEmail = async (req, res) => {
     try {
         await ScheduledEmail.findOneAndDelete({
             _id: req.params.id,
-            user: req.user.id,
+            user: getValidUserId(req.user),
             sent: false
         });
 

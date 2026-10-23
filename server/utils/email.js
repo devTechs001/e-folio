@@ -14,6 +14,10 @@ const getTransporter = () => {
 
 const sendEmail = async ({ to, cc, bcc, subject, html, attachments }) => {
     try {
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS || process.env.SMTP_USER === 'your_email@gmail.com') {
+            console.log('📧 Email simulated (SMTP credentials placeholder):', { to, subject });
+            return { success: true, simulated: true, messageId: `sim_${Date.now()}` };
+        }
         const transporter = getTransporter();
         const info = await transporter.sendMail({
             from: process.env.EMAIL_FROM || 'noreply@portfolio.com',

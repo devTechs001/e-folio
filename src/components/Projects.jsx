@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { useProjects } from '../hooks/useProjects';
 import ProjectFilters from './ProjectFilters';
 import ProjectCard from './ProjectCard';
-import ProjectModal from './ProjectModal';
-import ImageLightbox from './ImageLightbox';
+import ProjectModal from '../pages/ProjectModal';
+import ImageLightbox from '../pages/ImageLightbox';
 import '../styles/Projects.css';
 
 const Projects = () => {

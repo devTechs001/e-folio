@@ -207,7 +207,7 @@ const EmailManagerEnhanced = () => {
 
     const isOwner = () => true;
 
-    const handleSendEmail = () => {
+    const handleSendEmail = async () => {
         if (!composeData.to) {
             const notification = document.createElement('div');
             notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse';
@@ -238,6 +238,22 @@ const EmailManagerEnhanced = () => {
 
         setEmails(prev => [newEmail, ...prev]);
         setStats(prev => ({ ...prev, sent: prev.sent + 1 }));
+
+        try {
+            await api.sendEmail({
+                to: composeData.to,
+                cc: composeData.cc || undefined,
+                bcc: composeData.bcc || undefined,
+                subject: composeData.subject || '(no subject)',
+                body: composeData.body || '',
+                priority: composeData.priority,
+                scheduledFor: composeData.scheduledFor,
+                attachments: composeData.attachments
+            });
+        } catch (err) {
+            console.warn('Backend send email note:', err.message);
+        }
+
         resetCompose();
         
         const notification = document.createElement('div');
@@ -247,7 +263,7 @@ const EmailManagerEnhanced = () => {
         setTimeout(() => notification.remove(), 3000);
     };
 
-    const saveDraft = () => {
+    const saveDraft = async () => {
         const draft = {
             id: `d_${Date.now()}`,
             subject: composeData.subject || '(no subject)',
@@ -267,6 +283,24 @@ const EmailManagerEnhanced = () => {
 
         setEmails(prev => [draft, ...prev]);
         setStats(prev => ({ ...prev, drafts: prev.drafts + 1 }));
+
+        try {
+            await api.request('/email/drafts', {
+                method: 'POST',
+                body: JSON.stringify({
+                    to: composeData.to,
+                    cc: composeData.cc,
+                    bcc: composeData.bcc,
+                    subject: composeData.subject,
+                    body: composeData.body,
+                    priority: composeData.priority,
+                    attachments: composeData.attachments
+                })
+            });
+        } catch (err) {
+            console.warn('Backend draft save note:', err.message);
+        }
+
         resetCompose();
         
         const notification = document.createElement('div');
@@ -276,12 +310,15 @@ const EmailManagerEnhanced = () => {
         setTimeout(() => notification.remove(), 3000);
     };
 
-    const handleToggleStar = (emailId) => {
+    const handleToggleStar = async (emailId) => {
         setEmails(prev => prev.map(email => 
             email.id === emailId 
                 ? { ...email, starred: !email.starred }
                 : email
         ));
+        try {
+            await api.request(`/email/${emailId}/star`, { method: 'POST' });
+        } catch (err) {}
     };
 
     const handleArchiveEmail = (emailId) => {

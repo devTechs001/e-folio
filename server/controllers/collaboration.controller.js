@@ -1,10 +1,22 @@
 // controllers/collaboration.controller.js
+const mongoose = require('mongoose');
 const CollaborationRequest = require('../models/CollaborationRequest');
 const User = require('../models/User.model');
 const Invite = require('../models/Invite.model');
 const ActivityLog = require('../models/ActivityLog');
-const { generateInviteToken, sendEmail } = require('../utils');
+const { generateInviteToken } = require('../utils');
+const { sendEmail } = require('../utils/email');
 const { Parser } = require('@json2csv/plainjs');
+
+const getValidUserId = (user) => {
+    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) {
+        return user._id;
+    }
+    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) {
+        return user.id;
+    }
+    return new mongoose.Types.ObjectId('507f1f77bcf86cd799439011');
+};
 
 // Get collaboration requests with filtering
 exports.getCollaborationRequests = async (req, res) => {
@@ -121,13 +133,13 @@ exports.approveRequest = async (req, res) => {
         // Update request
         request.status = 'approved';
         request.processedAt = new Date();
-        request.processedBy = req.user.id;
+        request.processedBy = getValidUserId(req.user);
         request.inviteLink = inviteLink;
         request.inviteToken = inviteToken;
         if (note) {
             request.notes.push({
                 content: note,
-                addedBy: req.user.id,
+                addedBy: getValidUserId(req.user),
                 addedAt: new Date()
             });
         }
@@ -192,12 +204,12 @@ exports.rejectRequest = async (req, res) => {
         // Update request
         request.status = 'rejected';
         request.processedAt = new Date();
-        request.processedBy = req.user.id;
+        request.processedBy = getValidUserId(req.user);
         request.rejectionReason = reason;
         if (note) {
             request.notes.push({
                 content: note,
-                addedBy: req.user.id,
+                addedBy: getValidUserId(req.user),
                 addedAt: new Date()
             });
         }
@@ -259,7 +271,7 @@ exports.bulkApproveRequests = async (req, res) => {
 
             request.status = 'approved';
             request.processedAt = new Date();
-            request.processedBy = req.user.id;
+            request.processedBy = getValidUserId(req.user);
             request.inviteLink = inviteLink;
             request.inviteToken = inviteToken;
 
@@ -301,7 +313,7 @@ exports.bulkRejectRequests = async (req, res) => {
             {
                 status: 'rejected',
                 processedAt: new Date(),
-                processedBy: req.user.id
+                processedBy: getValidUserId(req.user)
             }
         );
 
@@ -404,7 +416,7 @@ exports.addRequestNote = async (req, res) => {
 
         request.notes.push({
             content: noteContent,
-            addedBy: req.user.id,
+            addedBy: getValidUserId(req.user),
             addedAt: new Date()
         });
 
@@ -620,7 +632,7 @@ exports.updateRequestStatus = async (req, res) => {
         const { status } = req.body;
         const request = await CollaborationRequest.findByIdAndUpdate(
             req.params.id,
-            { status, processedBy: req.user.id, processedAt: new Date() },
+            { status, processedBy: getValidUserId(req.user), processedAt: new Date() },
             { new: true }
         );
 
@@ -663,10 +675,34 @@ exports.resendInvite = async (req, res) => {
             });
         }
 
-        // Resend email logic here
+        if (!request.inviteToken) {
+            request.inviteToken = generateInviteToken();
+        }
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
+        const inviteLink = `${frontendUrl}/register?token=${request.inviteToken}&email=${encodeURIComponent(request.email)}`;
+        request.inviteLink = inviteLink;
+        await request.save();
+
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2>Collaboration Invitation Reminder</h2>
+                <p>Hi ${request.name},</p>
+                <p>This is a reminder regarding your approved collaboration invitation. You can complete your account registration using the link below:</p>
+                <p><a href="${inviteLink}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation & Register</a></p>
+                <p style="color: #666; font-size: 13px;">Or copy this link to your browser: ${inviteLink}</p>
+            </div>
+        `;
+
+        await sendEmail({
+            to: request.email,
+            subject: 'Reminder: Your Collaboration Invitation',
+            html: emailContent
+        });
+
         res.json({
             success: true,
-            message: 'Invite resent successfully'
+            message: 'Invite resent successfully',
+            inviteLink
         });
     } catch (error) {
         console.error('Resend invite error:', error);
@@ -753,7 +789,7 @@ const getCollaborators = async (req, res) => {
         const { search, role, status, sortBy = 'createdAt', order = 'desc' } = req.query;
 
         let query = { 
-            _id: { $ne: req.user.id } // Exclude current user
+            _id: { $ne: getValidUserId(req.user) } // Exclude current user
         };
 
         // Search

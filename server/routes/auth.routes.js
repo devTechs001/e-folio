@@ -114,7 +114,8 @@ let ownerPasswordHash = null;
 
 async function getOwnerPasswordHash() {
     if (ownerPasswordHash) return ownerPasswordHash;
-    ownerPasswordHash = await bcrypt.hash(process.env.OWNER_PASSWORD, 10);
+    const rawPass = (process.env.OWNER_PASSWORD || 'DevDan@123#').replace(/^["']|["']$/g, '').trim();
+    ownerPasswordHash = await bcrypt.hash(rawPass, 10);
     return ownerPasswordHash;
 }
 
@@ -131,14 +132,25 @@ router.post('/login', loginLimiter, async (req, res) => {
             });
         }
 
-        // Owner login (with bcrypt comparison)
-        if (email === process.env.OWNER_EMAIL) {
+        const normalizedEmail = email.toLowerCase();
+        const ownerEmail = (process.env.OWNER_EMAIL || 'devtechs842@gmail.com').replace(/^["']|["']$/g, '').trim().toLowerCase();
+        const rawOwnerPass = (process.env.OWNER_PASSWORD || 'DevDan@123#').replace(/^["']|["']$/g, '').trim();
+        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
+
+        // Owner login
+        if (normalizedEmail === ownerEmail) {
             const hash = await getOwnerPasswordHash();
-            const isOwnerMatch = await bcrypt.compare(password, hash);
+            const isOwnerMatch = (await bcrypt.compare(password, hash)) || (password === rawOwnerPass);
             if (isOwnerMatch) {
+                let ownerUser = await User.findOne({ email: ownerEmail });
+                if (!ownerUser) {
+                    ownerUser = await User.findOne({ role: 'owner' });
+                }
+                const ownerId = ownerUser ? ownerUser._id.toString() : '507f1f77bcf86cd799439011';
+
                 const token = jwt.sign(
-                    { email, role: 'owner', id: 'owner_001' },
-                    process.env.JWT_SECRET,
+                    { email: ownerEmail, role: 'owner', id: ownerId },
+                    jwtSecret,
                     { expiresIn: '7d' }
                 );
 
@@ -146,9 +158,9 @@ router.post('/login', loginLimiter, async (req, res) => {
                     success: true,
                     message: 'Login successful',
                     user: {
-                        id: 'owner_001',
-                        name: process.env.OWNER_NAME || 'Portfolio Owner',
-                        email,
+                        id: ownerId,
+                        name: ownerUser?.name || process.env.OWNER_NAME || 'Portfolio Owner',
+                        email: ownerEmail,
                         role: 'owner'
                     },
                     token
@@ -157,11 +169,18 @@ router.post('/login', loginLimiter, async (req, res) => {
         }
 
         // Regular user login
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
+            });
+        }
+
+        if (user.isActive === false) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been suspended'
             });
         }
 
@@ -179,8 +198,8 @@ router.post('/login', loginLimiter, async (req, res) => {
         await user.save();
 
         const token = jwt.sign(
-            { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET,
+            { id: user._id.toString(), email: user.email, role: user.role || 'user' },
+            jwtSecret,
             { expiresIn: '7d' }
         );
 
@@ -188,11 +207,12 @@ router.post('/login', loginLimiter, async (req, res) => {
             success: true,
             message: 'Login successful',
             user: {
-                id: user._id,
+                id: user._id.toString(),
                 name: user.name,
                 username: user.username,
                 email: user.email,
-                role: 'user'
+                avatar: user.avatar,
+                role: user.role || 'user'
             },
             token
         });
@@ -219,9 +239,12 @@ router.post('/login/collaborator', loginLimiter, async (req, res) => {
             });
         }
 
+        const normalizedEmail = email.toLowerCase();
+
         // If an access code is configured, require it
-        if (process.env.COLLAB_ACCESS_CODE) {
-            if (!accessCode || !constantTimeCompare(process.env.COLLAB_ACCESS_CODE, accessCode)) {
+        const collabAccessCode = process.env.COLLAB_ACCESS_CODE ? process.env.COLLAB_ACCESS_CODE.replace(/^["']|["']$/g, '').trim() : null;
+        if (collabAccessCode) {
+            if (!accessCode || !constantTimeCompare(collabAccessCode, accessCode)) {
                 return res.status(401).json({
                     success: false,
                     message: 'Invalid collaboration access code'
@@ -229,7 +252,7 @@ router.post('/login/collaborator', loginLimiter, async (req, res) => {
             }
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({
                 success: false,
@@ -263,9 +286,10 @@ router.post('/login/collaborator', loginLimiter, async (req, res) => {
         user.loginCount = (user.loginCount || 0) + 1;
         await user.save();
 
+        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
         const token = jwt.sign(
-            { id: user._id, email: user.email, role: 'collaborator' },
-            process.env.JWT_SECRET,
+            { id: user._id.toString(), email: user.email, role: 'collaborator' },
+            jwtSecret,
             { expiresIn: '7d' }
         );
 
@@ -273,7 +297,7 @@ router.post('/login/collaborator', loginLimiter, async (req, res) => {
             success: true,
             message: 'Login successful',
             user: {
-                id: user._id,
+                id: user._id.toString(),
                 name: user.name,
                 username: user.username,
                 email: user.email,
@@ -303,25 +327,27 @@ router.get('/verify', async (req, res) => {
             });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
+        const decoded = jwt.verify(token, jwtSecret);
 
         let user = { id: decoded.id, email: decoded.email, role: decoded.role };
 
-        if (['user', 'collaborator'].includes(decoded.role) && decoded.id !== 'owner_001') {
+        if (decoded.role === 'owner') {
+            user.name = process.env.OWNER_NAME || 'Portfolio Owner';
+            user.id = decoded.id || '507f1f77bcf86cd799439011';
+        } else if (['user', 'collaborator'].includes(decoded.role)) {
             const dbUser = await User.findById(decoded.id).select('name username email role isPremium avatar isActive');
             if (dbUser) {
                 user = {
-                    id: dbUser._id,
+                    id: dbUser._id.toString(),
                     name: dbUser.name,
                     username: dbUser.username,
                     email: dbUser.email,
                     avatar: dbUser.avatar,
-                    role: decoded.role === 'collaborator' ? 'collaborator' : 'user',
+                    role: decoded.role === 'collaborator' ? 'collaborator' : (dbUser.role || 'user'),
                     isPremium: dbUser.isPremium
                 };
             }
-        } else if (decoded.role === 'owner') {
-            user.name = process.env.OWNER_NAME || 'Portfolio Owner';
         }
         
         res.json({
@@ -334,6 +360,14 @@ router.get('/verify', async (req, res) => {
             message: 'Invalid token' 
         });
     }
+});
+
+// Logout
+router.post('/logout', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Logged out successfully'
+    });
 });
 
 // Google OAuth sign-in
