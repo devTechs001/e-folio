@@ -650,9 +650,10 @@
   display: grid;
   gap: 2rem;
   animation: fadeInUp 0.5s ease;
-  max-height: 70vh;
-  overflow-y: auto;
-  padding-right: 1rem;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  contain: layout paint;
 }
 
 /* Grid View */

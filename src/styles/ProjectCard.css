@@ -27,10 +27,10 @@
   border-radius: var(--border-radius-xl);
   overflow: hidden;
   cursor: pointer;
-  transition: all var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
   background: linear-gradient(135deg, rgba(14, 239, 239, 0.05), rgba(14, 239, 239, 0.02));
-  backdrop-filter: blur(var(--blur-sm));
   border: 1px solid rgba(14, 239, 239, 0.15);
+  will-change: transform;
 }
 
 .project-card::before {
@@ -54,8 +54,8 @@
 }
 
 .project-card:hover {
-  transform: translateY(-10px);
-  box-shadow: var(--shadow-glow-lg);
+  transform: translateY(-6px);
+  box-shadow: 0 0 18px rgba(14, 239, 239, 0.18);
 }
 
 /* ==================== FAVORITE BUTTON ==================== */

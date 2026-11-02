@@ -51,7 +51,16 @@ const Projects = () => {
                     <p className="projects-subtitle">Explore my latest work and ongoing projects</p>
                 </motion.div>
 
-                <div className="projects-actions">
+                <div className="projects-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+                    <a
+                        href="https://nex-store-pro.netlify.app/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="cta-btn cta-btn-primary"
+                        style={{ marginTop: '1rem' }}
+                    >
+                        Open NEX Store
+                    </a>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="btn-primary"
@@ -78,6 +87,27 @@ const Projects = () => {
                         onClick={() => setSelectedProject(project)}
                     />
                 ))}
+            </div>
+
+            <div className="cta-section">
+                <div className="cta-card">
+                    <div className="cta-content">
+                        <h2 className="projects-title" style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>
+                            Explore the NEX Store
+                        </h2>
+                        <p className="projects-subtitle" style={{ marginBottom: '1.5rem' }}>
+                            Open the store for all systems and apps in one place.
+                        </p>
+                        <a
+                            href="https://nex-store-pro.netlify.app/"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="cta-btn cta-btn-primary"
+                        >
+                            Open NEX Store
+                        </a>
+                    </div>
+                </div>
             </div>
 
             {selectedProject && (

@@ -775,6 +775,18 @@ const Projects = () => {
                         Explore my portfolio of innovative solutions and creative implementations
                     </p>
 
+                    <div className="flex justify-center mb-8">
+                        <a
+                            href="https://nex-store-pro.netlify.app/"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="cta-btn cta-btn-primary"
+                        >
+                            <i className="fa-solid fa-store mr-2"></i>
+                            Open NEX Store
+                        </a>
+                    </div>
+
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
                         <div className="stat-card">
