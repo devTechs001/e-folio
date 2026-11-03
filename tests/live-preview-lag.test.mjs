@@ -55,6 +55,8 @@ check('the dev server is preview-safe and proxies backend paths', () => {
         assert.ok(src.includes(`${route}: { target: backendTarget`), `missing proxy for ${route}`);
     }
     assert.match(src, /'\/socket\.io': \{ target: backendTarget, changeOrigin: true, ws: true \}/);
+    assert.match(src, /preview: \{[\s\S]*?proxy: backendProxies/,
+        'production-build preview must proxy the same backend paths');
     assert.match(src, /include: \[/);
     for (const dep of ['framer-motion', 'socket.io-client', 'qrcode', 'recharts']) {
         assert.ok(src.includes(`'${dep}'`), `optimizeDeps must pre-bundle ${dep}`);

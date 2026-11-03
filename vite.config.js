@@ -12,6 +12,14 @@ export default defineConfig(({ command, mode }) => {
   // backend origin is the local Express port; the dev server proxies it.
   const configuredApi = env.VITE_API_URL || ''
   const backendTarget = (configuredApi.replace(/\/api\/?$/, '') || 'http://localhost:5000')
+  // Shared by `vite dev` and `vite preview` so the production-build preview
+  // behaves exactly like the dev preview when the backend is unavailable.
+  const backendProxies = {
+    '/api': { target: backendTarget, changeOrigin: true },
+    '/socket.io': { target: backendTarget, changeOrigin: true, ws: true },
+    '/uploads': { target: backendTarget, changeOrigin: true },
+    '/portfolios': { target: backendTarget, changeOrigin: true }
+  }
   
   return {
     plugins: [
@@ -140,17 +148,13 @@ export default defineConfig(({ command, mode }) => {
       cors: true,
       // Permit the Arena live-preview host as well as local development.
       allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'],
-      proxy: {
-        '/api': { target: backendTarget, changeOrigin: true },
-        '/socket.io': { target: backendTarget, changeOrigin: true, ws: true },
-        '/uploads': { target: backendTarget, changeOrigin: true },
-        '/portfolios': { target: backendTarget, changeOrigin: true }
-      }
+      proxy: backendProxies
     },
 
     preview: {
       host: true,
-      allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1']
+      allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'],
+      proxy: backendProxies
     },
     
     publicDir: 'public',

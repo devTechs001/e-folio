@@ -869,6 +869,7 @@ Request: *"previre live,,laggin gissues"*. Two parts: make the app available as 
 ### A. Live preview
 
 - A Vite dev server is running on **port 5173**, bound to `0.0.0.0` (`server.host: true`), with `server.allowedHosts` permitting the Arena `.e2b.app` preview host alongside localhost. No host/origin rejection was reported by the platform.
+- A second **production-build preview** (`npm run preview`) is running on **port 4173**, also bound to `0.0.0.0` with `.e2b.app` allowed. `preview.proxy` now shares the same `backendProxies` map as the dev server, so `/api`, `/socket.io`, `/uploads` and `/portfolios` behave identically in both previews.
 - HTTP smoke checks with a preview-like `Host` header: `/`, `/src/main.jsx`, `/src/App.jsx`, `/src/pages/LandingPage.jsx`, `/src/components/dashboard/SecurityAuditDashboard.jsx`, `/src/data/securityResources.json` and `/src/services/api.service.js` all returned **200**. The dev server was ready in **185 ms**.
 - `/api/*` is proxied to the backend origin. With no Express/Mongo server running in this sandbox, a probe returned **500 in 17 ms** instead of leaving the browser waiting on a 15 s `localhost` timeout. API-backed sections therefore show their real "unavailable" states — this is deliberate: no sample/fabricated data was substituted.
 - The dashboard requires a real owner JWT, so the preview shows the public landing page and login form; there is no auth bypass or preview-only fake account.
@@ -888,7 +889,7 @@ Request: *"previre live,,laggin gissues"*. Two parts: make the app available as 
 
 ### C. Verification
 
-- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **21.61s**, PWA **214 precache entries (6966.12 KiB)**.
+- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **21.44s**, PWA **214 precache entries (6966.12 KiB)**.
 - **106** Node-only regression checks: 9 dashboard + 21 collaboration/review + 12 lab/dashboard + 11 testimonial + 8 profile/settings + 10 About/workspace + 12 enhanced-workspace/realtime/NEX Store + 13 Security Audit / Resources + **10 new live-preview / lagging-issue** checks (`tests/live-preview-lag.test.mjs`, wired as `test:live-preview` in both package files).
 - `git diff --check` clean; masked secret scan clean; no NetGate/project-link file changed.
 - Local only: no push, PR, merge, external issue, external probing or offensive testing.
