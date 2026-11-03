@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → merge to main |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -24,8 +24,10 @@ Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
 Resources page, live preview + lagging issues, CellarKeep client-portal link in
-Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
-**local only** — no push, PR, merge, external issue, or external service was used.
+Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
+subsequently merged into this repository's own `origin/main` via PR #3 after the
+explicit **"push t main"** instruction (see §5). All work stayed in this
+repository; no external tracker, external service or third party was used.
 
 ---
 
@@ -42,6 +44,7 @@ Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Merge to main (phase 14) | phases 3–13 were local-only commits on the active branch | pushed `arena/f176a951-e-folio`, opened PR #3 and merged to `main` as `3b97ef4` after explicit authorisation; full checks green, no secrets in the pushed range |
 | E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
 | Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
@@ -1096,5 +1099,20 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 are local-only work on `arena/f176a951-e-folio`; they have
-**not** been pushed, opened as a PR, or merged.
+this repository.
+
+After the later explicit **"push t main"** instruction, phases 3–13 (12 commits,
+115 changed files) were pushed from the active branch
+`arena/f176a951-e-folio`, opened as
+[PR #3](https://github.com/devTechs001/e-folio/pull/3) and merged into `main`
+with merge commit `3b97ef479dd260c0a6a784a4a872a98a21a54e42` at
+`2026-11-03T13:27:34Z`. `origin/main` was 0 commits ahead and 12 behind, so
+there was no conflict. Before the merge, `npm run check` exited 0 (0 lint
+errors, 0 endpoint gaps, 0 static security findings, 141 regression checks,
+build + PWA generation pass) and a masked secret scan over all 115 changed
+files found 0 findings. No credential value was included in the PR body.
+
+The PR body and this note are documentation only; no code or secret value was
+pasted into any external service. Real-looking credentials that remain in Git
+history still need rotation/revocation outside this workspace, and no history
+rewrite was performed without approval.
