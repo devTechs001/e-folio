@@ -114,6 +114,14 @@ const UserWorkspaceManager = lazy(() => import('../components/dashboard/UserWork
     console.error('Failed to load UserWorkspaceManager:', err);
     return { default: () => <div>Error loading User Workspaces</div> };
 }));
+const SecurityAuditDashboard = lazy(() => import('../components/dashboard/SecurityAuditDashboard').catch(err => {
+    console.error('Failed to load SecurityAuditDashboard:', err);
+    return { default: () => <div>Error loading Security Audit</div> };
+}));
+const ResourcesPage = lazy(() => import('../components/dashboard/ResourcesPage').catch(err => {
+    console.error('Failed to load ResourcesPage:', err);
+    return { default: () => <div>Error loading Resources</div> };
+}));
 
 // Wrapper components to avoid primitive value error
 const LazyDashboardHome = () => {
@@ -341,6 +349,24 @@ const LazyUserWorkspaceManager = () => {
         </Suspense>
     );
 };
+const LazySecurityAuditDashboard = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>}>
+            <SecurityAuditDashboard />
+        </Suspense>
+    );
+};
+const LazyResourcesPage = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>}>
+            <ResourcesPage />
+        </Suspense>
+    );
+};
 
 const Dashboard = () => {
     return (
@@ -440,6 +466,26 @@ const DashboardContent = () => {
             badge: 'New',
             category: 'Content',
             description: 'Create and manage your CV'
+        },
+        {
+            path: '/dashboard/security-audit',
+            icon: 'fas fa-shield-alt',
+            label: 'Security Audit',
+            component: LazySecurityAuditDashboard,
+            roles: ['owner'],
+            badge: null,
+            category: 'Security',
+            description: 'Offline static security audit, findings and controls'
+        },
+        {
+            path: '/dashboard/resources',
+            icon: 'fas fa-folder-open',
+            label: 'Resources',
+            component: LazyResourcesPage,
+            roles: ['owner'],
+            badge: null,
+            category: 'Security',
+            description: 'Local file inventory and curated security references'
         },
         {
             path: '/dashboard/user-workspaces',

@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,11 +19,12 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phases 3–8 (collaboration & review,
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–9 (collaboration & review,
 Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
-workspaces + real-time notifications + NEX Store link) are **local only** — no
-push, PR, merge, external issue, or external service was used.
+workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
+Resources page) are **local only** — no push, PR, merge, external issue, or
+external service was used.
 
 ---
 
@@ -40,6 +41,8 @@ push, PR, merge, external issue, or external service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Security Audit dashboard (phase 9) | audit results only existed as terminal output from `npm run audit:security` | owner-only `/dashboard/security-audit` with real cached/rate-limited audit API, findings, checks, controls, environment presence and JSON export |
+| Resources page (phase 9) | no inventory of local docs/backups/scripts/tests; no curated reference list | owner-only `/dashboard/resources` with allowlisted metadata-only file inventory, filters, JSON/CSV export and 16 verified security references |
 | Enhanced user workspaces + real-time notifications (phase 8) | one Profile card with 4 buttons; no account console; notifications broadcast on the root socket | `/dashboard/user-workspaces` with account creation, completeness, versions, templates, publish/export, user directory and DB-backed inbox; JWT-authenticated `/notifications` namespace with REST polling fallback |
 | NEX Store link (phase 8) | plain repeated anchor with `rel="noreferrer"` | one shared canonical URL (unchanged) plus banner/compact/card variants with copy, share, QR, offline hint and safe external-link attributes |
 | About data + CV/portfolio/accounts (phase 7) | Profile page did not reflect the public About data; new accounts got no CV/portfolio; public CV/portfolio pages called localhost | shared About data module used by both pages, real get-or-create CV/portfolio APIs, working public pages, real Profile card |
@@ -817,6 +820,47 @@ A new dashboard page at `/dashboard/user-workspaces` (`User Workspaces`, availab
 
 ---
 
+## 3i. Phase 9 — Security Audit dashboard + Resources page
+
+Request: *"the security audit,,dashboard,,resources,,page"*. Read as one dashboard area with two owner-only pages: a **Security Audit** page that surfaces the real offline audit, and a **Resources** page for the local resource inventory and curated security references. Both were implemented locally; no link in the projects data was touched and no external service was contacted.
+
+### A. Implemented — Security Audit page (`/dashboard/security-audit`)
+
+- `server/scripts/security-audit.js` now exports `runAudit()` (and `AUDIT_CHECKS`) in addition to the unchanged `main()` CLI, so the same eight checks can run as data instead of only printing to a terminal. `--json` and `--strict` behaviour is unchanged.
+- New owner-only `GET /api/admin/security-audit` re-runs that offline audit, returns `high/medium/low`, the findings with local file locations, the eight check names, elapsed time and a `cached` flag. Results are cached for 60 s and forced re-runs are rate limited to 12/min because the audit walks the checkout.
+- The page shows severity cards, a findings list (or the real "No findings. All static checks passed." state), the checks performed, cached/fresh status, last-run time and an **Export JSON** action built from the API response. "Run audit again" forces a fresh run. Loading, API-unavailable and not-run states are honest.
+- A **Controls** tab reads `GET /api/admin/security-controls`: eleven controls detected in local source (Helmet, `/api` rate limiter, bounded JSON bodies, CORS allowlist, JSON 404s, generic production 5xx, fail-closed config, JWT verification, `isOwner`, private uploads, authenticated notification namespace) plus environment **presence booleans only** and the production configuration-issue count. Secret values are never read or returned; the page explicitly says this is source inspection, not a live runtime probe.
+- All three new API routes sit behind the existing `auth` + `isOwner` middleware on `/api/admin`.
+
+### B. Implemented — Resources page (`/dashboard/resources`)
+
+- New owner-only `GET /api/admin/resources` scans an **allowlist** of local directories (documentation, guides, backups, server/build scripts, regression tests, data samples, and seven named root files) and returns **metadata only**: path, group, size, modification time and extension. Real `.env` files, private uploads, key material, `node_modules`, `.git` and `dist` are excluded; contents are never read. The response is capped at 400 items with an honest `truncated` flag.
+- The **Workspace files** tab shows group cards with real counts/bytes, search and category filters, a metadata table, copy-path, and client-side **JSON / CSV inventory export**. Empty, loading, error and truncated states are honest.
+- The **Security references** tab renders `src/data/securityResources.json`: ten official external references (OWASP, MITRE CWE, MDN, Express, MongoDB, NVD, GitHub secret scanning) and six project-internal resources whose paths are verified to exist. External links use `noopener noreferrer` + `no-referrer` and are **links only — the app never fetches them**. No code or data leaves the workspace.
+- Both pages cross-link to each other and appear in the dashboard menu under a new **Security** category, owner-only.
+
+### C. Confidentiality & safety
+
+- Everything is offline: no network calls, no database writes, no live/external probing, no offensive testing, no secret values in responses or UI. The audit remains a static source inspection.
+- A local smoke run of the controller (with only `server/config/security` stubbed because root `node_modules` lacks server-only deps) returned **HIGH/MEDIUM/LOW 0**, 8 checks, **11/11 controls**, **102 files across 8 groups**, **0 leaked `.env` entries**, and a working 60 s cache. This validates logic, not the Express/Mongo runtime.
+- No NetGate or project link was replaced or modified; the NEX Store destination from phase 8 is unchanged. No push, PR, merge, external issue or external service was used.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity `--strict` **0 live gaps** (521 route definitions / 622 frontend calls / 476 matched), static security audit `--strict` **0 findings**, build **22.81s**, PWA **214 precache entries (6966.52 KiB)**.
+- **96** Node-only regression checks: 9 dashboard + 21 collaboration/review + 12 lab/dashboard + 11 testimonial + 8 profile/settings + 10 About/workspace + 12 enhanced-workspace/realtime/NEX Store + **13 new Security Audit / Resources** checks (`tests/security-resources-page.test.mjs`, wired as `test:security-resources` in both package files). The new checks include an offline controller smoke test with a stubbed config module.
+- `git diff --check` clean; masked secret scan clean; no NetGate/project-link file changed.
+
+### Known gaps left open (not fixed)
+
+- No Express/Mongo server was started (`server/node_modules` is absent), so JWT auth on the three new routes, the rate limiter and the real HTTP responses are **not runtime-verified**.
+- External reference URLs are curated links, not fetched or link-checked; no request is made to them.
+- The audit is static and cannot prove runtime behaviour (unchanged §1 limitation). The `/api/admin/resources` endpoint exposes local file paths to owners; consider gating it further in production.
+- Phase 8 gaps still apply: notification retention/TTL, the owner-notify rate limit, and the public `/portfolio/:username` visibility check. All §3g projects/dashboard/security findings remain read-only and unfixed.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -859,6 +903,10 @@ A new dashboard page at `/dashboard/user-workspaces` (`User Workspaces`, availab
     `notification` broadcasts.
 13. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
     `|| echo` on lint/test. Now that checks are real, remove the swallowing.
+14. Phase 9 follow-ups: runtime-verify the three `/api/admin` security/resource
+    routes with a real server and owner JWT, consider gating
+    `GET /api/admin/resources` further in production, and add a link checker for
+    the curated external references (without sending any workspace data).
 
 ---
 
@@ -871,5 +919,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7 and 8 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6, 7, 8 and 9 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

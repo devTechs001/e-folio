@@ -3201,6 +3201,23 @@ class ApiService {
             body: JSON.stringify(payload)
         });
     }
+
+    // ---- Security Audit / Resources dashboard (owner-only, local data) ----
+
+    /** Run/reuse the offline static security audit (`?refresh=1` forces a run). */
+    async getSecurityAudit(params = {}) {
+        return this.request('/admin/security-audit', { params });
+    }
+
+    /** Real, non-secret control and environment-presence facts. */
+    async getSecurityControls() {
+        return this.request('/admin/security-controls');
+    }
+
+    /** Local resource inventory: file metadata only, never contents. */
+    async getResources() {
+        return this.request('/admin/resources');
+    }
 }
 
 export default new ApiService();

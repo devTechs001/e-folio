@@ -299,7 +299,23 @@ function checkOwnerGuardCoverage() {
     }
 }
 
-function main() {
+const AUDIT_CHECKS = [
+    'Tracked environment / key files',
+    'Hard-coded credentials',
+    'JWT handling',
+    'Server hardening controls',
+    'Undeclared runtime dependencies',
+    'Unprotected mutations',
+    'Fabricated content',
+    'Owner guard coverage'
+];
+
+/**
+ * Re-runnable audit used by both the CLI and the owner-only dashboard API.
+ * Returns data only — it never prints, exits the process or leaks values.
+ */
+function runAudit() {
+    findings.length = 0;
     checkTrackedEnvFiles();
     checkHardcodedCredentials();
     checkJwtHandling();
@@ -315,17 +331,30 @@ function main() {
     const medium = findings.filter(f => f.severity === 'MEDIUM').length;
     const low = findings.filter(f => f.severity === 'LOW').length;
 
+    return {
+        high,
+        medium,
+        low,
+        findings: findings.map(f => ({ ...f, locations: [...f.locations] })),
+        checksRun: [...AUDIT_CHECKS],
+        generatedAt: new Date().toISOString()
+    };
+}
+
+function main() {
+    const { high, medium, low, findings: result } = runAudit();
+
     if (process.argv.includes('--json')) {
-        console.log(JSON.stringify({ high, medium, low, findings }, null, 2));
+        console.log(JSON.stringify({ high, medium, low, findings: result }, null, 2));
     } else {
         console.log('E-Folio static security audit (offline, confidential)');
         console.log('='.repeat(56));
         console.log(`HIGH: ${high}   MEDIUM: ${medium}   LOW: ${low}`);
         console.log('');
-        if (!findings.length) {
+        if (!result.length) {
             console.log('No findings. All static checks passed.');
         } else {
-            for (const f of findings) {
+            for (const f of result) {
                 console.log(`[${f.severity}] ${f.category}: ${f.message}`);
                 for (const loc of f.locations) console.log(`    - ${loc}`);
             }
@@ -337,4 +366,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { main };
+module.exports = { main, runAudit, AUDIT_CHECKS };

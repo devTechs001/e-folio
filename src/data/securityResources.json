@@ -1,0 +1,131 @@
+{
+  "description": "Curated, read-only security references for the owner dashboard. External links are opened in a new tab and are NOT fetched by this app; internal entries point to files that already exist in this checkout.",
+  "categories": [
+    { "id": "standards", "label": "Standards & references" },
+    { "id": "guides", "label": "Implementation guides" },
+    { "id": "tooling", "label": "Tooling & advisories" },
+    { "id": "internal", "label": "Project-internal resources" }
+  ],
+  "references": [
+    {
+      "id": "owasp-top-ten",
+      "title": "OWASP Top 10",
+      "category": "standards",
+      "kind": "external",
+      "url": "https://owasp.org/www-project-top-ten/",
+      "description": "The baseline list of the most critical web application security risks."
+    },
+    {
+      "id": "owasp-asvs",
+      "title": "OWASP Application Security Verification Standard",
+      "category": "standards",
+      "kind": "external",
+      "url": "https://owasp.org/www-project-application-security-verification-standard/",
+      "description": "A measurable checklist of application security requirements."
+    },
+    {
+      "id": "cwe",
+      "title": "MITRE CWE",
+      "category": "standards",
+      "kind": "external",
+      "url": "https://cwe.mitre.org/",
+      "description": "Common weakness enumeration used to classify finding categories."
+    },
+    {
+      "id": "owasp-cheatsheets",
+      "title": "OWASP Cheat Sheet Series",
+      "category": "guides",
+      "kind": "external",
+      "url": "https://cheatsheetseries.owasp.org/",
+      "description": "Practical hardening guidance for authentication, sessions, uploads and headers."
+    },
+    {
+      "id": "express-security",
+      "title": "Express.js security best practices",
+      "category": "guides",
+      "kind": "external",
+      "url": "https://expressjs.com/en/advanced/best-practice-security.html",
+      "description": "Official guidance for the framework used by server/server.js."
+    },
+    {
+      "id": "mdn-web-security",
+      "title": "MDN Web Security",
+      "category": "guides",
+      "kind": "external",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/Security",
+      "description": "Browser-side security fundamentals: CORS, CSP, cookies and same-origin policy."
+    },
+    {
+      "id": "mongodb-security",
+      "title": "MongoDB Security Manual",
+      "category": "guides",
+      "kind": "external",
+      "url": "https://www.mongodb.com/docs/manual/security/",
+      "description": "Official checklist for authentication, authorisation and network exposure."
+    },
+    {
+      "id": "nvd",
+      "title": "National Vulnerability Database",
+      "category": "tooling",
+      "kind": "external",
+      "url": "https://nvd.nist.gov/",
+      "description": "Public CVE and severity data for dependency review."
+    },
+    {
+      "id": "github-secret-scanning",
+      "title": "GitHub secret scanning",
+      "category": "tooling",
+      "kind": "external",
+      "url": "https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning",
+      "description": "Detecting credentials accidentally committed to a repository."
+    },
+    {
+      "id": "internal-report",
+      "title": "Confidential audit & fix report",
+      "category": "internal",
+      "kind": "internal",
+      "path": "CONFIDENTIAL_AUDIT_AND_FIX_REPORT.md",
+      "description": "This checkout's phase-by-phase findings, fixes, backlog and merge note."
+    },
+    {
+      "id": "internal-audit-script",
+      "title": "Offline static security audit",
+      "category": "internal",
+      "kind": "internal",
+      "path": "server/scripts/security-audit.js",
+      "description": "The eight checks behind the Security Audit dashboard page. No network or database access."
+    },
+    {
+      "id": "internal-parity-script",
+      "title": "Endpoint parity audit",
+      "category": "internal",
+      "kind": "internal",
+      "path": "server/scripts/check-endpoint-parity.js",
+      "description": "Compares server route definitions with frontend API calls."
+    },
+    {
+      "id": "internal-security-config",
+      "title": "Central security configuration",
+      "category": "internal",
+      "kind": "internal",
+      "path": "server/config/security.js",
+      "description": "JWT signing, owner credentials and production fail-closed checks."
+    },
+    {
+      "id": "internal-env-docs",
+      "title": "Environment variable reference",
+      "category": "internal",
+      "kind": "internal",
+      "path": "documentation/ENVIRONMENT_VARIABLES.md",
+      "description": "Local documentation for configuring secrets without committing them."
+    },
+    {
+      "id": "internal-backup-readme",
+      "title": "Testimonial backup README",
+      "category": "internal",
+      "kind": "internal",
+      "path": "server/backups/testimonials/README.md",
+      "description": "Explains the owner-controlled backup and restore files."
+    }
+  ]
+}
