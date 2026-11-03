@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Typed from 'typed.js';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettingsListener } from '../hooks/useSettingsListener';
+import {
+    ABOUT_WELCOME, ABOUT_AVAILABILITY, ABOUT_CV_HREF, ABOUT_ROLES,
+    ABOUT_IMAGES, ABOUT_BIO_FALLBACK, ABOUT_SECOND_PARAGRAPH,
+    buildAboutProfile, aboutNameParts
+} from '../utils/aboutPageData';
 import '../styles/About.css';
 
 const About = () => {
@@ -10,128 +15,21 @@ const About = () => {
     const { user } = useAuth();
     const settings = useSettingsListener();
     
-    // Use profile data from settings if available, otherwise fallback to user data
-    const profileData = settings?.profile || user || {};
-    const [socialLinks, setSocialLinks] = useState([
-        {
-            name: 'Facebook',
-            icon: 'fab fa-facebook-f',
-            url: profileData.facebook || 'https://www.facebook.com/profile.php?id=100089960419104',
-            color: 'facebook'
-        },
-        {
-            name: 'Instagram',
-            icon: 'fab fa-instagram',
-            url: profileData.instagram || 'https://www.instagram.com/king_wisdom_ndk/',
-            color: 'instagram'
-        },
-        {
-            name: 'GitHub',
-            icon: 'fab fa-github',
-            url: profileData.github || 'https://github.com/devTechs001',
-            color: 'github'
-        },
-        {
-            name: 'Telegram',
-            icon: 'fab fa-telegram-plane',
-            url: profileData.telegram || 'https://t.me/+254758175275',
-            color: 'telegram'
-        },
-        {
-            name: 'WhatsApp',
-            icon: 'fab fa-whatsapp',
-            url: profileData.whatsapp || 'https://wa.me/254758175275',
-            color: 'whatsapp'
-        },
-        {
-            name: 'LinkedIn',
-            icon: 'fab fa-linkedin-in',
-            url: profileData.linkedin || '',
-            color: 'linkedin'
-        },
-        {
-            name: 'Twitter',
-            icon: 'fab fa-twitter',
-            url: profileData.twitter || '',
-            color: 'twitter'
-        },
-        {
-            name: 'Website',
-            icon: 'fas fa-globe',
-            url: profileData.website || '',
-            color: 'website'
-        }
-    ].filter(link => link.url)); // Filter out empty URLs
+    // Same real data model as the dashboard Profile page: /api/settings
+    // (dispatched through SettingsProvider) with the auth user as fallback.
+    const aboutProfile = buildAboutProfile(settings?.profile, user);
+    const { first, second } = aboutNameParts(aboutProfile.name);
+    const [socialLinks, setSocialLinks] = useState(aboutProfile.socialLinks);
 
-    // Update social links when profile data changes
+    // Keep the public links in sync when the owner edits them in Settings.
     useEffect(() => {
-        if (settings?.profile) {
-            const updatedLinks = [
-                {
-                    name: 'Facebook',
-                    icon: 'fab fa-facebook-f',
-                    url: settings.profile.facebook || 'https://www.facebook.com/profile.php?id=100089960419104',
-                    color: 'facebook'
-                },
-                {
-                    name: 'Instagram',
-                    icon: 'fab fa-instagram',
-                    url: settings.profile.instagram || 'https://www.instagram.com/king_wisdom_ndk/',
-                    color: 'instagram'
-                },
-                {
-                    name: 'GitHub',
-                    icon: 'fab fa-github',
-                    url: settings.profile.github || 'https://github.com/devTechs001',
-                    color: 'github'
-                },
-                {
-                    name: 'Telegram',
-                    icon: 'fab fa-telegram-plane',
-                    url: settings.profile.telegram || 'https://t.me/+254758175275',
-                    color: 'telegram'
-                },
-                {
-                    name: 'WhatsApp',
-                    icon: 'fab fa-whatsapp',
-                    url: settings.profile.whatsapp || 'https://wa.me/254758175275',
-                    color: 'whatsapp'
-                },
-                {
-                    name: 'LinkedIn',
-                    icon: 'fab fa-linkedin-in',
-                    url: settings.profile.linkedin || '',
-                    color: 'linkedin'
-                },
-                {
-                    name: 'Twitter',
-                    icon: 'fab fa-twitter',
-                    url: settings.profile.twitter || '',
-                    color: 'twitter'
-                },
-                {
-                    name: 'Website',
-                    icon: 'fas fa-globe',
-                    url: settings.profile.website || '',
-                    color: 'website'
-                }
-            ].filter(link => link.url);
-            
-            setSocialLinks(updatedLinks);
-        }
-    }, [settings?.profile]);
+        setSocialLinks(buildAboutProfile(settings?.profile, user).socialLinks);
+    }, [settings?.profile, user]);
 
     // Initialize Typed.js
     useEffect(() => {
         const options = {
-            strings: [
-                'Frontend Developer',
-                'Web Designer',
-                'UI/UX Designer',
-                'Software Developer',
-                'Full Stack Developer',
-                'Creative Problem Solver'
-            ],
+            strings: ABOUT_ROLES,
             typeSpeed: 100,
             backSpeed: 50,
             backDelay: 2000,
@@ -152,17 +50,11 @@ const About = () => {
         };
     }, []);
 
-    const images = [
-        { src: 'assets/images/profile-pic.jpg', alt: 'Daniel Mukula - Profile' },
-        { src: 'assets/images/profile_pic.png', alt: 'Daniel Mukula - Portrait' },
-        { src: 'assets/images/programmer.png', alt: 'Daniel Mukula - Developer' }
-    ];
-
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setCurrentImageIndex(prev => (prev + 1) % images.length);
+            setCurrentImageIndex(prev => (prev + 1) % ABOUT_IMAGES.length);
         }, 5000);
         return () => clearInterval(interval);
     }, []);
@@ -190,13 +82,13 @@ const About = () => {
                         <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-gradient-to-r from-mainColor/10 to-mainColor/5 border border-mainColor/30 rounded-full backdrop-blur-sm">
                             <span className="w-2 h-2 bg-mainColor rounded-full animate-pulse"></span>
                             <span className="welcome-badge-text gradient-text-animated">
-                                WELCOME TO MY PORTFOLIO
+                                {ABOUT_WELCOME}
                             </span>
                         </div>
 
                         {/* Main Heading */}
                         <h1 className="main-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-textColor mb-4 leading-tight">
-                            {profileData.name ? profileData.name.split(' ')[0] : 'Dev'} <span className="gradient-text-animated">{profileData.name ? profileData.name.split(' ')[1] || 'Techs' : 'Techs'}</span>
+                            {first} <span className="gradient-text-animated">{second}</span>
                         </h1>
 
                         {/* Typed Text */}
@@ -209,15 +101,10 @@ const About = () => {
                         {/* Description */}
                         <div className="space-y-4 mb-8">
                             <p className="text-base md:text-lg text-textColor/80 leading-relaxed">
-                                {profileData.bio || 
-                                `I am a passionate and creative developer with a strong foundation in web development 
-                                and software engineering. I specialize in creating responsive and user-friendly web 
-                                applications using modern technologies and best practices.`}
+                                {aboutProfile.bio || ABOUT_BIO_FALLBACK}
                             </p>
                             <p className="text-base md:text-lg text-textColor/80 leading-relaxed">
-                                My approach combines technical excellence with creative problem-solving, ensuring 
-                                that each project not only functions flawlessly but also provides an exceptional 
-                                user experience.
+                                {ABOUT_SECOND_PARAGRAPH}
                             </p>
                         </div>
 
@@ -262,7 +149,7 @@ const About = () => {
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                             <a 
-                                href="/CV2.pdf" 
+                                href={ABOUT_CV_HREF}
                                 className="btn-primary group"
                                 download
                                 data-aos="fade-up"
@@ -320,8 +207,8 @@ const About = () => {
                                     <AnimatePresence mode="wait">
                                         <motion.img
                                             key={currentImageIndex}
-                                            src={images[currentImageIndex].src}
-                                            alt={images[currentImageIndex].alt}
+                                            src={ABOUT_IMAGES[currentImageIndex].src}
+                                            alt={ABOUT_IMAGES[currentImageIndex].alt}
                                             className="w-full h-full object-cover rounded-full"
                                             loading="lazy"
                                             initial={{ opacity: 0, scale: 0.8 }}
@@ -334,13 +221,13 @@ const About = () => {
                                     {/* Status Badge */}
                                     <div className="status-badge">
                                         <span className="status-dot"></span>
-                                        <span className="status-text">Available for work</span>
+                                        <span className="status-text">{aboutProfile.availability || ABOUT_AVAILABILITY}</span>
                                     </div>
                                 </div>
                                 
                                 {/* Image Navigation Dots */}
                                 <div className="flex justify-center gap-2 mt-6">
-                                    {images.map((_, idx) => (
+                                    {ABOUT_IMAGES.map((_, idx) => (
                                         <button
                                             key={idx}
                                             onClick={() => setCurrentImageIndex(idx)}

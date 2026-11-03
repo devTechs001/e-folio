@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,10 +19,10 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phase 3 (collaboration & review
-systems), phase 4 (Lab ↔ dashboard), phase 5 (mock testimonials) and phase 6
-(chat/chatbot/email review + profile & settings real APIs) are **local only** — no push, PR, merge, external issue, or external
-service was used.
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–7 (collaboration & review,
+Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
+settings real APIs, About data + CV/portfolio/accounts + review) are **local
+only** — no push, PR, merge, external issue, or external service was used.
 
 ---
 
@@ -39,6 +39,8 @@ service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| About data + CV/portfolio/accounts (phase 7) | Profile page did not reflect the public About data; new accounts got no CV/portfolio; public CV/portfolio pages called localhost | shared About data module used by both pages, real get-or-create CV/portfolio APIs, working public pages, real Profile card |
+| Projects / dashboard APIs / security review (phase 7) | public `links` leak, unguarded interaction counters, broken tasks `limit` filter, open registration, public uploads | read-only source review with file/line findings; no live/external testing |
 | Chat / chatbot / email review (phase 6) | unauthenticated socket role spoofing, no room membership checks, public LLM endpoint with client-side-only redaction, email send reporting false success, broken `/email/settings` route, phantom user id | read-only source review with file/line findings; no live/external testing |
 | Profile & Settings → real APIs (phase 6) | 4 missing API methods, webhooks on an in-memory mock store, dead Delete Account button, 8 fabricated trend badges | real `/settings/*` + `GET /profile` wiring, `Promise.allSettled`, honest error states, working confirmation modal |
 | Mock testimonials (phase 5) | invented client quotes were served to visitors; the original 8 records were later deleted | the same 8 records restored verbatim as real, tagged, preview-only DB documents with owner add/delete/publish controls, backup files and a versioned cache |
@@ -646,6 +648,120 @@ was dead, and both pages rendered invented/partial data. Changes:
 
 ---
 
+## 3g. Phase 7 — About data on the Profile page, CV/portfolio/accounts for other users, and a read-only review of projects / dashboard APIs / security
+
+All work is local on `arena/f176a951-e-folio`. **No push, PR, merge, external
+issue or external service.** No MongoDB, SMTP, LLM or Cloudinary call was made;
+no live/offensive testing. **No NetGate/project link was replaced or changed** —
+`src/data/labSamples.json` and `src/data/testimonialSamples.json` remain exactly
+as phase 5 left them (a regression check asserts this again).
+
+### A. Implemented — Profile page now carries the public About page data
+
+- Created `src/utils/aboutPageData.js` as the **single source of truth** for the
+  About page's profile view model: welcome copy, typed roles, rotating profile
+  images, bio fallback, availability, CV link, the owner's published social
+  links, and helpers `buildAboutProfile()` / `buildAboutSocialLinks()` /
+  `aboutNameParts()` that accept both the flat `/api/settings` shape and the
+  nested `/api/profile` shape.
+- `src/pages/About.jsx` now builds its view from that module (removing two
+  duplicated 60-line social-link arrays). Its data still comes from the real
+  `SettingsProvider` → `/api/settings`, with the auth user as fallback.
+- `src/components/dashboard/Profile.jsx` **About section** gained a "Public
+  About page" card showing the same name split, bio, role/tagline, typed roles,
+  image count, availability, social links and website, sourced from the same
+  real `GET /api/settings` + `GET /api/profile` reads, with a link to `/#about`.
+  Where a field has no database value the card shows an honest empty state
+  rather than invented content.
+- The Profile page's **Add Project** button was a dead control; it now links to
+  the real `/dashboard/projects` manager.
+
+### B. Implemented — create CV / portfolios / accounts for other users
+
+Existing pieces were already real (`POST /api/auth/register` creates `role:'user'`,
+`/dashboard/cv-editor` and `/dashboard/portfolio-editor` are in the `user` menu,
+`GET /api/cv` and `GET /api/portfolio/config` are the server's get-or-create
+endpoints). The gaps were that new accounts got no records until an editor was
+opened, the public pages called a hardcoded `localhost:5000`, and registration
+discarded the API's error message.
+
+- `src/utils/userWorkspace.js` — `ensureUserWorkspace()` calls the two real
+  get-or-create APIs via `Promise.allSettled`, `publishUserPortfolio()` calls
+  `POST /api/portfolio/publish`, and `publicUserLinks(username)` builds the
+  public `/cv/:username` and `/portfolio/:username` routes. Nothing is
+  fabricated locally.
+- `AuthContext.register` now returns the server's real message (duplicate
+  username, maintenance, registration disabled) and, after a successful
+  registration, creates the new user's CV + portfolio records best-effort.
+- `src/pages/UserCVPage.jsx` and `src/pages/UserPortfolioPage.jsx` now use
+  `apiService.request('/public/cv/:username')` / `/public/portfolio/:username`
+  (relative `/api`) instead of `http://localhost:5000/api`, so they work behind
+  the preview proxy and in production. Usernames are URL-encoded.
+- Profile → **Portfolio** section gained a "My CV & Portfolio" card with real
+  **Create / refresh**, **Publish portfolio**, links to both editors, honest
+  per-service readiness, the public CV/portfolio URLs and an entry point to
+  `/register` for creating another account.
+
+### C. Projects system — review findings (read-only, not fixed)
+
+| Severity | Finding | Location |
+|---|---|---|
+| **MEDIUM** | Both public project lists return the **entire `links` object** to unauthenticated visitors. `Project.model.js` stores `staging`, `analytics`, `monitoring`, `api`, `documentation` and `netlify` URLs alongside the public ones, so internal endpoints leak. | `server/routes/projects.routes.js:47`; `server/controllers/public.controller.js:83`; `server/models/Project.model.js:37-49` |
+| **MEDIUM** | `POST /:id/like`, `/unlike`, `/view`, `/share` and `GET /:id/stats` are public, have no CSRF/origin check, and the controllers use `Project.findById(req.params.id)` **without a `visibility` filter** — private/hidden projects can be inflated and their stats read. Rate limits are 20–60 per 15 min per IP. | `projects.routes.js:62-70`; `projectController.js:356,390,407,429` |
+| **MEDIUM** | Public search interpolates raw user input into `new RegExp(search,'i')` (ReDoS / regex injection) in four `$or` clauses; the `$in: [RegExp]` on `technologies`/`tags` is also inefficient. | `server/controllers/public.controller.js:66-72` |
+| **MEDIUM** | Owner project list uses `filter.$text = { $search }` with no text index guarantee, an unvalidated `sortOptions[sortBy]` and an unbounded `parseInt(limit)` — a bad query can error or scan the whole collection. | `server/controllers/projectController.js:28-43` |
+| **LOW** | `uploadMiddleware.js` configures Cloudinary from `CLOUDINARY_*` env vars; `multer-storage-cloudinary`/`cloudinary` are declared only in `server/package.json` (not root). If the server deps or credentials are missing, `/api/projects/:id/images` fails. `syncGitHubMetrics` makes an outbound GitHub call from an owner request. | `server/middleware/uploadMiddleware.js:7-25`; `projectController.js:305-317` |
+| **LOW** | `ProjectManagerEnhanced.jsx` still special-cases "fallback projects (numeric ID)" and skips the API for them — dead code left over from the removed fabricated project list. | `src/components/dashboard/ProjectManagerEnhanced.jsx:938-950` |
+
+Positive: owner writes (`POST/PUT/DELETE`, `bulk-delete`, image upload, GitHub
+sync) are `isOwner`-guarded and scoped by `userId`; `deleteProject`,
+`bulkDeleteProjects`, `getProject` and `getAnalytics` all filter on
+`req.user.id`; the `experimental` status validation gap was closed in phase 4.
+
+### D. Dashboard APIs — review findings (read-only, not fixed)
+
+| Severity | Finding | Location |
+|---|---|---|
+| **MEDIUM** | `GET /api/dashboard/tasks?limit=N` puts `limit` **into the Mongo filter** (`{ userId, ...filters }`), so any request with a `limit` returns zero tasks. `status` works, `limit` never did. | `server/routes/dashboard.routes.js:109-121`; `server/services/DashboardService.js:149-153` |
+| **MEDIUM** | `/api/dashboard/*` is `auth` only (not `isOwner`). All `DashboardService` reads are scoped by `req.user.id`, so this is currently safe, but there is no role gate if a future endpoint is added unscoped. `/api/analytics/*` and `/api/admin/*` are correctly `auth + isOwner`. | `server/routes/dashboard.routes.js:8`; `analytics.routes.js:9-11`; `admin.routes.js:6-7` |
+| **MEDIUM** | Public tracking ingestion (`/api/tracking/session`, `/pageview`, `/event`, `/review`, `/session/end`) accepts client-supplied `sessionId`, `ip`, `browser`, `device` and arbitrary `eventData` at 300 req/min; there is no schema/allowlist validation, so analytics can be polluted. `POST /api/analytics/track` is also public. | `server/routes/tracking.routes.js:13-22`; `analytics.routes.js:6` |
+| **LOW** | `GET /api/admin/users?search=` builds an unescaped `$regex` from user input. | `server/routes/admin.routes.js:20-22` |
+| **LOW** | `/api/compat` still returns `501`/`403` placeholders with `meta.populated:false` (honest, but unfinished); the empty `dashboardSocket.js` and raw-WS leftovers remain. | `server/routes/compat.routes.js` and backlog items 4/8 |
+
+Positive: phase 2 converted the analytics/tracking controllers to Mongo
+aggregates with honest empty states, and `DashboardContext` uses
+`Promise.allSettled`; the strict endpoint-parity audit reports **0 live gaps**.
+
+### E. Security — review findings (read-only, not fixed)
+
+| Severity | Finding | Location |
+|---|---|---|
+| **MEDIUM** | Registration is open by default (`AppSettings.allowRegistration: true`), accepts a **6-character** password (the change-password flow requires 8), issues a **7-day** `role:'user'` JWT, and has no email verification or owner approval. That is acceptable for "accounts for other users" but is a large unauthenticated account-creation surface; the limiter allows 5 registrations/hour/IP. | `server/models/AppSettings.js:8-10`; `server/routes/auth.routes.js:17-20,34,63,85` |
+| **MEDIUM** | The public static `/uploads` mount still serves `server/uploads` with no auth. Chat and email uploads write into that root (relative paths), so private attachments are reachable by URL — the same class of bug fixed for collaboration applicant documents in phase 3. | `server/server.js:144`; `chat.routes.js:31`; `email.routes.js:53` |
+| **MEDIUM** | The public chatbot path still forwards visitor prompts to third-party "free LLM" endpoints via `keyRotator.service.js` (scrapes a GitHub key list, mutates `process.env.OPENAI_API_KEY`); `/settings` Socket.IO namespace remains unauthenticated. | from §3f: `keyRotator.service.js:5,58,80`; `socket/settings.handler.js:7-18` |
+| **LOW** | `auth.middleware.js` still bootstraps a synthetic owner with the fixed ObjectId `507f1f77bcf86cd799439011` when a token's user is missing — guarded by `!security.isProduction()`, so it is dev-only, but it makes local testing differ from production. | `server/middleware/auth.middleware.js:37-49` |
+| **LOW** | `GET /api/settings/sessions` cannot list sessions because no login creates a `Session` document and `req.sessionId` is never set (phase 6 finding); `changePassword` therefore cannot preserve the current session. | `settings.controller.js:190,419` |
+
+Positive: `assertProductionConfig()` requires a strong JWT secret and owner
+credentials in production, CORS denies unknown origins (`callback(null,false)`),
+bodies are capped at 1 MB, `/api` has a baseline limiter, unknown `/api` paths
+return JSON 404, 2FA is implemented, and the strict security audit reports
+**HIGH/MEDIUM/LOW 0**. Credentials from Git history still need rotation outside
+this workspace.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity
+  `--strict` **0 live gaps**, security audit `--strict` **0 findings**, build
+  24.05s, PWA 206 precache entries.
+- **71** Node-only regression checks: 9 dashboard + 21 collaboration/review +
+  12 lab/dashboard + 11 testimonial sample/preview + 8 profile/settings +
+  **10 About / CV / portfolio / account** checks.
+- `git diff --check` clean; masked secret scan clean.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -675,7 +791,12 @@ was dead, and both pages rendered invented/partial data. Changes:
     honour the SMTP failure result in `sendEmail`, fix the `/email/settings`
     route order, remove the phantom user id, implement attachment download /
     blocklist, and move private uploads out of the static root.
-11. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
+11. Projects/dashboard/security follow-ups from §3g: restrict public `links`
+    fields, require visibility checks + CSRF protection on interaction counters,
+    escape search regexes, cap `limit`, fix the `/dashboard/tasks?limit` filter,
+    validate tracking payloads, and move chat/email uploads out of the public
+    static root.
+12. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
     `|| echo` on lint/test. Now that checks are real, remove the swallowing.
 
 ---
@@ -689,5 +810,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5 and 6 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6 and 7 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

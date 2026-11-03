@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import apiService from '../services/api.service';
 import { motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { Download, FileText, File, ArrowLeft, Loader2, Mail, Phone, MapPin, Globe, Github, Linkedin, User } from 'lucide-react';
 import '../styles/CVComponent.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const UserCVPage = () => {
   const { username } = useParams();
@@ -18,8 +17,8 @@ const UserCVPage = () => {
   useEffect(() => {
     const fetchCV = async () => {
       try {
-        const res = await fetch(`${API_URL}/public/cv/${username}`);
-        const json = await res.json();
+        // Relative /api URL so this works behind the preview proxy and in prod.
+        const json = await apiService.request(`/public/cv/${encodeURIComponent(username)}`);
         if (json.success) {
           setData(json);
         } else {

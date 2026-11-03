@@ -25,8 +25,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
+import { Link } from 'react-router-dom';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
+import {
+    ABOUT_WELCOME, ABOUT_ROLES, ABOUT_IMAGES, ABOUT_AVAILABILITY,
+    buildAboutProfile, aboutNameParts
+} from '../../utils/aboutPageData';
+import {
+    ensureUserWorkspace, publishUserPortfolio, publicUserLinks
+} from '../../utils/userWorkspace';
 import QRCode from 'qrcode';
 import '../../styles/ActionButtons.css';
 import {
@@ -45,6 +53,10 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [loadError, setLoadError] = useState('');
+    const [settingsProfile, setSettingsProfile] = useState(null);
+    const [workspaceStatus, setWorkspaceStatus] = useState(null);
+    const [workspaceBusy, setWorkspaceBusy] = useState(false);
+    const [workspaceMessage, setWorkspaceMessage] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
     const [activeSection, setActiveSection] = useState('profile');
     const [qrCode, setQrCode] = useState('');
@@ -296,6 +308,7 @@ const Profile = () => {
         // Authoritative owner profile from GET /api/profile. The settings
         // endpoint is used only as a fallback for fields the profile record
         // does not carry. Both are real database reads — nothing is invented.
+        if (settingsRes?.data?.profile) setSettingsProfile(settingsRes.data.profile);
         const p = profileRes?.data || settingsRes?.data?.profile;
         if (p) {
             setProfile(prev => ({
@@ -657,6 +670,46 @@ const Profile = () => {
         { key: 'stackoverflow', label: 'Stack Overflow', icon: Code, placeholder: 'https://stackoverflow.com/users/...', color: '#f48024' },
         { key: 'youtube', label: 'YouTube', icon: Video, placeholder: 'https://youtube.com/@username', color: '#ff0000' }
     ];
+
+    // Exactly the same view model as the public About page, built from the
+    // real /api/settings + /api/profile payloads.
+    const aboutView = buildAboutProfile(
+        { ...profile, ...(settingsProfile || {}) },
+        user
+    );
+    const aboutName = aboutNameParts(aboutView.name);
+    const publicLinks = publicUserLinks(user?.username || profile.username);
+
+    const createWorkspace = async () => {
+        setWorkspaceBusy(true);
+        setWorkspaceMessage('');
+        try {
+            const status = await ensureUserWorkspace();
+            setWorkspaceStatus(status);
+            setWorkspaceMessage(status.errors.length
+                ? `Workspace partially unavailable: ${status.errors.join('; ')}`
+                : 'Your CV and portfolio records are ready.');
+        } catch (error) {
+            setWorkspaceMessage(error?.message || 'Could not create CV / portfolio records.');
+        } finally {
+            setWorkspaceBusy(false);
+        }
+    };
+
+    const publishWorkspace = async () => {
+        setWorkspaceBusy(true);
+        setWorkspaceMessage('');
+        try {
+            const response = await publishUserPortfolio();
+            setWorkspaceMessage(response?.success
+                ? `Portfolio published: ${response.url || publicLinks.portfolio}`
+                : (response?.message || 'Portfolio publish failed.'));
+        } catch (error) {
+            setWorkspaceMessage(error?.message || 'Portfolio publish failed.');
+        } finally {
+            setWorkspaceBusy(false);
+        }
+    };
 
     const completeness = getProfileCompleteness();
 
@@ -1353,6 +1406,59 @@ const Profile = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         className="space-y-6"
                                     >
+                                        {/* Public About page data (same source as /#about) */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/30">
+                                            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                                                <div>
+                                                    <h3 className="text-xl font-semibold text-white">Public About page</h3>
+                                                    <p className="text-slate-400 text-sm mt-1">
+                                                        The fields rendered on the public About section, read from the same
+                                                        <code className="text-cyan-300"> /api/settings </code> and
+                                                        <code className="text-cyan-300"> /api/profile </code> records.
+                                                    </p>
+                                                </div>
+                                                <Link to="/#about" className="px-4 py-2 bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 rounded-lg text-sm hover:bg-cyan-500/25">
+                                                    View public page
+                                                </Link>
+                                            </div>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="bg-slate-900/50 rounded-lg p-4">
+                                                    <div className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-2">{ABOUT_WELCOME}</div>
+                                                    <div className="text-2xl font-bold text-white">{aboutName.first} <span className="text-cyan-400">{aboutName.second}</span></div>
+                                                    <div className="text-sm text-slate-400 mt-1">{aboutView.role || aboutView.tagline || '—'}</div>
+                                                    <p className="text-sm text-slate-300 mt-3 leading-relaxed line-clamp-4">
+                                                        {aboutView.bio || 'No bio published yet. Add one in Settings.'}
+                                                    </p>
+                                                    <div className="mt-3 text-xs text-emerald-300">{aboutView.availability || ABOUT_AVAILABILITY}</div>
+                                                </div>
+                                                <div className="bg-slate-900/50 rounded-lg p-4">
+                                                    <div className="text-xs font-semibold text-slate-300 mb-2">About roles &amp; images</div>
+                                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                                        {ABOUT_ROLES.map(role => (
+                                                            <span key={role} className="text-[11px] px-2 py-1 rounded-full bg-slate-800 text-slate-300">{role}</span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 mb-2">
+                                                        {ABOUT_IMAGES.length} rotating profile images · {aboutView.socialLinks.length} published links
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {aboutView.socialLinks.length === 0 && <span className="text-xs text-slate-500">No social links</span>}
+                                                        {aboutView.socialLinks.map(link => (
+                                                            <a key={link.key} href={link.url} target="_blank" rel="noopener noreferrer"
+                                                               className="text-xs px-2 py-1 rounded-lg border border-slate-600 text-cyan-300 hover:border-cyan-400">
+                                                                {link.name}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                    {aboutView.website && (
+                                                        <a href={aboutView.website} target="_blank" rel="noopener noreferrer" className="block mt-3 text-xs text-cyan-300 hover:underline truncate">
+                                                            {aboutView.website}
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Detailed About Information */}
                                         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
                                             <h3 className="text-xl font-semibold text-white mb-4">About Me</h3>
@@ -1738,14 +1844,50 @@ const Profile = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         className="space-y-6"
                                     >
+                                        {/* CV, portfolio and account system (real APIs) */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
+                                            <h3 className="text-xl font-semibold text-white mb-2">My CV &amp; Portfolio</h3>
+                                            <p className="text-slate-400 text-sm mb-4">
+                                                Every account gets its own CV and portfolio records. Created through
+                                                <code className="text-cyan-300"> GET /api/cv </code> and
+                                                <code className="text-cyan-300"> GET /api/portfolio/config</code>; published pages are public.
+                                            </p>
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                <button type="button" onClick={createWorkspace} disabled={workspaceBusy}
+                                                        className="px-4 py-2 bg-purple-500/15 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold hover:bg-purple-500/25 disabled:opacity-50">
+                                                    {workspaceBusy ? 'Working…' : 'Create / refresh my CV & portfolio'}
+                                                </button>
+                                                <button type="button" onClick={publishWorkspace} disabled={workspaceBusy}
+                                                        className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 rounded-lg text-sm font-semibold hover:bg-emerald-500/20 disabled:opacity-50">
+                                                    Publish portfolio
+                                                </button>
+                                                <Link to="/dashboard/cv-editor" className="px-4 py-2 border border-slate-600 text-slate-200 rounded-lg text-sm hover:border-cyan-400">CV Editor</Link>
+                                                <Link to="/dashboard/portfolio-editor" className="px-4 py-2 border border-slate-600 text-slate-200 rounded-lg text-sm hover:border-cyan-400">Portfolio Editor</Link>
+                                            </div>
+                                            {workspaceMessage && (
+                                                <div className="text-xs text-amber-300 mb-3">{workspaceMessage}</div>
+                                            )}
+                                            {workspaceStatus && (
+                                                <div className="flex flex-wrap gap-3 text-xs mb-3">
+                                                    <span className={workspaceStatus.cvReady ? 'text-emerald-300' : 'text-rose-300'}>CV: {workspaceStatus.cvReady ? 'ready' : 'unavailable'}</span>
+                                                    <span className={workspaceStatus.portfolioReady ? 'text-emerald-300' : 'text-rose-300'}>Portfolio: {workspaceStatus.portfolioReady ? 'ready' : 'unavailable'}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-wrap gap-3 text-xs">
+                                                {publicLinks.cv && <a href={publicLinks.cv} className="text-cyan-300 hover:underline">Public CV: {publicLinks.cv}</a>}
+                                                {publicLinks.portfolio && <a href={publicLinks.portfolio} className="text-cyan-300 hover:underline">Public portfolio: {publicLinks.portfolio}</a>}
+                                                <Link to="/register" className="text-slate-400 hover:underline">Create account for another user</Link>
+                                            </div>
+                                        </div>
+
                                         {/* Top Projects */}
                                         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
                                             <div className="flex items-center justify-between mb-6">
                                                 <h3 className="text-xl font-semibold text-white">Featured Projects</h3>
-                                                <button className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2">
+                                                <Link to="/dashboard/projects" className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2">
                                                     <Plus size={18} />
                                                     Add Project
-                                                </button>
+                                                </Link>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {topProjects.map((project, index) => (

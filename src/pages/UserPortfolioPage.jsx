@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import apiService from '../services/api.service';
 import { motion } from 'framer-motion';
 import { Loader2, ArrowLeft } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const UserPortfolioPage = () => {
   const { username } = useParams();
@@ -14,8 +13,8 @@ const UserPortfolioPage = () => {
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
-        const res = await fetch(`${API_URL}/public/portfolio/${username}`);
-        const json = await res.json();
+        // Relative /api URL so this works behind the preview proxy and in prod.
+        const json = await apiService.request(`/public/portfolio/${encodeURIComponent(username)}`);
         if (json.success) {
           setData(json);
         } else {
