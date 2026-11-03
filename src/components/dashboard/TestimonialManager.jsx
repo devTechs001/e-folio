@@ -40,9 +40,15 @@ const TestimonialManager = () => {
     const loadTestimonials = async () => {
         try {
             setLoading(true);
-            const response = await apiService.getTestimonials();
+            // The admin view needs every testimonial (including hidden and
+            // pending ones). The public endpoint only returns visible records,
+            // which made moderation impossible and desynced the stats cards.
+            const response = await apiService.getAllTestimonials({ limit: 100 });
             if (response.success) {
-                setTestimonials(response.testimonials);
+                setTestimonials(Array.isArray(response.testimonials) ? response.testimonials : []);
+            } else {
+                setTestimonials([]);
+                showNotification(response.message || 'Failed to load testimonials', 'error');
             }
         } catch (error) {
             console.error('Error loading testimonials:', error);

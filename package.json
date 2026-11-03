@@ -30,8 +30,9 @@
     "audit:security": "node server/scripts/security-audit.js",
     "test:load": "node server/tests/load/smoke-load.js",
     "check": "npm run lint && npm test && npm run build",
-    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs",
-    "test:dashboards": "node tests/dashboard-api.test.mjs"
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs",
+    "test:dashboards": "node tests/dashboard-api.test.mjs",
+    "test:collaboration": "node tests/collaboration-review.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

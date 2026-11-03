@@ -35,6 +35,11 @@ results.json
 load-test-results/
 *.har
 
+# User-uploaded files are runtime data, never source. Applicant documents are
+# kept outside the static root and are only served to the authenticated owner.
+server/uploads/
+server/private/uploads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

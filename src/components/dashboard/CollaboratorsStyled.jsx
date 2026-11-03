@@ -904,7 +904,17 @@ const Collaborators = () => {
                                             onChange={() => toggleSelectCollaborator(collaborator.id)}
                                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                         />
-                                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                                        <button
+                                            type="button"
+                                            title="Edit permissions"
+                                            aria-label="Edit permissions"
+                                            onClick={() => {
+                                                setEditingCollaborator(collaborator);
+                                                setSelectedPermissions(collaborator.permissions || []);
+                                                setShowPermissionsModal(true);
+                                            }}
+                                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                        >
                                             <MoreVertical size={18} className="text-gray-600 dark:text-gray-400" />
                                         </button>
                                     </div>
@@ -1010,6 +1020,16 @@ const Collaborators = () => {
                                         {/* Actions */}
                                         <div className="flex gap-2">
                                             <button
+                                                type="button"
+                                                title="Send email"
+                                                aria-label="Send email"
+                                                onClick={() => {
+                                                    if (collaborator.email) {
+                                                        window.location.href = `mailto:${collaborator.email}`;
+                                                    } else {
+                                                        info('No email address on file for this collaborator');
+                                                    }
+                                                }}
                                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                             >
                                                 <Mail size={18} className="text-gray-600 dark:text-gray-400" />

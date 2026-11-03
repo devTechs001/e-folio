@@ -228,6 +228,77 @@ function checkUnprotectedMutations() {
     }
 }
 
+/* 7. Fabricated reviews/testimonials must never stand in for real data.
+ *    A DB outage used to render invented five-star clients as `success:true`,
+ *    which is both a data-integrity and a trust problem. Form placeholders
+ *    ("John Doe" in an input) are deliberately ignored. */
+function checkFabricatedContent() {
+    const targets = [
+        ...walk(path.join(ROOT, 'server/controllers'), ['.js']),
+        ...walk(path.join(ROOT, 'src/pages'), ['.jsx']),
+        ...walk(path.join(ROOT, 'src/components/dashboard'), ['.jsx'])
+    ];
+    const forbidden = [
+        { re: /\b(mockReviews|mockAnalytics|getFallbackTestimonials|generateEnhancedDemoData)\b/, label: 'mock data fallback' },
+        { re: /name:\s*['"](?:John Doe|Jane Smith|Alex Johnson)['"]/, label: 'fabricated person record' }
+    ];
+    const offenders = [];
+    for (const file of targets) {
+        stripComments(read(file)).split('\n').forEach((line, index) => {
+            if (forbidden.some(f => f.re.test(line))) offenders.push(`${rel(file)}:${index + 1}`);
+        });
+    }
+    if (offenders.length) {
+        add('HIGH', 'data-integrity', 'Fabricated review/testimonial content is served instead of an honest empty state.', offenders);
+    }
+}
+
+/* 8. Routes touching owner-only data need isOwner, not merely `auth`.
+ *    The previous audit only checked that a route file *mentioned* an auth
+ *    reference, so a collaborator token passed moderation/export checks. */
+function checkOwnerGuardCoverage() {
+    const files = [
+        'reviews.routes.js',
+        'testimonials.routes.js',
+        'collaborators.routes.js',
+        'collaboration.routes.js',
+        'collaboration-requests.routes.js'
+    ];
+    const publicPaths = new Set([
+        '/public', '/submit', '/upload', '/featured', '/:id/like',
+        '/invite/validate/:token', '/invite/accept/:token',
+        '/public/testimonials', '/public/testimonials/featured',
+        '/public/testimonials/stats', '/public/testimonials/submit',
+        '/public/testimonials/:id/helpful'
+    ]);
+    const offenders = [];
+    for (const name of files) {
+        const file = path.join(ROOT, 'server/routes', name);
+        if (!fs.existsSync(file)) continue;
+        const lines = stripComments(read(file)).split('\n');
+        let ownerScoped = false;
+        let chainPath = null;
+        for (const line of lines) {
+            if (/router\.use\(\s*isOwner\s*\)/.test(line)) { ownerScoped = true; continue; }
+            const routeChain = line.match(/router\.route\(\s*'([^']+)'\s*\)/);
+            if (routeChain) { chainPath = routeChain[1]; continue; }
+            const direct = line.match(/router\.(get|post|put|patch|delete)\(\s*'([^']+)'/);
+            if (direct) {
+                if (ownerScoped || publicPaths.has(direct[2])) continue;
+                if (!/isOwner/.test(line)) offenders.push(`${rel(file)} ${direct[1].toUpperCase()} ${direct[2]}`);
+                continue;
+            }
+            const chained = line.match(/^\s*\.(get|post|put|patch|delete)\(/);
+            if (chained && !ownerScoped && !publicPaths.has(chainPath)) {
+                if (!/isOwner/.test(line)) offenders.push(`${rel(file)} ${chained[1].toUpperCase()} ${chainPath || '(chain)'}`);
+            }
+        }
+    }
+    if (offenders.length) {
+        add('HIGH', 'access-control', 'Owner-data or moderation routes are guarded by authentication only.', offenders);
+    }
+}
+
 function main() {
     checkTrackedEnvFiles();
     checkHardcodedCredentials();
@@ -235,6 +306,8 @@ function main() {
     checkServerControls();
     checkUndeclaredRequires();
     checkUnprotectedMutations();
+    checkFabricatedContent();
+    checkOwnerGuardCoverage();
 
     const order = { HIGH: 0, MEDIUM: 1, LOW: 2, PASS: 3 };
     findings.sort((a, b) => order[a.severity] - order[b.severity]);

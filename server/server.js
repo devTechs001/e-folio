@@ -137,7 +137,10 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // tracking, exports) remain stricter than this ceiling.
 app.use('/api', apiLimiter);
 
-// Serve static files for uploads
+// Applicant documents (CVs, portfolios) are NOT under this static root: the
+// collaboration upload middleware writes them to server/private/uploads and
+// they are served only by the owner-authenticated /files/:filename route.
+// Only public portfolio assets (review images) are exposed here.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/portfolios', express.static(path.join(__dirname, 'public/portfolios')));
 

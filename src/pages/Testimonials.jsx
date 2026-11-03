@@ -6,6 +6,7 @@ import '../styles/Testimonials.css';
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [filter, setFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +24,7 @@ const Testimonials = () => {
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
   const loadTestimonials = useCallback(async () => {
+    setLoadError('');
     try {
       const cached = cacheService.get('public_testimonials');
       if (cached) {
@@ -31,22 +33,23 @@ const Testimonials = () => {
         return;
       }
 
-      console.log('Fetching testimonials from API...');
       const response = await apiService.getTestimonials();
-      console.log('Testimonials API response:', response);
 
-      if (response.success && response.testimonials && response.testimonials.length > 0) {
-        console.log(`Loaded ${response.testimonials.length} testimonials from database`);
+      if (response.success && Array.isArray(response.testimonials) && response.testimonials.length > 0) {
         cacheService.set('public_testimonials', response.testimonials, CACHE_TTL.TEN_MINUTES);
         setTestimonials(response.testimonials);
       } else {
-        console.log('No testimonials from API, using fallback data');
-        setTestimonials(getFallbackTestimonials());
+        // An empty collection is an honest empty state. Never substitute
+        // invented clients, quotes, ratings or avatars as social proof.
+        setTestimonials([]);
+        if (!response.success) {
+          setLoadError(response.message || 'Testimonials are temporarily unavailable.');
+        }
       }
     } catch (error) {
       console.error('Error loading testimonials:', error);
-      console.log('Using fallback testimonials due to error');
-      setTestimonials(getFallbackTestimonials());
+      setTestimonials([]);
+      setLoadError('Testimonials are temporarily unavailable. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -76,113 +79,6 @@ const Testimonials = () => {
     window.addEventListener('settingsChanged', handleSettingsChange);
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
   }, [loadTestimonials]);
-
-  const getFallbackTestimonials = () => [
-    {
-      name: "Sarah Johnson",
-      position: "CEO",
-      company: "TechStart Inc.",
-      avatar: "https://images.unsplash.com/photo-1494790108756-2616b612b786?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Working with this developer was an absolute pleasure. They delivered our e-commerce platform ahead of schedule and exceeded all our expectations. The attention to detail and technical expertise is unmatched.",
-      featured: true,
-      verified: true,
-      date: new Date('2025-01-15'),
-      project: "E-commerce Platform",
-      tags: ["React", "Node.js", "MongoDB"]
-    },
-    {
-      name: "Michael Chen",
-      position: "CTO",
-      company: "InnovateTech Solutions",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Exceptional work on our AI-powered analytics dashboard. The developer's ability to understand complex requirements and translate them into elegant solutions is remarkable. Highly recommended!",
-      featured: true,
-      verified: true,
-      date: new Date('2025-02-20'),
-      project: "AI Analytics Dashboard",
-      tags: ["Python", "TensorFlow", "React"]
-    },
-    {
-      name: "Emily Rodriguez",
-      position: "Product Manager",
-      company: "Digital Dynamics",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "The portfolio website they built for us is stunning. It perfectly captures our brand identity and has significantly increased our conversion rates. Professional, creative, and reliable.",
-      featured: false,
-      verified: true,
-      date: new Date('2025-03-10'),
-      project: "Portfolio Website",
-      tags: ["React", "Tailwind", "Framer Motion"]
-    },
-    {
-      name: "David Kim",
-      position: "Founder",
-      company: "StartupHub",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Outstanding development work on our real-time chat application. The performance optimization and user experience improvements have been game-changing for our platform.",
-      featured: false,
-      verified: true,
-      date: new Date('2025-04-05'),
-      project: "Real-time Chat App",
-      tags: ["Socket.io", "Express", "Redis"]
-    },
-    {
-      name: "Jessica Taylor",
-      position: "Marketing Director",
-      company: "BrandBoost Agency",
-      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "The weather app they developed is both beautiful and functional. Our users love the intuitive interface and accurate forecasts. A truly talented developer!",
-      featured: false,
-      verified: true,
-      date: new Date('2025-05-12'),
-      project: "Weather App",
-      tags: ["React Native", "API Integration"]
-    },
-    {
-      name: "Robert Anderson",
-      position: "VP Engineering",
-      company: "CloudScale Systems",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Impressive work on our enterprise Java system. The microservices architecture they implemented has improved our scalability and performance significantly. Top-notch technical skills.",
-      featured: false,
-      verified: true,
-      date: new Date('2025-06-18'),
-      project: "Enterprise System",
-      tags: ["Java", "Spring Boot", "Microservices"]
-    },
-    {
-      name: "Amanda White",
-      position: "Design Lead",
-      company: "Creative Studios",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Collaboration was seamless! They transformed our design mockups into pixel-perfect, performant web applications. Communication was excellent throughout.",
-      featured: true,
-      verified: true,
-      date: new Date('2025-07-22'),
-      project: "Design System Implementation",
-      tags: ["React", "Storybook", "Design Systems"]
-    },
-    {
-      name: "Chris Martinez",
-      position: "Operations Manager",
-      company: "LogiTech Solutions",
-      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3",
-      rating: 4,
-      content: "Great experience working together. The inventory management system has streamlined our operations significantly. Would definitely work with them again!",
-      featured: false,
-      verified: true,
-      date: new Date('2025-08-15'),
-      project: "Inventory Management",
-      tags: ["Vue.js", "Laravel", "MySQL"]
-    }
-  ];
 
   const filteredAndSortedTestimonials = testimonials
     .filter(testimonial => {
@@ -670,10 +566,20 @@ const Testimonials = () => {
             </div>
             <h3 className="empty-state-title">No testimonials found</h3>
             <p className="empty-state-text">
-              {searchTerm
-                ? `No results for "${searchTerm}". Try adjusting your search or filters.`
-                : 'Try adjusting your filters to see more testimonials.'}
+              {loadError
+                ? loadError
+                : searchTerm
+                  ? `No results for "${searchTerm}". Try adjusting your search or filters.`
+                  : testimonials.length === 0
+                    ? 'No testimonials have been published yet.'
+                    : 'Try adjusting your filters to see more testimonials.'}
             </p>
+            {loadError && (
+              <button onClick={loadTestimonials} className="btn-primary mt-4">
+                <i className="fas fa-redo mr-2"></i>
+                Retry
+              </button>
+            )}
             <button
               onClick={() => {
                 setFilter('all');

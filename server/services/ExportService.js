@@ -1,5 +1,5 @@
 // services/ExportService.js
-const { Parser } = require('json2csv');
+const { Parser } = require('@json2csv/plainjs');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const TrackingSession = require('../models/TrackingSession');

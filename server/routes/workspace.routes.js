@@ -9,7 +9,9 @@ router.use(auth);
 
 // Workspace CRUD (collaborators can view, owner creates/manages)
 router.get('/', workspaceController.getWorkspaces);
-router.get('/all', workspaceController.getAllWorkspaces);
+// Site-wide listing exposes other owners' workspaces and collaborator emails.
+// Restrict it to the owner (the controller scopes the query as well).
+router.get('/all', isOwner, workspaceController.getAllWorkspaces);
 router.get('/my-collaborations', workspaceController.getCollaboratorWorkspaces);
 router.get('/:workspaceId', workspaceController.getWorkspaceById);
 router.get('/:workspaceId/analytics', workspaceController.getWorkspaceAnalytics);

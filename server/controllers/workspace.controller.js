@@ -1,4 +1,5 @@
 // controllers/workspace.controller.js
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const Workspace = require('../models/Workspace');
 const User = require('../models/User.model');
 const CollaborationRequest = require('../models/CollaborationRequest');
@@ -23,8 +24,7 @@ exports.createWorkspace = async (req, res) => {
         if (!name) {
             return res.status(400).json({
                 success: false,
-                message: 'Workspace name is required'
-            });
+                message: 'Workspace name is required' });
         }
 
         // Create workspace
@@ -98,9 +98,7 @@ exports.createWorkspace = async (req, res) => {
         console.error('Create workspace error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to create workspace',
-            error: error.message
-        });
+            message: 'Failed to create workspace' });
     }
 };
 
@@ -120,9 +118,10 @@ exports.getWorkspaces = async (req, res) => {
         }
 
         if (search) {
+            const safeSearch = escapeRegex(String(search).slice(0, 100));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { description: { $regex: safeSearch, $options: 'i' } }
             ];
         }
 
@@ -148,9 +147,7 @@ exports.getWorkspaces = async (req, res) => {
         console.error('Get workspaces error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -170,10 +167,23 @@ exports.getAllWorkspaces = async (req, res) => {
         }
 
         if (search) {
+            const safeSearch = escapeRegex(String(search).slice(0, 100));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { description: { $regex: safeSearch, $options: 'i' } }
             ];
+        }
+
+        // /all is owner-only at the router, but scope here as well so a
+        // misconfigured mount cannot leak other people's workspaces.
+        if (req.user?.role !== 'owner') {
+            const userId = req.user?._id || req.user?.id;
+            query = {
+                $and: [
+                    query,
+                    { $or: [{ ownerId: userId }, { 'collaborators.userId': userId }] }
+                ]
+            };
         }
 
         const sortOrder = order === 'desc' ? -1 : 1;
@@ -203,16 +213,15 @@ exports.getAllWorkspaces = async (req, res) => {
         console.error('Get all workspaces error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
 // Get workspace by ID
 exports.getWorkspaceById = async (req, res) => {
     try {
-        const workspace = await Workspace.findById(req.params.id)
+        const { workspaceId } = req.params;
+        const workspace = await Workspace.findById(workspaceId)
             .populate('collaborators.userId', 'name email avatar')
             .populate('projects', 'title description thumbnail')
             .populate('tasks.assignedTo', 'name email');
@@ -220,21 +229,22 @@ exports.getWorkspaceById = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
-        // Check access
-        const isOwner = workspace.ownerId.toString() === req.user.id;
-        const isCollaborator = workspace.collaborators.some(
-            c => c.userId?.toString() === req.user.id && c.status === 'active'
-        );
+        // Check access. collaborators.userId is populated here, so read ._id
+        // when present; comparing the populated document itself never matched.
+        const userId = String(req.user?._id || req.user?.id || '');
+        const isOwner = String(workspace.ownerId?._id || workspace.ownerId) === userId;
+        const isCollaborator = workspace.collaborators.some(c => {
+            const collaboratorId = c.userId?._id || c.userId;
+            return String(collaboratorId || '') === userId && c.status === 'active';
+        });
 
         if (!isOwner && !isCollaborator) {
             return res.status(403).json({
                 success: false,
-                message: 'Access denied'
-            });
+                message: 'Access denied' });
         }
 
         // Update last active for collaborator
@@ -254,9 +264,7 @@ exports.getWorkspaceById = async (req, res) => {
         console.error('Get workspace error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -279,9 +287,7 @@ exports.getCollaboratorWorkspaces = async (req, res) => {
         console.error('Get collaborator workspaces error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -296,16 +302,14 @@ exports.addCollaborator = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
         // Check if user is owner
         if (workspace.ownerId.toString() !== req.user.id) {
             return res.status(403).json({
                 success: false,
-                message: 'Only workspace owner can add collaborators'
-            });
+                message: 'Only workspace owner can add collaborators' });
         }
 
         // Check if already a collaborator
@@ -316,8 +320,7 @@ exports.addCollaborator = async (req, res) => {
         if (existing) {
             return res.status(400).json({
                 success: false,
-                message: 'User is already a collaborator'
-            });
+                message: 'User is already a collaborator' });
         }
 
         // Add collaborator
@@ -366,9 +369,7 @@ exports.addCollaborator = async (req, res) => {
         console.error('Add collaborator error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to add collaborator',
-            error: error.message
-        });
+            message: 'Failed to add collaborator' });
     }
 };
 
@@ -382,16 +383,14 @@ exports.removeCollaborator = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
         // Check if user is owner
         if (workspace.ownerId.toString() !== req.user.id) {
             return res.status(403).json({
                 success: false,
-                message: 'Only workspace owner can remove collaborators'
-            });
+                message: 'Only workspace owner can remove collaborators' });
         }
 
         await workspace.removeCollaborator(collaboratorId, req.user.id);
@@ -404,9 +403,7 @@ exports.removeCollaborator = async (req, res) => {
         console.error('Remove collaborator error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to remove collaborator',
-            error: error.message
-        });
+            message: 'Failed to remove collaborator' });
     }
 };
 
@@ -421,8 +418,7 @@ exports.updateCollaboratorPermissions = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
         const collaborator = workspace.collaborators.find(
@@ -432,8 +428,7 @@ exports.updateCollaboratorPermissions = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         if (role) collaborator.role = role;
@@ -450,9 +445,7 @@ exports.updateCollaboratorPermissions = async (req, res) => {
         console.error('Update permissions error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update permissions',
-            error: error.message
-        });
+            message: 'Failed to update permissions' });
     }
 };
 
@@ -467,9 +460,15 @@ exports.addTask = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
+
+        if (!isWorkspaceMember(workspace, req.user?._id || req.user?.id)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied' });
+        }
+
 
         await workspace.addTask({
             title,
@@ -488,9 +487,7 @@ exports.addTask = async (req, res) => {
         console.error('Add task error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to add task',
-            error: error.message
-        });
+            message: 'Failed to add task' });
     }
 };
 
@@ -505,9 +502,15 @@ exports.updateTaskStatus = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
+
+        if (!isWorkspaceMember(workspace, req.user?._id || req.user?.id)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied' });
+        }
+
 
         workspace.updateTaskStatus(taskId, status);
         await workspace.save();
@@ -521,9 +524,7 @@ exports.updateTaskStatus = async (req, res) => {
         console.error('Update task status error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update task status',
-            error: error.message
-        });
+            message: 'Failed to update task status' });
     }
 };
 
@@ -538,8 +539,7 @@ exports.updateWorkspaceSettings = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
         workspace.settings = { ...workspace.settings, ...settings };
@@ -554,9 +554,7 @@ exports.updateWorkspaceSettings = async (req, res) => {
         console.error('Update settings error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update settings',
-            error: error.message
-        });
+            message: 'Failed to update settings' });
     }
 };
 
@@ -574,8 +572,7 @@ exports.archiveWorkspace = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
         res.json({
@@ -587,9 +584,7 @@ exports.archiveWorkspace = async (req, res) => {
         console.error('Archive workspace error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to archive workspace',
-            error: error.message
-        });
+            message: 'Failed to archive workspace' });
     }
 };
 
@@ -603,8 +598,7 @@ exports.deleteWorkspace = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
 
         res.json({
@@ -615,9 +609,7 @@ exports.deleteWorkspace = async (req, res) => {
         console.error('Delete workspace error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to delete workspace',
-            error: error.message
-        });
+            message: 'Failed to delete workspace' });
     }
 };
 
@@ -631,9 +623,15 @@ exports.getWorkspaceAnalytics = async (req, res) => {
         if (!workspace) {
             return res.status(404).json({
                 success: false,
-                message: 'Workspace not found'
-            });
+                message: 'Workspace not found' });
         }
+
+        if (!isWorkspaceMember(workspace, req.user?._id || req.user?.id)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied' });
+        }
+
 
         res.json({
             success: true,
@@ -643,19 +641,19 @@ exports.getWorkspaceAnalytics = async (req, res) => {
         console.error('Get analytics error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get analytics',
-            error: error.message
-        });
+            message: 'Failed to get analytics' });
     }
 };
 
 // Check whether a user is a member (owner or collaborator) of a workspace
 function isWorkspaceMember(workspace, userId) {
     if (!workspace.ownerId) return false;
-    if (String(workspace.ownerId) === String(userId)) return true;
-    return workspace.collaborators.some(c =>
-        c.userId && String(c.userId) === String(userId)
-    );
+    const id = String(userId || '');
+    if (String(workspace.ownerId?._id || workspace.ownerId) === id) return true;
+    return (workspace.collaborators || []).some(c => {
+        const collaboratorId = c.userId?._id || c.userId;
+        return collaboratorId && String(collaboratorId) === id && c.status !== 'removed';
+    });
 }
 
 // This function emits a real-time socket event for workspace updates
@@ -687,7 +685,7 @@ exports.getWorkspaceMessages = async (req, res) => {
         res.json({ success: true, messages });
     } catch (error) {
         console.error('Get workspace messages error:', error);
-        res.status(500).json({ success: false, message: 'Failed to load messages', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to load messages' });
     }
 };
 
@@ -743,7 +741,7 @@ exports.sendWorkspaceMessage = async (req, res) => {
         res.json({ success: true, message: 'Message sent', data: message });
     } catch (error) {
         console.error('Send workspace message error:', error);
-        res.status(500).json({ success: false, message: 'Failed to send message', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to send message' });
     }
 };
 
@@ -805,7 +803,7 @@ exports.addWorkspaceResource = async (req, res) => {
         res.json({ success: true, message: 'Resource added', resource });
     } catch (error) {
         console.error('Add workspace resource error:', error);
-        res.status(500).json({ success: false, message: 'Failed to add resource', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to add resource' });
     }
 };
 
@@ -840,10 +838,11 @@ exports.deleteWorkspaceResource = async (req, res) => {
 
         emitWorkspaceEvent(req, 'workspace:resource-deleted', { workspaceId, resourceId });
 
-        res.json({ success: true, message: 'Resource deleted' });
+        res.json({ success: true, message: 'Resource deleted'
+        });
     } catch (error) {
         console.error('Delete workspace resource error:', error);
-        res.status(500).json({ success: false, message: 'Failed to delete resource', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to delete resource' });
     }
 };
 
@@ -864,7 +863,7 @@ exports.getWorkspaceCommits = async (req, res) => {
         res.json({ success: true, commits });
     } catch (error) {
         console.error('Get commits error:', error);
-        res.status(500).json({ success: false, message: 'Failed to load commits', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to load commits' });
     }
 };
 
@@ -914,7 +913,7 @@ exports.addWorkspaceCommit = async (req, res) => {
         res.json({ success: true, message: 'Commit recorded', commit });
     } catch (error) {
         console.error('Add commit error:', error);
-        res.status(500).json({ success: false, message: 'Failed to record commit', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to record commit' });
     }
 };
 
@@ -935,7 +934,7 @@ exports.getWorkspaceBuilds = async (req, res) => {
         res.json({ success: true, builds });
     } catch (error) {
         console.error('Get builds error:', error);
-        res.status(500).json({ success: false, message: 'Failed to load builds', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to load builds' });
     }
 };
 
@@ -976,7 +975,7 @@ exports.triggerWorkspaceBuild = async (req, res) => {
         res.json({ success: true, message: 'Build triggered', build: workspace.builds[workspace.builds.length - 1] });
     } catch (error) {
         console.error('Trigger build error:', error);
-        res.status(500).json({ success: false, message: 'Failed to trigger build', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to trigger build' });
     }
 };
 
@@ -1018,7 +1017,7 @@ exports.updateWorkspaceBuild = async (req, res) => {
         res.json({ success: true, build });
     } catch (error) {
         console.error('Update build error:', error);
-        res.status(500).json({ success: false, message: 'Failed to update build', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to update build' });
     }
 };
 

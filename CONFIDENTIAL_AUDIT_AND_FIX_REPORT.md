@@ -9,17 +9,19 @@
 |---|---|
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
-| Branch | `arena/352dad6c-e-folio` (from `70b6427`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests |
+| Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
-| Not performed | offensive/exploitation activity, live/external probing, remote push/PR, history rewrite |
+| Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
 The phrase *"exploitation (contract here)"* was not clarified (the clarification
 prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
-hardening, and authorised local tests. **"Fix merge"** is handled as a local
-commit on this branch; no remote merge/push was performed because of the
-no-sharing constraint.
+hardening, and authorised local tests. Under the explicit **"merge to main"**
+instruction, phase 1 and phase 2 were merged into this repository's own
+`origin/main` via PR #1 and PR #2 (see §5). Phase 3 (collaboration & review
+systems) is **local only** — no push, PR, merge, external issue, or external
+service was used.
 
 ---
 
@@ -36,6 +38,7 @@ no-sharing constraint.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Collaboration & review (phase 3) | anonymous review reads, `auth`-only moderation, unscoped workspaces, dead invite links, fake reviews/testimonials, public applicant documents | owner-only guards, hashed `Invite` flow + accept page, private uploads, membership checks, honest empty states, 21 new regression checks |
 
 ---
 
@@ -271,6 +274,101 @@ was started); the aggregates are static-verified and syntax-checked.
 
 ---
 
+## 3c. Phase 3 — collaboration & review systems
+
+Scope: source review findings for `/api/collaboration`,
+`/api/collaboration-requests`, `/api/collaborators`, `/api/workspace`,
+`/api/reviews`, `/api/testimonials` and their controllers/models/UI. All work
+was done locally on `arena/f176a951-e-folio`. **No push, PR, merge, external
+issue or external service was used for this phase.**
+
+### Access control
+
+| Fix | Where |
+|---|---|
+| `GET /reviews`, `GET /reviews/:id`, moderation, bulk actions, export, analytics, reply, featured/visibility and attachment upload now require `auth` **and** `isOwner` (previously anonymous or `auth` only) | `server/routes/reviews.routes.js` |
+| Site-wide collaborator/invite/activity listings on both collaboration prefixes changed from `auth` to `auth, isOwner` | `server/routes/collaboration*.routes.js` |
+| `GET /workspace/all` is owner-only at the router **and** scoped by owner/member in the controller; `addTask`, `updateTaskStatus` and `getWorkspaceAnalytics` now call `isWorkspaceMember()` | `server/routes/workspace.routes.js`, `server/controllers/workspace.controller.js` |
+| `getWorkspaceById` read `req.params.id` while the route declares `:workspaceId` — fixed. Membership comparison now handles populated collaborator documents | `server/controllers/workspace.controller.js` |
+| Applicant documents (CVs/portfolios) moved out of `express.static` into `server/private/uploads/`; served only by `GET /api/collaboration*/files/:filename` with `auth, isOwner` and a strict filename pattern | `server/middleware/upload.middleware.js`, `server/server.js`, both collaboration routers, `collaboration.controller.js` |
+| Upload directories are now gitignored | `.gitignore` |
+
+### Invitation flow (was broken end-to-end)
+
+- `approveRequest`, `bulkApproveRequests` and `resendInvite` now call a shared
+  `issueApprovalInvite()` which **creates a real `Invite` record with the
+  SHA-256 hash** of the raw token — matching `validateInviteToken` /
+  `acceptInvite`. Previously no `Invite` was created and a raw token was stored
+  on `CollaborationRequest`, so every approval produced a dead link.
+- All invite links now point at `/accept-invite/<token>` (not
+  `/register?token=…`); `FRONTEND_URL` has a working request-derived fallback.
+- `resendInvite` cancels stale pending invites and issues a **fresh** token
+  instead of reusing a never-registered one.
+- `GET /api/collaborators/invite/validate/:token` and
+  `POST /api/collaborators/invite/accept/:token` were behind `router.use(auth)`,
+  which an invitee cannot satisfy. They are now anonymous, rate limited, and
+  declared before the auth/owner middleware.
+- New `src/pages/AcceptInvite.jsx` (route `/accept-invite/:token`) validates the
+  token, collects name/password, calls the accept endpoint, stores the returned
+  session and links to `/workspace`. Handles `USER_EXISTS` and expired links.
+- `acceptInvite` no longer crashes when Socket.IO is absent, validates the
+  password, and returns `code: 'USER_EXISTS'` for existing accounts.
+- Simulated email now returns `{ success:false, simulated:true }`; approval /
+  resend responses carry `email.delivered` / `email.undelivered` so the operator
+  is told when nothing was sent. The dashboard shows a warning.
+- Raw tokens are no longer written to `inviteToken`; that model field is now
+  `select:false` (legacy only). `inviteLink` remains an owner-only field for
+  re-sharing; `inviteSentAt` / `inviteExpiresAt` were added.
+- `getValidUserId()` no longer fabricates an ObjectId; mutating handlers return
+  401 for an invalid principal. Socket emissions are guarded.
+
+### Data integrity (no fabricated content)
+
+- Removed every mock fallback from `reviews.controller.js` (`John Doe`,
+  `Jane Smith`, `Alex Johnson`, fake stats/analytics). DB-down and error paths
+  now return `503`, `success:false`, `meta.populated:false` and empty arrays.
+- Deleted `getFallbackTestimonials()` (8 invented clients/quotes/avatars) from
+  `src/pages/Testimonials.jsx`; it now shows an honest empty state with a retry.
+- `TestimonialManager.jsx` now calls owner-only `getAllTestimonials()` so
+  pending/hidden testimonials can actually be moderated and match the stats.
+- Removed `getFallbackProjects()` (~490 lines of fabricated projects, views,
+  likes, clients) and all `picsum.photos` / `Math.random()` image fallbacks from
+  `ProjectManagerEnhanced.jsx` — this also closes a phase-2 backlog item.
+- `getFeaturedReviews`, `getReviewsCount` and `getAverageReviewRating` no longer
+  return `success:true` with zeros on failure.
+- `error.message` is no longer echoed in HTTP responses from the four touched
+  controllers; HTML email templates escape applicant name/notes.
+
+### Robustness / consistency
+
+- Both collaboration routers now expose the **same** path set (both bulk
+  spellings), share one multer config, and `/upload` finally has
+  `collaborationUpload.array('files', 5)` — previously `/api/collaboration/upload`
+  always failed with `400`. A regression test fails if the declarations drift.
+- `uploadRequestFile` returns a usable owner-scoped `url` instead of an absolute
+  server filesystem path (the public form previously stored `undefined`).
+- Escaped all user-supplied `$regex` searches, whitelisted review sort fields,
+  bounded `page`/`limit`, and added MIME+extension allow-lists for uploads.
+- `getRequestActivity` read `req.params.requestId` but the route supplies `:id`.
+- Standardised all CSV exports on the declared `@json2csv/plainjs` package
+  (removing the `json2csv@6.0.0-alpha.2` `Parser` runtime risk).
+- Dead `MoreVertical` and `Mail` buttons in `CollaboratorsStyled.jsx` are wired.
+
+### Verification (all local, offline)
+
+- `npm test`: endpoint parity `--strict` → **0 live gaps** (515 definitions,
+  604 calls, 458 matched, 146 orphaned/legacy); security audit `--strict` →
+  **HIGH 0 / MEDIUM 0 / LOW 0**; 9 dashboard + **21 collaboration/review**
+  regression checks passed.
+- `npm run lint`: **0 errors**, 672 warnings. `npm run build`: success
+  (~21 s), PWA 200 precache entries. `git diff --check` clean.
+- New static audit checks: `checkFabricatedContent()` (HIGH on mock
+  review/testimonial data) and `checkOwnerGuardCoverage()` (HIGH on owner-data
+  routes guarded only by `auth`). These would have caught the original defects.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -279,7 +377,8 @@ was started); the aggregates are static-verified and syntax-checked.
    production readiness; the mock target only proves the harness.
 3. **Runtime-verify** realtime event envelopes, `getRealtimeAnalytics()` payload
    shape, `assertProductionConfig()` startup, CORS/no-origin behaviour,
-   `/uploads` access, error messages, and rate limits. No server instance was
+   the new owner-only `/files/:filename` download route, error messages, and
+   rate limits. No server instance was
    started (server deps are not installed; `corepack pnpm` is available).
 4. **Decide on `compat.routes.js` static responses** — `meta.populated:false`,
    `501`, and `403` are honest placeholders, not finished features.
@@ -294,7 +393,10 @@ was started); the aggregates are static-verified and syntax-checked.
    `aiSocket.js` are unwired raw-WS handlers.
 9. `customEventTracking.destroy()` is implemented but not wired into unmount;
    `DashboardHomeStyled.jsx` `data.type` switch and unused `wsRef` need review.
-10. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
+10. `src/pages/Projects.jsx` and `src/pages/Lab.jsx` still contain seeded
+    demo projects / `picsum.photos` placeholders on their fallback paths; they
+    are marketing pages, not API-driven dashboards, and are tracked separately.
+11. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
     `|| echo` on lint/test. Now that checks are real, remove the swallowing.
 
 ---
@@ -306,5 +408,7 @@ explicitly requested **"merge to main"**, phase 1 was merged via PR #1
 (merge commit `e27abd00e84f1c99c463e4ebb6a895d3af21e077`) into the repository's
 own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
-second PR. No code was shared with any third party, external tracker, or
-service outside this repository.
+second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
+No code was shared with any third party, external tracker, or service outside
+this repository. Phase 3 is local-only work on `arena/f176a951-e-folio`; it has
+**not** been pushed, opened as a PR, or merged.

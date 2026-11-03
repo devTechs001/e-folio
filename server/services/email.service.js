@@ -19,8 +19,15 @@ class EmailService {
     async send({ to, subject, template, data }) {
         try {
             if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_email@gmail.com') {
-                console.log('📧 Email simulation (SMTP not configured):', { to, subject, template });
-                return { success: true, simulated: true, messageId: `sim_${Date.now()}` };
+                // Do not claim delivery when nothing was sent. Template-based
+                // notifications use this path, so it must be honest too.
+                console.warn('[email] SMTP not configured; template message was not delivered:', { to, subject, template });
+                return {
+                    success: false,
+                    simulated: true,
+                    reason: 'SMTP_NOT_CONFIGURED',
+                    message: 'Email transport is not configured'
+                };
             }
 
             // Load email template

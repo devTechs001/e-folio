@@ -1718,7 +1718,7 @@ class ApiService {
             return await this.request('/reviews/featured');
         } catch (error) {
             console.warn('Featured reviews unavailable');
-            return { success: true, reviews: [] };
+            return { success: false, reviews: [], message: error.message };
         }
     }
 
@@ -1864,6 +1864,33 @@ class ApiService {
             console.error('Error fetching testimonials:', error);
             return { success: false, message: error.message };
         }
+    }
+
+    // Owner-only list for the dashboard. The public endpoint returns only
+    // visible entries, which made pending testimonials impossible to moderate
+    // even though the owner stats endpoint counted them.
+    async getAllTestimonials(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            const qs = query.toString();
+            return await this.request(`/testimonials${qs ? `?${qs}` : ''}`);
+        } catch (error) {
+            console.error('Error fetching all testimonials:', error);
+            return { success: false, testimonials: [], message: error.message };
+        }
+    }
+
+    // Invite recipients are anonymous until they accept, so these endpoints
+    // are deliberately public (rate limited server-side).
+    async validateInviteToken(token) {
+        return this.request(`/collaborators/invite/validate/${encodeURIComponent(token)}`);
+    }
+
+    async acceptInvite(token, payload) {
+        return this.request(`/collaborators/invite/accept/${encodeURIComponent(token)}`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
     }
 
     async createTestimonial(testimonialData) {
@@ -2271,7 +2298,7 @@ class ApiService {
             return await this.request('/reviews?count=true');
         } catch (error) {
             console.warn('Reviews count unavailable');
-            return { success: true, data: { total: 0, approved: 0, pending: 0, rejected: 0 } };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2280,7 +2307,7 @@ class ApiService {
             return await this.request('/reviews?average=true');
         } catch (error) {
             console.warn('Average review rating unavailable');
-            return { success: true, data: { average: 0, totalReviews: 0 } };
+            return { success: false, data: {}, message: error.message };
         }
     }
 

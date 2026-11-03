@@ -1,7 +1,7 @@
 const Testimonial = require('../models/Testimonial.model');
 const asyncHandler = require('../middleware/async.middleware');
 const ErrorResponse = require('../utils/errorResponse');
-const { Parser } = require('json2csv');
+const { Parser } = require('@json2csv/plainjs');
 const emailService = require('../services/email.service');
 
 // =============================================

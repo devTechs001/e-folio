@@ -195,11 +195,15 @@ const CollaborationRequests = () => {
 
             if (response.success) {
                 setRequests(prev => prev.map(r =>
-                    r.id === id ? { ...r, status: 'approved' } : r
+                    r.id === id ? { ...r, status: 'approved', inviteLink: response.inviteLink } : r
                 ));
-                success(`✅ Approved ${name}! Invite link: ${response.inviteLink}`);
+                success(`✅ Approved ${name}!`);
 
-                // Copy invite link to clipboard
+                // A simulated/failed SMTP transport must not look like a
+                // successful delivery from the operator's point of view.
+                if (response.email && response.email.delivered === false) {
+                    error('The invitation email was not delivered. Share the copied link manually.');
+                }
                 if (response.inviteLink) {
                     navigator.clipboard.writeText(response.inviteLink);
                     info('📋 Invite link copied to clipboard');
