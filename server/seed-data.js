@@ -18,8 +18,8 @@ const seedProjects = [
         thumbnail: "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3",
         links: {
             github: "https://github.com/yourusername/ecommerce",
-            live: "https://demo-ecommerce.com",
-            demo: "https://demo-ecommerce.com"
+            live: "https://ominbiz-solution.netlify.app/",
+            demo: "https://ominbiz-solution.netlify.app/"
         },
         technologies: ["React", "Node.js", "MongoDB", "Stripe"],
         category: "Web",

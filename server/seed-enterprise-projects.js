@@ -47,7 +47,7 @@ const enterpriseProjects = [
             live: "https://enterprise-ecommerce-platform.netlify.app",
             demo: "https://enterprise-ecommerce-platform.netlify.app/demo",
             api: "https://ecommerce-api.demo.com/api",
-            netlify: "https://bizsolutionz.netlify.app/"
+            netlify: "https://ominbiz-solution.netlify.app/"
         },
         technologies: ["React", "Vite", "Node.js", "MongoDB", "Stripe API", "PayPal SDK", "Nodemailer", "TailwindCSS", "Redux Toolkit", "Formik"],
         category: "Web",

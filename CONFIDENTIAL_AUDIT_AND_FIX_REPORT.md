@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,13 +19,13 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phases 3–12 (collaboration & review,
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–13 (collaboration & review,
 Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
 Resources page, live preview + lagging issues, CellarKeep client-portal link in
-Projects, public copy + saved-data fallback) are **local only** — no push, PR,
-merge, external issue, or external service was used.
+Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
+**local only** — no push, PR, merge, external issue, or external service was used.
 
 ---
 
@@ -42,6 +42,7 @@ merge, external issue, or external service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
 | Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
 | Live preview + lagging issues (phase 10) | browser-facing code called localhost and hung 15 s per request; 1 s fake loader; dead raw WS retrying every 5 s; uncached file scans | same-origin `/api` + proxy fixes, no artificial loader, hidden-tab timer guards, authenticated tracking namespace, 30 s inventory caches, preview-safe Vite host/proxy |
@@ -985,6 +986,42 @@ Request: *"keep dev info away from the publi [public] … like the database data
 
 ---
 
+## 3m. Phase 13 — replace the E-Commerce project link with OmniBiz
+
+Request: *"[https://ominbiz-solution.netlify.app/](https://ominbiz-solution.netlify.app/), replace with project link for ecomerce"*.
+
+The destination was read once, read-only: it serves **"OmniBiz - Complete Business Management Platform"**. No workspace code, data or credential was sent to that site. The URL is stored exactly as supplied, including its trailing slash.
+
+### What changed
+
+Only link URL values were edited — no title, description, technology, tag, image, metric or other project record was altered.
+
+| File | Change |
+| --- | --- |
+| `scripts/seed-projects.js` | **E-Commerce Platform** `links.live`, `links.demo` and `links.netlify` now point at the OmniBiz site. This is the source file the public snapshot is generated from. |
+| `server/scripts/seedProjects.js` | Same project: the two placeholder `live`/`demo` links and the legacy `netlify` link now use the published URL. |
+| `server/seed-data.js` | Same project: the two placeholder `live`/`demo` links now use the published URL. |
+| `server/scripts/seed-all-projects.js`, `server/seed-enterprise-projects.js` | The legacy `netlify` link on the **Enterprise E-Commerce Platform** records was swapped. Their own `live`/`demo` links (the separate enterprise demo site) were deliberately left alone. |
+| `src/data/publicSnapshot.json` | Regenerated with `npm run snapshot:build`; the offline/public Projects card now opens the new site even when the API is unavailable. |
+
+The retired BizSolutionz URL and the `demo-ecommerce` placeholder no longer appear anywhere in the source tree (checked by a repository-wide scan). No MongoDB write was performed — there is no database in this sandbox — so run the relevant seed command against a configured MongoDB if existing live records also need the new link.
+
+### Explicitly not changed
+
+- The **NetGate link** (`https://net-gate-portal.netlify.app/`) and all its files — this honours the standing "do not replace the previous NetGate link in projects" instruction. Also untouched: the NEX Store link, the CellarKeep client-portal link, GitHub links, and every other project link.
+- No push, PR, merge, external issue, external write or offensive testing.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **21.68s**, PWA **216 precache entries (7000.00 KiB)**.
+- **141** Node-only regression checks in total (**9** new E-Commerce link checks). `git diff --check` clean; masked secret scan clean.
+- The built JS contains the new URL **3 times** and the retired URL **0 times**; the dev preview serves the regenerated snapshot with the new URL. Both live previews (5173 dev / 4173 production build) return 200 and the production build still contains no dev-diagnostics panel.
+- The NetGate URL count is unchanged in `src/data/labSamples.json`, `src/data/testimonialSamples.json`, `server/backups/testimonials/*` and the generated snapshot.
+- `tests/ecommerce-link.test.mjs` is wired into both `test` scripts as `test:ecommerce-link`.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1043,6 +1080,10 @@ Request: *"keep dev info away from the publi [public] … like the database data
     `npm run snapshot:build` whenever the real backups/seed records change,
     and runtime-verify that live API data overrides the saved copy once a
     MongoDB/Express backend is available.
+18. Phase 13 follow-up: run the project seeders against a configured MongoDB
+    so existing E-Commerce project documents also pick up the new OmniBiz
+    link; the local file changes take effect immediately in the offline
+    snapshot but cannot rewrite live DB records without a database.
 
 ---
 
@@ -1055,5 +1096,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10, 11 and 12 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.
