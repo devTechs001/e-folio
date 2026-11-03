@@ -275,126 +275,159 @@ exports.endSession = asyncHandler(async (req, res) => {
 // @route   GET /api/tracking/analytics/realtime
 // @access  Private (Owner only)
 exports.getRealtimeAnalytics = asyncHandler(async (req, res) => {
-    const { timeRange = 'today' } = req.query;
-    
+    const { timeRange = 'today', device = 'all', location = 'all' } = req.query;
     const dateFilter = getDateFilter(timeRange);
-    
-    // Active sessions now
-    const activeNow = await TrackingSession.countDocuments({
-        isActive: true,
-        startTime: { $gte: new Date(Date.now() - 30 * 60 * 1000) } // Last 30 min
-    });
+    const since = dateFilter.startTime.$gte;
 
-    // Total today
-    const todayTotal = await TrackingSession.countDocuments(dateFilter);
+    const match = { ...dateFilter };
+    if (device === 'mobile') match['device.isMobile'] = true;
+    else if (device === 'tablet') match['device.isTablet'] = true;
+    else if (device === 'desktop') match['device.type'] = 'desktop';
+    if (location && location !== 'all') match['location.country'] = location;
 
-    // Recent visitors
-    const recentVisitors = await TrackingSession.find(dateFilter)
-        .sort({ startTime: -1 })
-        .limit(20)
-        .lean();
-
-    // Device breakdown
-    const deviceAgg = await TrackingSession.aggregate([
-        { $match: dateFilter },
-        {
-            $group: {
+    const [
+        activeNow, todayTotal, weekTotal, recentVisitors, devicesAgg,
+        locations, topPages, referrers, engagementAgg, weeklyAgg, hourlyAgg,
+        totalsAgg, conversions, bounces, trafficHistory
+    ] = await Promise.all([
+        TrackingSession.countDocuments({ isActive: true, startTime: { $gte: new Date(Date.now() - 30 * 60 * 1000) } }),
+        TrackingSession.countDocuments(match),
+        TrackingSession.countDocuments({ ...match, startTime: { $gte: new Date(Date.now() - 7 * 86400000) } }),
+        TrackingSession.find(match).sort({ startTime: -1 }).limit(20).lean(),
+        TrackingSession.aggregate([
+            { $match: match },
+            { $group: {
                 _id: null,
                 mobile: { $sum: { $cond: ['$device.isMobile', 1, 0] } },
                 tablet: { $sum: { $cond: ['$device.isTablet', 1, 0] } },
                 desktop: { $sum: { $cond: [{ $and: [{ $not: '$device.isMobile' }, { $not: '$device.isTablet' }] }, 1, 0] } }
-            }
-        }
-    ]);
-
-    const devices = deviceAgg[0] || { mobile: 0, tablet: 0, desktop: 0 };
-
-    // Geographic distribution
-    const locations = await TrackingSession.aggregate([
-        { $match: dateFilter },
-        { $group: { _id: '$location.country', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 10 }
-    ]);
-
-    // Top pages
-    const topPages = await PageAnalytics.aggregate([
-        { $match: { date: { $gte: dateFilter.startTime } } },
-        {
-            $group: {
-                _id: '$path',
-                count: { $sum: '$views' },
-                avgTime: { $avg: '$avgTimeSpent' },
-                uniqueViews: { $sum: '$uniqueViews' }
-            }
-        },
-        { $sort: { count: -1 } },
-        { $limit: 10 }
-    ]);
-
-    // Traffic sources
-    const sources = await TrackingSession.aggregate([
-        { $match: dateFilter },
-        {
-            $group: {
-                _id: null,
-                direct: { $sum: { $cond: [{ $eq: ['$source.referrer', null] }, 1, 0] } },
-                search: { $sum: { $cond: [{ $regexMatch: { input: '$source.referrer', regex: /google|bing|yahoo/ } }, 1, 0] } },
-                social: { $sum: { $cond: [{ $regexMatch: { input: '$source.referrer', regex: /facebook|twitter|linkedin|instagram/ } }, 1, 0] } },
-                referral: { $sum: { $cond: [{ $and: [{ $ne: ['$source.referrer', null] }, { $not: { $regexMatch: { input: '$source.referrer', regex: /google|bing|yahoo|facebook|twitter/ } } }] }, 1, 0] } }
-            }
-        }
-    ]);
-
-    // Engagement metrics
-    const engagementAgg = await TrackingSession.aggregate([
-        { $match: dateFilter },
-        {
-            $group: {
+            } }
+        ]),
+        TrackingSession.aggregate([
+            { $match: match },
+            { $group: { _id: { $ifNull: ['$location.country', 'Unknown'] }, count: { $sum: 1 } } },
+            { $sort: { count: -1 } }, { $limit: 10 }
+        ]),
+        PageAnalytics.aggregate([
+            { $match: { date: { $gte: since } } },
+            { $group: {
+                _id: '$path', count: { $sum: '$views' },
+                avgDuration: { $avg: '$avgTimeSpent' }, uniqueViews: { $sum: '$uniqueViews' }
+            } },
+            { $sort: { count: -1 } }, { $limit: 10 }
+        ]),
+        TrackingSession.aggregate([
+            { $match: match },
+            { $group: { _id: { $ifNull: ['$source.source', 'direct'] }, count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]),
+        TrackingSession.aggregate([
+            { $match: match },
+            { $group: {
                 _id: null,
                 avgEngagement: { $avg: '$aiInsights.intentScore' },
-                avgDuration: { $avg: '$duration' },
+                avgDurationMs: { $avg: '$duration' },
                 avgPages: { $avg: '$pagesViewed' },
                 avgScrollDepth: { $avg: '$scrollDepth' }
-            }
-        }
+            } }
+        ]),
+        TrackingSession.aggregate([
+            { $match: { startTime: { $gte: new Date(Date.now() - 7 * 86400000) } } },
+            { $group: {
+                _id: { $dateToString: { format: '%Y-%m-%d', date: '$startTime' } },
+                visitors: { $sum: 1 }, pageViews: { $sum: '$pagesViewed' }
+            } },
+            { $sort: { _id: 1 } }
+        ]),
+        TrackingSession.aggregate([
+            { $match: match },
+            { $group: { _id: { $hour: '$startTime' }, visitors: { $sum: 1 } } }
+        ]),
+        TrackingSession.aggregate([
+            { $match: match },
+            { $group: { _id: null, pageViews: { $sum: '$pagesViewed' } } }
+        ]),
+        TrackingSession.countDocuments({ ...match, converted: true }),
+        TrackingSession.countDocuments({ ...match, pagesViewed: 1 }),
+        getTrafficHistory(timeRange)
     ]);
 
     const engagement = engagementAgg[0] || {};
+    const devices = devicesAgg[0] || { mobile: 0, tablet: 0, desktop: 0 };
+    delete devices._id;
+    const totalPageViews = totalsAgg[0]?.pageViews || 0;
+    const sourceTotal = referrers.reduce((n, r) => n + r.count, 0);
 
-    // Conversion rate
-    const conversions = await TrackingSession.countDocuments({
-        ...dateFilter,
-        converted: true
+    const weeklyMap = new Map(weeklyAgg.map(r => [r._id, r]));
+    const weeklyData = Array.from({ length: 7 }, (_, i) => {
+        const day = new Date(Date.now() - (6 - i) * 86400000);
+        const key = day.toISOString().slice(0, 10);
+        const row = weeklyMap.get(key) || {};
+        return {
+            day: day.toLocaleDateString('en-US', { weekday: 'short' }),
+            visitors: row.visitors || 0,
+            pageViews: row.pageViews || 0
+        };
     });
-    const conversionRate = todayTotal > 0 ? (conversions / todayTotal) * 100 : 0;
+    const hourlyMap = new Map(hourlyAgg.map(r => [r._id, r.visitors]));
+    const hourlyData = Array.from({ length: 24 }, (_, h) => ({
+        hour: `${String(h).padStart(2, '0')}:00`, visitors: hourlyMap.get(h) || 0
+    }));
 
-    // Bounce rate (single page visits)
-    const bounces = await TrackingSession.countDocuments({
-        ...dateFilter,
-        pagesViewed: 1
+    const flatten = (v) => ({
+        id: v.sessionId,
+        sessionId: v.sessionId,
+        location: v.location?.country || 'Unknown',
+        page: v.pageJourney?.[0]?.path || '/',
+        device: v.device?.type || 'desktop',
+        browser: v.browser || 'Unknown',
+        duration: Math.round((v.duration || 0) / 1000),
+        timestamp: v.startTime,
+        isActive: v.isActive
     });
-    const bounceRate = todayTotal > 0 ? (bounces / todayTotal) * 100 : 0;
 
-    // Traffic history (for charts)
-    const trafficHistory = await getTrafficHistory(timeRange);
+    const flow = new Map();
+    for (const session of recentVisitors) {
+        const paths = (session.pageJourney || []).map(x => x.path).filter(Boolean);
+        for (let i = 0; i < paths.length - 1; i++) {
+            const key = `${paths[i]}|${paths[i + 1]}`;
+            flow.set(key, (flow.get(key) || 0) + 1);
+        }
+    }
+    const visitorFlow = [...flow.entries()].map(([key, count]) => {
+        const [from, to] = key.split('|');
+        return { from, to, fromCount: count, toCount: count };
+    }).sort((a, b) => b.fromCount - a.fromCount).slice(0, 10);
 
     res.json({
         success: true,
         analytics: {
             activeNow,
             todayTotal,
-            recentVisitors,
+            weekTotal,
+            totalPageViews,
+            avgDuration: Math.round((engagement.avgDurationMs || 0) / 1000),
+            avgPages: Math.round((engagement.avgPages || 0) * 10) / 10,
+            avgScrollDepth: Math.round(engagement.avgScrollDepth || 0),
             devices,
             locations,
             topPages,
-            sources: sources[0] || { direct: 0, search: 0, social: 0, referral: 0 },
+            referrers: referrers.map(r => ({
+                source: r._id || 'direct', count: r.count,
+                percentage: sourceTotal ? Math.round((r.count / sourceTotal) * 1000) / 10 : 0
+            })),
+            sources: Object.fromEntries(referrers.map(r => [r._id || 'direct', r.count])),
+            recentVisitors: recentVisitors.map(flatten),
+            realtimeVisitors: recentVisitors.filter(v => v.isActive).map(flatten),
+            visitorFlow,
+            weeklyData,
+            hourlyData,
             averageEngagement: Math.round(engagement.avgEngagement || 0),
-            conversionRate: conversionRate.toFixed(2),
-            bounceRate: bounceRate.toFixed(2),
-            aiConfidence: 94, // Could be calculated from AI model confidence
+            conversionRate: todayTotal > 0 ? (conversions / todayTotal * 100).toFixed(2) : '0.00',
+            bounceRate: todayTotal > 0 ? (bounces / todayTotal * 100).toFixed(2) : '0.00',
             trafficHistory
-        }
+        },
+        meta: { source: 'mongo', populated: true }
     });
 });
 
@@ -408,7 +441,7 @@ exports.getHeatmapData = asyncHandler(async (req, res) => {
 
     const heatmapData = await PageAnalytics.findOne({
         path: page || '/',
-        date: { $gte: dateFilter.startTime }
+        date: { $gte: dateFilter.startTime.$gte }
     }).select('heatmap');
 
     res.json({

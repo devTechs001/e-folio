@@ -28,5 +28,6 @@ router.get('/ab-tests', analyticsController.getABTestResults);
 router.get('/retention', analyticsController.getUserRetention);
 router.get('/funnel', analyticsController.getConversionFunnel);
 router.get('/alerts', analyticsController.getAnalyticsAlerts);
+router.get('/top-projects', analyticsController.getTopProjects);
 
 module.exports = router;

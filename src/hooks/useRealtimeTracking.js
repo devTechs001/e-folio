@@ -137,7 +137,7 @@ export function useRealtimeTracking({ paused = false, pollIntervalMs = 15000 } =
                 },
                 currentPageViews: (a.recentVisitors || []).slice(0, 20).map(v => ({
                     sessionId: v.sessionId,
-                    page: v.pageJourney?.[0]?.path || '/',
+                    page: v.page || v.pageJourney?.[0]?.path || '/',
                     location: v.location,
                     timestamp: new Date(v.startTime || Date.now()).getTime()
                 }))

@@ -27,9 +27,20 @@ class ApiService {
 
     // Generic request method
     async request(endpoint, options = {}) {
-        const { timeout, signal, ...fetchOptions } = options;
+        const { timeout, signal, params, ...fetchOptions } = options;
         const method = (fetchOptions.method || 'GET').toUpperCase();
-        const key = `${method}:${endpoint}`;
+        // Callers legitimately pass `{ params }`; previously that object was
+        // forwarded to fetch() and the filters never reached the server.
+        let url = endpoint;
+        if (params && typeof params === 'object') {
+            const query = new URLSearchParams();
+            for (const [name, value] of Object.entries(params)) {
+                if (value !== undefined && value !== null && value !== '') query.set(name, String(value));
+            }
+            const qs = query.toString();
+            if (qs) url += `${url.includes('?') ? '&' : '?'}${qs}`;
+        }
+        const key = `${method}:${url}`;
         const dedupe = method === 'GET' && !signal;
 
         if (dedupe && this.inflight.has(key)) {
@@ -53,7 +64,7 @@ class ApiService {
                     delete headers['Content-Type'];
                 }
 
-                const response = await fetch(`${this.baseURL}${endpoint}`, {
+                const response = await fetch(`${this.baseURL}${url}`, {
                     ...fetchOptions,
                     headers,
                     signal: signal || controller.signal
@@ -62,7 +73,7 @@ class ApiService {
                 // Check if response is HTML (indicates error page)
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('text/html')) {
-                    throw new Error(`Server returned an HTML error page (${response.status}) for ${endpoint}`);
+                    throw new Error(`Server returned an HTML error page (${response.status}) for ${url}`);
                 }
 
                 // Some error responses have no JSON body at all.
@@ -171,21 +182,7 @@ class ApiService {
             return response;
         } catch (error) {
             console.error('Error fetching projects:', error);
-            // Return mock project data if backend is unavailable
-            return {
-                success: true,
-                data: [
-                    {
-                        id: 1,
-                        name: 'Sample Project',
-                        description: 'This is a sample project',
-                        thumbnail: '/placeholder-project.jpg',
-                        images: ['/placeholder-project.jpg'],
-                        views: 0,
-                        likes: 0
-                    }
-                ]
-            };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -198,17 +195,7 @@ class ApiService {
             return response;
         } catch (error) {
             console.error('Error fetching project:', error);
-            // Return mock project data if backend is unavailable
-            return {
-                success: true,
-                data: {
-                    id: id,
-                    name: 'Project Unavailable',
-                    description: 'Project details are temporarily unavailable',
-                    thumbnail: '/placeholder-project.jpg',
-                    images: ['/placeholder-project.jpg']
-                }
-            };
+            return { success: false, data: null, message: error.message };
         }
     }
 
@@ -971,18 +958,8 @@ class ApiService {
         try {
             return await this.request('/media/storage');
         } catch (error) {
-            console.warn('Media storage API unavailable, using mock data');
-            // Return mock storage data when backend is unavailable
-            return {
-                success: true,
-                data: {
-                    total: 1073741824, // 1GB in bytes
-                    used: 268435456,   // 256MB in bytes
-                    available: 805306368, // Remaining space
-                    files: 24,
-                    folders: 5
-                }
-            };
+            console.warn('Media storage API unavailable');
+            return { success: false, data: null, message: error.message };
         }
     }
 
@@ -1318,8 +1295,8 @@ class ApiService {
     }
 
     // AI Tracking APIs
-    async getRealtimeAnalytics() {
-        return this.request('/tracking/analytics/realtime');
+    async getRealtimeAnalytics(params = {}) {
+        return this.request('/tracking/analytics/realtime', { params });
     }
 
 
@@ -1404,42 +1381,11 @@ class ApiService {
     async getPortfolioConfig() {
         try {
             const response = await this.request('/portfolio/config');
-            if (response && typeof response === 'object') {
-                return response;
-            } else {
-                console.warn('Portfolio config returned unexpected data, using mock data');
-                return {
-                    success: true,
-                    data: {
-                        enabled: true,
-                        themes: ['light', 'dark', 'professional', 'modern'],
-                        sections: ['about', 'projects', 'skills', 'contact', 'testimonials'],
-                        settings: {
-                            analytics: true,
-                            seo: true,
-                            socialLinks: true,
-                            contactForm: true
-                        }
-                    }
-                };
-            }
+            if (response && typeof response === 'object') return response;
+            return { success: false, data: null, message: 'Unexpected portfolio config response' };
         } catch (error) {
-            console.warn('Portfolio config API unavailable, using mock data');
-            // Return mock configuration when backend is unavailable
-            return {
-                success: true,
-                data: {
-                    enabled: true,
-                    themes: ['light', 'dark', 'professional', 'modern'],
-                    sections: ['about', 'projects', 'skills', 'contact', 'testimonials'],
-                    settings: {
-                        analytics: true,
-                        seo: true,
-                        socialLinks: true,
-                        contactForm: true
-                    }
-                }
-            };
+            console.warn('Portfolio config API unavailable');
+            return { success: false, data: null, message: error.message };
         }
     }
 
@@ -1467,34 +1413,13 @@ class ApiService {
     async getCustomTemplates() {
         try {
             const response = await this.request('/portfolio/templates/custom');
-            if (response && typeof response === 'object') {
-                // Server may return { templates } or { data }; normalize to { data }
-                const templates = Array.isArray(response.data)
-                    ? response.data
-                    : (Array.isArray(response.templates) ? response.templates : []);
-                return { success: true, data: templates };
-            } else {
-                console.warn('Custom templates returned unexpected data, using mock data');
-                return {
-                    success: true,
-                    data: [
-                        { id: 1, name: 'Modern Portfolio', category: 'professional', preview: '/placeholder-template1.jpg' },
-                        { id: 2, name: 'Creative Showcase', category: 'design', preview: '/placeholder-template2.jpg' },
-                        { id: 3, name: 'Minimal Resume', category: 'simple', preview: '/placeholder-template3.jpg' }
-                    ]
-                };
-            }
+            const templates = Array.isArray(response?.data)
+                ? response.data
+                : (Array.isArray(response?.templates) ? response.templates : []);
+            return { success: true, data: templates };
         } catch (error) {
-            console.warn('Custom templates API unavailable, using mock data');
-            // Return mock templates when backend is unavailable
-            return {
-                success: true,
-                data: [
-                    { id: 1, name: 'Modern Portfolio', category: 'professional', preview: '/placeholder-template1.jpg' },
-                    { id: 2, name: 'Creative Showcase', category: 'design', preview: '/placeholder-template2.jpg' },
-                    { id: 3, name: 'Minimal Resume', category: 'simple', preview: '/placeholder-template3.jpg' }
-                ]
-            };
+            console.warn('Custom templates API unavailable');
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1744,7 +1669,7 @@ class ApiService {
             return await this.request('/learning/bookmarks');
         } catch (error) {
             console.warn('Bookmarks unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1754,7 +1679,7 @@ class ApiService {
             return await this.request('/learning/communities');
         } catch (error) {
             console.warn('Communities unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1763,7 +1688,7 @@ class ApiService {
             return await this.request('/learning/resources');
         } catch (error) {
             console.warn('Learning resources unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1782,7 +1707,7 @@ class ApiService {
             return await this.request('/collaboration-requests/requests');
         } catch (error) {
             console.warn('Collaboration requests unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1802,18 +1727,22 @@ class ApiService {
             return await this.request('/reviews/analytics');
         } catch (error) {
             console.warn('Review analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
     // Analytics APIs
+    async getAnalyticsTopProjects() {
+        return this.request('/analytics/top-projects');
+    }
+
     async getAnalyticsOverview(timeRange = '7d', filters = {}) {
         try {
             const query = new URLSearchParams({ timeRange, ...filters });
             return await this.request(`/analytics/overview?${query}`);
         } catch (error) {
             console.warn('Analytics overview unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1823,7 +1752,7 @@ class ApiService {
             return await this.request(`/analytics/traffic?${query}`);
         } catch (error) {
             console.warn('Traffic analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1833,7 +1762,7 @@ class ApiService {
             return await this.request(`/analytics/behavior?${query}`);
         } catch (error) {
             console.warn('Behavior analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1843,7 +1772,7 @@ class ApiService {
             return await this.request(`/analytics/conversion?${query}`);
         } catch (error) {
             console.warn('Conversion analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1853,7 +1782,7 @@ class ApiService {
             return await this.request(`/analytics/technical?${query}`);
         } catch (error) {
             console.warn('Technical analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1863,7 +1792,7 @@ class ApiService {
             return await this.request(`/analytics/social?${query}`);
         } catch (error) {
             console.warn('Social media analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1873,7 +1802,7 @@ class ApiService {
             return await this.request(`/analytics/seo?${query}`);
         } catch (error) {
             console.warn('SEO analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1883,7 +1812,7 @@ class ApiService {
             return await this.request(`/analytics/competitor?${query}`);
         } catch (error) {
             console.warn('Competitor analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -1892,7 +1821,7 @@ class ApiService {
             return await this.request('/analytics/goals');
         } catch (error) {
             console.warn('Goals progress unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1902,7 +1831,7 @@ class ApiService {
             return await this.request(`/analytics/events?${query}`);
         } catch (error) {
             console.warn('Custom events unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1912,7 +1841,7 @@ class ApiService {
             return await this.request(`/analytics/heatmap?${query}`);
         } catch (error) {
             console.warn('Heatmap data unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -1921,7 +1850,7 @@ class ApiService {
             return await this.request('/analytics/ab-tests');
         } catch (error) {
             console.warn('A/B test results unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2104,7 +2033,7 @@ class ApiService {
             return await this.request(`/analytics/retention?${query}`);
         } catch (error) {
             console.warn('User retention data unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2114,7 +2043,7 @@ class ApiService {
             return await this.request(`/analytics/funnel?${query}`);
         } catch (error) {
             console.warn('Conversion funnel unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2125,7 +2054,7 @@ class ApiService {
             return await this.request(`/projects/${projectId}/stats?${query}`);
         } catch (error) {
             console.warn('getProjectAnalytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2189,7 +2118,7 @@ class ApiService {
             return await this.request(`/projects/${projectId}/stats?${query}`);
         } catch (error) {
             console.warn('getProjectMedia unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2300,7 +2229,7 @@ class ApiService {
             return await this.request('/analytics/alerts');
         } catch (error) {
             console.warn('Analytics alerts unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2310,7 +2239,7 @@ class ApiService {
             return await this.request(`/analytics/export?${query}`);
         } catch (error) {
             console.warn('Analytics export unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2323,7 +2252,7 @@ class ApiService {
             return await this.request(`/reviews?${query}`);
         } catch (error) {
             console.warn('Reviews by rating unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2333,7 +2262,7 @@ class ApiService {
             return await this.request(`/reviews?${query}`);
         } catch (error) {
             console.warn('Reviews by date range unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2361,7 +2290,7 @@ class ApiService {
             return await this.request(`/reviews?${query}`);
         } catch (error) {
             console.warn('Recent reviews unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2371,7 +2300,7 @@ class ApiService {
             return await this.request('/analytics/visitors/demographics');
         } catch (error) {
             console.warn('Visitor demographics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2380,7 +2309,7 @@ class ApiService {
             return await this.request('/analytics/visitors/engagement');
         } catch (error) {
             console.warn('Visitor engagement unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2389,7 +2318,7 @@ class ApiService {
             return await this.request('/analytics/visitors/flow');
         } catch (error) {
             console.warn('Visitor flow unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2399,7 +2328,7 @@ class ApiService {
             return await this.request(`/analytics/visitors/sessions?${query}`);
         } catch (error) {
             console.warn('Visitor sessions unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2408,7 +2337,7 @@ class ApiService {
             return await this.request('/analytics/visitors/devices');
         } catch (error) {
             console.warn('Visitor devices unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2417,7 +2346,7 @@ class ApiService {
             return await this.request('/analytics/visitors/countries');
         } catch (error) {
             console.warn('Visitor countries unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2426,7 +2355,7 @@ class ApiService {
             return await this.request('/analytics/visitors/pages');
         } catch (error) {
             console.warn('Visitor pages unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2435,7 +2364,7 @@ class ApiService {
             return await this.request('/analytics/visitors/sources');
         } catch (error) {
             console.warn('Visitor sources unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2444,7 +2373,7 @@ class ApiService {
             return await this.request('/analytics/visitors/hours');
         } catch (error) {
             console.warn('Peak visiting hours unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2453,7 +2382,7 @@ class ApiService {
             return await this.request('/analytics/visitors/returning');
         } catch (error) {
             console.warn('Returning visitors unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2462,7 +2391,7 @@ class ApiService {
             return await this.request('/analytics/visitors/retention');
         } catch (error) {
             console.warn('Visitor retention unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2472,7 +2401,7 @@ class ApiService {
             return await this.request('/analytics/reviews-visitors/correlation');
         } catch (error) {
             console.warn('Reviews and visitors correlation unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2533,7 +2462,7 @@ class ApiService {
             return await this.request(`/learning/comments/${resourceId}`);
         } catch (error) {
             console.warn('Get comments unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2556,7 +2485,7 @@ class ApiService {
             return await this.request('/learning/achievements');
         } catch (error) {
             console.warn('Get achievements unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2565,7 +2494,7 @@ class ApiService {
             return await this.request('/learning/achievements/progress');
         } catch (error) {
             console.warn('Get achievement progress unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2595,7 +2524,7 @@ class ApiService {
             return await this.request('/learning/courses/enrolled');
         } catch (error) {
             console.warn('Get enrolled courses unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2605,7 +2534,7 @@ class ApiService {
             return await this.request(`/learning/quizzes?courseId=${courseId}`);
         } catch (error) {
             console.warn('Get quizzes unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2627,7 +2556,7 @@ class ApiService {
             return await this.request('/learning/certificates');
         } catch (error) {
             console.warn('Get certificates unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2647,7 +2576,7 @@ class ApiService {
             return await this.request(`/learning/search?${params}`);
         } catch (error) {
             console.warn('Search learning content unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2657,7 +2586,7 @@ class ApiService {
             return await this.request('/learning/recommendations');
         } catch (error) {
             console.warn('Get recommendations unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2667,7 +2596,7 @@ class ApiService {
             return await this.request('/learning/paths');
         } catch (error) {
             console.warn('Get learning paths unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2686,7 +2615,7 @@ class ApiService {
             return await this.request('/learning/notifications');
         } catch (error) {
             console.warn('Get learning notifications unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2708,7 +2637,7 @@ class ApiService {
             return await this.request(`/notifications?${query}`);
         } catch (error) {
             console.warn('Get all notifications unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2717,7 +2646,7 @@ class ApiService {
             return await this.request('/notifications/unread');
         } catch (error) {
             console.warn('Get unread notifications unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2770,7 +2699,7 @@ class ApiService {
             return await this.request('/notifications/preferences');
         } catch (error) {
             console.warn('Get notification preferences unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2827,7 +2756,7 @@ class ApiService {
             return await this.request(`/notifications/history?${query}`);
         } catch (error) {
             console.warn('Get notification history unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2861,7 +2790,7 @@ class ApiService {
             return await this.request(`/ai/tracking/history?${query}`);
         } catch (error) {
             console.warn('Get AI interaction history unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2880,7 +2809,7 @@ class ApiService {
             return await this.request(`/ai/tracking/engagement?${query}`);
         } catch (error) {
             console.warn('Get AI engagement metrics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2890,7 +2819,7 @@ class ApiService {
             return await this.request(`/ai/tracking/insights?${query}`);
         } catch (error) {
             console.warn('Get AI insights unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2900,7 +2829,7 @@ class ApiService {
             return await this.request(`/ai/tracking/performance?${query}`);
         } catch (error) {
             console.warn('Get AI performance metrics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2909,7 +2838,7 @@ class ApiService {
             return await this.request(`/ai/tracking/recommendations/${userId}`);
         } catch (error) {
             console.warn('Get AI recommendations unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2941,7 +2870,7 @@ class ApiService {
             return await this.request(`/ai/tracking/behavior?${query}`);
         } catch (error) {
             console.warn('Get AI behavior analysis unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2951,7 +2880,7 @@ class ApiService {
             return await this.request(`/ai/tracking/leading-indicators?${query}`);
         } catch (error) {
             console.warn('Get AI leading indicators unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2961,7 +2890,7 @@ class ApiService {
             return await this.request(`/ai/tracking/funnel?${query}`);
         } catch (error) {
             console.warn('Get AI funnel analysis unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2971,7 +2900,7 @@ class ApiService {
             return await this.request(`/ai/tracking/cohort?${query}`);
         } catch (error) {
             console.warn('Get AI cohort analysis unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -2981,7 +2910,7 @@ class ApiService {
             return await this.request(`/ai/tracking/predictive?${query}`);
         } catch (error) {
             console.warn('Get AI predictive analytics unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2991,7 +2920,7 @@ class ApiService {
             return await this.request(`/ai/tracking/attribution?${query}`);
         } catch (error) {
             console.warn('Get AI attribution data unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3001,7 +2930,7 @@ class ApiService {
             return await this.request(`/ai/tracking/sentiment?${query}`);
         } catch (error) {
             console.warn('Get AI sentiment analysis unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3011,7 +2940,7 @@ class ApiService {
             return await this.request(`/ai/tracking/heatmap?${query}`);
         } catch (error) {
             console.warn('Get AI heatmap data unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -3021,7 +2950,7 @@ class ApiService {
             return await this.request(`/ai/tracking/segmentation?${query}`);
         } catch (error) {
             console.warn('Get AI user segmentation unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -3031,7 +2960,7 @@ class ApiService {
             return await this.request(`/ai/tracking/visualization?${query}`);
         } catch (error) {
             console.warn('Get AI visualization data unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3041,7 +2970,7 @@ class ApiService {
             return await this.request(`/ai/tracking/anomaly-detection?${query}`);
         } catch (error) {
             console.warn('Get AI anomaly detection unavailable');
-            return { success: true, data: [] };
+            return { success: false, data: [], message: error.message };
         }
     }
 
@@ -3051,7 +2980,7 @@ class ApiService {
             return await this.request(`/ai/tracking/audience-insights?${query}`);
         } catch (error) {
             console.warn('Get AI audience insights unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3061,7 +2990,7 @@ class ApiService {
             return await this.request(`/ai/tracking/content-effectiveness?${query}`);
         } catch (error) {
             console.warn('Get AI content effectiveness unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3071,7 +3000,7 @@ class ApiService {
             return await this.request(`/ai/tracking/feedback-analysis?${query}`);
         } catch (error) {
             console.warn('Get AI feedback analysis unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3081,7 +3010,7 @@ class ApiService {
             return await this.request(`/ai/tracking/experiment?${query}`);
         } catch (error) {
             console.warn('Get AI experiment tracking unavailable');
-            return { success: true, data: {} };
+            return { success: false, data: {}, message: error.message };
         }
     }
 

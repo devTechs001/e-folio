@@ -97,10 +97,17 @@ const VisitorsAnalytics = () => {
     useEffect(() => {
         if (isOwner()) {
             fetchAnalytics();
+            // The old 5s poll issued ~720 requests/hour per viewer. 30s is
+            // plenty for a dashboard, and hidden tabs should not poll at all.
             const interval = setInterval(() => {
-                fetchAnalytics(true); // Silent refresh
-            }, 5000);
-            return () => clearInterval(interval);
+                if (!document.hidden) fetchAnalytics(true);
+            }, 30000);
+            const onVisibility = () => { if (!document.hidden) fetchAnalytics(true); };
+            document.addEventListener('visibilitychange', onVisibility);
+            return () => {
+                clearInterval(interval);
+                document.removeEventListener('visibilitychange', onVisibility);
+            };
         }
     }, [isOwner, timeRange, filterDevice, filterLocation]);
 
@@ -109,18 +116,16 @@ const VisitorsAnalytics = () => {
             if (!silent) setLoading(true);
             setRefreshing(true);
 
-            const response = await apiService.request('/tracking/analytics/realtime', {
-                params: {
-                    timeRange,
-                    device: filterDevice,
-                    location: filterLocation
-                }
+            const response = await apiService.getRealtimeAnalytics({
+                timeRange,
+                device: filterDevice,
+                location: filterLocation
             });
 
-            if (response.success) {
+            if (response.success && response.analytics) {
                 setAnalytics(response.analytics);
-                setRealtimeData(response.realtimeVisitors || []);
-                setVisitorFlow(response.visitorFlow || []);
+                setRealtimeData(response.analytics.realtimeVisitors || []);
+                setVisitorFlow(response.analytics.visitorFlow || []);
             } else {
                 throw new Error(response.message || 'Failed to fetch analytics');
             }
@@ -209,7 +214,7 @@ const VisitorsAnalytics = () => {
             {
                 label: 'Avg. Duration',
                 value: formatDuration(analytics.avgDuration || 0),
-                change: '+8.3%',
+                change: 'Live',
                 icon: Timer,
                 color: '#3b82f6',
                 description: 'Time on site',
@@ -218,7 +223,7 @@ const VisitorsAnalytics = () => {
             {
                 label: 'Bounce Rate',
                 value: `${analytics.bounceRate || 0}%`,
-                change: '-2.1%',
+                change: 'Live',
                 icon: Target,
                 color: '#f59e0b',
                 description: 'Lower is better',
@@ -227,8 +232,8 @@ const VisitorsAnalytics = () => {
             },
             {
                 label: 'Total Page Views',
-                value: (analytics.todayTotal || 0) * 2.7,
-                change: '+15.2%',
+                value: analytics.totalPageViews || 0,
+                change: 'Live',
                 icon: Eye,
                 color: '#8b5cf6',
                 description: 'Pages viewed',
@@ -237,7 +242,7 @@ const VisitorsAnalytics = () => {
             {
                 label: 'Conversion Rate',
                 value: `${analytics.conversionRate || 0}%`,
-                change: '+3.4%',
+                change: 'Live',
                 icon: Zap,
                 color: '#ec4899',
                 description: 'Contact forms',
@@ -253,7 +258,7 @@ const VisitorsAnalytics = () => {
             visitors: loc.count,
             percentage: ((loc.count / (analytics?.todayTotal || 1)) * 100).toFixed(1),
             flag: getCountryFlag(loc._id),
-            change: (Math.random() * 20 - 5).toFixed(1)
+            change: 'Live'
         }));
     }, [analytics]);
 
@@ -880,33 +885,44 @@ const VisitorsAnalytics = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {[...Array(8)].map((_, index) => (
-                                    <tr key={index} className="border-b border-slate-700/20 hover:bg-slate-900/30 transition-colors">
+                                {(analytics?.recentVisitors || [])
+                                    .filter(visitor => !searchTerm ||
+                                        [visitor.location, visitor.page, visitor.device, visitor.browser]
+                                            .some(value => String(value || '').toLowerCase().includes(searchTerm.toLowerCase())))
+                                    .map((visitor, index) => (
+                                    <tr key={visitor.id || index} className="border-b border-slate-700/20 hover:bg-slate-900/30 transition-colors">
                                         <td className="px-4 py-4">
                                             <div className="flex items-center gap-2">
                                                 <MapPin size={16} className="text-cyan-400" />
-                                                <span className="text-white">
-                                                    {['New York, US', 'London, UK', 'Tokyo, JP', 'Sydney, AU'][index % 4]}
-                                                </span>
+                                                <span className="text-white">{visitor.location || 'Unknown'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 text-slate-300">/projects</td>
+                                        <td className="px-4 py-4 text-slate-300">{visitor.page || '/'}</td>
                                         <td className="px-4 py-4">
                                             <div className="flex items-center gap-2 text-slate-300">
-                                                {index % 2 === 0 ? <Monitor size={16} /> : <Smartphone size={16} />}
-                                                {index % 2 === 0 ? 'Desktop' : 'Mobile'}
+                                                {visitor.device === 'mobile' ? <Smartphone size={16} /> : <Monitor size={16} />}
+                                                {visitor.device || 'Unknown'}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 text-slate-300">Chrome</td>
-                                        <td className="px-4 py-4 text-slate-300">{Math.floor(Math.random() * 5)}m {Math.floor(Math.random() * 60)}s</td>
-                                        <td className="px-4 py-4 text-slate-400">{index + 1}m ago</td>
+                                        <td className="px-4 py-4 text-slate-300">{visitor.browser || 'Unknown'}</td>
+                                        <td className="px-4 py-4 text-slate-300">{formatDuration(visitor.duration || 0)}</td>
+                                        <td className="px-4 py-4 text-slate-400">
+                                            {visitor.timestamp ? new Date(visitor.timestamp).toLocaleTimeString() : '—'}
+                                        </td>
                                         <td className="px-4 py-4">
-                                            <button className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
-                                                <MoreVertical size={16} className="text-slate-400" />
-                                            </button>
+                                            <span className={`px-2 py-1 text-xs rounded ${visitor.isActive ? 'bg-green-500/10 text-green-400' : 'bg-slate-700/50 text-slate-400'}`}>
+                                                {visitor.isActive ? 'Active' : 'Ended'}
+                                            </span>
                                         </td>
                                     </tr>
                                 ))}
+                                {(!analytics?.recentVisitors || analytics.recentVisitors.length === 0) && (
+                                    <tr>
+                                        <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                                            No visitor sessions recorded for this period.
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

@@ -35,6 +35,7 @@ no-sharing constraint.
 | Incomplete UI | 2FA button had **no handler**; no API methods | full enable/verify/disable 2FA flow with QR + backup codes |
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
+| Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
 
 ---
 
@@ -203,6 +204,71 @@ Added scripts: root `check`, `test`, `audit:endpoints`, `audit:security`,
 exited 1), `audit:endpoints`, `audit:security`, `test:load`, `test:load:k6`,
 `test:load:mock`. CI's previously swallowed `npm test` now runs real checks.
 
+
+---
+
+## 3b. Phase 2 — dashboards wired to real APIs
+
+After the first merge to `main`, the dashboards were audited for *real* data.
+The audit found that the API calls existed but the numbers did not:
+
+**Backend (`server/controllers/analytics.controller.js`)** — the previous
+implementation returned ~700 lines of hard-coded objects: fixed `2024-01-01`
+dates, invented traffic sources, fake revenue, fake competitors and SEO scores.
+It is now rewritten around `TrackingSession` / `PageAnalytics` aggregates:
+headline metrics, daily/hourly trends, top pages, sources, countries, devices,
+browsers, user flow, events, conversions and load times are all derived from
+real documents. Views with no backing data source (SEO rankings, ad campaigns,
+competitor traffic, A/B tests, configured goals) return explicit empty states
+with `meta.populated: false`. `getDateFilter` now understands `7d`/`24h`/`30d`
+(the frontend passes those; the old code silently fell back to "today").
+
+**`server/controllers/tracking.controller.js`** — fixed an invalid Mongo
+`$gte: dateFilter.startTime` (an object where a Date was expected), removed the
+`$regexMatch`-on-null source aggregation and the hard-coded `aiConfidence: 94`,
+and extended `/api/tracking/analytics/realtime` with the fields the dashboard
+actually renders: `weekTotal`, `totalPageViews`, `avgDuration` (seconds),
+`weeklyData`, `hourlyData`, `referrers`, `recentVisitors`, `realtimeVisitors`
+and `visitorFlow`.
+
+**Frontend**
+- `src/utils/analyticsData.js` (new): unwraps the per-section API responses into
+  the flat shape the charts expect and guarantees a safe, all-zero skeleton.
+- `Analytics.jsx`: deleted the 280-line `generateEnhancedDemoData()` /
+  `generateRealtimeActivity()` fallback and the dead raw `ws://localhost:3001`
+  WebSocket; now uses the Socket.IO `/tracking` namespace, 17 real endpoints,
+  hidden-tab-aware refresh, an explicit "sections unavailable" banner, and real
+  chart values instead of `Math.random()`.
+- `VisitorsAnalyticsStyled.jsx`: uses `getRealtimeAnalytics({ ...filters })`
+  (the old `request(..., { params })` silently dropped every filter), replaced
+  the 8 hard-coded table rows with real sessions + search, removed fabricated
+  deltas/multipliers, and slowed polling from 5 s to 30 s.
+- `EmailManagerEnhanced.jsx`: removed the seeded sample inbox, fake unread
+  counts and invented templates/quick responses; loads emails, stats, labels,
+  templates and quick responses from `/api/email`, with an explicit error state.
+- `DashboardHomeStyled.jsx` / `DashboardContext.jsx`: realtime listeners now
+  subscribe to the actual `tracking:event` envelope instead of event names the
+  server never emitted; authoritative values are re-fetched (throttled) after
+  each event. `socketService` now ref-counts the shared `/tracking` namespace so
+  one dashboard unmounting cannot disconnect the others.
+- `src/services/api.service.js`: `request()` now honours `params`; mock
+  fallbacks for projects, storage, portfolio config and custom templates were
+  removed; all 72 catch fallbacks now report `success: false` instead of
+  pretending an empty response was a healthy one.
+
+**Regression coverage** — `tests/dashboard-api.test.mjs` (9 checks, Node-only)
+asserts that no dashboard contains demo generators, random values, seeded
+inboxes or hardcoded 2024 data, that the normalizer maps real responses, and
+that the API client supports `params` without fabricating success. Wired into
+`npm test` and `npm run check`.
+
+**Verification (phase 2)**: `npm run check` exits 0 — lint 0 errors, endpoint
+parity `--strict` 0 live gaps, security audit `--strict` 0 findings, 9
+regression checks, production build passes.
+
+The real Express/Mongo runtime is still unverified (no backend instance or DB
+was started); the aggregates are static-verified and syntax-checked.
+
 ---
 
 ## 4. Residual risk & prioritised backlog
@@ -235,9 +301,10 @@ exited 1), `audit:endpoints`, `audit:security`, `test:load`, `test:load:k6`,
 
 ## 5. Merge note
 
-There was **no** merge conflict, no open PR, and no merge state in the checkout.
-"Fix merge" was therefore handled the normal way: all fixes are committed on
-`arena/352dad6c-e-folio` with a single descriptive commit. **Nothing was pushed
-to `origin` and no PR/merge was created** — doing so would share code against
-the `no sharing of code` instruction. Confirm explicitly if you want a private
-PR or a local merge into `main`.
+There was no merge conflict and no merge state in the checkout. After the user
+explicitly requested **"merge to main"**, phase 1 was merged via PR #1
+(merge commit `e27abd00e84f1c99c463e4ebb6a895d3af21e077`) into the repository's
+own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
+branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
+second PR. No code was shared with any third party, external tracker, or
+service outside this repository.

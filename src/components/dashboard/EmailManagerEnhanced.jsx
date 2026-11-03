@@ -65,95 +65,14 @@ const EmailManagerEnhanced = () => {
     const fileInputRef = useRef(null);
     const editorRef = useRef(null);
 
-    // Mock data
-    const [stats, setStats] = useState({
-        unread: 5,
-        sent: 12,
-        drafts: 3
-    });
-
-    const labels = [
-        { id: 'work', name: 'Work', color: '#22D3EE' },
-        { id: 'personal', name: 'Personal', color: '#10B981' },
-        { id: 'important', name: 'Important', color: '#EF4444' }
-    ];
-
-    const templates = [
-        {
-            id: 1,
-            name: 'Project Inquiry',
-            description: 'Template for responding to project inquiries',
-            subject: 'Re: Project Inquiry',
-            body: 'Thank you for your interest in working together...'
-        },
-        {
-            id: 2,
-            name: 'Meeting Follow-up',
-            description: 'Template for following up after meetings',
-            subject: 'Following up on our meeting',
-            body: 'It was great meeting with you today. Here are the key points we discussed...'
-        }
-    ];
-
-    const quickResponses = [
-        { id: 1, name: 'Thank You', body: 'Thank you for reaching out. I appreciate your message.' },
-        { id: 2, name: 'Will Reply Soon', body: 'Thank you for your email. I will get back to you shortly.' },
-        { id: 3, name: 'Received', body: 'I have received your email and will review it carefully.' }
-    ];
-
-    // Seed mock emails
-    useEffect(() => {
-        if (emails.length === 0 && !realEmailsLoaded) {
-            setEmails([
-                {
-                    id: 'e_1',
-                    subject: 'Welcome to E-Folio',
-                    from: { name: 'E-Folio Team', email: 'hello@efolio.dev' },
-                    preview: 'Thanks for joining E-Folio! Here are some tips to get started...',
-                    body: 'Thanks for joining E-Folio! We\'re excited to have you. Start by customizing your portfolio...',
-                    timestamp: Date.now() - 1000 * 60 * 60 * 24,
-                    unread: true,
-                    starred: false,
-                    attachments: [],
-                    priority: 'normal',
-                    labels: [],
-                    folder: 'inbox',
-                    archived: false
-                },
-                {
-                    id: 'e_2',
-                    subject: 'Project inquiry from Alice',
-                    from: { name: 'Alice Johnson', email: 'alice@example.com' },
-                    preview: 'Hi, I saw your portfolio and would love to discuss a project...',
-                    body: 'Hi, I saw your portfolio and would love to discuss a project. Are you available next week?',
-                    timestamp: Date.now() - 1000 * 60 * 60 * 5,
-                    unread: false,
-                    starred: true,
-                    attachments: [{ name: 'brief.pdf', size: 245000, type: 'application/pdf' }],
-                    priority: 'high',
-                    labels: ['work'],
-                    folder: 'inbox',
-                    archived: false,
-                    hasAttachment: true
-                },
-                {
-                    id: 'e_3',
-                    subject: 'Newsletter: Design Trends 2024',
-                    from: { name: 'Design Weekly', email: 'news@designweekly.com' },
-                    preview: 'Check out the latest design trends for 2024...',
-                    body: 'Here are the top design trends to watch in 2024...',
-                    timestamp: Date.now() - 1000 * 60 * 60 * 48,
-                    unread: false,
-                    starred: false,
-                    attachments: [],
-                    priority: 'low',
-                    labels: ['personal'],
-                    folder: 'inbox',
-                    archived: false
-                }
-            ]);
-        }
-    }, []);
+    // All list data comes from the email API. Previously the component seeded
+    // three fabricated messages, fake unread counts and made-up templates, so
+    // the inbox looked populated even when the backend was down.
+    const [stats, setStats] = useState({ unread: 0, sent: 0, drafts: 0, starred: 0 });
+    const [labels, setLabels] = useState([]);
+    const [templates, setTemplates] = useState([]);
+    const [quickResponses, setQuickResponses] = useState([]);
+    const [loadError, setLoadError] = useState(null);
 
     // Fetch real emails from the API + live-refresh on email_sent
     useEffect(() => {
@@ -182,18 +101,38 @@ const EmailManagerEnhanced = () => {
 
         const refresh = async () => {
             try {
-                const res = await api.request('/emails?folder=inbox&limit=20');
-                if (!cancelled && res.success && Array.isArray(res.emails)) {
-                    setEmails(prev => {
-                        const real = res.emails.map(mapApiEmail);
-                        const others = prev.filter(p => !real.some(r => r.id === p.id));
-                        return [...real, ...others];
-                    });
+                const [inbox, statsRes, labelsRes, templatesRes, quickRes] = await Promise.all([
+                    api.getEmailsList({ folder: 'inbox', limit: 20 }),
+                    api.getEmailStats(),
+                    api.request('/email/labels/all'),
+                    api.request('/email/templates/all'),
+                    api.getQuickResponses()
+                ]);
+                if (cancelled) return;
+                if (inbox.success && Array.isArray(inbox.emails)) {
+                    setEmails(inbox.emails.map(mapApiEmail));
                     setRealEmailsLoaded(true);
-                    notifySuccess(`📥 Inbox synced — ${res.emails.length} email(s) loaded`, { duration: 2500, type: 'info' });
+                    setLoadError(null);
+                } else {
+                    setLoadError(inbox.message || 'Inbox unavailable');
+                }
+                if (statsRes?.success && statsRes.stats) setStats(statsRes.stats);
+                if (labelsRes?.success && Array.isArray(labelsRes.labels)) {
+                    setLabels(labelsRes.labels.map(l => ({ id: l._id || l.id, name: l.name, color: l.color || '#22D3EE' })));
+                }
+                if (templatesRes?.success && Array.isArray(templatesRes.templates)) {
+                    setTemplates(templatesRes.templates.map(t => ({
+                        id: t._id || t.id, name: t.name, description: t.description || '',
+                        subject: t.subject || '', body: t.body || ''
+                    })));
+                }
+                if (quickRes?.success && Array.isArray(quickRes.responses)) {
+                    setQuickResponses(quickRes.responses.map(r => ({
+                        id: r._id || r.id, name: r.title || r.name, body: r.content || r.body || ''
+                    })));
                 }
             } catch (e) {
-                // Keep the sample inbox when the API is unavailable
+                if (!cancelled) setLoadError(e.message || 'Email API unavailable');
             }
         };
 
@@ -938,9 +877,11 @@ const EmailManagerEnhanced = () => {
                                         <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
                                             <MailOpen size={32} className="text-slate-600" />
                                         </div>
-                                        <p className="text-slate-400 font-medium">No emails found</p>
+                                        <p className="text-slate-400 font-medium">
+                                            {loadError ? 'Inbox unavailable' : 'No emails found'}
+                                        </p>
                                         <p className="text-slate-500 text-sm mt-1">
-                                            {searchQuery ? 'Try a different search term' : activeTab === 'inbox' ? 'Your inbox is empty' : `No emails in ${activeTab}`}
+                                            {loadError || (searchQuery ? 'Try a different search term' : activeTab === 'inbox' ? 'Your inbox is empty' : `No emails in ${activeTab}`)}
                                         </p>
                                     </motion.div>
                                 ) : (
