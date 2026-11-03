@@ -1,191 +1,17 @@
 // src/components/Dashboard/AITracking/RealtimeDashboard.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Activity, Users, Eye, MousePointer, Clock, MapPin,
-    TrendingUp, Zap, Target, Brain, RefreshCw, Play, Pause
+    TrendingUp, Zap, Target, Brain, RefreshCw, Play, Pause, Wifi, WifiOff
 } from 'lucide-react';
+import useRealtimeTracking from '../../../hooks/useRealtimeTracking';
 
 const RealtimeDashboard = () => {
-    const [realTimeData, setRealTimeData] = useState({
-        activeUsers: 0,
-        currentPageViews: [],
-        recentEvents: [],
-        liveMetrics: {
-            avgEngagement: 0,
-            avgDuration: 0,
-            topPage: '',
-            topLocation: ''
-        }
-    });
-
     const [isPaused, setIsPaused] = useState(false);
-    const wsRef = useRef(null);
-    const audioRef = useRef(null);
-
-    useEffect(() => {
-        connectWebSocket();
-        
-        return () => {
-            if (wsRef.current) {
-                wsRef.current.close();
-            }
-        };
-    }, []);
-
-    const connectWebSocket = () => {
-        const wsUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('http', 'ws') || 'ws://localhost:5000';
-        wsRef.current = new WebSocket(`${wsUrl}/tracking`);
-
-        wsRef.current.onopen = () => {
-            console.log('Real-time connection established');
-            wsRef.current.send(JSON.stringify({
-                type: 'auth',
-                token: localStorage.getItem('token')
-            }));
-        };
-
-        wsRef.current.onmessage = (event) => {
-            if (isPaused) return;
-
-            const data = JSON.parse(event.data);
-            handleRealtimeUpdate(data);
-        };
-
-        wsRef.current.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-
-        wsRef.current.onclose = () => {
-            console.log('WebSocket closed, reconnecting...');
-            setTimeout(connectWebSocket, 5000);
-        };
-    };
-
-    const handleRealtimeUpdate = (data) => {
-        switch (data.type) {
-            case 'new_visitor':
-                handleNewVisitor(data.visitor);
-                playNotificationSound();
-                break;
-            case 'page_view':
-                handlePageView(data.pageView);
-                break;
-            case 'event':
-                handleEvent(data.event);
-                break;
-            case 'metrics_update':
-                updateMetrics(data.metrics);
-                break;
-            case 'conversion':
-                handleConversion(data.conversion);
-                playConversionSound();
-                break;
-        }
-    };
-
-    const handleNewVisitor = (visitor) => {
-        setRealTimeData(prev => ({
-            ...prev,
-            activeUsers: prev.activeUsers + 1,
-            recentEvents: [
-                {
-                    type: 'visitor',
-                    message: `New visitor from ${visitor.location?.country || 'Unknown'}`,
-                    timestamp: Date.now(),
-                    data: visitor
-                },
-                ...prev.recentEvents.slice(0, 19)
-            ]
-        }));
-    };
-
-    const handlePageView = (pageView) => {
-        setRealTimeData(prev => {
-            const existingIndex = prev.currentPageViews.findIndex(
-                pv => pv.sessionId === pageView.sessionId
-            );
-
-            let updatedPageViews;
-            if (existingIndex >= 0) {
-                updatedPageViews = [...prev.currentPageViews];
-                updatedPageViews[existingIndex] = {
-                    ...updatedPageViews[existingIndex],
-                    page: pageView.page,
-                    timestamp: Date.now()
-                };
-            } else {
-                updatedPageViews = [
-                    pageView,
-                    ...prev.currentPageViews.slice(0, 49)
-                ];
-            }
-
-            return {
-                ...prev,
-                currentPageViews: updatedPageViews,
-                recentEvents: [
-                    {
-                        type: 'pageview',
-                        message: `Viewing ${pageView.page}`,
-                        timestamp: Date.now(),
-                        data: pageView
-                    },
-                    ...prev.recentEvents.slice(0, 19)
-                ]
-            };
-        });
-    };
-
-    const handleEvent = (event) => {
-        setRealTimeData(prev => ({
-            ...prev,
-            recentEvents: [
-                {
-                    type: event.eventType,
-                    message: `${event.eventType}: ${event.description || ''}`,
-                    timestamp: Date.now(),
-                    data: event
-                },
-                ...prev.recentEvents.slice(0, 19)
-            ]
-        }));
-    };
-
-    const handleConversion = (conversion) => {
-        setRealTimeData(prev => ({
-            ...prev,
-            recentEvents: [
-                {
-                    type: 'conversion',
-                    message: `🎉 Conversion: ${conversion.type}`,
-                    timestamp: Date.now(),
-                    data: conversion,
-                    highlight: true
-                },
-                ...prev.recentEvents.slice(0, 19)
-            ]
-        }));
-    };
-
-    const updateMetrics = (metrics) => {
-        setRealTimeData(prev => ({
-            ...prev,
-            liveMetrics: metrics
-        }));
-    };
-
-    const playNotificationSound = () => {
-        if (audioRef.current) {
-            audioRef.current.play().catch(e => console.log('Audio play failed:', e));
-        }
-    };
-
-    const playConversionSound = () => {
-        // Play a different sound for conversions
-        const audio = new Audio('/sounds/conversion.mp3');
-        audio.play().catch(e => console.log('Audio play failed:', e));
-    };
+    // Live Socket.IO namespace + REST snapshot fallback, with full cleanup.
+    const { realTimeData, connected, lastUpdate, source, refresh } =
+        useRealtimeTracking({ paused: isPaused });
 
     const getEventIcon = (type) => {
         const icons = {
@@ -211,8 +37,6 @@ const RealtimeDashboard = () => {
 
     return (
         <div className="space-y-6">
-            {/* Audio elements */}
-            <audio ref={audioRef} src="/sounds/notification.mp3" preload="auto" />
 
             {/* Header Controls */}
             <div className="flex items-center justify-between">
@@ -222,7 +46,11 @@ const RealtimeDashboard = () => {
                         <span className="font-semibold text-green-500">LIVE</span>
                     </div>
                     <span className="text-gray-400 text-sm">
-                        Updated {new Date().toLocaleTimeString()}
+                        {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : 'Connecting…'}
+                    </span>
+                    <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border ${connected ? 'border-green-500/40 text-green-400' : 'border-amber-500/40 text-amber-400'}`}>
+                        {connected ? <Wifi size={13} /> : <WifiOff size={13} />}
+                        {connected ? 'Live' : 'Polling'} · {source}
                     </span>
                 </div>
 
@@ -240,7 +68,7 @@ const RealtimeDashboard = () => {
                     </button>
 
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={refresh}
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-semibold transition-all flex items-center gap-2"
                     >
                         <RefreshCw size={16} />

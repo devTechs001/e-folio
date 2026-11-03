@@ -95,7 +95,7 @@ npx kill-port 5174
 ### Backend Connection Error
 - Check that MongoDB is running
 - Verify `.env` file in `server/` folder exists
-- Confirm `MONGODB_URI=mongodb://localhost:27017/e-folio`
+- Confirm `MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>`
 
 ### Socket.IO Not Connecting
 - Check browser console for connection errors

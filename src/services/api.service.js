@@ -1,10 +1,14 @@
 // API Service for Frontend-Backend Communication
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const DEFAULT_TIMEOUT_MS = 15000;
 
 class ApiService {
     constructor() {
         this.baseURL = API_BASE_URL;
+        // De-duplicate identical in-flight GETs: dashboard widgets frequently
+        // request the same resource on mount, which doubled backend load.
+        this.inflight = new Map();
     }
 
     // Helper method to get auth headers
@@ -23,47 +27,79 @@ class ApiService {
 
     // Generic request method
     async request(endpoint, options = {}) {
-        try {
-            const headers = {
-                ...this.getHeaders(),
-                ...options.headers
-            };
+        const { timeout, signal, ...fetchOptions } = options;
+        const method = (fetchOptions.method || 'GET').toUpperCase();
+        const key = `${method}:${endpoint}`;
+        const dedupe = method === 'GET' && !signal;
 
-            // Let the browser set the multipart boundary for FormData uploads
-            if (typeof FormData !== 'undefined' && options.body instanceof FormData) {
-                delete headers['Content-Type'];
-            }
-
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
-                ...options,
-                headers
-            });
-
-            // Check if response is HTML (indicates error page)
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('text/html')) {
-                console.warn(`Server returned HTML for ${endpoint}, likely an error page`);
-                throw new Error(`Server error: ${response.status} for ${endpoint}`);
-            }
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                console.warn(`API request failed: ${response.status} for ${endpoint}`);
-                throw new Error(data.message || `Request failed with status ${response.status}`);
-            }
-
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            
-            // Provide more specific error messages
-            if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
-                throw new Error('Unable to connect to the server. Please ensure the backend is running.');
-            }
-            
-            throw error;
+        if (dedupe && this.inflight.has(key)) {
+            return this.inflight.get(key);
         }
+
+        const controller = new AbortController();
+        // A hung backend request used to leave dashboard widgets spinning
+        // forever with no fallback. Always bound the wait.
+        const timer = setTimeout(() => controller.abort(), timeout || DEFAULT_TIMEOUT_MS);
+
+        const run = async () => {
+            try {
+                const headers = {
+                    ...this.getHeaders(),
+                    ...fetchOptions.headers
+                };
+
+                // Let the browser set the multipart boundary for FormData uploads
+                if (typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData) {
+                    delete headers['Content-Type'];
+                }
+
+                const response = await fetch(`${this.baseURL}${endpoint}`, {
+                    ...fetchOptions,
+                    headers,
+                    signal: signal || controller.signal
+                });
+
+                // Check if response is HTML (indicates error page)
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    throw new Error(`Server returned an HTML error page (${response.status}) for ${endpoint}`);
+                }
+
+                // Some error responses have no JSON body at all.
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    if (!response.ok) data = { message: `Request failed with status ${response.status}` };
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.message || `Request failed with status ${response.status}`);
+                }
+
+                return data;
+            } catch (error) {
+                if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+                    throw new Error(`Request timed out after ${timeout || DEFAULT_TIMEOUT_MS}ms. Please try again.`);
+                }
+                if (error.message.includes('Failed to fetch') || error.message.toLowerCase().includes('network')) {
+                    throw new Error('Unable to connect to the server. Please ensure the backend is running.');
+                }
+                throw error;
+            } finally {
+                clearTimeout(timer);
+            }
+        };
+
+        const promise = run();
+        if (dedupe) {
+            this.inflight.set(key, promise);
+            const release = () => {
+                if (this.inflight.get(key) === promise) this.inflight.delete(key);
+            };
+            promise.then(release, release);
+        }
+        return promise;
     }
 
     // Auth APIs
@@ -347,9 +383,6 @@ class ApiService {
         }
     }
 
-    async getCollaborationRequests() {
-        return this.request('/collaboration/requests');
-    }
 
     async approveRequest(requestId, data = {}) {
         return this.request(`/collaboration/requests/${requestId}/approve`, {
@@ -365,9 +398,6 @@ class ApiService {
         });
     }
 
-    async getCollaborationStats() {
-        return this.request('/collaboration/stats');
-    }
 
     async getRequestDetails(requestId) {
         return this.request(`/collaboration/requests/${requestId}`);
@@ -694,9 +724,6 @@ class ApiService {
         return this.request(`/email?${query}`);
     }
 
-    async getEmailById(id) {
-        return this.request(`/email/${id}`);
-    }
 
     async sendEmail(emailData) {
         return this.request('/email/send', {
@@ -711,19 +738,8 @@ class ApiService {
         });
     }
 
-    async markEmailAsRead(id) {
-        return this.request(`/email/${id}/read`, {
-            method: 'POST'
-        });
-    }
 
-    async getEmailStats() {
-        return this.request('/email/stats');
-    }
 
-    async getQuickResponses() {
-        return this.request('/email/quick-responses/all');
-    }
 
     // Education APIs
     async getEducation() {
@@ -837,11 +853,6 @@ class ApiService {
         });
     }
 
-    async removeCollaborator(id) {
-        return this.request(`/collaborators/${id}`, {
-            method: 'DELETE'
-        });
-    }
 
     async updateCollaboratorRole(id, role) {
         return this.request(`/collaborators/${id}/role`, {
@@ -1311,14 +1322,7 @@ class ApiService {
         return this.request('/tracking/analytics/realtime');
     }
 
-    async getHeatmapData(params = {}) {
-        const query = new URLSearchParams(params);
-        return this.request(`/tracking/heatmap?${query}`);
-    }
 
-    async getConversionFunnel() {
-        return this.request('/tracking/funnel');
-    }
 
     async getBehaviorPatterns() {
         return this.request('/tracking/patterns');
@@ -1359,6 +1363,25 @@ class ApiService {
         return this.request('/settings/password/change', {
             method: 'POST',
             body: JSON.stringify(data)
+        });
+    }
+
+    // Two-factor authentication (RFC 6238 TOTP)
+    async enable2FA() {
+        return this.request('/settings/2fa/enable', { method: 'POST' });
+    }
+
+    async verify2FA(token) {
+        return this.request('/settings/2fa/verify', {
+            method: 'POST',
+            body: JSON.stringify({ token })
+        });
+    }
+
+    async disable2FA(password, token) {
+        return this.request('/settings/2fa/disable', {
+            method: 'POST',
+            body: JSON.stringify({ password, token })
         });
     }
 
@@ -1715,15 +1738,6 @@ class ApiService {
         }
     }
 
-    // Analytics APIs
-    async getAnalyticsOverview() {
-        try {
-            return await this.request('/analytics/overview');
-        } catch (error) {
-            console.warn('Analytics overview unavailable');
-            return { success: false, message: 'Failed to fetch analytics overview' };
-        }
-    }
 
     async getBookmarks() {
         try {
@@ -1772,16 +1786,6 @@ class ApiService {
         }
     }
 
-    // Export Analytics API
-    async exportAnalytics(params) {
-        try {
-            const query = new URLSearchParams(params);
-            return await this.request(`/tracking/analytics/export?${query}`);
-        } catch (error) {
-            console.warn('Analytics export unavailable');
-            return { success: false, message: 'Failed to export analytics' };
-        }
-    }
 
     // Reviews APIs
     async getFeaturedReviews() {

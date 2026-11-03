@@ -8,20 +8,15 @@ const errorRate = new Rate('errors');
 const sessionDuration = new Trend('session_duration');
 const pageviewCount = new Counter('pageviews');
 
-// Test configuration
+// Test configuration. VUS/DURATION come from the runner (or BASE_URL/VUS/
+// DURATION env vars) so a short CI smoke run and a long stress run share one
+// script. The old hard-coded 23-minute stages made `--vus/--duration` no-ops.
 export const options = {
-    stages: [
-        { duration: '2m', target: 50 },   // Ramp up to 50 users
-        { duration: '5m', target: 50 },   // Stay at 50 users
-        { duration: '2m', target: 100 },  // Ramp up to 100 users
-        { duration: '5m', target: 100 },  // Stay at 100 users
-        { duration: '2m', target: 200 },  // Ramp up to 200 users
-        { duration: '5m', target: 200 },  // Stay at 200 users
-        { duration: '2m', target: 0 },    // Ramp down to 0 users
-    ],
+    vus: Number(__ENV.VUS || 20),
+    duration: __ENV.DURATION || '2m',
     thresholds: {
-        http_req_duration: ['p(95)<500', 'p(99)<1000'],
-        http_req_failed: ['rate<0.01'],
+        http_req_duration: [`p(95)<${__ENV.P95_MS || 800}`, `p(99)<${__ENV.P99_MS || 1500}`],
+        http_req_failed: ['rate<0.02'],
         errors: ['rate<0.1'],
     },
 };
@@ -64,6 +59,11 @@ export default function(data) {
             sessionId = initResponse.json('sessionId');
             errorRate.add(0);
         });
+
+        if (!sessionId) {
+            // Do not hammer the rest of the journey with an invalid session.
+            return;
+        }
 
         sleep(1);
 

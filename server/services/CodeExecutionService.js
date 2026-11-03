@@ -1,6 +1,6 @@
 // services/CodeExecutionService.js
 const { VM } = require('vm2');
-const axios = require('axios');
+const axios = require('../utils/httpClient');
 
 class CodeExecutionService {
     constructor() {

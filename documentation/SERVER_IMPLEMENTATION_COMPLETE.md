@@ -124,7 +124,7 @@ CLIENT_URL=http://localhost:5173
 APP_URL=http://localhost:5173
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/efolio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 
 # Authentication
 JWT_SECRET=your_secret_key_here

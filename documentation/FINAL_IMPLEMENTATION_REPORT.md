@@ -476,7 +476,7 @@ All components are fully responsive:
 ```env
 # Backend (.env)
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 JWT_SECRET=your_secret_key
 CLIENT_URL=http://localhost:5174
 

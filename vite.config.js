@@ -20,15 +20,38 @@ export default defineConfig(({ command, mode }) => {
         registerType: 'autoUpdate',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-          runtimeCaching: [{
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] }
+          // The service worker used to precache 2289 files (~20 MB), mostly
+          // 2155 FontAwesome SVGs and multi-megabyte demo images. That made
+          // first install and every update visibly slow. Precache the app
+          // shell only and cache the heavy assets lazily at runtime.
+          globIgnores: [
+            '**/assets/fontawesome/**',
+            '**/assets/images/**',
+            '**/dash.all.min*',
+            '**/hls*',
+            '**/*.map'
+          ],
+          maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
+            },
+            {
+              urlPattern: /\/assets\/(images|fontawesome)\//i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'static-media-cache',
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
             }
-          }]
+          ]
         },
         manifest: {
           name: 'E-Folio Pro - Advanced Portfolio Platform',
@@ -63,23 +86,10 @@ export default defineConfig(({ command, mode }) => {
     build: {
       modulePreload: { polyfill: false },
       target: 'esnext',
-      minify: 'terser',  // Always use terser for better minification
-      terserOptions: {
-        compress: {
-          drop_console: true,  // Remove console logs
-          drop_debugger: true,  // Remove debugger statements
-          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn', 'console.error', 'console.trace']  // Remove specific console calls
-        },
-        mangle: {
-          toplevel: true,  // Mangle top-level names
-          keep_classnames: false,  // Don't preserve class names
-          keep_fnames: false  // Don't preserve function names
-        },
-        format: {
-          comments: false,  // Remove comments
-          ascii_only: true  // Use only ASCII characters
-        }
-      },
+      // `terser` was configured but never declared in package.json, so every
+      // production build failed with "terser not found". Vite's built-in
+      // esbuild minifier needs no extra dependency and is considerably faster.
+      minify: 'esbuild',
       sourcemap: false,  // Disable source maps in production for security
       assetsDir: 'assets',
       rollupOptions: {
@@ -111,19 +121,31 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     
+    // Strip console/debugger calls in production builds without a plugin.
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : []
+    },
+
     // Server configuration
     server: {
       port: 5173,
-      strictPort: true,
-      open: true,
+      strictPort: false,
+      open: false,
       host: true,
       cors: true,
+      // Permit the Arena live-preview host as well as local development.
+      allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'],
       proxy: {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:5000',
           changeOrigin: true
         }
       }
+    },
+
+    preview: {
+      host: true,
+      allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1']
     },
     
     publicDir: 'public',

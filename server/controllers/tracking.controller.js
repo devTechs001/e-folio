@@ -4,6 +4,7 @@ const PageAnalytics = require('../models/PageAnalytics');
 const asyncHandler = require('../middleware/async.middleware');
 // const AIAnalysisService = require('../services/AIAnalysisService'); // Disabled - requires TensorFlow rebuild
 const GeoLocationService = require('../services/GeoLocationService');
+const { publishTrackingEvent } = require('../socket/tracking.handler');
 // const { v4: uuidv4 } = require('uuid');
 
 // Simple UUID generator fallback
@@ -61,6 +62,13 @@ exports.initSession = asyncHandler(async (req, res) => {
             medium,
             source
         }
+    });
+
+    publishTrackingEvent('new_visitor', {
+        sessionId: session.sessionId,
+        location: session.location,
+        device: session.device,
+        source: session.source
     });
 
     res.json({
@@ -130,6 +138,14 @@ exports.trackPageView = asyncHandler(async (req, res) => {
         broadcastHighEngagement(session);
     }
 
+    publishTrackingEvent('page_view', {
+        sessionId,
+        page: pagePath,
+        title: pageTitle,
+        timeSpent: timeSpent || 0,
+        scrollDepth: scrollDepth || 0
+    });
+
     res.json({
         success: true,
         aiInsights: session.aiInsights || {}
@@ -191,6 +207,8 @@ exports.trackEvent = asyncHandler(async (req, res) => {
         
         await newSession.save();
         
+        publishTrackingEvent('event', { sessionId, eventType, eventData });
+
         return res.json({
             success: true,
             message: 'New session created and event tracked'
@@ -211,6 +229,8 @@ exports.trackEvent = asyncHandler(async (req, res) => {
 
     session.lastActivity = new Date();
     await session.save();
+
+    publishTrackingEvent('event', { sessionId, eventType, eventData });
 
     res.json({
         success: true,
@@ -242,6 +262,8 @@ exports.endSession = asyncHandler(async (req, res) => {
     // }
 
     await session.save();
+
+    publishTrackingEvent('session_end', { sessionId, duration: session.duration });
 
     res.json({
         success: true,
@@ -681,6 +703,10 @@ function generateCSV(sessions) {
 }
 
 function broadcastHighEngagement(session) {
+    publishTrackingEvent('high_engagement', {
+        sessionId: session.sessionId,
+        engagementLevel: session.aiInsights?.engagementLevel
+    });
     try {
         if (global.io) {
             global.io.emit('high_engagement', {

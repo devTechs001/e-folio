@@ -465,7 +465,7 @@ npm install nodemailer
 
 ```env
 # Database
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 
 # Server
 PORT=5000

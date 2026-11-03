@@ -13,15 +13,27 @@ dist
 dist-ssr
 *.local
 
-# Environment variables (CRITICAL - never commit!)
+# Environment variables / secrets (CRITICAL - never commit)
+# Real env files stay on disk only; committed templates are explicitly allowlisted.
 .env
-.env.local
-.env.development
-.env.production
-.env.test
+.env.*
+!.env.example
+!.env.render.example
 server/.env
 server/.env.*
 !server/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.pfx.pem
+id_rsa
+id_ed25519
+
+# Load-test / audit output (may contain environment details)
+results.json
+load-test-results/
+*.har
 
 # Editor directories and files
 .vscode/*

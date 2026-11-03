@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Media = require('../models/Media');
 const fs = require('fs').promises;
+const path = require('path');
 
 // Clean up orphaned files (files without database records)
 const cleanupOrphanedFiles = async () => {

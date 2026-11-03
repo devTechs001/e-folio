@@ -96,7 +96,9 @@ module.exports = (io) => {
                         timestamp: new Date(),
                         action: {
                             label: 'View Request',
-                            onClick: () => window.location.href = '/dashboard/collaborators'
+                            // Functions cannot cross the socket boundary; send a
+                            // route and let the client build the click handler.
+                            url: '/dashboard/collaborators'
                         }
                     });
                 });

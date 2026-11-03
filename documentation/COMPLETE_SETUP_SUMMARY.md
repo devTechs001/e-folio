@@ -266,7 +266,7 @@ VITE_SOCKET_URL=https://your-backend-url.com
 
 **Backend (server/.env):**
 ```env
-MONGODB_URI=mongodb+srv://...
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 JWT_SECRET=your-secret-key
 CLIENT_URL=https://your-frontend-url.com
 ```

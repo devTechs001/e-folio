@@ -96,13 +96,13 @@ Simple Web Service deployment - points directly to the `server` directory.
 3. Driver: **Node.js**, Version: **4.1 or later**
 4. Copy connection string:
    ```
-   mongodb+srv://efolio_admin:<password>@e-folio-cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster>/<database>
    ```
 
 5. **Replace `<password>`** with your actual password (NO angle brackets!)
 6. **Add database name** at the end:
    ```
-   mongodb+srv://efolio_admin:YourPassword123@e-folio-cluster.xxxxx.mongodb.net/e-folio?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster>/<database>
    ```
 
 **Save this complete connection string!**
@@ -247,7 +247,7 @@ Wait for Netlify to rebuild (1-2 minutes).
 ```env
 NODE_ENV=production
 PORT=10000
-MONGODB_URI=mongodb+srv://efolio_admin:PASSWORD@cluster.mongodb.net/e-folio?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 JWT_SECRET=auto-generated-by-render
 CLIENT_URL=https://your-netlify-site.netlify.app
 ```
@@ -292,7 +292,7 @@ git push origin main
 ### Connection String Format
 
 ```
-mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/DATABASE?retryWrites=true&w=majority
+mongodb+srv://<username>:<password>@<cluster>/<database>
 ```
 
 - **USERNAME**: Database user (e.g., `efolio_admin`)

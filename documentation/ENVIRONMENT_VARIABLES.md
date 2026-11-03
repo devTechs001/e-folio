@@ -19,7 +19,7 @@
 
 ```bash
 # Database
-MONGODB_URI=mongodb+srv://danielmukula8_db_user:YOUR_MONGODB_PASSWORD@cluster0.joo25jc.mongodb.net/?appName=Cluster0
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 
 # Client
 CLIENT_URL=https://e-folio-pro.netlify.app
@@ -73,7 +73,7 @@ VITE_SOCKET_URL=http://localhost:5000
 PORT=5000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 JWT_SECRET=efolio_dev_secret_2024
 OWNER_EMAIL=devtechs842@gmail.com
 OWNER_PASSWORD=pass1234
@@ -141,7 +141,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Test MongoDB connection
 ```bash
-mongosh "mongodb+srv://danielmk:YOUR_MONGODB_PASSWORD@cluster1.1frrfrb.mongodb.net/e-folio"
+mongosh "mongodb+srv://<username>:<password>@<cluster>/<database>"
 ```
 
 ---

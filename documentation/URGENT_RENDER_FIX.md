@@ -100,7 +100,7 @@ If updating doesn't work, do a fresh deployment:
 Render will create 2 services automatically. Add these to **backend service**:
 
 ```
-MONGODB_URI = mongodb+srv://username:password@cluster.mongodb.net/e-folio
+MONGODB_URI = mongodb+srv://<username>:<password>@<cluster>/<database>
 JWT_SECRET = any-long-random-string-here-change-in-production
 SESSION_SECRET = another-random-string-for-sessions
 ```
@@ -126,7 +126,7 @@ Your backend needs a database. Quick setup:
 6. **Clusters** → Connect → Connect your application
 7. **Copy connection string:**
    ```
-   mongodb+srv://efolio_user:<password>@cluster0.xxxxx.mongodb.net/e-folio?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster>/<database>
    ```
 8. **Replace** `<password>` with your actual password
 9. **Add to Render** environment variables

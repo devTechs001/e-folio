@@ -1,6 +1,6 @@
 // websocket/trackingSocket.js
 const WebSocket = require('ws');
-const jwt = require('jsonwebtoken');
+const security = require('../config/security');
 
 class TrackingWebSocket {
     constructor(server) {
@@ -56,7 +56,7 @@ class TrackingWebSocket {
 
     async authenticateClient(ws, token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = security.verifyToken(token);
             
             if (decoded.role === 'owner') {
                 ws.isOwner = true;

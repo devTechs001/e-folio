@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const path = require('path');
 
 const mediaSchema = new mongoose.Schema({
     userId: {

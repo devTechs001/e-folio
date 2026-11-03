@@ -69,10 +69,10 @@ Your backend needs a database. Here's how to set it up (takes 5 minutes):
 4. Version: **4.1 or later**
 5. Copy the connection string:
    ```
-   mongodb+srv://efolio_admin:<password>@e-folio-cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster>/<database>
    ```
 6. **Replace** `<password>` with the password you saved earlier
-7. **Add database name**: Change to `mongodb+srv://efolio_admin:YOUR_PASSWORD@e-folio-cluster.xxxxx.mongodb.net/e-folio?retryWrites=true&w=majority`
+7. **Add database name**: Change to `mongodb+srv://<username>:<password>@<cluster>/<database>`
 
 **Save this connection string!** You'll add it to Render in Step 4.
 
@@ -141,7 +141,7 @@ The backend needs MongoDB connection string.
 
 Example:
 ```
-mongodb+srv://efolio_admin:YourPassword123@e-folio-cluster.abc123.mongodb.net/e-folio?retryWrites=true&w=majority
+mongodb+srv://<username>:<password>@<cluster>/<database>
 ```
 
 4. Click **"Save Changes"**
