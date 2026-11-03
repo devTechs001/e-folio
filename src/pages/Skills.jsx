@@ -7,6 +7,7 @@ const Skills = () => {
     const [technicalSkills, setTechnicalSkills] = useState([]);
     const [professionalSkills, setProfessionalSkills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(true);
 
     const loadSkills = useCallback(async () => {
@@ -19,28 +20,27 @@ const Skills = () => {
                 return;
             }
 
-            console.log('Fetching skills from API...');
+            setLoadError('');
             const response = await apiService.request('/public/skills');
-            console.log('Skills API response:', response);
-            
-            if (response.success && response.skills && response.skills.length > 0) {
-                console.log(`Loaded ${response.skills.length} skills from database`);
+
+            if (response.success && Array.isArray(response.skills) && response.skills.length > 0) {
                 const technical = response.skills.filter(s => s.type === 'technical');
                 const professional = response.skills.filter(s => s.type === 'professional');
-                
                 cacheService.set('public_skills', { technical, professional }, CACHE_TTL.TEN_MINUTES);
                 setTechnicalSkills(technical);
                 setProfessionalSkills(professional);
             } else {
-                console.log('No skills from API, using fallback data');
-                setTechnicalSkills(getFallbackTechnicalSkills());
-                setProfessionalSkills(getFallbackProfessionalSkills());
+                // Real skills only: an empty or unavailable API is an honest
+                // empty state, never an invented skill set.
+                setTechnicalSkills([]);
+                setProfessionalSkills([]);
+                if (!response.success) setLoadError(response.message || 'Skills are temporarily unavailable.');
             }
         } catch (error) {
             console.error('Error loading skills:', error);
-            console.log('Using fallback skills due to error');
-            setTechnicalSkills(getFallbackTechnicalSkills());
-            setProfessionalSkills(getFallbackProfessionalSkills());
+            setTechnicalSkills([]);
+            setProfessionalSkills([]);
+            setLoadError('Skills are temporarily unavailable. Please try again later.');
         } finally {
             setLoading(false);
         }
@@ -60,31 +60,6 @@ const Skills = () => {
         return () => window.removeEventListener('settingsChanged', handleSettingsChange);
     }, [loadSkills]);
 
-    const getFallbackTechnicalSkills = () => [
-        { name: "HTML5", level: 90, icon: "fa-brands fa-html5" },
-        { name: "CSS3", level: 85, icon: "fa-brands fa-css3-alt" },
-        { name: "JavaScript", level: 80, icon: "fa-brands fa-js" },
-        { name: "React", level: 75, icon: "fa-brands fa-react" },
-        { name: "Python", level: 70, icon: "fa-brands fa-python" },
-        { name: "Node.js", level: 65, icon: "fa-brands fa-node-js" },
-        { name: "Git", level: 85, icon: "fa-brands fa-git-alt" },
-        { name: "Database", level: 60, icon: "fa-solid fa-database" },
-        { name: "TypeScript", level: 72, icon: "fa-brands fa-js" },
-        { name: "Docker", level: 68, icon: "fa-brands fa-docker" },
-        { name: "MongoDB", level: 75, icon: "fa-solid fa-database" },
-        { name: "Vue.js", level: 70, icon: "fa-brands fa-vuejs" }
-    ];
-
-    const getFallbackProfessionalSkills = () => [
-        { name: "Problem Solving", level: 90 },
-        { name: "Creativity", level: 85 },
-        { name: "Team Work", level: 95 },
-        { name: "Communication", level: 85 },
-        { name: "Leadership", level: 80 },
-        { name: "Time Management", level: 88 },
-        { name: "Adaptability", level: 92 },
-        { name: "Critical Thinking", level: 87 }
-    ];
 
     if (loading) {
         return (
@@ -238,7 +213,7 @@ const Skills = () => {
                                 {technicalSkills.length === 0 && (
                                     <div className="text-center py-12 text-[var(--textColor)] opacity-50">
                                         <i className="fas fa-inbox text-4xl mb-4"></i>
-                                        <p>No technical skills added yet</p>
+                                        <p>{loadError || 'No technical skills added yet'}</p>
                                     </div>
                                 )}
                             </div>
@@ -373,7 +348,7 @@ const Skills = () => {
                                 {professionalSkills.length === 0 && (
                                     <div className="text-center py-12 text-[var(--textColor)] opacity-50">
                                         <i className="fas fa-inbox text-4xl mb-4"></i>
-                                        <p>No professional skills added yet</p>
+                                        <p>{loadError || 'No professional skills added yet'}</p>
                                     </div>
                                 )}
                             </div>

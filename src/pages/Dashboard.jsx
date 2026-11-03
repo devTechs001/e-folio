@@ -98,6 +98,10 @@ const HobbiesManager = lazy(() => import('../components/dashboard/HobbiesManager
     console.error('Failed to load HobbiesManager:', err);
     return { default: () => <div>Error loading Hobbies Manager</div> };
 }));
+const LabManager = lazy(() => import('../components/dashboard/LabManager').catch(err => {
+    console.error('Failed to load LabManager:', err);
+    return { default: () => <div>Error loading Lab Manager</div> };
+}));
 const CVEditor = lazy(() => import('../components/dashboard/CVEditorStyled').catch(err => {
     console.error('Failed to load CVEditor:', err);
     return { default: () => <div>Error loading CV Editor</div> };
@@ -123,6 +127,15 @@ const LazyProjectManager = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>}>
             <ProjectManager />
+        </Suspense>
+    );
+};
+const LazyLabManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <LabManager />
         </Suspense>
     );
 };
@@ -364,6 +377,16 @@ const DashboardContent = () => {
             badge: '12',
             category: 'Main',
             description: 'Manage your projects'
+        },
+        {
+            path: '/dashboard/lab',
+            icon: 'fas fa-flask',
+            label: 'Lab',
+            component: LazyLabManager,
+            roles: ['owner', 'collaborator'],
+            badge: null,
+            category: 'Main',
+            description: 'Lab experiments, toolkit and deletable sample data'
         },
         {
             path: '/dashboard/analytics',

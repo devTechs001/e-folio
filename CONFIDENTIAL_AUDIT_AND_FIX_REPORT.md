@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -38,6 +38,7 @@ service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Lab ↔ dashboard (phase 4) | Lab page used 4 fake experiments; Projects/Skills/Interests pages shipped ~700 lines of invented fallback data | real `/api/public/*` records for projects, skills and hobbies; new `/dashboard/lab`; clearly tagged, owner-deletable sample data |
 | Collaboration & review (phase 3) | anonymous review reads, `auth`-only moderation, unscoped workspaces, dead invite links, fake reviews/testimonials, public applicant documents | owner-only guards, hashed `Invite` flow + accept page, private uploads, membership checks, honest empty states, 21 new regression checks |
 
 ---
@@ -369,6 +370,70 @@ issue or external service was used for this phase.**
 
 ---
 
+## 3d. Phase 4 — Lab page ↔ dashboard, real data + deletable samples
+
+All work is local on `arena/f176a951-e-folio`. **No push, PR, merge, external
+issue or external service was used.** No live database was started, so the
+sample records are *not* pre-inserted; they are created on demand by the owner
+from the dashboard or by the local seed script.
+
+### Real data (no fabricated content)
+
+- `Lab.jsx`, `Projects.jsx`, `Skills.jsx` and `Interests.jsx` no longer ship
+  hard-coded fallback datasets (removed ~700 lines of invented projects,
+  skills, hobbies, views, likes, clients, stock photos and `picsum.photos`
+  URLs). An empty or unavailable API now produces an honest empty state with a
+  retry/error message.
+- The public Lab page loads **one bundle of real records** with
+  `Promise.allSettled` from `/api/public/projects`, `/api/public/skills` and
+  `/api/public/interests` — exactly the collections managed by
+  `/dashboard/projects`, `/dashboard/skills` and `/dashboard/hobbies`.
+  A `live / partial / unavailable` badge reports which sources actually loaded.
+- New Lab sections render the real skills (grouped, with proficiency) and real
+  hobbies, each with a link back to its dashboard manager.
+- The experiment grid keeps only projects whose status is
+  `live | beta | development | experimental`, so a project edited in the
+  Projects manager appears immediately (socket `project_*`, `skills_changed`,
+  `interests_changed` events and `settingsChanged` also invalidate the cache).
+
+### Sample data the owner can delete
+
+- `src/data/labSamples.json` is the single source of truth: 4 entries, each
+  prefixed `[SAMPLE]`, tagged `lab-sample`, with a lab status. No stock images.
+- `/dashboard/lab` (new **Lab** dashboard page) has **Add sample experiments**
+  (creates real Project documents through `POST /api/projects`) and
+  **Delete all samples** / per-row **Delete** (through `DELETE /api/projects/:id`).
+  Both are owner-gated and operate only on the tagged records.
+- On the public Lab page, sample cards show a `Sample · deletable` badge and an
+  owner-only **Delete sample** button.
+- `npm run seed:lab` / `npm run seed:lab:remove` (also in `server/`) provide an
+  offline CLI equivalent. The removal path is `deleteMany({ tags: 'lab-sample' })`
+  — real projects, skills and hobbies are never touched. The seed resolves the
+  owner user from the database instead of fabricating an ObjectId.
+- `server/routes/projects.routes.js` validation now accepts the `experimental`
+  status, which the Project model already allowed but the API validator rejected.
+
+### Verification
+
+- `npm test`: parity `--strict` **0 live gaps**, security audit `--strict`
+  **HIGH/MEDIUM/LOW 0**, and three Node-only suites: 9 dashboard + 21
+  collaboration/review + **12 lab/dashboard** checks (42 total).
+- `npm run lint`: **0 errors**, 672 warnings. `npm run build`: success, PWA
+  204 precache entries. `git diff --check` clean; masked secret scan clean.
+
+### How to use
+
+1. Start the backend with its MongoDB configured (`server/.env`).
+2. As owner, open **Dashboard → Lab** and click **Add sample experiments**, or
+   run `npm run seed:lab` locally.
+3. Check the public landing page Lab section — samples appear with a badge and
+   sit alongside real projects, skills and hobbies.
+4. Delete them whenever you like, individually or with **Delete all samples** /
+   `npm run seed:lab:remove`.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -393,10 +458,7 @@ issue or external service was used for this phase.**
    `aiSocket.js` are unwired raw-WS handlers.
 9. `customEventTracking.destroy()` is implemented but not wired into unmount;
    `DashboardHomeStyled.jsx` `data.type` switch and unused `wsRef` need review.
-10. `src/pages/Projects.jsx` and `src/pages/Lab.jsx` still contain seeded
-    demo projects / `picsum.photos` placeholders on their fallback paths; they
-    are marketing pages, not API-driven dashboards, and are tracked separately.
-11. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
+10. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
     `|| echo` on lint/test. Now that checks are real, remove the swallowing.
 
 ---
@@ -410,5 +472,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phase 3 is local-only work on `arena/f176a951-e-folio`; it has
+this repository. Phases 3 and 4 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

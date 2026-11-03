@@ -14,13 +14,16 @@
     "seed:enterprise": "node scripts/seed-enterprise-projects.js",
     "seed:complete": "node scripts/seed-all-projects.js",
     "seed:reset": "node seed-data.js",
-    "test": "node scripts/check-endpoint-parity.js --strict && node scripts/security-audit.js --strict && node ../tests/dashboard-api.test.mjs && node ../tests/collaboration-review.test.mjs",
+    "test": "node scripts/check-endpoint-parity.js --strict && node scripts/security-audit.js --strict && node ../tests/dashboard-api.test.mjs && node ../tests/collaboration-review.test.mjs && node ../tests/lab-page.test.mjs",
     "audit:endpoints": "node scripts/check-endpoint-parity.js",
     "audit:security": "node scripts/security-audit.js",
     "test:load": "node tests/load/smoke-load.js",
     "test:load:k6": "bash tests/load/run-load-test.sh",
     "test:load:mock": "node tests/load/mock-server.js",
-    "test:collaboration": "node ../tests/collaboration-review.test.mjs"
+    "test:collaboration": "node ../tests/collaboration-review.test.mjs",
+    "seed:lab": "node scripts/seedLabSamples.js",
+    "seed:lab:remove": "node scripts/seedLabSamples.js --remove",
+    "test:lab": "node ../tests/lab-page.test.mjs"
   },
   "keywords": [
     "portfolio",

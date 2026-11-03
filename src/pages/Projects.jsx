@@ -15,6 +15,7 @@ const Projects = () => {
     const { socket, connected } = useSocket();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('featured'); // featured, newest, popular, views
@@ -38,17 +39,21 @@ const Projects = () => {
             }
 
             setLoading(true);
+            setLoadError('');
             const response = await apiService.request('/public/projects');
-            
-            if (response.success && response.projects && response.projects.length > 0) {
+
+            if (response.success && Array.isArray(response.projects) && response.projects.length > 0) {
                 cacheService.set('public_projects', response.projects, CACHE_TTL.TEN_MINUTES);
                 setProjects(response.projects);
             } else {
-                setProjects(getFallbackProjects());
+                // Projects are real data managed in /dashboard/projects.
+                setProjects([]);
+                if (!response.success) setLoadError(response.message || 'Projects are temporarily unavailable.');
             }
         } catch (error) {
             console.error('Error loading projects:', error);
-            setProjects(getFallbackProjects());
+            setProjects([]);
+            setLoadError('Projects are temporarily unavailable. Please try again later.');
         } finally {
             setLoading(false);
         }
@@ -214,395 +219,6 @@ const Projects = () => {
         }
     }, [projects]);
 
-    const getFallbackProjects = () => [
-        {
-            id: 1,
-            title: "E-Commerce Platform",
-            description: "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management.",
-            fullDescription: "A comprehensive e-commerce platform built with modern web technologies. Features include real-time inventory tracking, secure payment processing through Stripe, user authentication with JWT, product recommendations using AI, advanced search with filters, shopping cart persistence, order tracking, and admin dashboard for managing products and orders.",
-            imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
-            thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
-            images: [
-                { url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d", caption: "Main E-commerce View" },
-                { url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3", caption: "Product Detail Page" },
-                { url: "https://images.unsplash.com/photo-1556740738-b6a82e8bfca5", caption: "Shopping Cart" },
-                { url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3", caption: "Checkout Process" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/ecommerce-platform",
-                live: "https://devtechs001.github.io/omnibiz/",
-                netlify: "https://bizsolutionz.netlify.app/"
-            },
-            technologies: ["React", "Node.js", "MongoDB", "Stripe", "Express", "Redux", "JWT", "Socket.io"],
-            category: "Web",
-            tags: ["Full-Stack", "E-Commerce", "Real-time", "Payment Integration"],
-            views: 1245,
-            likes: 42,
-            featured: true,
-            status: "Live",
-            completionDate: "2024-01-15",
-            duration: "3 months",
-            teamSize: 1,
-            challenges: "Implementing real-time inventory updates, secure payment processing, and scalable architecture",
-            achievements: ["99.9% uptime", "Sub-second load times", "1000+ daily active users"]
-        },
-        {
-            id: 2,
-            title: "Portfolio Website",
-            description: "Modern portfolio website built with React, featuring smooth animations and responsive design.",
-            fullDescription: "A stunning portfolio website showcasing projects and skills with beautiful animations, dark mode support, and optimal performance. Built with modern React practices and styled with Tailwind CSS for a sleek, professional appearance.",
-            imageUrl: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
-            thumbnail: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
-            images: [
-                { url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d", caption: "Portfolio Home" },
-                { url: "https://images.unsplash.com/photo-1522252234503-e356532cafd5", caption: "Projects Section" },
-                { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d", caption: "About Page" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/portfolio-website",
-                live: "https://devtechs001.github.io/portfolio"
-            },
-            technologies: ["React", "Tailwind CSS", "Framer Motion", "TypeScript"],
-            category: "Web",
-            tags: ["Portfolio", "Animation", "Responsive", "TypeScript"],
-            views: 892,
-            likes: 28,
-            featured: false,
-            status: "Live",
-            completionDate: "2023-12-20",
-            duration: "1 month",
-            teamSize: 1
-        },
-        {
-            id: 3,
-            title: "Task Management App",
-            description: "React-based task management application with real-time updates and collaborative features.",
-            fullDescription: "A powerful task management solution with real-time collaboration, drag-and-drop interface, team workspaces, and productivity analytics. Perfect for remote teams and project management.",
-            imageUrl: "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
-            thumbnail: "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
-            images: [
-                { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "Task Dashboard" },
-                { url: "https://images.unsplash.com/photo-1586880244406-5564e8cb497d", caption: "Kanban Board" },
-                { url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173", caption: "Analytics View" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/task-manager",
-                live: "https://devtechs001.github.io/task-manager"
-            },
-            technologies: ["React", "Firebase", "Redux", "Material-UI", "Chart.js"],
-            category: "Mobile",
-            tags: ["Productivity", "Real-time", "Collaboration", "PWA"],
-            views: 532,
-            likes: 17,
-            featured: false,
-            status: "Live",
-            completionDate: "2023-11-10",
-            duration: "2 months",
-            teamSize: 2
-        },
-        {
-            id: 4,
-            title: "AI Image Generator",
-            description: "Advanced AI-powered image generation platform using stable diffusion models and neural networks.",
-            fullDescription: "Cutting-edge AI image generation platform utilizing stable diffusion technology. Features include text-to-image generation, image editing with AI, style transfer, upscaling, and custom model training capabilities.",
-            imageUrl: "https://picsum.photos/800/600?random=4",
-            thumbnail: "https://picsum.photos/400/300?random=4",
-            images: [
-                { url: "https://picsum.photos/800/600?random=4", caption: "AI Generated Art" },
-                { url: "https://picsum.photos/800/600?random=41", caption: "Style Transfer Interface" },
-                { url: "https://picsum.photos/800/600?random=42", caption: "Gallery View" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/ai-image-generator",
-                live: "https://devtechs001.github.io/ai-image-generator"
-            },
-            technologies: ["React", "TensorFlow.js", "Python", "FastAPI", "WebGL", "Docker"],
-            category: "AI/ML",
-            tags: ["AI", "Machine Learning", "Image Processing", "Deep Learning"],
-            views: 742,
-            likes: 31,
-            featured: true,
-            status: "Beta",
-            completionDate: "2024-02-01",
-            duration: "4 months",
-            teamSize: 3,
-            achievements: ["Featured on Product Hunt", "10k+ images generated", "AI Weekly mention"]
-        },
-        {
-            id: 5,
-            title: "Social Media Dashboard",
-            description: "Comprehensive dashboard for social media analytics with real-time data visualization.",
-            fullDescription: "All-in-one social media analytics dashboard providing insights from multiple platforms. Features real-time metrics, engagement tracking, sentiment analysis, competitor analysis, and automated reporting.",
-            imageUrl: "https://picsum.photos/800/600?random=5",
-            thumbnail: "https://picsum.photos/400/300?random=5",
-            images: [
-                { url: "https://picsum.photos/800/600?random=5", caption: "Analytics Dashboard" },
-                { url: "https://picsum.photos/800/600?random=51", caption: "Engagement Metrics" },
-                { url: "https://picsum.photos/800/600?random=52", caption: "Report Generation" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/analytics-dashboard",
-                live: "https://devtechs001.github.io/analytics-dashboard"
-            },
-            technologies: ["React", "D3.js", "Chart.js", "Python", "Flask", "PostgreSQL", "Redis"],
-            category: "Web",
-            tags: ["Analytics", "Data Visualization", "Dashboard", "API Integration"],
-            views: 1103,
-            likes: 38,
-            featured: true,
-            status: "Live",
-            completionDate: "2023-10-25",
-            duration: "3 months",
-            teamSize: 2,
-            achievements: ["500+ active users", "99% customer satisfaction", "Featured on HackerNews"]
-        },
-        {
-            id: 6,
-            title: "Blockchain Wallet",
-            description: "Secure cryptocurrency wallet with multi-chain support and DeFi integration.",
-            fullDescription: "Next-generation cryptocurrency wallet supporting multiple blockchains. Features include secure key management, token swaps, NFT gallery, staking, DeFi protocol integration, and portfolio tracking.",
-            imageUrl: "https://picsum.photos/800/600?random=6",
-            thumbnail: "https://picsum.photos/400/300?random=6",
-            images: [
-                { url: "https://picsum.photos/800/600?random=6", caption: "Wallet Dashboard" },
-                { url: "https://picsum.photos/800/600?random=61", caption: "Token Swap Interface" },
-                { url: "https://picsum.photos/800/600?random=62", caption: "NFT Gallery" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/blockchain-wallet",
-                live: "https://wallet.devtechs001.com"
-            },
-            technologies: ["React", "Web3.js", "Ethers.js", "Solidity", "IPFS", "TypeScript"],
-            category: "Blockchain",
-            tags: ["Web3", "Cryptocurrency", "DeFi", "NFT", "Security"],
-            views: 2341,
-            likes: 87,
-            featured: true,
-            status: "Live",
-            completionDate: "2024-03-05",
-            duration: "5 months",
-            teamSize: 4,
-            achievements: ["$1M+ in transactions", "Security audit passed", "20k+ wallet downloads"]
-        },
-        {
-            id: 7,
-            title: "GB Chat",
-            description: "Real-time chat application with group messaging, file sharing, and advanced communication features.",
-            fullDescription: "A comprehensive real-time chat application built with modern web technologies. Features include group messaging, private chats, file sharing, emoji reactions, typing indicators, online status tracking, message search, and responsive design for all devices.",
-            imageUrl: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
-            thumbnail: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
-            images: [
-                { url: "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3", caption: "Chat Interface" },
-                { url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2", caption: "Group Chat" },
-                { url: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0", caption: "Mobile View" },
-                { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "File Sharing" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/GB-chat",
-                live: "https://devtechs001.github.io/GB-chat/",
-                netlify: "https://gbchat.netlify.app/"
-            },
-            technologies: ["React", "Socket.io", "Node.js", "Express", "MongoDB", "JWT", "Tailwind CSS", "WebRTC"],
-            category: "Web",
-            tags: ["Real-time", "Chat", "Messaging", "Socket.io", "Communication"],
-            views: 856,
-            likes: 34,
-            featured: true,
-            status: "Live",
-            completionDate: "2024-02-15",
-            duration: "2 months",
-            teamSize: 2,
-            challenges: "Implementing real-time messaging, file uploads, and scalable socket connections",
-            achievements: ["1000+ active users", "99.9% uptime", "Sub-second message delivery"]
-        },
-        {
-            id: 8,
-            title: "Moview Watch",
-            description: "Movie streaming platform with personalized recommendations, watchlists, and social features.",
-            fullDescription: "A comprehensive movie streaming platform that provides users with a vast library of films and TV shows. Features include personalized recommendations based on viewing history, watchlist management, user ratings and reviews, social sharing, genre filtering, search functionality, and responsive design for optimal viewing on any device.",
-            imageUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
-            thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
-            images: [
-                { url: "https://images.unsplash.com/photo-1536440136628-849c177e76a1", caption: "Movie Library" },
-                { url: "https://images.unsplash.com/photo-1489599745951-884f3749b052", caption: "Movie Details" },
-                { url: "https://images.unsplash.com/photo-1518676590629-3d8889cced0c", caption: "Watch Interface" },
-                { url: "https://images.unsplash.com/photo-1535016120720-40c6a9e0a2f5", caption: "User Dashboard" }
-            ],
-            links: {
-                github: "https://github.com/devTechs001/moview-watch",
-                live: "https://devtechs001.github.io/moview-watch/",
-                netlify: "https://cinemaflx.netlify.app/"
-            },
-            technologies: ["React", "Redux", "TMDB API", "Node.js", "Express", "MongoDB", "JWT", "CSS3", "Video.js"],
-            category: "Web",
-            tags: ["Streaming", "Movies", "Entertainment", "API Integration", "Media"],
-            views: 1243,
-            likes: 56,
-            featured: true,
-            status: "Live",
-            completionDate: "2024-03-01",
-            duration: "3 months",
-            teamSize: 3,
-            challenges: "Integrating TMDB API, implementing video streaming, and building recommendation engine",
-            achievements: ["5000+ registered users", "50,000+ movies streamed", "4.8/5 user rating"]
-        },
-        {
-            id: 9,
-            title: "Kazi Find",
-            description: "Job discovery and hiring platform for finding local opportunities and talent quickly.",
-            fullDescription: "Kazi Find connects people with relevant jobs and freelance opportunities through a clean, mobile-friendly marketplace experience. It is designed to make local talent discovery, role matching, and hiring decisions faster and more transparent.",
-            imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-            thumbnail: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-            images: [
-                { url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f", caption: "Kazi Find Landing Page" },
-                { url: "https://images.unsplash.com/photo-1552664730-d307ca884978", caption: "Job Listings" }
-            ],
-            links: {
-                live: "https://kazi-find.netlify.app/",
-                netlify: "https://kazi-find.netlify.app/"
-            },
-            technologies: ["React", "JavaScript", "Tailwind CSS", "Netlify"],
-            category: "Web",
-            tags: ["Jobs", "Marketplace", "Hiring", "Career"],
-            views: 980,
-            likes: 27,
-            featured: true,
-            status: "Live",
-            completionDate: "2025-01-14",
-            duration: "2 weeks",
-            teamSize: 1
-        },
-        {
-            id: 10,
-            title: "HomeScape Platform",
-            description: "Modern real-estate and property discovery platform for browsing homes, apartments, and spaces.",
-            fullDescription: "HomeScape Platform helps users explore property listings, compare options, and discover living spaces with an elegant and responsive experience. It focuses on clear presentation, searchability, and a polished real-estate browsing flow.",
-            imageUrl: "https://images.unsplash.com/photo-1494526585095-c41746248156",
-            thumbnail: "https://images.unsplash.com/photo-1494526585095-c41746248156",
-            images: [
-                { url: "https://images.unsplash.com/photo-1494526585095-c41746248156", caption: "Property Showcase" },
-                { url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85", caption: "Home Listing" }
-            ],
-            links: {
-                live: "https://home-scape-platform.netlify.app/",
-                netlify: "https://home-scape-platform.netlify.app/"
-            },
-            technologies: ["React", "JavaScript", "CSS", "Netlify"],
-            category: "Web",
-            tags: ["Real Estate", "Properties", "Dashboard", "Listings"],
-            views: 920,
-            likes: 24,
-            featured: true,
-            status: "Live",
-            completionDate: "2025-02-02",
-            duration: "3 weeks",
-            teamSize: 1
-        },
-        {
-            id: 11,
-            title: "Net Gate",
-            description: "Secure networking and access management platform for safer, smarter digital connectivity.",
-            fullDescription: "Net Gate showcases a secure, modern interface for network operations, access management, and digital infrastructure monitoring. The project emphasizes clarity, usability, and a professional user experience for networking workflows.",
-            imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-            thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-            images: [
-                { url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3", caption: "Network Dashboard" },
-                { url: "https://images.unsplash.com/photo-1558494949cc5c5f3f4d6d9337e9044f3", caption: "Security Overview" }
-            ],
-            links: {
-                live: "https://net-gate.netlify.app/",
-                netlify: "https://net-gate.netlify.app/"
-            },
-            technologies: ["React", "JavaScript", "UI Design", "Netlify"],
-            category: "Web",
-            tags: ["Networking", "Security", "Infrastructure", "Dashboard"],
-            views: 870,
-            likes: 22,
-            featured: false,
-            status: "Live",
-            completionDate: "2025-02-20",
-            duration: "2 weeks",
-            teamSize: 1
-        },
-        {
-            id: 12,
-            title: "Schedule Manager",
-            description: "Planning and scheduling application for managing tasks, appointments, and daily activity flow.",
-            fullDescription: "Schedule Manager is a productivity-focused planner that helps users organize tasks, track appointments, and manage their time efficiently. The experience is built around clear scheduling, quick updates, and a user-friendly workflow.",
-            imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40",
-            thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40",
-            images: [
-                { url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40", caption: "Planner Dashboard" },
-                { url: "https://images.unsplash.com/photo-1552664730-d307ca884978", caption: "Calendar View" }
-            ],
-            links: {
-                live: "https://schedule-manager-ap.netlify.app/",
-                netlify: "https://schedule-manager-ap.netlify.app/"
-            },
-            technologies: ["React", "JavaScript", "Calendar UI", "Netlify"],
-            category: "Productivity",
-            tags: ["Scheduling", "Planner", "Productivity", "Calendar"],
-            views: 910,
-            likes: 26,
-            featured: true,
-            status: "Live",
-            completionDate: "2025-03-06",
-            duration: "2 weeks",
-            teamSize: 1
-        },
-        {
-            id: 13,
-            title: "AI Image Editor Pro",
-            description: "AI-powered image editing platform with fast enhancements, crop tools, and creative transformations.",
-            fullDescription: "AI Image Editor Pro gives users a polished editor for adjusting and enhancing images with automated, creative tools. It is built to feel fast, flexible, and modern for both casual and professional editing workflows.",
-            imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-            thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-            images: [
-                { url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3", caption: "AI Editor" },
-                { url: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935", caption: "Creative Tools" }
-            ],
-            links: {
-                live: "https://ai-image-editor-pro.netlify.app/",
-                netlify: "https://ai-image-editor-pro.netlify.app/"
-            },
-            technologies: ["React", "JavaScript", "AI Tools", "Canvas", "Netlify"],
-            category: "AI",
-            tags: ["AI", "Image Editing", "Design", "Creative Tools"],
-            views: 1040,
-            likes: 31,
-            featured: true,
-            status: "Live",
-            completionDate: "2025-03-18",
-            duration: "3 weeks",
-            teamSize: 1
-        },
-        {
-            id: 14,
-            title: "Elimu Pro Beta",
-            description: "Learning platform for education, course browsing, and digital student engagement.",
-            fullDescription: "Elimu Pro Beta is a modern education experience built to help learners discover resources, track progress, and engage with a streamlined digital learning system. It focuses on clean course presentation and a motivating student experience.",
-            imageUrl: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
-            thumbnail: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
-            images: [
-                { url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b", caption: "Learning Dashboard" },
-                { url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644", caption: "Course Catalog" }
-            ],
-            links: {
-                live: "https://elimu-pro-beta.netlify.app/",
-                netlify: "https://elimu-pro-beta.netlify.app/"
-            },
-            technologies: ["React", "JavaScript", "Education UI", "Netlify"],
-            category: "Education",
-            tags: ["Education", "Learning", "Courses", "Student Portal"],
-            views: 880,
-            likes: 20,
-            featured: false,
-            status: "Live",
-            completionDate: "2025-04-12",
-            duration: "2 weeks",
-            teamSize: 1
-        }
-    ];
 
     useEffect(() => {
         loadProjects();
@@ -983,7 +599,7 @@ const Projects = () => {
                         <i className="fa-solid fa-folder-open text-6xl text-mainColor/30 mb-4"></i>
                         <h3 className="text-2xl font-bold text-textColor mb-2">No Projects Found</h3>
                         <p className="text-textColor/60 mb-6">
-                            Try adjusting your filters or search query
+                            {loadError || 'Try adjusting your filters or search query'}
                         </p>
                         <button
                             onClick={() => {
