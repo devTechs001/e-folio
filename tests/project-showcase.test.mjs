@@ -1,7 +1,8 @@
 /**
- * Regression checks: the verified CellarKeep client-portal link added to the
- * public Projects section. Node-only static checks — no DB, no network, no
- * browser and no external service. Confidential: local checkout only.
+ * Regression checks: the verified external project links (CellarKeep client
+ * portal and HomeScape property marketplace) shown in the public Projects
+ * section. Node-only static checks — no DB, no network, no browser and no
+ * external service. Confidential: local checkout only.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -22,15 +23,43 @@ const check = (name, fn) => {
 
 /* ---------------------------------- data ---------------------------------- */
 
-check('the new project link is stored exactly once in the shared JSON', () => {
+check('the CellarKeep project link is stored exactly once in the shared JSON', () => {
     const data = json('src/data/projectShowcase.json');
-    assert.equal(data.projects.length, 1);
+    assert.equal(data.projects.length, 2);
     assert.equal(data.projects[0].url, URL);
     assert.equal(data.projects[0].slug, 'cellarkeep-client-portal');
     assert.equal(data.projects[0].title, 'CellarKeep — Client Portal');
     assert.equal(data.projects[0].category, 'Web');
     assert.equal(data.projects[0].status, 'live');
     assert.equal((read('src/data/projectShowcase.json').match(/liqourstor\.netlify\.app\/client/g) || []).length, 1);
+});
+
+check('HomeScape is an append-only second entry with the exact supplied URL', () => {
+    const data = json('src/data/projectShowcase.json');
+    const project = data.projects.find(p => p.slug === 'homescape-property-marketplace');
+    assert.ok(project, 'the HomeScape entry must exist');
+    assert.equal(project.url, 'https://homescape-pro.netlify.app/');
+    assert.equal(project.title, 'HomeScape — Property Marketplace');
+    assert.equal(project.category, 'Web');
+    assert.equal(project.status, 'live');
+    assert.equal(project.linkLabel, 'Browse properties');
+    assert.equal((read('src/data/projectShowcase.json').match(/homescape-pro\.netlify\.app\//g) || []).length, 1);
+    assert.equal(data.projects[0].slug, 'cellarkeep-client-portal');
+    assert.equal(data.projects[0].url, URL);
+    assert.equal(data.projects[0].linkLabel, 'Open client portal');
+    assert.equal(new Set(data.projects.map(p => p.slug)).size, data.projects.length);
+});
+
+check('the HomeScape card claims no fabricated stack, metrics or security features', () => {
+    const project = json('src/data/projectShowcase.json').projects[1];
+    assert.deepEqual(project.technologies, []);
+    assert.deepEqual(project.securityNotes, []);
+    for (const key of ['views', 'likes', 'achievements', 'metrics', 'uptime', 'users', 'orders']) {
+        assert.equal(project[key], undefined, `must not fabricate ${key}`);
+    }
+    assert.ok(project.features.length >= 3);
+    assert.match(project.description, /property marketplace/i);
+    assert.match(project.note, /illustrative examples/i);
 });
 
 check('no invented stack, statistics or achievements are attached to the link', () => {
@@ -74,6 +103,14 @@ check('both public Projects surfaces render the shared showcase', () => {
         assert.match(src, /<ProjectShowcase/);
     }
     assert.match(read('src/components/Projects.jsx'), /<ProjectShowcase compact \/>/);
+});
+
+check('each card uses its own link label and only renders notes it actually has', () => {
+    const src = read('src/components/ProjectShowcase.jsx');
+    assert.match(src, /project\.linkLabel \|\| 'Open project'/);
+    assert.match(src, /project\.securityNotes\.length > 0/);
+    assert.match(src, /project\.note && <p className="showcase-card__note">/);
+    assert.doesNotMatch(src, />\s*Open client portal </);
 });
 
 check('the card has a real copy action and an offline hint', () => {

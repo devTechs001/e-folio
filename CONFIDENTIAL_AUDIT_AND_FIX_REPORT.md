@@ -9,8 +9,8 @@
 |---|---|
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
-| Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz |
+| Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -24,8 +24,12 @@ Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
 Resources page, live preview + lagging issues, CellarKeep client-portal link in
-Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
-**local only** — no push, PR, merge, external issue, or external service was used.
+Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
+subsequently merged into this repository's own `origin/main` via PR #3
+(merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
+Phase 14 (§3n, HomeScape property-marketplace link in Projects) is **local only**
+on the new active branch `arena/28000c5e-e-folio` — no push, PR, merge,
+external issue, or external service has been used for it.
 
 ---
 
@@ -42,6 +46,7 @@ Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| HomeScape link → Projects (phase 14) | no entry for the property marketplace; the card button text was hardcoded for one project | `https://homescape-pro.netlify.app/` appended as a second record in the shared showcase JSON, data-driven button label and conditional notes, 13 new regression checks; NetGate/NEX Store/CellarKeep/OmniBiz links untouched |
 | E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
 | Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
@@ -1022,6 +1027,36 @@ The retired BizSolutionz URL and the `demo-ecommerce` placeholder no longer appe
 
 ---
 
+## 3n. Phase 14 — add the HomeScape property marketplace to Projects
+
+Request: *"[https://homescape-pro.netlify.app/](https://homescape-pro.netlify.app/)"*, followed by *"continue"* on the new active branch. As with the earlier bare-link request (§3k), this was handled as **an append-only new Projects entry**, not as a replacement for any existing project link. The destination was read once, read-only: it serves **"HomeScape - Find Your Perfect Home | HomeScape"**, a property marketplace with listing search by type/city/price, seller accounts, price estimates, saved properties, owner inquiries, viewing appointments, and showcase homes clearly labelled as illustrative examples. No workspace code, data or credential was sent to that site. The URL is stored exactly as supplied, including its trailing slash.
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `src/data/projectShowcase.json` | Appended a second reviewed record (`homescape-property-marketplace`). The CellarKeep record keeps its URL, title, description, features and security notes; the only addition to it is an optional `linkLabel` so its button still reads "Open client portal". |
+| `src/components/ProjectShowcase.jsx` | The open-button label is now per-project (`linkLabel`), an optional factual `note` can be shown, and the "As described on the live page" block renders only when a project actually has security notes. Both cards render automatically from the shared array. |
+| `src/styles/ProjectShowcase.css` | Added a small style for the factual note. The existing auto-fit grid already lays out two cards, so no layout rule was replaced. |
+| `tests/project-showcase.test.mjs`, `tests/homescape-link.test.mjs` | 15 showcase checks (3 added) plus 13 new HomeScape checks; `test:homescape-link` wired into both `test` scripts. |
+
+`server/scripts/seedProjectShowcase.js` needed no edit: it already iterates the shared JSON and upserts one `portfolio-showcase`-tagged record per entry, so `npm run seed:showcase` against a configured MongoDB will add HomeScape without touching existing project documents. There is no database in this sandbox, so no write was performed. No seed or backup file was overwritten or deleted.
+
+### Explicitly not changed
+
+- The **NetGate link** (`https://net-gate-portal.netlify.app/`) and all its files — this honours the standing "do not replace the previous NetGate link in projects" instruction. Also untouched: NEX Store, CellarKeep, the OmniBiz E-Commerce links, the generated public snapshot, `scripts/seed-projects.js`, and every other project record and link.
+- No invented technology stack, views, likes, metrics, achievements or security claims. The HomeScape record has empty `technologies` and `securityNotes`; its description, features and note come only from the live page copy, and its showcase homes are described as illustrative rather than live listings.
+- No push, PR, merge, external issue, external write or offensive testing. This phase is local-only on `arena/28000c5e-e-folio`.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **19.71s**, PWA **216 precache entries (7001.15 KiB)**.
+- **157** Node-only regression checks in total (**13** new HomeScape checks and **3** added to the project-showcase suite). `git diff --check` clean; masked secret scan clean.
+- The built JS contains the new URL **1 time** (inlined from the shared JSON) and the retired/placeholder E-Commerce URLs **0 times**; the production build still contains no dev-diagnostics panel. Both live previews (5173 dev / 4173 production build) return 200 and the dev preview serves the new card.
+- NetGate URL counts are unchanged in `src/data/labSamples.json`, `src/data/testimonialSamples.json`, `server/backups/testimonials/*` and `src/data/publicSnapshot.json`; the new URL appears in exactly one `src/` or `server/` source file (the shared showcase JSON).
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1084,6 +1119,10 @@ The retired BizSolutionz URL and the `demo-ecommerce` placeholder no longer appe
     so existing E-Commerce project documents also pick up the new OmniBiz
     link; the local file changes take effect immediately in the offline
     snapshot but cannot rewrite live DB records without a database.
+19. Phase 14 follow-up: run `npm run seed:showcase` against a configured
+    MongoDB so the new HomeScape record appears in `/dashboard/projects` and
+    `GET /api/public/projects` alongside the CellarKeep record; no database
+    was available in this sandbox.
 
 ---
 
@@ -1096,5 +1135,18 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 are local-only work on `arena/f176a951-e-folio`; they have
-**not** been pushed, opened as a PR, or merged.
+this repository.
+
+After the later explicit **"push t main"** instruction, phases 3–13 (12 commits,
+115 changed files) were pushed from `arena/f176a951-e-folio`, opened as
+[PR #3](https://github.com/devTechs001/e-folio/pull/3) and merged into `main`
+with merge commit `3b97ef479dd260c0a6a784a4a872a98a21a54e42` at
+`2026-11-03T13:27:34Z`. `origin/main` was 0 commits ahead and 12 behind, so
+there was no conflict. Before the merge, `npm run check` exited 0 and a masked
+secret scan over all 115 changed files found 0 findings. A later docs-only PR #4
+was opened to record that merge note; remote access became blocked for the
+merged branch before its status could be confirmed, so the correction is
+re-applied on this branch. No credential value was included in any PR body.
+
+Phase 14 (§3n) is local-only work on `arena/28000c5e-e-folio`; it has **not**
+been pushed, opened as a PR, or merged.

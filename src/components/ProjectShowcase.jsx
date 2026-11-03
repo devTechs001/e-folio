@@ -50,23 +50,26 @@ const ShowcaseCard = ({ project }) => {
             <span className="showcase-card__badge">{project.label}</span>
             <h3 className="showcase-card__title">{project.title}</h3>
             <p className="showcase-card__description">{project.description}</p>
+            {project.note && <p className="showcase-card__note">{project.note}</p>}
 
             <ul className="showcase-card__features">
                 {project.features.map(feature => <li key={feature}>{feature}</li>)}
             </ul>
 
-            <div className="showcase-card__security">
-                <p className="showcase-card__security-heading">
-                    <ShieldCheck size={15} aria-hidden="true" /> As described on the live page
-                </p>
-                <ul>
-                    {project.securityNotes.map(note => <li key={note}>{note}</li>)}
-                </ul>
-            </div>
+            {project.securityNotes.length > 0 && (
+                <div className="showcase-card__security">
+                    <p className="showcase-card__security-heading">
+                        <ShieldCheck size={15} aria-hidden="true" /> As described on the live page
+                    </p>
+                    <ul>
+                        {project.securityNotes.map(note => <li key={note}>{note}</li>)}
+                    </ul>
+                </div>
+            )}
 
             <div className="showcase-card__actions">
                 <a {...anchor} className="showcase-card__open">
-                    Open client portal <ArrowUpRight size={16} aria-hidden="true" />
+                    {project.linkLabel || 'Open project'} <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
                 <button
                     type="button"

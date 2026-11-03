@@ -30,6 +30,34 @@
         "mpesa",
         "receipt-verification"
       ],
+      "verifiedAt": "2026-11-03",
+      "linkLabel": "Open client portal"
+    },
+    {
+      "slug": "homescape-property-marketplace",
+      "title": "HomeScape — Property Marketplace",
+      "label": "Featured · Property marketplace",
+      "url": "https://homescape-pro.netlify.app/",
+      "linkLabel": "Browse properties",
+      "description": "A property marketplace for finding a home: search listings by type, city and price, contact owners, save properties and request viewings.",
+      "features": [
+        "Search by property type, city, price and buy or rent",
+        "Seller accounts for managing listings and inquiries",
+        "Saved properties, owner inquiries and viewing appointments",
+        "Indicative price estimates based on active asking prices"
+      ],
+      "note": "Showcase homes on the live page are labelled illustrative examples; they are not available to buy or rent.",
+      "securityNotes": [],
+      "category": "Web",
+      "status": "live",
+      "technologies": [],
+      "tags": [
+        "property-marketplace",
+        "real-estate",
+        "listings",
+        "seller-accounts",
+        "saved-properties"
+      ],
       "verifiedAt": "2026-11-03"
     }
   ]
