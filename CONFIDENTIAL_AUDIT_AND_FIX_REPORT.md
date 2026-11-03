@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,12 +19,13 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phases 3–10 (collaboration & review,
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–11 (collaboration & review,
 Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
-Resources page, live preview + lagging issues) are **local only** — no push, PR,
-merge, external issue, or external service was used.
+Resources page, live preview + lagging issues, CellarKeep client-portal link in
+Projects) are **local only** — no push, PR, merge, external issue, or external
+service was used.
 
 ---
 
@@ -41,6 +42,7 @@ merge, external issue, or external service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
 | Live preview + lagging issues (phase 10) | browser-facing code called localhost and hung 15 s per request; 1 s fake loader; dead raw WS retrying every 5 s; uncached file scans | same-origin `/api` + proxy fixes, no artificial loader, hidden-tab timer guards, authenticated tracking namespace, 30 s inventory caches, preview-safe Vite host/proxy |
 | Security Audit dashboard (phase 9) | audit results only existed as terminal output from `npm run audit:security` | owner-only `/dashboard/security-audit` with real cached/rate-limited audit API, findings, checks, controls, environment presence and JSON export |
 | Resources page (phase 9) | no inventory of local docs/backups/scripts/tests; no curated reference list | owner-only `/dashboard/resources` with allowlisted metadata-only file inventory, filters, JSON/CSV export and 15 verified security references (9 external + 6 internal) |
@@ -903,6 +905,45 @@ Request: *"previre live,,laggin gissues"*. Two parts: make the app available as 
 
 ---
 
+## 3k. Phase 11 — add the CellarKeep client portal to Projects
+
+Request: *"[https://liqourstor.netlify.app/client](https://liqourstor.netlify.app/client), add to projects"*.
+
+The destination was read once, read-only, to describe it accurately: it is
+**"Cellarkeep — Liquor store management"**, a protected client portal offering
+client accounts, a loyalty club, order tracking, concierge chat, and verified
+M-PESA / card receipts (CKV seals). Its own copy lists password hashing with a
+brute-force lockout, HttpOnly `SameSite=Strict` cookies, six-digit OTP
+verification and HMAC-SHA256 receipt seals. No workspace code, data or
+credential was sent to that site, and the URL's exact spelling
+(`liqourstor`, `/client`) is preserved.
+
+### What was added
+
+| File | Purpose |
+| --- | --- |
+| `src/data/projectShowcase.json` | One shared source of truth for the new verified link. One entry, no invented technology stack, view/like counts, achievements or metrics. Add another object here to publish another link. |
+| `src/utils/projectShowcase.js` | Freezes the entries, rejects any non-HTTPS / credential-bearing URL, and supplies consistent `target="_blank"`, `rel="noopener noreferrer"` and `referrerPolicy="no-referrer"` anchor attributes. |
+| `src/components/ProjectShowcase.jsx` + `src/styles/ProjectShowcase.css` | Accessible card with the verified description, feature and security notes, a real clipboard copy action, an offline hint and safe external anchors. No QR, no fake counters. |
+| `src/pages/Projects.jsx` and `src/components/Projects.jsx` | Renders the showcase in both public Projects surfaces; the first is the section included by `LandingPage.jsx`, so the link is visible in the live preview immediately without a database. |
+| `server/scripts/seedProjectShowcase.js` | Idempotent CLI that creates **real `Project` documents** from the same JSON, tagged `portfolio-showcase`, with `views: 0` and `likes: 0`. `--remove` deletes only records bearing that tag. Registered as `seed:showcase` / `seed:showcase:remove` in both package files. |
+| `tests/project-showcase.test.mjs` | 12 Node-only regression checks; wired into both `test` scripts as `test:project-showcase`. |
+
+### Explicitly not changed
+
+- No existing project record, seed script, backup, sample dataset or project link was edited. The NetGate link (`https://net-gate-portal.netlify.app/`) and the NEX Store link are untouched and covered by an assertion.
+- No MongoDB insert was executed here — there is no `mongod`, no server dependencies and no configured database in this sandbox. Run `npm run seed:showcase` against a configured MongoDB to make the record appear in `/dashboard/projects` and `GET /api/public/projects`; the public showcase card needs no database.
+- Local-only work: no push, PR, merge, external issue, external write or offensive testing.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **22.28s**, PWA **215 precache entries (6972.63 KiB)**.
+- **118** Node-only regression checks in total (**12** new project-showcase checks); the live preview (ports 5173 dev / 4173 production build) serves the new module and JSON with 200.
+- `git diff --check` clean; masked secret scan clean; the NetGate/project-link changed-file filter is empty.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -953,6 +994,10 @@ Request: *"previre live,,laggin gissues"*. Two parts: make the app available as 
     Web Vitals) once a backend and browser automation are available, split the
     remaining >500 kB lazy chunks, and self-host/subset the Google Fonts
     stylesheet.
+16. Phase 11 follow-up: run `npm run seed:showcase` against a configured
+    MongoDB and verify the new record in `/dashboard/projects` and
+    `GET /api/public/projects` with a real owner account; no database was
+    available in this sandbox.
 
 ---
 
@@ -965,5 +1010,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8, 9 and 10 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10 and 11 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

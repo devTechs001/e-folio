@@ -1,0 +1,36 @@
+{
+  "description": "Verified external project links shown in the public Projects section. The same file drives the UI cards and the idempotent MongoDB seeder, so the portfolio and the database can never drift apart. Add an object here to publish another link.",
+  "tag": "portfolio-showcase",
+  "source": "Descriptions were read from the live pages on 2026-11-03. No invented statistics, technology stack, metrics or achievements are included.",
+  "projects": [
+    {
+      "slug": "cellarkeep-client-portal",
+      "title": "CellarKeep — Client Portal",
+      "label": "Featured · Client portal",
+      "url": "https://liqourstor.netlify.app/client",
+      "description": "Secure client portal for a liquor store management system: dedicated client accounts, a loyalty club, order tracking, and verified M-PESA and card receipts.",
+      "features": [
+        "Client sign-in and account creation",
+        "Loyalty points, tasting programmes and concierge chat",
+        "Order tracking and verified receipts"
+      ],
+      "securityNotes": [
+        "Password hashing with brute-force lockout",
+        "HttpOnly SameSite=Strict session cookies",
+        "Six-digit OTP account verification",
+        "HMAC-SHA256 payment receipt seals"
+      ],
+      "category": "Web",
+      "status": "live",
+      "technologies": [],
+      "tags": [
+        "client-portal",
+        "liquor-store",
+        "loyalty",
+        "mpesa",
+        "receipt-verification"
+      ],
+      "verifiedAt": "2026-11-03"
+    }
+  ]
+}

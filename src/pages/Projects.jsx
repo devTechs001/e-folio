@@ -9,6 +9,7 @@ import ProjectShare from './ProjectShare';
 import ImageLightbox from './ImageLightbox';
 import ProjectFilters from './ProjectFilters';
 import NexStoreCard from '../components/NexStoreCard';
+import ProjectShowcase from '../components/ProjectShowcase';
 import '../styles/Projects.css';
 
 const Projects = () => {
@@ -395,6 +396,11 @@ const Projects = () => {
                     {/* Enhanced featured link: same destination, real copy/share/QR actions. */}
                     <div className="flex justify-center mb-8 w-full">
                         <NexStoreCard variant="banner" />
+                    </div>
+
+                    {/* Additional verified external project links (shared JSON + seeder). */}
+                    <div className="flex justify-center mb-8 w-full">
+                        <ProjectShowcase />
                     </div>
 
                     {/* Stats Cards */}

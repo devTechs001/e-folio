@@ -7,6 +7,7 @@ import ProjectCard from './ProjectCard';
 import ProjectModal from '../pages/ProjectModal';
 import ImageLightbox from '../pages/ImageLightbox';
 import NexStoreCard from './NexStoreCard';
+import ProjectShowcase from './ProjectShowcase';
 import '../styles/Projects.css';
 
 const Projects = () => {
@@ -62,6 +63,8 @@ const Projects = () => {
                     </button>
                 </div>
             </div>
+
+            <ProjectShowcase compact />
 
             <ProjectFilters
                 filters={filters}

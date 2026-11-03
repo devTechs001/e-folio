@@ -30,7 +30,7 @@
     "audit:security": "node server/scripts/security-audit.js",
     "test:load": "node server/tests/load/smoke-load.js",
     "check": "npm run lint && npm test && npm run build",
-    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs",
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs",
     "test:dashboards": "node tests/dashboard-api.test.mjs",
     "test:collaboration": "node tests/collaboration-review.test.mjs",
     "seed:lab": "node server/scripts/seedLabSamples.js",
@@ -47,7 +47,10 @@
     "test:about-workspace": "node tests/about-user-workspace.test.mjs",
     "test:user-workspace": "node tests/user-workspace-realtime.test.mjs",
     "test:security-resources": "node tests/security-resources-page.test.mjs",
-    "test:live-preview": "node tests/live-preview-lag.test.mjs"
+    "test:live-preview": "node tests/live-preview-lag.test.mjs",
+    "seed:showcase": "node server/scripts/seedProjectShowcase.js",
+    "seed:showcase:remove": "node server/scripts/seedProjectShowcase.js --remove",
+    "test:project-showcase": "node tests/project-showcase.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
