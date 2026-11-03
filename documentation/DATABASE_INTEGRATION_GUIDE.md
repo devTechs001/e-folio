@@ -33,9 +33,9 @@ CLIENT_URL=http://localhost:5173
 APP_URL=http://localhost:5173
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/efolio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 # Or use MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/efolio
+# MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 
 # Authentication
 JWT_SECRET=your_super_secret_key_change_this_in_production
@@ -509,7 +509,7 @@ JWT_SECRET=generate_a_very_strong_random_key_here
 SESSION_SECRET=another_strong_random_key
 
 # MongoDB Atlas connection
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/efolio?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 
 # Production URLs
 CLIENT_URL=https://your-domain.com

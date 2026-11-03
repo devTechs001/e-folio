@@ -7,161 +7,179 @@ class SocketService {
     constructor() {
         this.socket = null;
         this.connected = false;
+        this.trackingSocket = null;
+        // Buffered listeners so components can subscribe before the socket is
+        // created, and keep their subscriptions across reconnects.
+        this.listeners = new Map();
+        this.trackingListeners = new Map();
+    }
+
+    #addListener(map, event, callback) {
+        if (!map.has(event)) map.set(event, new Set());
+        map.get(event).add(callback);
+    }
+
+    #removeListener(map, event, callback) {
+        const set = map.get(event);
+        if (!set) return;
+        if (callback) set.delete(callback);
+        else set.clear();
+        if (set.size === 0) map.delete(event);
+    }
+
+    #attach(map, socket) {
+        for (const [event, callbacks] of map.entries()) {
+            for (const callback of callbacks) socket.on(event, callback);
+        }
     }
 
     // Connect to Socket.io server
     connect(userData) {
-        if (this.socket?.connected) {
-            return this.socket;
-        }
-        if (this.socket) {
-            this.disconnect();
-        }
+        if (this.socket?.connected) return this.socket;
+        if (this.socket) this.disconnect();
 
         this.socket = io(SOCKET_URL, {
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionDelay: 1000,
-            reconnectionAttempts: 5,
-            timeout: 20000, // 20 seconds
+            reconnectionDelayMax: 10000,
+            reconnectionAttempts: 20,
+            timeout: 20000,
             autoConnect: true
         });
 
-        this.socket.on('connect', () => {
-            console.log('✅ Socket connected:', this.socket.id);
+        const socket = this.socket;
+
+        socket.on('connect', () => {
             this.connected = true;
-            
-            // Authenticate user
-            if (userData) {
-                this.authenticate(userData);
-            }
+            if (userData) this.authenticate(userData);
         });
 
-        this.socket.on('disconnect', (reason) => {
-            console.log('❌ Socket disconnected:', reason);
+        socket.on('disconnect', (reason) => {
             this.connected = false;
-            
-            // Try to reconnect on server disconnect
+            // A server-side disconnect disables auto-reconnect; reconnect
+            // explicitly but keep the buffered application listeners intact.
             if (reason === 'io server disconnect') {
                 setTimeout(() => {
-                    this.connect(userData);
+                    if (!this.socket?.connected) this.connect(userData);
                 }, 1000);
             }
         });
 
-        this.socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error);
-            console.error('Error details:', {
-                message: error.message,
-                type: error.type,
-                description: error.description
-            });
+        socket.on('connect_error', (error) => {
+            console.warn('Socket connection error:', error?.message || error);
         });
 
-        this.socket.on('reconnect_attempt', (attemptNumber) => {
-            console.log(`🔄 Reconnection attempt #${attemptNumber}`);
+        socket.on('reconnect_failed', () => {
+            this.connected = false;
+            console.warn('Real-time connection could not be restored');
         });
 
-        this.socket.on('reconnect', (attemptNumber) => {
-            console.log(`🔄 Successful reconnection after ${attemptNumber} attempts`);
-            this.connected = true;
-        });
-
-        this.socket.on('reconnect_error', (error) => {
-            console.error('Reconnection error:', error);
-        });
-
-        this.socket.on('reconnect_failed', () => {
-            console.error('❌ Reconnection failed after max attempts');
-        });
-
-        return this.socket;
+        this.#attach(this.listeners, socket);
+        return socket;
     }
 
     // Disconnect from server
     disconnect() {
         if (this.socket) {
+            this.socket.removeAllListeners();
             this.socket.disconnect();
             this.socket = null;
-            this.connected = false;
         }
+        this.connected = false;
+    }
+
+    /** Owner-only tracking namespace (replaces the dead raw /tracking WS). */
+    connectTracking() {
+        if (this.trackingSocket?.connected) return this.trackingSocket;
+        if (this.trackingSocket) this.disconnectTracking();
+
+        const token = localStorage.getItem('token');
+        this.trackingSocket = io(`${SOCKET_URL}/tracking`, {
+            auth: { token },
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 10000,
+            reconnectionAttempts: 20
+        });
+        this.#attach(this.trackingListeners, this.trackingSocket);
+        return this.trackingSocket;
+    }
+
+    disconnectTracking() {
+        if (this.trackingSocket) {
+            this.trackingSocket.removeAllListeners();
+            this.trackingSocket.disconnect();
+            this.trackingSocket = null;
+        }
+    }
+
+    onTrackingEvent(callback) {
+        this.#addListener(this.trackingListeners, 'tracking:event', callback);
+        this.trackingSocket?.on('tracking:event', callback);
+    }
+
+    offTrackingEvent(callback) {
+        this.#removeListener(this.trackingListeners, 'tracking:event', callback);
+        this.trackingSocket?.off('tracking:event', callback);
     }
 
     // Authenticate user
     authenticate(userData) {
-        if (this.socket) {
-            this.socket.emit('authenticate', userData);
-        }
+        if (this.socket) this.socket.emit('authenticate', userData);
     }
 
     // Join chat room
     joinRoom(roomId) {
-        if (this.socket) {
-            this.socket.emit('join_room', roomId);
-        }
+        if (this.socket) this.socket.emit('join_room', roomId);
     }
 
     // Leave chat room
     leaveRoom(roomId) {
-        if (this.socket) {
-            this.socket.emit('leave_room', roomId);
-        }
+        if (this.socket) this.socket.emit('leave_room', roomId);
     }
 
     // Send message
     sendMessage(roomId, message) {
-        if (this.socket) {
-            this.socket.emit('send_message', { roomId, message });
-        }
+        if (this.socket) this.socket.emit('send_message', { roomId, message });
     }
 
     // Typing indicator
     setTyping(roomId, isTyping) {
-        if (this.socket) {
-            this.socket.emit('typing', { roomId, isTyping });
-        }
+        if (this.socket) this.socket.emit('typing', { roomId, isTyping });
     }
 
     // Update user status
     updateStatus(status) {
-        if (this.socket) {
-            this.socket.emit('update_status', status);
-        }
+        if (this.socket) this.socket.emit('update_status', status);
     }
 
-    // Listen for events
+    // Listen for events (works before connect() and survives reconnects)
     on(event, callback) {
-        if (this.socket) {
-            this.socket.on(event, callback);
-        }
+        this.#addListener(this.listeners, event, callback);
+        this.socket?.on(event, callback);
     }
 
     // Remove event listener
     off(event, callback) {
-        if (this.socket) {
-            this.socket.off(event, callback);
-        }
+        this.#removeListener(this.listeners, event, callback);
+        this.socket?.off(event, callback);
     }
 
     // Join settings room
     joinSettings(userId) {
-        if (this.socket) {
-            this.socket.emit('join', userId);
-        }
+        if (this.socket) this.socket.emit('join', userId);
     }
 
     // Emit settings update
     emitSettingsUpdate(data) {
-        if (this.socket) {
-            this.socket.emit('settings:update', data);
-        }
+        if (this.socket) this.socket.emit('settings:update', data);
     }
 
     // Listen for settings updates
     onSettingsUpdated(callback) {
-        if (this.socket) {
-            this.socket.on('settings:updated', callback);
-        }
+        this.on('settings:updated', callback);
     }
 
     // Get connection status

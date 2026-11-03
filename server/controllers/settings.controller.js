@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs').promises;
+const totp = require('../utils/totp');
 
 class SettingsController {
     // Get user settings
@@ -491,9 +492,6 @@ class SettingsController {
     async enable2FA(req, res) {
         try {
             const userId = req.user.id;
-            const speakeasy = require('speakeasy');
-            const QRCode = require('qrcode');
-
             const user = await User.findById(userId);
             if (!user) {
                 return res.status(404).json({
@@ -502,27 +500,22 @@ class SettingsController {
                 });
             }
 
-            // Generate secret
-            const secret = speakeasy.generateSecret({
-                name: `Portfolio (${user.email})`,
-                length: 32
+            // Generate secret locally; the client renders the otpauth URL.
+            const secret = totp.generateSecret(32);
+            const otpauthUrl = totp.buildOtpauthUrl({
+                secret,
+                label: user.email || 'user'
             });
 
-            // Generate QR code
-            const qrCode = await QRCode.toDataURL(secret.otpauth_url);
-
             // Store secret temporarily (will be confirmed after verification)
-            user.twoFactorSecret = secret.base32;
-            user.twoFactorTempSecret = secret.base32;
+            user.twoFactorSecret = secret;
+            user.twoFactorTempSecret = secret;
             await user.save();
 
             res.json({
                 success: true,
                 message: '2FA secret generated',
-                data: {
-                    secret: secret.base32,
-                    qrCode
-                }
+                data: { secret, otpauthUrl }
             });
         } catch (error) {
             console.error('Enable 2FA error:', error);
@@ -538,7 +531,6 @@ class SettingsController {
         try {
             const userId = req.user.id;
             const { token } = req.body;
-            const speakeasy = require('speakeasy');
 
             const user = await User.findById(userId);
             if (!user || !user.twoFactorTempSecret) {
@@ -549,12 +541,7 @@ class SettingsController {
             }
 
             // Verify token
-            const verified = speakeasy.totp.verify({
-                secret: user.twoFactorTempSecret,
-                encoding: 'base32',
-                token,
-                window: 2
-            });
+            const verified = totp.verify({ secret: user.twoFactorTempSecret, token, window: 2 });
 
             if (!verified) {
                 return res.status(400).json({
@@ -598,7 +585,6 @@ class SettingsController {
         try {
             const userId = req.user.id;
             const { password, token } = req.body;
-            const speakeasy = require('speakeasy');
 
             const user = await User.findById(userId);
             if (!user) {
@@ -618,12 +604,7 @@ class SettingsController {
             }
 
             // Verify 2FA token
-            const verified = speakeasy.totp.verify({
-                secret: user.twoFactorSecret,
-                encoding: 'base32',
-                token,
-                window: 2
-            });
+            const verified = totp.verify({ secret: user.twoFactorSecret, token, window: 2 });
 
             if (!verified) {
                 return res.status(400).json({
@@ -782,7 +763,7 @@ class SettingsController {
     }
 
     async testWebhook(webhook) {
-        const axios = require('axios');
+        const axios = require('../utils/httpClient');
         try {
             await axios.post(webhook.url, {
                 event: 'webhook.test',

@@ -1,5 +1,5 @@
 // services/GeoLocationService.js
-const axios = require('axios');
+const axios = require('../utils/httpClient');
 
 class GeoLocationService {
     static async getLocation(ip) {

@@ -38,6 +38,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
+import QRCode from 'qrcode';
 import DashboardLayout from './DashboardLayout';
 
 const Settings = () => {
@@ -53,6 +54,13 @@ const Settings = () => {
     const [imagePreview, setImagePreview] = useState(user?.avatar || '');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [show2FAModal, setShow2FAModal] = useState(false);
+    const [twoFactorMode, setTwoFactorMode] = useState('setup');
+    const [twoFactorSetup, setTwoFactorSetup] = useState(null);
+    const [twoFactorToken, setTwoFactorToken] = useState('');
+    const [twoFactorPassword, setTwoFactorPassword] = useState('');
+    const [twoFactorBackupCodes, setTwoFactorBackupCodes] = useState([]);
+    const [twoFactorBusy, setTwoFactorBusy] = useState(false);
     const [apiKeys, setApiKeys] = useState([]);
     const [webhooks, setWebhooks] = useState([]);
     const [sessions, setSessions] = useState([]);
@@ -116,6 +124,73 @@ const Settings = () => {
     });
 
     const [errors, setErrors] = useState({});
+
+    const open2FADisable = () => {
+        setTwoFactorMode('disable');
+        setTwoFactorSetup(null);
+        setTwoFactorToken('');
+        setTwoFactorPassword('');
+        setTwoFactorBackupCodes([]);
+        setShow2FAModal(true);
+    };
+
+    const open2FASetup = async () => {
+        setTwoFactorBusy(true);
+        try {
+            const response = await apiService.enable2FA();
+            const data = response?.data || {};
+            if (!data.secret || !data.otpauthUrl) throw new Error('Unexpected 2FA setup response');
+            let qrDataUrl = '';
+            try {
+                qrDataUrl = await QRCode.toDataURL(data.otpauthUrl);
+            } catch (qrError) {
+                console.warn('QR rendering unavailable:', qrError);
+            }
+            setTwoFactorSetup({ ...data, qrDataUrl });
+            setTwoFactorMode('setup');
+            setTwoFactorToken('');
+            setTwoFactorBackupCodes([]);
+            setShow2FAModal(true);
+        } catch (err) {
+            showError(err.message || 'Unable to start two-factor setup');
+        } finally {
+            setTwoFactorBusy(false);
+        }
+    };
+
+    const submit2FA = async () => {
+        if (!/^\d{6}$/.test(twoFactorToken)) {
+            showError('Enter the 6-digit code from your authenticator app');
+            return;
+        }
+        setTwoFactorBusy(true);
+        try {
+            if (twoFactorMode === 'disable') {
+                const response = await apiService.disable2FA(twoFactorPassword, twoFactorToken);
+                if (response?.success === false) throw new Error(response.message || 'Could not disable 2FA');
+                setSettings(prev => ({
+                    ...prev,
+                    security: { ...prev.security, twoFactorEnabled: false }
+                }));
+                success('Two-factor authentication disabled');
+                setShow2FAModal(false);
+            } else {
+                const response = await apiService.verify2FA(twoFactorToken);
+                if (response?.success === false) throw new Error(response.message || 'Could not verify code');
+                setSettings(prev => ({
+                    ...prev,
+                    security: { ...prev.security, twoFactorEnabled: true }
+                }));
+                setTwoFactorBackupCodes(response?.backupCodes || []);
+                setTwoFactorMode('backup');
+                success('Two-factor authentication enabled');
+            }
+        } catch (err) {
+            showError(err.message || 'Two-factor verification failed');
+        } finally {
+            setTwoFactorBusy(false);
+        }
+    };
 
     useEffect(() => {
         loadUserSettings();
@@ -1179,7 +1254,9 @@ const Settings = () => {
                                             </p>
                                         </div>
                                         <button
-                                            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                                            disabled={twoFactorBusy}
+                                            onClick={settings.security.twoFactorEnabled ? open2FADisable : open2FASetup}
+                                            className={`px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 ${
                                                 settings.security.twoFactorEnabled
                                                     ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30'
                                                     : 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30'
@@ -1542,6 +1619,86 @@ const Settings = () => {
                                     Cancel
                                 </button>
                             </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Two-factor authentication modal */}
+            <AnimatePresence>
+                {show2FAModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        onClick={() => setShow2FAModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-slate-800 rounded-xl p-6 max-w-md w-full border border-slate-700"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h3 className="text-2xl font-bold text-white mb-4">
+                                {twoFactorMode === 'disable' ? 'Disable 2FA' : 'Set up 2FA'}
+                            </h3>
+
+                            {twoFactorMode === 'backup' ? (
+                                <div className="space-y-4">
+                                    <p className="text-slate-300 text-sm">
+                                        Save these one-time backup codes. They will not be shown again.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {twoFactorBackupCodes.map((code, index) => (
+                                            <code key={index} className="px-3 py-2 bg-slate-900 rounded text-cyan-300 text-sm">{code}</code>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => setShow2FAModal(false)} className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg font-semibold">Done</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {twoFactorMode === 'setup' && twoFactorSetup && (
+                                        <div className="text-center">
+                                            {twoFactorSetup.qrDataUrl ? (
+                                                <img src={twoFactorSetup.qrDataUrl} alt="Authenticator QR code" className="mx-auto w-44 h-44 bg-white p-2 rounded-lg" />
+                                            ) : (
+                                                <p className="text-slate-400 text-sm">QR rendering unavailable — enter the secret manually.</p>
+                                            )}
+                                            <p className="text-slate-400 text-xs mt-3 break-all">Secret: <code className="text-cyan-300">{twoFactorSetup.secret}</code></p>
+                                        </div>
+                                    )}
+                                    {twoFactorMode === 'disable' && (
+                                        <input
+                                            type="password"
+                                            placeholder="Account password"
+                                            value={twoFactorPassword}
+                                            onChange={(e) => setTwoFactorPassword(e.target.value)}
+                                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                        />
+                                    )}
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        placeholder="6-digit authenticator code"
+                                        value={twoFactorToken}
+                                        onChange={(e) => setTwoFactorToken(e.target.value.replace(/\D/g, ''))}
+                                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    />
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={submit2FA}
+                                            disabled={twoFactorBusy}
+                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold disabled:opacity-50"
+                                        >
+                                            {twoFactorMode === 'disable' ? 'Disable 2FA' : 'Verify & enable'}
+                                        </button>
+                                        <button onClick={() => setShow2FAModal(false)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-lg font-semibold">Cancel</button>
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}

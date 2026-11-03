@@ -53,8 +53,8 @@ VITE_API_URL=http://localhost:5000/api
 
 ```bash
 # DATABASE CONFIGURATION
-MONGODB_URI=mongodb://localhost:27017/e-folio
-# Production: mongodb+srv://<username>:<password>@cluster1.1frrfrb.mongodb.net/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
+# Production: mongodb+srv://<username>:<password>@<cluster>/<database>
 
 # AUTHENTICATION & OWNER ACCOUNT
 OWNER_EMAIL=devtechs842@gmail.com
@@ -156,7 +156,7 @@ Created three new documentation files:
 4. Verify these exist:
 
 ```
-MONGODB_URI=mongodb+srv://danielmukula8_db_user:YOUR_MONGODB_PASSWORD@cluster0.joo25jc.mongodb.net/?appName=Cluster0
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 CLIENT_URL=https://e-folio-pro.netlify.app
 JWT_SECRET=(should exist)
 OWNER_PASSWORD=pass1234

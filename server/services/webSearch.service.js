@@ -1,4 +1,4 @@
-const axios = require('axios');
+const axios = require('../utils/httpClient');
 const { execSync } = require('child_process');
 const path = require('path');
 

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const Invite = require('../models/Invite.model');
 const ActivityLog = require('../models/ActivityLog');
-const jwt = require('jsonwebtoken');
+const security = require('../config/security');
 const crypto = require('crypto');
 const { sendEmail } = require('../services/email.service');
 const { Parser } = require('json2csv');
@@ -983,11 +983,7 @@ exports.acceptInvite = async (req, res) => {
         });
 
         // Generate auth token
-        const authToken = jwt.sign(
-            { id: user._id, email: user.email, role: user.role || 'collaborator' },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const authToken = security.signToken({ id: user._id, email: user.email, role: user.role || 'collaborator' }, { expiresIn: '7d' });
 
         res.json({
             success: true,

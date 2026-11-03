@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const security = require('../config/security');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
 
@@ -49,15 +49,11 @@ class AuthController {
             await user.save();
 
             // Generate JWT token
-            const token = jwt.sign(
-                { 
-                    email: user.email, 
-                    role: user.role, 
-                    id: user._id 
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: '7d' }
-            );
+            const token = security.signToken({
+                    email: user.email,
+                    role: user.role,
+                    id: user._id
+                }, { expiresIn: '7d' });
 
             return res.json({
                 success: true,
@@ -91,7 +87,7 @@ class AuthController {
                 });
             }
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = security.verifyToken(token);
 
             return res.json({
                 success: true,

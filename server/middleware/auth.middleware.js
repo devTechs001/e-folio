@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const security = require('../config/security');
 const { ObjectId } = require('mongoose').Types;
 const User = require('../models/User.model');
 
@@ -18,8 +18,7 @@ exports.auth = async (req, res, next) => {
     }
 
     try {
-        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
-        const decoded = jwt.verify(token, jwtSecret);
+        const decoded = security.verifyToken(token);
         
         let user;
 
@@ -32,16 +31,16 @@ exports.auth = async (req, res, next) => {
             if (!user && decoded.email) {
                 user = await User.findOne({ email: decoded.email.toLowerCase() }).select('-password');
             }
-            if (!user) {
-                user = await User.findOne({ role: 'owner' }).select('-password');
-            }
-            if (!user) {
+            // Do NOT silently fall back to "any owner" or manufacture an owner
+            // principal in production: that turns a stale/foreign token into
+            // full admin access. Only local development gets a bootstrap owner.
+            if (!user && !security.isProduction()) {
                 const fixedId = new ObjectId('507f1f77bcf86cd799439011');
                 user = {
                     _id: fixedId,
                     id: fixedId.toString(),
                     name: process.env.OWNER_NAME || 'Portfolio Owner',
-                    email: decoded.email || process.env.OWNER_EMAIL || 'devtechs842@gmail.com',
+                    email: decoded.email || security.getOwnerEmail(),
                     role: 'owner',
                     isActive: true,
                     permissions: ['*'],
@@ -147,9 +146,7 @@ exports.verifyToken = (req, res, next) => {
                 message: 'Access denied. No token provided.'
             });
         }
-
-        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
-        const decoded = jwt.verify(token, jwtSecret);
+        const decoded = security.verifyToken(token);
         req.user = decoded;
         next();
     } catch (error) {

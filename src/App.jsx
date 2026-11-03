@@ -48,7 +48,6 @@ const HashNavigationHandler = () => {
 const AppContent = () => {
     const location = useLocation();
     const isDashboard = location.pathname.startsWith('/dashboard');
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
     return (
         <div className="App min-h-screen">

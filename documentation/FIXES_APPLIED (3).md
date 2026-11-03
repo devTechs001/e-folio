@@ -107,7 +107,7 @@ VITE_API_URL=http://localhost:5000/api
 PORT=5000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5174
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 JWT_SECRET=efolio_super_secret_key_change_in_production_2024
 OWNER_EMAIL=devtechs842@gmail.com
 OWNER_PASSWORD=pass1234
@@ -213,7 +213,7 @@ npm run seed:all    # Seed everything
 ## Support
 
 For issues or questions:
-- Check MongoDB connection: `mongodb://localhost:27017/e-folio`
+- Check MongoDB connection: `mongodb://<username>:<password>@<cluster>/<database>`
 - Verify backend running on port 5000
 - Verify frontend running on port 5174
 - Check browser console for Socket.IO connection status

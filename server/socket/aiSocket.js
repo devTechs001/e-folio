@@ -1,6 +1,6 @@
 // websocket/aiSocket.js
 const WebSocket = require('ws');
-const jwt = require('jsonwebtoken');
+const security = require('../config/security');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 
@@ -95,7 +95,7 @@ class AIWebSocketServer {
 
     async authenticateClient(ws, token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = security.verifyToken(token);
             ws.userId = decoded.id;
             ws.authenticated = true;
 

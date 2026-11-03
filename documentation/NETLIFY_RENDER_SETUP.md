@@ -48,7 +48,7 @@ git push origin main
 4. Network Access → Add `0.0.0.0/0`
 5. Get connection string:
    ```
-   mongodb+srv://username:PASSWORD@cluster.mongodb.net/e-folio?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster>/<database>
    ```
 
 **B. Add to Render**
@@ -137,7 +137,7 @@ Visit: `https://e-folio-backend.onrender.com/api/health`
 ```env
 NODE_ENV=production          # Auto-set
 PORT=10000                   # Auto-set
-MONGODB_URI=mongodb+srv://...  # ADD MANUALLY
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>  # ADD MANUALLY
 JWT_SECRET=...               # Auto-generated
 CLIENT_URL=https://your-app.netlify.app  # ADD MANUALLY
 ```

@@ -51,10 +51,10 @@ CLIENT_URL=http://localhost:5174  # Frontend URL
 #### **2. Database**
 ```env
 # Local Development:
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 
 # Production (MongoDB Atlas):
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/e-folio
+# MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 ```
 
 **How to get MongoDB Atlas URI:**
@@ -188,7 +188,7 @@ STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 ```env
 NODE_ENV=production
 CLIENT_URL=https://your-site.netlify.app
-MONGODB_URI=mongodb+srv://...  # MongoDB Atlas
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>  # MongoDB Atlas
 JWT_SECRET=<generate-new-32-byte-secret>
 SESSION_SECRET=<generate-new-32-byte-secret>
 ```
@@ -260,7 +260,7 @@ cd server
 nano .env  # or use your editor
 
 # 2. Set these values:
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 # Keep other defaults
 
 # 3. Start MongoDB (if local)

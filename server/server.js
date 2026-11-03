@@ -7,12 +7,16 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 
-// Prevent unhandled rejections from crashing the server
+// An uncaught exception leaves the process in an undefined state. Log it and
+// let the process supervisor restart a clean instance instead of serving
+// requests from a half-broken one.
 process.on('unhandledRejection', (reason) => {
-    console.warn(' Unhandled Rejection:', reason?.message || reason);
+    console.error('[fatal] Unhandled rejection:', reason?.stack || reason?.message || reason);
 });
 process.on('uncaughtException', (err) => {
-    console.warn('Uncaught Exception:', err?.message || err);
+    console.error('[fatal] Uncaught exception:', err?.stack || err?.message || err);
+    server.close(() => process.exit(1));
+    setTimeout(() => process.exit(1), 3000).unref();
 });
 
 // Load environment variables
@@ -25,6 +29,9 @@ const keyRotator = require('./services/keyRotator.service');
 const Education = require('./models/Education');
 const Interests = require('./models/Interests');
 const UserModel = require('./models/User.model');
+const security = require('./config/security');
+const { apiLimiter } = require('./middleware/rateLimitMiddleware');
+const { registerTrackingRealtime } = require('./socket/tracking.handler');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -58,6 +65,7 @@ const workspaceRoutes = require('./routes/workspace.routes');
 const cvRoutes = require('./routes/cv.routes');
 const adminRoutes = require('./routes/admin.routes');
 const templateRoutes = require('./routes/template.routes');
+const compatRoutes = require('./routes/compat.routes');
 
 // Create Express app and server
 const app = express();
@@ -110,19 +118,24 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
+
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            console.warn(`⚠️ CORS blocked origin: ${origin}`);
-            console.warn(`Allowed origins:`, allowedOrigins);
-            callback(new Error('Not allowed by CORS'));
+            console.warn(`[cors] blocked origin: ${origin}`);
+            // Returning false omits CORS headers; the browser blocks the
+            // response. Throwing here produced a 500 that leaked internals.
+            callback(null, false);
         }
     },
     credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Baseline abuse protection for every /api route. Per-route limiters (auth,
+// tracking, exports) remain stricter than this ceiling.
+app.use('/api', apiLimiter);
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -162,15 +175,22 @@ app.use('/api/cv', cvRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/templates', templateRoutes);
 
+// Compatibility endpoints are mounted LAST so they only handle paths no
+// dedicated router claimed. See server/routes/compat.routes.js.
+app.use('/api', compatRoutes);
+
 
 // API Routes
+const configIssues = security.assertProductionConfig();
+
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        message: 'E-Folio Pro Server Running', 
+    res.json({
+        status: configIssues.length ? 'degraded' : 'ok',
+        message: configIssues.length ? 'Server running with configuration warnings' : 'E-Folio Pro Server Running',
         timestamp: new Date(),
         version: '2.0.0',
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        ...(configIssues.length ? { configurationIssues: configIssues.length } : {})
     });
 });
 
@@ -183,16 +203,27 @@ app.get('/api/health', (req, res) => {
 chatHandler(io);
 const settingsHandler = require('./socket/settings.handler');
 settingsHandler(io);
+registerTrackingRealtime(io);
 
 // Pass Socket.IO instance to collaboration controller
 const collaborationController = require('./controllers/collaboration.controller');
 // collaborationController.setSocketIO(io); // Function doesn't exist
 
-// Error handling
+// Unknown API paths must return JSON: the frontend treats an HTML error page
+// as a broken backend and falls back to mock data.
+app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, message: 'Endpoint not found', path: req.path });
+});
+
+// Error handling (never leak stack traces or internals to clients)
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-    res.status(statusCode).json({ error: err.message || 'Something went wrong!' });
+    console.error('[error]', err.stack || err.message || err);
+    const statusCode = res.statusCode >= 400 ? res.statusCode : 500;
+    const message = security.isProduction() && statusCode >= 500
+        ? 'Internal server error'
+        : (err.message || 'Something went wrong!');
+    if (res.headersSent) return next(err);
+    res.status(statusCode).json({ success: false, message });
 });
 
 // Start server
@@ -260,8 +291,8 @@ connectDB().then(async () => {
         console.log(` Port: ${PORT}`);
         console.log(` Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
         console.log(` Database: ${process.env.MONGODB_URI ? 'Atlas/Local (with fallback)' : 'Local Only'}`);
-        if (!process.env.JWT_SECRET) {
-            console.warn(' WARNING: JWT_SECRET is not set — login/verify will fail with 500. Set it in env (Render dashboard).');
+        if (configIssues.length) {
+            console.warn('[security] configuration warnings:', configIssues.join('; '));
         }
         console.log(` Socket.io: Ready`);
         keyRotator.start();

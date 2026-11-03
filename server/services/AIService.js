@@ -25,10 +25,14 @@ class AIService {
 
         // Initialize Groq only if API key is provided
         if (process.env.GROQ_API_KEY) {
-            this.groq = require('groq-sdk');
-            this.groq_client = new this.groq({
-                apiKey: process.env.GROQ_API_KEY
-            });
+            try {
+                const Groq = require('groq-sdk');
+                this.groq_client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            } catch (error) {
+                // groq-sdk is an optional provider; a missing package must not
+                // prevent the whole server from starting.
+                console.warn('Groq provider unavailable (groq-sdk not installed):', error.message);
+            }
         } else {
             console.warn('Groq API key not provided. Groq features will be limited.');
         }
@@ -538,64 +542,10 @@ class AIService {
     /**
      * Generate embeddings for semantic search
      */
-    async generateEmbeddings(text) {
-        if (!this.openai) {
-            // If OpenAI is not configured, return mock embeddings
-            return Array(1536).fill(0).map(() => Math.random() * 2 - 1);
-        }
-        
-        try {
-            const response = await this.openai.embeddings.create({
-                model: 'text-embedding-ada-002',
-                input: text
-            });
-
-            return response.data[0].embedding;
-        } catch (error) {
-            console.error('Embeddings error:', error);
-            // Return mock embeddings if fail
-            return Array(1536).fill(0).map(() => Math.random() * 2 - 1);
-        }
-    }
 
     /**
      * Moderate content
      */
-    async moderateContent(text) {
-        if (!this.openai) {
-            // If OpenAI is not configured, return safe default
-            return { 
-                flagged: false, 
-                categories: {}, 
-                scores: {},
-                success: true
-            };
-        }
-        
-        try {
-            const response = await this.openai.moderations.create({
-                input: text
-            });
-
-            const result = response.results[0];
-            return {
-                flagged: result.flagged,
-                categories: result.categories,
-                scores: result.category_scores,
-                success: true
-            };
-        } catch (error) {
-            console.error('Moderation error:', error);
-            // Return safe default if moderation fails
-            return { 
-                flagged: false, 
-                categories: {}, 
-                scores: {},
-                success: false,
-                error: error.message
-            };
-        }
-    }
 
     /**
      * Generate image using DALL-E or compatible service

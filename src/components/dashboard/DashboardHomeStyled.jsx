@@ -51,6 +51,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSocket } from '../../contexts/SocketContext';
+import { useDashboard } from '../../contexts/DashboardContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
@@ -77,6 +78,7 @@ const DashboardHome = () => {
     const { user } = useAuth();
     const { theme } = useTheme();
     const { socket, connected } = useSocket();
+    const { refreshDashboard } = useDashboard();
     const { success, error: showError } = useNotifications();
     const wsRef = useRef(null);
 
@@ -111,13 +113,22 @@ const DashboardHome = () => {
     useEffect(() => {
         loadDashboardData();
         
-        // Refresh data every 30 seconds
+        // Polling is a fallback for the real-time feed. It used to fire every
+        // 30 seconds even in background tabs, issuing nine requests each time.
+        // Slow it down and skip hidden tabs entirely.
         const refreshInterval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
             loadDashboardData(true);
-        }, 30000);
+        }, 60000);
+
+        const onVisibilityChange = () => {
+            if (!document.hidden) loadDashboardData(true);
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
 
         return () => {
             clearInterval(refreshInterval);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
         };
     }, []);
 
@@ -238,6 +249,7 @@ const DashboardHome = () => {
 
     const handleRefresh = () => {
         loadDashboardData();
+        refreshDashboard();
         success('Dashboard refreshed');
     };
 

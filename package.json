@@ -25,7 +25,12 @@
     "preview": "vite preview",
     "predeploy": "cross-env GITHUB_PAGES=true npm run build",
     "deploy": "gh-pages -d dist",
-    "seed-projects": "node scripts/seed-projects.js"
+    "seed-projects": "node scripts/seed-projects.js",
+    "audit:endpoints": "node server/scripts/check-endpoint-parity.js",
+    "audit:security": "node server/scripts/security-audit.js",
+    "test:load": "node server/tests/load/smoke-load.js",
+    "check": "npm run lint && npm run audit:endpoints -- --strict && npm run audit:security -- --strict && npm run build",
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

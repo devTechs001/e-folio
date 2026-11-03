@@ -57,9 +57,9 @@ NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 
 # MongoDB (Optional - runs without it)
-MONGODB_URI=mongodb://localhost:27017/efolio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 # Or MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/efolio
+# MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 
 # Authentication (for future JWT implementation)
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
@@ -321,7 +321,7 @@ use efolio
 3. Get connection string
 4. Add to `.env`:
 ```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/efolio
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 ```
 
 ### Database Models

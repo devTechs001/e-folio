@@ -17,16 +17,17 @@ services:
         value: https://e-folio-pro.netlify.app
       - key: MONGODB_URI
         sync: false
+      # Secrets are set in the Render dashboard, never committed to the repo.
       - key: JWT_SECRET
-        value: efolio_jwt_secret_placeholder
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_BASE_URL
-        value: https://aiapiv2.pekpik.com/v1
+        value: https://api.openai.com/v1
       - key: GEMINI_API_KEY
-        value: AIzaSyA7IS5Auefu-2Y2L3P2ooEfNTGbD8LpYn8
+        sync: false
       - key: GOOGLE_API_KEY
-        value: AIzaSyA7IS5Auefu-2Y2L3P2ooEfNTGbD8LpYn8
+        sync: false
 
 # ============================================
 # DEPLOYMENT NOTES

@@ -324,7 +324,7 @@ exports.syncGitHubMetrics = asyncHandler(async (req, res) => {
 
     try {
         // Fetch from GitHub API (you'll need to install axios and set up GitHub token)
-        const axios = require('axios');
+        const axios = require('../utils/httpClient');
         const response = await axios.get(
             `https://api.github.com/repos/${owner}/${repo}`,
             {

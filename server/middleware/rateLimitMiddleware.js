@@ -13,6 +13,21 @@ exports.generalLimiter = rateLimit({
 });
 
 /**
+ * Baseline limiter applied to the whole /api surface.
+ *
+ * Deliberately generous: dashboards poll and tracking sends frequent events,
+ * so a low global ceiling would cause self-inflicted 429s. Per-route limiters
+ * (auth, tracking, exports) still enforce the strict budgets.
+ */
+exports.apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 2000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: 'Too many requests, please slow down.' },
+});
+
+/**
  * Tracking endpoint rate limiter (permissive for frequent events)
  */
 exports.trackingLimiter = rateLimit({

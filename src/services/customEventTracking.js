@@ -186,14 +186,22 @@ class CustomEventTracking {
      * Setup auto-flush
      */
     setupAutoFlush() {
-        setInterval(() => {
-            this.flush();
+        this.flushTimer = setInterval(() => {
+            if (!document.hidden) this.flush();
         }, this.flushInterval);
 
         // Flush on page unload
-        window.addEventListener('beforeunload', () => {
+        this.onBeforeUnload = () => {
             this.flush();
-        });
+        };
+        window.addEventListener('beforeunload', this.onBeforeUnload);
+    }
+
+    /** Release the timer and listener (prevents a permanent background loop). */
+    destroy() {
+        if (this.flushTimer) clearInterval(this.flushTimer);
+        if (this.onBeforeUnload) window.removeEventListener('beforeunload', this.onBeforeUnload);
+        this.flush();
     }
 
     /**

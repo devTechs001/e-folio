@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const security = require('../config/security');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User.model');
 const AppSettings = require('../models/AppSettings');
@@ -82,11 +82,7 @@ router.post('/register', registerLimiter, async (req, res) => {
 
         const user = await User.create({ name, username, email, password });
 
-        const token = jwt.sign(
-            { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const token = security.signToken({ id: user._id, email: user.email, role: 'user' }, { expiresIn: '7d' });
 
         res.status(201).json({
             success: true,
@@ -109,16 +105,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 });
 
-// Cache for owner password hash (set on first comparison)
-let ownerPasswordHash = null;
-
-async function getOwnerPasswordHash() {
-    if (ownerPasswordHash) return ownerPasswordHash;
-    const rawPass = (process.env.OWNER_PASSWORD || 'DevDan@123#').replace(/^["']|["']$/g, '').trim();
-    ownerPasswordHash = await bcrypt.hash(rawPass, 10);
-    return ownerPasswordHash;
-}
-
+// Owner bootstrap credentials are validated through the central security config.
 // Login
 router.post('/login', loginLimiter, async (req, res) => {
     try {
@@ -133,14 +120,11 @@ router.post('/login', loginLimiter, async (req, res) => {
         }
 
         const normalizedEmail = email.toLowerCase();
-        const ownerEmail = (process.env.OWNER_EMAIL || 'devtechs842@gmail.com').replace(/^["']|["']$/g, '').trim().toLowerCase();
-        const rawOwnerPass = (process.env.OWNER_PASSWORD || 'DevDan@123#').replace(/^["']|["']$/g, '').trim();
-        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
+        const ownerEmail = security.getOwnerEmail();
 
         // Owner login
         if (normalizedEmail === ownerEmail) {
-            const hash = await getOwnerPasswordHash();
-            const isOwnerMatch = (await bcrypt.compare(password, hash)) || (password === rawOwnerPass);
+            const isOwnerMatch = await security.verifyOwnerPassword(password, bcrypt);
             if (isOwnerMatch) {
                 let ownerUser = await User.findOne({ email: ownerEmail });
                 if (!ownerUser) {
@@ -148,11 +132,7 @@ router.post('/login', loginLimiter, async (req, res) => {
                 }
                 const ownerId = ownerUser ? ownerUser._id.toString() : '507f1f77bcf86cd799439011';
 
-                const token = jwt.sign(
-                    { email: ownerEmail, role: 'owner', id: ownerId },
-                    jwtSecret,
-                    { expiresIn: '7d' }
-                );
+                const token = security.signToken({ email: ownerEmail, role: 'owner', id: ownerId }, { expiresIn: '7d' });
 
                 return res.json({
                     success: true,
@@ -197,11 +177,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         user.loginCount = (user.loginCount || 0) + 1;
         await user.save();
 
-        const token = jwt.sign(
-            { id: user._id.toString(), email: user.email, role: user.role || 'user' },
-            jwtSecret,
-            { expiresIn: '7d' }
-        );
+        const token = security.signToken({ id: user._id.toString(), email: user.email, role: user.role || 'user' }, { expiresIn: '7d' });
 
         res.json({
             success: true,
@@ -285,13 +261,7 @@ router.post('/login/collaborator', loginLimiter, async (req, res) => {
         user.lastLoginAt = new Date();
         user.loginCount = (user.loginCount || 0) + 1;
         await user.save();
-
-        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
-        const token = jwt.sign(
-            { id: user._id.toString(), email: user.email, role: 'collaborator' },
-            jwtSecret,
-            { expiresIn: '7d' }
-        );
+        const token = security.signToken({ id: user._id.toString(), email: user.email, role: 'collaborator' }, { expiresIn: '7d' });
 
         res.json({
             success: true,
@@ -326,9 +296,7 @@ router.get('/verify', async (req, res) => {
                 message: 'No token provided'
             });
         }
-
-        const jwtSecret = process.env.JWT_SECRET || 'efolio_pro_jwt_secret_key_2024_secure';
-        const decoded = jwt.verify(token, jwtSecret);
+        const decoded = security.verifyToken(token);
 
         let user = { id: decoded.id, email: decoded.email, role: decoded.role };
 
@@ -447,11 +415,7 @@ router.post('/google', async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
-            { id: user._id, email: user.email, role: 'user' },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const token = security.signToken({ id: user._id, email: user.email, role: 'user' }, { expiresIn: '7d' });
 
         res.json({
             success: true,

@@ -232,7 +232,7 @@ cd server
 cat .env  # or: type .env on Windows
 
 # Verify MONGODB_URI is set
-MONGODB_URI=mongodb://localhost:27017/e-folio
+MONGODB_URI=mongodb://<username>:<password>@<cluster>/<database>
 ```
 
 ### Issue: Frontend shows errors

@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const axios = require('axios');
+const axios = require('../utils/httpClient');
 const keyRotator = require('./keyRotator.service');
 const webSearch = require('./webSearch.service');
 

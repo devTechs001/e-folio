@@ -107,7 +107,7 @@ async function seedProjects() {
         console.log('Connected to MongoDB');
 
         // Get the admin user (assuming you have one)
-        const adminUser = await User.findOne({ email: 'admin@efolio.com' });
+        let adminUser = await User.findOne({ email: 'admin@efolio.com' });
         
         if (!adminUser) {
             console.log('Admin user not found. Creating admin user...');
