@@ -73,6 +73,10 @@ class ApiService {
                     signal: signal || controller.signal
                 });
 
+                // Technical messages below are INTERNAL / DEV-ONLY. Public
+                // pages must never render them: loadPublicSection() catches
+                // them, records them via recordDevIssue() for the dev
+                // diagnostics panel, and serves the saved local copy instead.
                 // Check if response is HTML (indicates error page)
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('text/html')) {

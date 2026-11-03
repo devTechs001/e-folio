@@ -1,0 +1,14 @@
+/* Friendly, non-technical note for saved-copy content. */
+.archive-note {
+  margin: 0.5rem auto 0;
+  max-width: 60ch;
+  text-align: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.archive-note::before {
+  content: '◦ ';
+  color: #38bdf8;
+}

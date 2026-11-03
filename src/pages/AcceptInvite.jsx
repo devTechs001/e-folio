@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { CheckCircle, AlertCircle, Lock, User, Mail, Loader2 } from 'lucide-react';
 import apiService from '../services/api.service';
+import { recordDevIssue, publicCopy } from '../utils/publicMessaging';
 
 /**
  * Destination for every collaboration invite link.
@@ -41,7 +42,8 @@ const AcceptInvite = () => {
             } catch (err) {
                 if (cancelled) return;
                 setStatus('invalid');
-                setError(err?.message || 'We could not verify this invitation. Please try again later.');
+                recordDevIssue({ section: 'invite', endpoint: '/collaboration/invite/validate', error: err });
+                setError(publicCopy('invite'));
             }
         };
         validate();
@@ -90,7 +92,8 @@ const AcceptInvite = () => {
         } catch (err) {
             // apiService.request throws on non-2xx, so the 409 USER_EXISTS
             // case arrives here rather than in the success branch above.
-            const message = err?.message || 'We could not accept this invitation.';
+            recordDevIssue({ section: 'invite', endpoint: '/collaboration/invite/accept', error: err });
+            const message = publicCopy('invite');
             setError(/already exists/i.test(message)
                 ? 'An account already exists for this email. Please sign in instead.'
                 : message);

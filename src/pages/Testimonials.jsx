@@ -3,6 +3,9 @@ import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import { useAuth } from '../contexts/AuthContext';
 import sampleDataset from '../data/testimonialSamples.json';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, getSnapshotSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Testimonials.css';
 
 const SAMPLE_TAG = sampleDataset.tag;
@@ -29,7 +32,7 @@ const readPreviewFlag = () => {
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+  const [contentSource, setContentSource] = useState('');
   const [filter, setFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,29 +54,26 @@ const Testimonials = () => {
   const [sampleCount, setSampleCount] = useState(0);
 
   const loadTestimonials = useCallback(async () => {
-    setLoadError('');
     try {
       // Never use a cached list while previewing samples.
       const cached = previewMode ? null : cacheService.get(CACHE_KEY);
       let real = [];
+      let source = 'live';
 
-      if (cached) {
+      if (Array.isArray(cached) && cached.length) {
         real = cached;
       } else {
-        const response = await apiService.getTestimonials();
-        real = response?.success && Array.isArray(response.testimonials)
-          ? response.testimonials
-          : [];
-        if (!previewMode) {
+        // Live API first; the saved copy keeps the section complete and
+        // consistent. Technical failures are for developers only.
+        const response = await loadPublicSection('testimonials');
+        real = Array.isArray(response.testimonials) ? response.testimonials : [];
+        source = response.source || '';
+        if (isLiveContent(response) && !previewMode) {
           cacheService.set(CACHE_KEY, real, CACHE_TTL.TEN_MINUTES);
         }
-        if (!response?.success) {
-          setLoadError(response?.message || 'Testimonials are temporarily unavailable.');
-        }
       }
+      setContentSource(source);
 
-      // An empty collection is an honest empty state. Mock data only ever
-      // appears in OWNER preview mode and is always clearly labelled.
       let display = real;
       if (previewMode && owner) {
         const admin = await apiService.getAllTestimonials({ limit: 100 });
@@ -87,9 +87,9 @@ const Testimonials = () => {
       }
       setTestimonials(display);
     } catch (error) {
-      console.error('Error loading testimonials:', error);
-      setTestimonials([]);
-      setLoadError('Testimonials are temporarily unavailable. Please try again later.');
+      recordDevIssue({ section: 'testimonials', endpoint: PUBLIC_ENDPOINTS.testimonials, error });
+      setTestimonials(getSnapshotSection('testimonials').testimonials || []);
+      setContentSource('snapshot');
     } finally {
       setLoading(false);
     }
@@ -322,7 +322,7 @@ const Testimonials = () => {
       )}
 
       <div className="container mx-auto px-4">
-        {previewMode && (
+        {previewMode && owner && (
           <div className="testimonial-preview-banner" role="status">
             <span className="testimonial-preview-badge">PREVIEW MODE</span>
             <span>
@@ -368,6 +368,7 @@ const Testimonials = () => {
           <p className="text-lg md:text-xl text-textColor/60 max-w-4xl mx-auto leading-relaxed font-light">
             Real feedback from <span className="text-mainColor font-semibold">{stats.total}+ amazing clients</span> I've had the pleasure to work with
           </p>
+          <ArchiveNote source={contentSource} className="mt-3" />
 
           {/* Decorative Quote Marks */}
           <div className="relative mt-8">
@@ -647,20 +648,12 @@ const Testimonials = () => {
             </div>
             <h3 className="empty-state-title">No testimonials found</h3>
             <p className="empty-state-text">
-              {loadError
-                ? loadError
-                : searchTerm
-                  ? `No results for "${searchTerm}". Try adjusting your search or filters.`
-                  : testimonials.length === 0
-                    ? 'No testimonials have been published yet.'
-                    : 'Try adjusting your filters to see more testimonials.'}
+              {searchTerm
+                ? `No results for "${searchTerm}". Try adjusting your search or filters.`
+                : testimonials.length === 0
+                  ? publicEmptyCopy('emptyTestimonials')
+                  : 'Try adjusting your filters to see more testimonials.'}
             </p>
-            {loadError && (
-              <button onClick={loadTestimonials} className="btn-primary mt-4">
-                <i className="fas fa-redo mr-2"></i>
-                Retry
-              </button>
-            )}
             <button
               onClick={() => {
                 setFilter('all');

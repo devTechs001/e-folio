@@ -36,28 +36,33 @@ check('public projects, skills and hobbies pages no longer fabricate fallback da
     }
 });
 
-check('public data pages keep honest empty/error states', () => {
+check('public data pages stay populated with saved copies and friendly copy', () => {
     for (const file of [
         'src/pages/Projects.jsx',
         'src/pages/Skills.jsx',
         'src/pages/Interests.jsx'
     ]) {
         const src = read(file);
-        assert.match(src, /loadError/, `${file} must surface load failures`);
-        assert.match(src, /set\w*\(\[\]\)|setInterests\(\[\]\)/);
+        assert.doesNotMatch(src, /loadError/, `${file} must not show technical errors`);
+        assert.match(src, /loadPublicSection\(/, `${file} must use the live-first loader`);
+        assert.match(src, /publicEmptyCopy|ArchiveNote/, `${file} must use friendly copy`);
     }
 });
 
 check('Lab page reads the three real dashboard-backed endpoints', () => {
     const src = read('src/pages/Lab.jsx');
-    assert.match(src, /Promise\.allSettled\(\[/);
-    assert.match(src, /\/public\/projects\?status=all&limit=100/);
-    assert.match(src, /\/public\/skills/);
-    assert.match(src, /\/public\/interests/);
+    assert.match(src, /Promise\.all\(\[/);
+    assert.match(src, /loadPublicSection\('projects', \{ fallbackSection: 'labProjects' \}\)/);
+    assert.match(src, /loadPublicSection\('skills'\)/);
+    assert.match(src, /loadPublicSection\('interests'\)/);
+    const loader = read('src/services/publicContent.js');
+    assert.match(loader, /\/public\/projects\?status=all&limit=100/);
+    assert.match(loader, /\/public\/skills/);
+    assert.match(loader, /\/public\/interests/);
     assert.match(src, /setDataStatus/);
     assert.match(src, /lab-source-\$\{dataStatus\}/);
     const css = read('src/styles/Lab.css');
-    for (const state of ['live', 'partial', 'unavailable']) {
+    for (const state of ['live', 'partial', 'unavailable', 'archive']) {
         assert.match(css, new RegExp(`.lab-source-${state}\\b`));
     }
 });

@@ -114,12 +114,15 @@ check('review controller never serves fabricated reviews or analytics', () => {
     assert.doesNotMatch(src, /error: error\.message/);
 });
 
-check('public testimonial page has no invented client fallback', () => {
+check('public testimonial page uses live data, then the saved local copy', () => {
     const src = read('src/pages/Testimonials.jsx');
     assert.doesNotMatch(src, /getFallbackTestimonials/);
     assert.doesNotMatch(src, /Sarah Johnson|unsplash\.com/);
-    assert.match(src, /setTestimonials\(\[\]\)/);
-    assert.match(src, /loadError/);
+    assert.match(src, /loadPublicSection\('testimonials'\)/);
+    assert.match(src, /getSnapshotSection\('testimonials'\)/);
+    assert.doesNotMatch(src, /loadError|temporarily unavailable/);
+    const snapshot = JSON.parse(read('src/data/publicSnapshot.json'));
+    assert.equal(snapshot.sections.testimonials.count, 8);
 });
 
 check('testimonial manager uses the owner list endpoint', () => {

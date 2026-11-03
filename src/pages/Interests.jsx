@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import apiService from '../services/api.service';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Interests.css';
 
 const Interests = () => {
     const [interests, setInterests] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState('');
+    const [contentSource, setContentSource] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const cardRefs = useRef([]);
@@ -16,20 +18,17 @@ const Interests = () => {
 
     const loadInterests = async () => {
         try {
-            setLoadError('');
-            const response = await apiService.getInterests();
-            const real = Array.isArray(response.interests) ? response.interests
+            // Live API first, then the saved local copy, so the section stays
+            // complete. Technical failures are logged for developers only.
+            const response = await loadPublicSection('interests');
+            const items = Array.isArray(response.interests) ? response.interests
                 : Array.isArray(response.data) ? response.data : [];
-            if (response.success) {
-                setInterests(real);
-            } else {
-                setInterests([]);
-                setLoadError(response.message || 'Hobbies are temporarily unavailable.');
-            }
+            setInterests(items);
+            setContentSource(response.source || '');
         } catch (error) {
-            console.error('Error loading interests:', error);
+            recordDevIssue({ section: 'interests', endpoint: PUBLIC_ENDPOINTS.interests, error });
             setInterests([]);
-            setLoadError('Hobbies are temporarily unavailable. Please try again later.');
+            setContentSource('');
         } finally {
             setLoading(false);
         }
@@ -114,6 +113,7 @@ const Interests = () => {
                     <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mt-6" data-aos="fade-up">
                         Exploring passions and cultivating skills that drive innovation and creativity
                     </p>
+                    <ArchiveNote source={contentSource} className="mt-3" />
 
                     {/* Stats Overview */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-8">
@@ -295,7 +295,7 @@ const Interests = () => {
                 {filteredInterests.length === 0 && (
                     <div className="text-center py-20">
                         <i className="fas fa-heart-broken text-6xl text-textColor/30 mb-4"></i>
-                        <p className="text-textColor/50 text-xl">{loadError || (activeCategory === 'all' ? 'No hobbies have been added yet.' : 'No interests found in this category.')}</p>
+                        <p className="text-textColor/50 text-xl">{publicEmptyCopy('emptyInterests')}</p>
                     </div>
                 )}
 

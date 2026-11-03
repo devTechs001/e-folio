@@ -1,0 +1,1087 @@
+{
+  "generatedAt": "2026-11-03",
+  "description": "Saved copy of local backup/seed records. Used by public pages only when the live API cannot supply a section. Live data always wins.",
+  "sources": [
+    "scripts/seed-projects.js",
+    "server/seed-data.js",
+    "src/pages/Education.jsx",
+    "server/backups/testimonials/original-fallback-testimonials.json",
+    "src/data/labSamples.json"
+  ],
+  "sections": {
+    "projects": {
+      "success": true,
+      "projects": [
+        {
+          "id": "snapshot-e-commerce-platform",
+          "title": "E-Commerce Platform",
+          "description": "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management.",
+          "fullDescription": "A comprehensive e-commerce platform built with modern web technologies. Features include real-time inventory tracking, secure payment processing through Stripe, user authentication with JWT, product recommendations using AI, advanced search with filters, shopping cart persistence, order tracking, and admin dashboard for managing products and orders.",
+          "technologies": [
+            "React",
+            "Node.js",
+            "MongoDB",
+            "Stripe",
+            "Express",
+            "Redux",
+            "JWT",
+            "Socket.io"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": true,
+          "tags": [
+            "Full-Stack",
+            "E-Commerce",
+            "Real-time",
+            "Payment Integration"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/ecommerce-platform",
+            "live": "https://bizsolutionz.netlify.app/",
+            "demo": "https://bizsolutionz.netlify.app/",
+            "netlify": "https://bizsolutionz.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+              "caption": "Main E-commerce View"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1563013544-824ae1b704d3",
+              "caption": "Product Detail Page"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1556740738-b6a82e8bfca5",
+              "caption": "Shopping Cart"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1563013544-824ae1b704d3",
+              "caption": "Checkout Process"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+          "imageUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+          "completionDate": "2025-11-15T00:00:00.000Z",
+          "teamSize": 1,
+          "views": 0,
+          "likes": 0,
+          "order": 1
+        },
+        {
+          "id": "snapshot-gb-chat",
+          "title": "GB Chat",
+          "description": "Real-time chat application with group messaging, file sharing, and advanced communication features.",
+          "fullDescription": "A comprehensive real-time chat application built with modern web technologies. Features include group messaging, private chats, file sharing, emoji reactions, typing indicators, online status tracking, message search, and responsive design for all devices.",
+          "technologies": [
+            "React",
+            "Socket.io",
+            "Node.js",
+            "Express",
+            "MongoDB",
+            "JWT",
+            "Tailwind CSS",
+            "WebRTC"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": true,
+          "tags": [
+            "Real-time",
+            "Chat",
+            "Messaging",
+            "Socket.io",
+            "Communication"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/GB-chat",
+            "live": "https://gbchat.netlify.app/",
+            "demo": "https://gbchat.netlify.app/",
+            "netlify": "https://gbchat.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
+              "caption": "Chat Interface"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2",
+              "caption": "Group Chat"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0",
+              "caption": "Mobile View"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
+              "caption": "File Sharing"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
+          "imageUrl": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
+          "completionDate": "2026-02-15T00:00:00.000Z",
+          "teamSize": 2,
+          "views": 0,
+          "likes": 0,
+          "order": 2
+        },
+        {
+          "id": "snapshot-cinemaflix",
+          "title": "CinemaFlix",
+          "description": "Movie streaming platform with personalized recommendations, watchlists, and social features.",
+          "fullDescription": "A comprehensive movie streaming platform that provides users with a vast library of films and TV shows. Features include personalized recommendations based on viewing history, watchlist management, user ratings and reviews, social sharing, genre filtering, search functionality, and responsive design for optimal viewing on any device.",
+          "technologies": [
+            "React",
+            "Redux",
+            "TMDB API",
+            "Node.js",
+            "Express",
+            "MongoDB",
+            "JWT",
+            "CSS3",
+            "Video.js"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": true,
+          "tags": [
+            "Streaming",
+            "Movies",
+            "Entertainment",
+            "API Integration",
+            "Media"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/moview-watch",
+            "live": "https://cinemaflx.netlify.app/",
+            "demo": "https://cinemaflx.netlify.app/",
+            "netlify": "https://cinemaflx.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
+              "caption": "Movie Library"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1489599745951-884f3749b052",
+              "caption": "Movie Details"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1518676590629-3d8889cced0c",
+              "caption": "Watch Interface"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1535016120720-40c6a9e0a2f5",
+              "caption": "User Dashboard"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
+          "imageUrl": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
+          "completionDate": "2024-03-01T00:00:00.000Z",
+          "teamSize": 3,
+          "views": 0,
+          "likes": 0,
+          "order": 3
+        }
+      ],
+      "count": 3
+    },
+    "skills": {
+      "success": true,
+      "skills": [
+        {
+          "name": "HTML5",
+          "level": 90,
+          "icon": "fa-brands fa-html5",
+          "type": "technical",
+          "category": "Frontend",
+          "visible": true,
+          "order": 1,
+          "id": "snapshot-skill-1"
+        },
+        {
+          "name": "CSS3",
+          "level": 85,
+          "icon": "fa-brands fa-css3-alt",
+          "type": "technical",
+          "category": "Frontend",
+          "visible": true,
+          "order": 2,
+          "id": "snapshot-skill-2"
+        },
+        {
+          "name": "JavaScript",
+          "level": 80,
+          "icon": "fa-brands fa-js",
+          "type": "technical",
+          "category": "Frontend",
+          "visible": true,
+          "order": 3,
+          "id": "snapshot-skill-3"
+        },
+        {
+          "name": "React",
+          "level": 75,
+          "icon": "fa-brands fa-react",
+          "type": "technical",
+          "category": "Frontend",
+          "visible": true,
+          "order": 4,
+          "id": "snapshot-skill-4"
+        },
+        {
+          "name": "Python",
+          "level": 70,
+          "icon": "fa-brands fa-python",
+          "type": "technical",
+          "category": "Backend",
+          "visible": true,
+          "order": 5,
+          "id": "snapshot-skill-5"
+        },
+        {
+          "name": "Node.js",
+          "level": 65,
+          "icon": "fa-brands fa-node-js",
+          "type": "technical",
+          "category": "Backend",
+          "visible": true,
+          "order": 6,
+          "id": "snapshot-skill-6"
+        },
+        {
+          "name": "Git",
+          "level": 85,
+          "icon": "fa-brands fa-git-alt",
+          "type": "technical",
+          "category": "Tools",
+          "visible": true,
+          "order": 7,
+          "id": "snapshot-skill-7"
+        },
+        {
+          "name": "Database",
+          "level": 60,
+          "icon": "fa-solid fa-database",
+          "type": "technical",
+          "category": "Backend",
+          "visible": true,
+          "order": 8,
+          "id": "snapshot-skill-8"
+        },
+        {
+          "name": "TypeScript",
+          "level": 72,
+          "icon": "fa-brands fa-js",
+          "type": "technical",
+          "category": "Frontend",
+          "visible": true,
+          "order": 9,
+          "id": "snapshot-skill-9"
+        },
+        {
+          "name": "Docker",
+          "level": 68,
+          "icon": "fa-brands fa-docker",
+          "type": "technical",
+          "category": "DevOps",
+          "visible": true,
+          "order": 10,
+          "id": "snapshot-skill-10"
+        },
+        {
+          "name": "MongoDB",
+          "level": 75,
+          "icon": "fa-solid fa-database",
+          "type": "technical",
+          "category": "Backend",
+          "visible": true,
+          "order": 11,
+          "id": "snapshot-skill-11"
+        },
+        {
+          "name": "Vue.js",
+          "level": 70,
+          "icon": "fa-brands fa-vuejs",
+          "type": "technical",
+          "category": "Frontend",
+          "visible": true,
+          "order": 12,
+          "id": "snapshot-skill-12"
+        },
+        {
+          "name": "Problem Solving",
+          "level": 90,
+          "type": "professional",
+          "category": "Problem Solving",
+          "visible": true,
+          "order": 13,
+          "id": "snapshot-skill-13"
+        },
+        {
+          "name": "Creativity",
+          "level": 85,
+          "type": "professional",
+          "category": "Creativity",
+          "visible": true,
+          "order": 14,
+          "id": "snapshot-skill-14"
+        },
+        {
+          "name": "Team Work",
+          "level": 95,
+          "type": "professional",
+          "category": "Teamwork",
+          "visible": true,
+          "order": 15,
+          "id": "snapshot-skill-15"
+        },
+        {
+          "name": "Communication",
+          "level": 85,
+          "type": "professional",
+          "category": "Communication",
+          "visible": true,
+          "order": 16,
+          "id": "snapshot-skill-16"
+        },
+        {
+          "name": "Leadership",
+          "level": 80,
+          "type": "professional",
+          "category": "Leadership",
+          "visible": true,
+          "order": 17,
+          "id": "snapshot-skill-17"
+        },
+        {
+          "name": "Time Management",
+          "level": 88,
+          "type": "professional",
+          "category": "Project Management",
+          "visible": true,
+          "order": 18,
+          "id": "snapshot-skill-18"
+        },
+        {
+          "name": "Adaptability",
+          "level": 92,
+          "type": "professional",
+          "category": "Problem Solving",
+          "visible": true,
+          "order": 19,
+          "id": "snapshot-skill-19"
+        },
+        {
+          "name": "Critical Thinking",
+          "level": 87,
+          "type": "professional",
+          "category": "Problem Solving",
+          "visible": true,
+          "order": 20,
+          "id": "snapshot-skill-20"
+        }
+      ],
+      "count": 20
+    },
+    "interests": {
+      "success": true,
+      "interests": [
+        {
+          "id": "snapshot-interest-1",
+          "title": "Programming",
+          "name": "Programming",
+          "category": "technical",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Passionate about solving complex problems through code and building innovative solutions that make a difference.",
+          "icon": "fas fa-code",
+          "color": "blue",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-2",
+          "title": "Web Design",
+          "name": "Web Design",
+          "category": "creative",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Creating visually appealing and user-friendly interfaces that enhance the digital experience.",
+          "icon": "fas fa-palette",
+          "color": "purple",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-3",
+          "title": "Mobile Development",
+          "name": "Mobile Development",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Exploring the world of mobile applications and creating responsive solutions for various platforms.",
+          "icon": "fas fa-mobile-alt",
+          "color": "cyan",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-4",
+          "title": "AI & Machine Learning",
+          "name": "AI & Machine Learning",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Fascinated by the potential of artificial intelligence and its applications in solving real-world problems.",
+          "icon": "fas fa-robot",
+          "color": "green",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-5",
+          "title": "Blockchain Technology",
+          "name": "Blockchain Technology",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Interested in decentralized systems and their potential to revolutionize digital transactions.",
+          "icon": "fas fa-link",
+          "color": "orange",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-6",
+          "title": "Continuous Learning",
+          "name": "Continuous Learning",
+          "category": "personal",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Committed to staying updated with the latest technologies and industry best practices.",
+          "icon": "fas fa-book-reader",
+          "color": "indigo",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-7",
+          "title": "Community Building",
+          "name": "Community Building",
+          "category": "social",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Enjoy participating in tech communities and sharing knowledge with fellow developers.",
+          "icon": "fas fa-users",
+          "color": "pink",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-8",
+          "title": "Innovation",
+          "name": "Innovation",
+          "category": "creative",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Passionate about creating new solutions and pushing the boundaries of what is possible with technology.",
+          "icon": "fas fa-lightbulb",
+          "color": "yellow",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-9",
+          "title": "Game Development",
+          "name": "Game Development",
+          "category": "creative",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Creating interactive experiences and exploring game mechanics and storytelling through code.",
+          "icon": "fas fa-gamepad",
+          "color": "red",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-10",
+          "title": "Cloud Computing",
+          "name": "Cloud Computing",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Building scalable cloud-based solutions and understanding modern infrastructure.",
+          "icon": "fas fa-cloud",
+          "color": "teal",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-11",
+          "title": "Cybersecurity",
+          "name": "Cybersecurity",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Ensuring digital safety and understanding security best practices in application development.",
+          "icon": "fas fa-shield-alt",
+          "color": "gray",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-12",
+          "title": "Content Creation",
+          "name": "Content Creation",
+          "category": "social",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Sharing knowledge through tutorials, blogs, and video content to help others learn.",
+          "icon": "fas fa-video",
+          "color": "rose",
+          "tags": [],
+          "relatedTech": []
+        }
+      ],
+      "data": [
+        {
+          "id": "snapshot-interest-1",
+          "title": "Programming",
+          "name": "Programming",
+          "category": "technical",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Passionate about solving complex problems through code and building innovative solutions that make a difference.",
+          "icon": "fas fa-code",
+          "color": "blue",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-2",
+          "title": "Web Design",
+          "name": "Web Design",
+          "category": "creative",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Creating visually appealing and user-friendly interfaces that enhance the digital experience.",
+          "icon": "fas fa-palette",
+          "color": "purple",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-3",
+          "title": "Mobile Development",
+          "name": "Mobile Development",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Exploring the world of mobile applications and creating responsive solutions for various platforms.",
+          "icon": "fas fa-mobile-alt",
+          "color": "cyan",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-4",
+          "title": "AI & Machine Learning",
+          "name": "AI & Machine Learning",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Fascinated by the potential of artificial intelligence and its applications in solving real-world problems.",
+          "icon": "fas fa-robot",
+          "color": "green",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-5",
+          "title": "Blockchain Technology",
+          "name": "Blockchain Technology",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Interested in decentralized systems and their potential to revolutionize digital transactions.",
+          "icon": "fas fa-link",
+          "color": "orange",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-6",
+          "title": "Continuous Learning",
+          "name": "Continuous Learning",
+          "category": "personal",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Committed to staying updated with the latest technologies and industry best practices.",
+          "icon": "fas fa-book-reader",
+          "color": "indigo",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-7",
+          "title": "Community Building",
+          "name": "Community Building",
+          "category": "social",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Enjoy participating in tech communities and sharing knowledge with fellow developers.",
+          "icon": "fas fa-users",
+          "color": "pink",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-8",
+          "title": "Innovation",
+          "name": "Innovation",
+          "category": "creative",
+          "level": 90,
+          "levelLabel": "expert",
+          "description": "Passionate about creating new solutions and pushing the boundaries of what is possible with technology.",
+          "icon": "fas fa-lightbulb",
+          "color": "yellow",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-9",
+          "title": "Game Development",
+          "name": "Game Development",
+          "category": "creative",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Creating interactive experiences and exploring game mechanics and storytelling through code.",
+          "icon": "fas fa-gamepad",
+          "color": "red",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-10",
+          "title": "Cloud Computing",
+          "name": "Cloud Computing",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Building scalable cloud-based solutions and understanding modern infrastructure.",
+          "icon": "fas fa-cloud",
+          "color": "teal",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-11",
+          "title": "Cybersecurity",
+          "name": "Cybersecurity",
+          "category": "technical",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Ensuring digital safety and understanding security best practices in application development.",
+          "icon": "fas fa-shield-alt",
+          "color": "gray",
+          "tags": [],
+          "relatedTech": []
+        },
+        {
+          "id": "snapshot-interest-12",
+          "title": "Content Creation",
+          "name": "Content Creation",
+          "category": "social",
+          "level": 75,
+          "levelLabel": "advanced",
+          "description": "Sharing knowledge through tutorials, blogs, and video content to help others learn.",
+          "icon": "fas fa-video",
+          "color": "rose",
+          "tags": [],
+          "relatedTech": []
+        }
+      ],
+      "count": 12
+    },
+    "education": {
+      "success": true,
+      "education": [
+        {
+          "id": 1,
+          "icon": "fas fa-graduation-cap",
+          "period": "2023 - 2025",
+          "degree": "Diploma in Computer Science",
+          "level": "Level 6",
+          "institution": "Bungoma National Polytechnic",
+          "location": "Bungoma, Kenya",
+          "description": "Specializing in software development, web technologies, and computer systems. Key focus on practical programming skills and modern development practices.",
+          "category": "academic",
+          "grade": "Ongoing",
+          "skills": [
+            "Software Development",
+            "Web Technologies",
+            "Database Management",
+            "System Analysis"
+          ],
+          "color": "blue"
+        },
+        {
+          "id": 2,
+          "icon": "fas fa-laptop-code",
+          "period": "March 2023 - July 2023",
+          "degree": "ICT Essentials",
+          "level": "Office Automation Specialist",
+          "institution": "Ayes Consults Ltd.",
+          "location": "Nairobi, Kenya",
+          "description": "Comprehensive training in Microsoft Office Suite, computer maintenance, and essential IT skills for modern workplace efficiency.",
+          "category": "professional",
+          "grade": "Distinction",
+          "skills": [
+            "MS Office Suite",
+            "IT Support",
+            "Hardware Maintenance",
+            "Technical Documentation"
+          ],
+          "color": "green"
+        },
+        {
+          "id": 3,
+          "icon": "fas fa-certificate",
+          "period": "Jan 2023 - March 2023",
+          "degree": "Digital Skills Training",
+          "level": "Google Digital Skills Certificate",
+          "institution": "Google Africa",
+          "location": "Online",
+          "description": "Mastered digital marketing, online presence management, and web analytics fundamentals for business growth.",
+          "category": "certification",
+          "grade": "Certified",
+          "skills": [
+            "Digital Marketing",
+            "SEO",
+            "Analytics",
+            "Social Media Strategy"
+          ],
+          "color": "purple"
+        },
+        {
+          "id": 4,
+          "icon": "fas fa-laptop-code",
+          "period": "2022 - 2023",
+          "degree": "Certificate in Web Development",
+          "level": "Level 5",
+          "institution": "FreeCodeCamp",
+          "location": "Online",
+          "description": "Comprehensive training in full-stack web development. Covered HTML5, CSS3, JavaScript, React, and Node.js.",
+          "category": "certification",
+          "grade": "Certified",
+          "skills": [
+            "HTML5",
+            "CSS3",
+            "JavaScript",
+            "React",
+            "Node.js",
+            "MongoDB"
+          ],
+          "color": "cyan"
+        },
+        {
+          "id": 5,
+          "icon": "fas fa-code",
+          "period": "2022",
+          "degree": "Python Programming Certification",
+          "level": "Professional Certificate",
+          "institution": "Coursera",
+          "location": "Online",
+          "description": "Advanced Python programming concepts including data structures, algorithms, and object-oriented programming.",
+          "category": "certification",
+          "grade": "Certified",
+          "skills": [
+            "Python",
+            "OOP",
+            "Data Structures",
+            "Algorithms"
+          ],
+          "color": "yellow"
+        },
+        {
+          "id": 6,
+          "icon": "fas fa-school",
+          "period": "2019 - 2022",
+          "degree": "Secondary Education",
+          "level": "K.C.S.E Certificate",
+          "institution": "Musingu High School",
+          "location": "Kakamega, Kenya",
+          "description": "Completed secondary education with excellent grades in Mathematics, Physics, and Computer Studies.",
+          "category": "academic",
+          "grade": "B+ (Plus)",
+          "skills": [
+            "Mathematics",
+            "Physics",
+            "Computer Studies",
+            "Chemistry"
+          ],
+          "color": "orange"
+        }
+      ],
+      "count": 6
+    },
+    "testimonials": {
+      "success": true,
+      "testimonials": [
+        {
+          "name": "Sarah Johnson",
+          "position": "CEO",
+          "company": "TechStart Inc.",
+          "avatar": "https://images.unsplash.com/photo-1494790108756-2616b612b786?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "Working with this developer was an absolute pleasure. They delivered our e-commerce platform ahead of schedule and exceeded all our expectations. The attention to detail and technical expertise is unmatched.",
+          "featured": true,
+          "verified": true,
+          "date": "2025-01-15T00:00:00.000Z",
+          "project": "E-commerce Platform",
+          "tags": [
+            "React",
+            "Node.js",
+            "MongoDB"
+          ],
+          "id": "snapshot-testimonial-1"
+        },
+        {
+          "name": "Michael Chen",
+          "position": "CTO",
+          "company": "InnovateTech Solutions",
+          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "Exceptional work on our AI-powered analytics dashboard. The developer's ability to understand complex requirements and translate them into elegant solutions is remarkable. Highly recommended!",
+          "featured": true,
+          "verified": true,
+          "date": "2025-02-20T00:00:00.000Z",
+          "project": "AI Analytics Dashboard",
+          "tags": [
+            "Python",
+            "TensorFlow",
+            "React"
+          ],
+          "id": "snapshot-testimonial-2"
+        },
+        {
+          "name": "Emily Rodriguez",
+          "position": "Product Manager",
+          "company": "Digital Dynamics",
+          "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "The portfolio website they built for us is stunning. It perfectly captures our brand identity and has significantly increased our conversion rates. Professional, creative, and reliable.",
+          "featured": false,
+          "verified": true,
+          "date": "2025-03-10T00:00:00.000Z",
+          "project": "Portfolio Website",
+          "tags": [
+            "React",
+            "Tailwind",
+            "Framer Motion"
+          ],
+          "id": "snapshot-testimonial-3"
+        },
+        {
+          "name": "David Kim",
+          "position": "Founder",
+          "company": "StartupHub",
+          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "Outstanding development work on our real-time chat application. The performance optimization and user experience improvements have been game-changing for our platform.",
+          "featured": false,
+          "verified": true,
+          "date": "2025-04-05T00:00:00.000Z",
+          "project": "Real-time Chat App",
+          "tags": [
+            "Socket.io",
+            "Express",
+            "Redis"
+          ],
+          "id": "snapshot-testimonial-4"
+        },
+        {
+          "name": "Jessica Taylor",
+          "position": "Marketing Director",
+          "company": "BrandBoost Agency",
+          "avatar": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "The weather app they developed is both beautiful and functional. Our users love the intuitive interface and accurate forecasts. A truly talented developer!",
+          "featured": false,
+          "verified": true,
+          "date": "2025-05-12T00:00:00.000Z",
+          "project": "Weather App",
+          "tags": [
+            "React Native",
+            "API Integration"
+          ],
+          "id": "snapshot-testimonial-5"
+        },
+        {
+          "name": "Robert Anderson",
+          "position": "VP Engineering",
+          "company": "CloudScale Systems",
+          "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "Impressive work on our enterprise Java system. The microservices architecture they implemented has improved our scalability and performance significantly. Top-notch technical skills.",
+          "featured": false,
+          "verified": true,
+          "date": "2025-06-18T00:00:00.000Z",
+          "project": "Enterprise System",
+          "tags": [
+            "Java",
+            "Spring Boot",
+            "Microservices"
+          ],
+          "id": "snapshot-testimonial-6"
+        },
+        {
+          "name": "Amanda White",
+          "position": "Design Lead",
+          "company": "Creative Studios",
+          "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3",
+          "rating": 5,
+          "content": "Collaboration was seamless! They transformed our design mockups into pixel-perfect, performant web applications. Communication was excellent throughout.",
+          "featured": true,
+          "verified": true,
+          "date": "2025-07-22T00:00:00.000Z",
+          "project": "Design System Implementation",
+          "tags": [
+            "React",
+            "Storybook",
+            "Design Systems"
+          ],
+          "id": "snapshot-testimonial-7"
+        },
+        {
+          "name": "Chris Martinez",
+          "position": "Operations Manager",
+          "company": "LogiTech Solutions",
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3",
+          "rating": 4,
+          "content": "Great experience working together. The inventory management system has streamlined our operations significantly. Would definitely work with them again!",
+          "featured": false,
+          "verified": true,
+          "date": "2025-08-15T00:00:00.000Z",
+          "project": "Inventory Management",
+          "tags": [
+            "Vue.js",
+            "Laravel",
+            "MySQL"
+          ],
+          "id": "snapshot-testimonial-8"
+        }
+      ],
+      "count": 8
+    },
+    "labProjects": {
+      "success": true,
+      "projects": [
+        {
+          "id": "snapshot-lab-1",
+          "title": "Network Recon Suite",
+          "description": "passive and active reconnaissance toolkit — port scanning, OSINT gathering, DNS enumeration and service fingerprinting. Preview: https://net-gate-portal.netlify.app/ (NetGate captive portal).",
+          "status": "beta",
+          "category": "Other",
+          "technologies": [
+            "Python",
+            "Nmap",
+            "Scapy",
+            "Docker"
+          ],
+          "tags": [
+            "cybersecurity",
+            "recon",
+            "networking"
+          ],
+          "links": {
+            "live": "https://net-gate-portal.netlify.app/",
+            "demo": "https://net-gate-portal.netlify.app/"
+          },
+          "thumbnail": "",
+          "imageUrl": "",
+          "views": 0,
+          "likes": 0,
+          "updatedAt": null
+        },
+        {
+          "id": "snapshot-lab-2",
+          "title": "Wi-Fi Security Playground",
+          "description": "hands-on wireless security practicals — WPA2/WPA3 capture, PMKID handshake analysis and deauth detection in a sandboxed hardware lab.",
+          "status": "development",
+          "category": "IoT",
+          "technologies": [
+            "Raspberry Pi",
+            "Wireshark",
+            "Python",
+            "Linux"
+          ],
+          "tags": [
+            "wireless",
+            "iot",
+            "hardware"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/wifi-security-lab"
+          },
+          "thumbnail": "",
+          "imageUrl": "",
+          "views": 0,
+          "likes": 0,
+          "updatedAt": null
+        },
+        {
+          "id": "snapshot-lab-3",
+          "title": "Web Pentest Lab (OWASP)",
+          "description": "ethical web application practicals — SQLi, XSS, SSRF and IDOR walkthroughs against a deliberately vulnerable local target.",
+          "status": "experimental",
+          "category": "Web",
+          "technologies": [
+            "Docker",
+            "Node.js",
+            "PostgreSQL"
+          ],
+          "tags": [
+            "owasp",
+            "web-security",
+            "docker"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/web-pentest-lab"
+          },
+          "thumbnail": "",
+          "imageUrl": "",
+          "views": 0,
+          "likes": 0,
+          "updatedAt": null
+        },
+        {
+          "id": "snapshot-lab-4",
+          "title": "Cloud IAM Misconfig Sentinel",
+          "description": "auditing utility for IAM role permission bloat and open object-storage buckets with remediation hints.",
+          "status": "live",
+          "category": "DevOps",
+          "technologies": [
+            "Node.js",
+            "Terraform",
+            "Docker"
+          ],
+          "tags": [
+            "cloud",
+            "devsecops"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/cloud-iam-sentinel"
+          },
+          "thumbnail": "",
+          "imageUrl": "",
+          "views": 0,
+          "likes": 0,
+          "updatedAt": null
+        }
+      ],
+      "count": 4
+    }
+  }
+}

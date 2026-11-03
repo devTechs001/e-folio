@@ -8,6 +8,7 @@ import {
     Facebook, Twitter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { recordDevIssue, publicCopy } from '../utils/publicMessaging';
 import '../styles/LoginPage.css';
 
 const LoginPage = ({ collaborator = false }) => {
@@ -82,7 +83,8 @@ const LoginPage = ({ collaborator = false }) => {
                 setError(result.error || 'Login failed. Please check your credentials and try again.');
             }
         } catch (err) {
-            setError(err.message || 'An error occurred during login. Please try again.');
+            recordDevIssue({ section: 'auth', endpoint: '/auth/login', error: err });
+            setError(publicCopy('auth'));
         } finally {
             setLoading(false);
         }

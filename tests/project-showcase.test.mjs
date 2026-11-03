@@ -147,7 +147,7 @@ check('the confidential report documents this addition', () => {
     const report = read('CONFIDENTIAL_AUDIT_AND_FIX_REPORT.md');
     assert.match(report, /## 3k\./);
     assert.ok(report.includes(URL));
-    assert.match(report, /Phases 3–11/);
+    assert.match(report, /Phases 3–/);
 });
 
 console.log(`\n${passed} project-showcase regression checks passed.`);

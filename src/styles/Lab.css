@@ -546,3 +546,10 @@
   .lab-data-section { padding: 20px 16px; }
   .lab-data-heading { align-items: flex-start; }
 }
+
+/* Friendly label shown when the saved portfolio copy is in use. */
+.lab-source-archive {
+  color: #38bdf8;
+  background: color-mix(in srgb, #38bdf8 12%, transparent);
+  border-color: color-mix(in srgb, #38bdf8 30%, transparent);
+}

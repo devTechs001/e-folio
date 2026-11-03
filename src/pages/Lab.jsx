@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Flame, Rocket, Wrench, FlaskConical, Globe, Github, RefreshCw,
-  Search, Terminal, ExternalLink, Filter, X, Trash2, Database,
-  Wrench as ToolkitIcon, Heart, ArrowUpRight, AlertCircle
+  Search, Terminal, ExternalLink, Filter, X, Trash2,
+  Wrench as ToolkitIcon, Heart, ArrowUpRight
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import api from '../services/api.service';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import ProjectModal from './ProjectModal';
 import '../styles/Lab.css';
 
@@ -42,9 +45,6 @@ const getDemoLink = (links) => {
 
 const getCodeLink = (links) => (links || {}).github || null;
 
-const settledValue = (result) =>
-  result.status === 'fulfilled' && result.value?.success ? result.value : null;
-
 const Lab = () => {
   const { isOwner: checkOwner } = useAuth();
   const { connected, on, off } = useSocket();
@@ -54,8 +54,8 @@ const Lab = () => {
   const [skills, setSkills] = useState([]);
   const [hobbies, setHobbies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const [dataStatus, setDataStatus] = useState('loading'); // live | partial | unavailable
+  const [contentSource, setContentSource] = useState('');
+  const [dataStatus, setDataStatus] = useState('loading'); // live | archive | loading
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [liveUpdate, setLiveUpdate] = useState(false);
@@ -65,7 +65,6 @@ const Lab = () => {
 
   const load = useCallback(async (force = false) => {
     const token = ++loadTokenRef.current;
-    setLoadError('');
     try {
       const cached = !force && cacheService.get(CACHE_KEY);
       if (cached) {
@@ -73,52 +72,51 @@ const Lab = () => {
         setSkills(cached.skills || []);
         setHobbies(cached.hobbies || []);
         setDataStatus('live');
+        setContentSource('live');
         setLoading(false);
         return;
       }
 
-      // All three collections are the SAME data the dashboard manages:
-      // /dashboard/projects, /dashboard/skills and /dashboard/hobbies.
-      const [projectsResult, skillsResult, hobbiesResult] = await Promise.allSettled([
-        api.request('/public/projects?status=all&limit=100'),
-        api.request('/public/skills'),
-        api.request('/public/interests')
+      // Each section tries the live API first and falls back to its saved
+      // local copy. Visitors always see a complete, consistent page; all
+      // technical failures are recorded for the dev diagnostics panel.
+      const [projectsResponse, skillsResponse, hobbiesResponse] = await Promise.all([
+        loadPublicSection('projects', { fallbackSection: 'labProjects' }),
+        loadPublicSection('skills'),
+        loadPublicSection('interests')
       ]);
       if (token !== loadTokenRef.current) return;
 
-      const projectsData = settledValue(projectsResult);
-      const skillsData = settledValue(skillsResult);
-      const hobbiesData = settledValue(hobbiesResult);
-
-      const realProjects = Array.isArray(projectsData?.projects)
-        ? projectsData.projects.filter(p => LAB_STATUSES.includes(String(p.status || '').toLowerCase()))
+      const realProjects = Array.isArray(projectsResponse.projects)
+        ? projectsResponse.projects.filter(p => LAB_STATUSES.includes(String(p.status || '').toLowerCase()))
         : [];
-      const realSkills = Array.isArray(skillsData?.skills) ? skillsData.skills : [];
-      const realHobbies = Array.isArray(hobbiesData?.interests)
-        ? hobbiesData.interests
-        : (Array.isArray(hobbiesData?.data) ? hobbiesData.data : []);
+      const realSkills = Array.isArray(skillsResponse.skills) ? skillsResponse.skills : [];
+      const realHobbies = Array.isArray(hobbiesResponse.interests)
+        ? hobbiesResponse.interests
+        : (Array.isArray(hobbiesResponse.data) ? hobbiesResponse.data : []);
 
       setProjects(realProjects);
       setSkills(realSkills);
       setHobbies(realHobbies);
 
-      const okCount = [projectsData, skillsData, hobbiesData].filter(Boolean).length;
-      setDataStatus(okCount === 3 ? 'live' : okCount === 0 ? 'unavailable' : 'partial');
-      if (okCount < 3) {
-        setLoadError('Some lab data is temporarily unavailable. Showing only the records that loaded.');
-      }
-      if (okCount === 3) {
+      const allLive = [projectsResponse, skillsResponse, hobbiesResponse].every(isLiveContent);
+      setDataStatus(allLive ? 'live' : 'archive');
+      setContentSource(allLive ? 'live' : 'snapshot');
+      // Only cache genuine live data, so a saved copy never masks a backend
+      // that comes back online.
+      if (allLive) {
         cacheService.set(CACHE_KEY, {
           projects: realProjects, skills: realSkills, hobbies: realHobbies
         }, CACHE_TTL.TEN_MINUTES);
       }
     } catch (error) {
       if (token !== loadTokenRef.current) return;
+      recordDevIssue({ section: 'lab', endpoint: PUBLIC_ENDPOINTS.projects, error });
       setProjects([]);
       setSkills([]);
       setHobbies([]);
-      setDataStatus('unavailable');
-      setLoadError('Lab data is temporarily unavailable. Please try again later.');
+      setDataStatus('archive');
+      setContentSource('snapshot');
     } finally {
       if (token === loadTokenRef.current) setLoading(false);
     }
@@ -231,10 +229,8 @@ const Lab = () => {
 
           <div className="lab-header-meta mt-3">
             <span className={`lab-source lab-source-${dataStatus}`}>
-              <Database size={12} />
-              {dataStatus === 'live' && 'Live dashboard data'}
-              {dataStatus === 'partial' && 'Partial dashboard data'}
-              {dataStatus === 'unavailable' && 'Data unavailable'}
+              <FlaskConical size={12} />
+              {dataStatus === 'archive' ? 'From the portfolio archive' : 'Latest from the portfolio'}
             </span>
             {connected && (
               <motion.span className="lab-live" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
@@ -264,11 +260,7 @@ const Lab = () => {
             </div>
           )}
 
-          {loadError && (
-            <div className="lab-error">
-              <AlertCircle size={14} /> {loadError}
-            </div>
-          )}
+          <ArchiveNote source={contentSource} />
         </div>
 
         {/* Metrics Row */}
@@ -428,9 +420,7 @@ const Lab = () => {
             <p className="text-gray-400">
               {searchQuery
                 ? `No lab experiments matching "${searchQuery}"`
-                : loadError
-                  ? loadError
-                  : 'No lab experiments yet. Tag a project with a lab status to show it here.'}
+                : publicEmptyCopy('emptyLab')}
             </p>
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="mt-3 text-cyan-400 text-sm hover:underline">
@@ -513,10 +503,14 @@ const Lab = () => {
 
         <div className="lab-footer-note">
           <Filter size={13} />
-          <span>
-            Projects, skills and hobbies are live database records. Items tagged
-            <code>{LAB_SAMPLE_TAG}</code> are sample entries that an owner can delete here or in the Lab dashboard.
-          </span>
+          {owner ? (
+            <span>
+              Projects, skills and hobbies are live database records. Items tagged
+              <code>{LAB_SAMPLE_TAG}</code> are sample entries that an owner can delete here or in the Lab dashboard.
+            </span>
+          ) : (
+            <span>Experiments, tools and interests from the portfolio. New entries are added regularly.</span>
+          )}
         </div>
 
         {/* Project Modal Preview */}

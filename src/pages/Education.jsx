@@ -1,30 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import apiService from '../services/api.service';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue } from '../utils/publicMessaging';
 import '../styles/Education.css';
 
 const Education = () => {
     const [educationData, setEducationData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'timeline'
+    const [contentSource, setContentSource] = useState('');
 
     useEffect(() => {
         loadEducation();
     }, []);
 
     const loadEducation = async () => {
+        // Live API first, then the bundled saved copy (generated from the
+        // local education records). No technical detail reaches visitors.
+        let response;
         try {
-            const response = await apiService.getEducation();
-            if (response.success && response.education) {
-                setEducationData(response.education);
-            } else {
-                setEducationData(getFallbackEducation());
-            }
+            response = await loadPublicSection('education');
         } catch (error) {
-            console.error('Error loading education:', error);
-            setEducationData(getFallbackEducation());
-        } finally {
-            setLoading(false);
+            recordDevIssue({ section: 'education', endpoint: PUBLIC_ENDPOINTS.education, error });
+            response = getSnapshotSection('education');
         }
+        const items = Array.isArray(response.education) ? response.education : [];
+        setEducationData(items.length ? items : getFallbackEducation());
+        setContentSource(response.source || '');
+        setLoading(false);
     };
 
     const getFallbackEducation = () => [
@@ -149,6 +152,7 @@ const Education = () => {
                     <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mb-8">
                         My academic journey and professional certifications that shaped my expertise
                     </p>
+                    <ArchiveNote source={contentSource} />
 
                     {/* View Mode Toggle */}
                     <div className="flex items-center justify-center gap-4 mb-8">

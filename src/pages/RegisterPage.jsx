@@ -7,6 +7,7 @@ import {
     Sparkles, AlertCircle, CheckCircle, Loader2, Chrome
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { recordDevIssue, publicCopy } from '../utils/publicMessaging';
 import '../styles/LoginPage.css';
 
 const RegisterPage = () => {
@@ -83,7 +84,8 @@ const RegisterPage = () => {
                 setError(result.error || 'Registration failed');
             }
         } catch (err) {
-            setError(err.message || 'An error occurred during registration');
+            recordDevIssue({ section: 'registration', endpoint: '/auth/register', error: err });
+            setError(publicCopy('registration'));
         } finally {
             setLoading(false);
         }

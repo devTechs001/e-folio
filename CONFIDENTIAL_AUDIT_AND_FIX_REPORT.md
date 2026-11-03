@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,13 +19,13 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phases 3–11 (collaboration & review,
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–12 (collaboration & review,
 Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
 Resources page, live preview + lagging issues, CellarKeep client-portal link in
-Projects) are **local only** — no push, PR, merge, external issue, or external
-service was used.
+Projects, public copy + saved-data fallback) are **local only** — no push, PR,
+merge, external issue, or external service was used.
 
 ---
 
@@ -42,6 +42,7 @@ service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
 | Live preview + lagging issues (phase 10) | browser-facing code called localhost and hung 15 s per request; 1 s fake loader; dead raw WS retrying every 5 s; uncached file scans | same-origin `/api` + proxy fixes, no artificial loader, hidden-tab timer guards, authenticated tracking namespace, 30 s inventory caches, preview-safe Vite host/proxy |
 | Security Audit dashboard (phase 9) | audit results only existed as terminal output from `npm run audit:security` | owner-only `/dashboard/security-audit` with real cached/rate-limited audit API, findings, checks, controls, environment presence and JSON export |
@@ -944,6 +945,46 @@ credential was sent to that site, and the URL's exact spelling
 
 ---
 
+## 3l. Phase 12 — keep developer wording off the public site; load saved copies when the API is down
+
+Request: *"keep dev info away from the publi [public] … like the database data unavailable, request failed with 500/505, because server is offline (keep for dev) return some info to users (sensible … data should also be loaded in files in case the server is down … just load from backup files"*.
+
+### Policy applied
+
+| Audience | What they see |
+| --- | --- |
+| Public visitors | Real content loaded live, or the same sections loaded from bundled local backup data; short friendly sentences; no status codes, exception text, "server is offline", "database unavailable", "temporarily unavailable", "partial/unavailable data" or raw `error.message`. |
+| Developers | All of it: the original technical messages remain in `api.service.js`, are recorded with endpoint/status/time in an in-memory buffer, printed to the console in dev builds, and shown in a dev-only diagnostics panel. The panel is gated by `import.meta.env.DEV` and is absent from production builds. |
+
+### A. Saved-copy data (files, not nulls)
+
+- `scripts/build-public-snapshot.mjs` (run with `npm run snapshot:build`) generates **`src/data/publicSnapshot.json`** from files already in this repository: `server/backups/testimonials/original-fallback-testimonials.json`, `server/seed-data.js`, `scripts/seed-projects.js`, `src/pages/Education.jsx` and `src/data/labSamples.json`. No network, no credentials, no invented metrics (`views`/`likes` are reset to 0).
+- Snapshot contents: **3** projects, **20** skills, **12** interests, **6** education records, **8** testimonials, **4** lab experiments. The `[SAMPLE]` presentation marker is removed from lab titles; the NetGate link itself is untouched.
+- `src/services/publicContent.js` tries the live API first and falls back to the saved copy on failure **or on an empty response**. Every result is flagged `source: 'live' | 'snapshot'`. A `fallbackSection` option lets the Lab page use its own experiment records. Pages only cache genuine live data, so a saved copy can never mask a backend that comes back online.
+- `src/components/ArchiveNote.jsx` shows one short, non-technical line ("A selection from the portfolio archive") when a saved copy is in use.
+
+### B. Public pages rewritten
+
+`src/pages/Projects.jsx`, `Skills.jsx`, `Interests.jsx`, `Education.jsx`, `Testimonials.jsx` and `Lab.jsx` now load through the shared live-first loader, never display technical failure text, and keep their sections populated. `Lab.jsx` also replaces the "Live dashboard data / Partial dashboard data / Data unavailable" badge with friendly labels and shows its database/sample wording **only to the owner**. `Testimonials.jsx` keeps its mock/preview wording owner-only.
+
+`src/pages/LoginPage.jsx`, `RegisterPage.jsx`, `AcceptInvite.jsx` and `src/components/CollaborationRequestStyled.jsx` no longer put `err.message` / `response.message` in front of visitors; they record it for developers and show one friendly sentence. `src/services/api.service.js` keeps its technical messages unchanged, now explicitly documented as internal/dev-only.
+
+### C. Developer-only diagnostics
+
+`src/utils/publicMessaging.js` holds all friendly public copy plus `recordDevIssue()` / `getDevIssues()` / `IS_DEV`. `src/components/DevDiagnostics.jsx` is a small collapsible panel listing endpoint, status, message and timestamp; it is rendered from `src/App.jsx` only under `{IS_DEV && <DevDiagnostics />}`, so the production build contains no technical surface. In the dev preview (port 5173) the developer can open it; the production-build preview (port 4173) shows only the public site.
+
+### D. Verification & scope
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **20.89s**, PWA **216 precache entries (6999.99 KiB)**.
+- **132** Node-only regression checks in total (**14** new public-fallback / dev-info checks). Two older tests that asserted "empty array + error banner" were updated to the new live-first/saved-copy policy.
+- Verified the production build contains **no** "Developer diagnostics" / "DEV · API" strings (the panel is removed by the `import.meta.env.DEV` build-time literal), while the dev preview still serves all new modules and JSON with 200.
+- `git diff --check` clean; masked secret scan clean; the NetGate/project-link changed-file filter is empty.
+- Not changed: any existing project record, seed script, backup file, or link — including the NetGate link and the NEX Store link. No database write, no external call, no push, PR or merge.
+- Not verified here: a live MongoDB/Express round trip (no backend in this sandbox). Live API responses always take precedence when available.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -998,6 +1039,10 @@ credential was sent to that site, and the URL's exact spelling
     MongoDB and verify the new record in `/dashboard/projects` and
     `GET /api/public/projects` with a real owner account; no database was
     available in this sandbox.
+17. Phase 12 follow-ups: refresh `src/data/publicSnapshot.json` with
+    `npm run snapshot:build` whenever the real backups/seed records change,
+    and runtime-verify that live API data overrides the saved copy once a
+    MongoDB/Express backend is available.
 
 ---
 
@@ -1010,5 +1055,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10 and 11 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10, 11 and 12 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

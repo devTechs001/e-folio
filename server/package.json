@@ -14,7 +14,7 @@
     "seed:enterprise": "node scripts/seed-enterprise-projects.js",
     "seed:complete": "node scripts/seed-all-projects.js",
     "seed:reset": "node seed-data.js",
-    "test": "node scripts/check-endpoint-parity.js --strict && node scripts/security-audit.js --strict && node ../tests/dashboard-api.test.mjs && node ../tests/collaboration-review.test.mjs && node ../tests/lab-page.test.mjs && node ../tests/testimonial-samples.test.mjs && node ../tests/profile-settings-api.test.mjs && node ../tests/about-user-workspace.test.mjs && node ../tests/user-workspace-realtime.test.mjs && node ../tests/security-resources-page.test.mjs && node ../tests/live-preview-lag.test.mjs && node ../tests/project-showcase.test.mjs",
+    "test": "node scripts/check-endpoint-parity.js --strict && node scripts/security-audit.js --strict && node ../tests/dashboard-api.test.mjs && node ../tests/collaboration-review.test.mjs && node ../tests/lab-page.test.mjs && node ../tests/testimonial-samples.test.mjs && node ../tests/profile-settings-api.test.mjs && node ../tests/about-user-workspace.test.mjs && node ../tests/user-workspace-realtime.test.mjs && node ../tests/security-resources-page.test.mjs && node ../tests/live-preview-lag.test.mjs && node ../tests/project-showcase.test.mjs && node ../tests/public-fallback.test.mjs",
     "audit:endpoints": "node scripts/check-endpoint-parity.js",
     "audit:security": "node scripts/security-audit.js",
     "test:load": "node tests/load/smoke-load.js",
@@ -38,7 +38,9 @@
     "test:live-preview": "node ../tests/live-preview-lag.test.mjs",
     "seed:showcase": "node scripts/seedProjectShowcase.js",
     "seed:showcase:remove": "node scripts/seedProjectShowcase.js --remove",
-    "test:project-showcase": "node ../tests/project-showcase.test.mjs"
+    "test:project-showcase": "node ../tests/project-showcase.test.mjs",
+    "test:public-fallback": "node ../tests/public-fallback.test.mjs",
+    "snapshot:build": "node ../scripts/build-public-snapshot.mjs"
   },
   "keywords": [
     "portfolio",

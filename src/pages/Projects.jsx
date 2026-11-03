@@ -10,6 +10,9 @@ import ImageLightbox from './ImageLightbox';
 import ProjectFilters from './ProjectFilters';
 import NexStoreCard from '../components/NexStoreCard';
 import ProjectShowcase from '../components/ProjectShowcase';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
 
 const Projects = () => {
@@ -17,7 +20,7 @@ const Projects = () => {
     const { socket, connected } = useSocket();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState('');
+    const [contentSource, setContentSource] = useState('');
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('featured'); // featured, newest, popular, views
@@ -36,26 +39,28 @@ const Projects = () => {
             const cached = cacheService.get('public_projects');
             if (cached) {
                 setProjects(cached);
+                setContentSource('live');
                 setLoading(false);
                 return;
             }
 
             setLoading(true);
-            setLoadError('');
-            const response = await apiService.request('/public/projects');
-
-            if (response.success && Array.isArray(response.projects) && response.projects.length > 0) {
-                cacheService.set('public_projects', response.projects, CACHE_TTL.TEN_MINUTES);
-                setProjects(response.projects);
-            } else {
-                // Projects are real data managed in /dashboard/projects.
-                setProjects([]);
-                if (!response.success) setLoadError(response.message || 'Projects are temporarily unavailable.');
+            // Live API first; the saved local copy keeps the section complete
+            // and consistent when the backend cannot supply it. No technical
+            // detail is ever exposed to visitors.
+            const response = await loadPublicSection('projects');
+            const items = Array.isArray(response.projects) ? response.projects : [];
+            setProjects(items);
+            setContentSource(response.source || '');
+            // Only cache genuine live data, so a saved copy never masks a
+            // backend that comes back online.
+            if (isLiveContent(response)) {
+                cacheService.set('public_projects', items, CACHE_TTL.TEN_MINUTES);
             }
         } catch (error) {
-            console.error('Error loading projects:', error);
+            recordDevIssue({ section: 'projects', endpoint: PUBLIC_ENDPOINTS.projects, error });
             setProjects([]);
-            setLoadError('Projects are temporarily unavailable. Please try again later.');
+            setContentSource('');
         } finally {
             setLoading(false);
         }
@@ -392,6 +397,7 @@ const Projects = () => {
                     <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mb-8">
                         Explore my portfolio of innovative solutions and creative implementations
                     </p>
+                    <ArchiveNote source={contentSource} />
 
                     {/* Enhanced featured link: same destination, real copy/share/QR actions. */}
                     <div className="flex justify-center mb-8 w-full">
@@ -599,7 +605,7 @@ const Projects = () => {
                         <i className="fa-solid fa-folder-open text-6xl text-mainColor/30 mb-4"></i>
                         <h3 className="text-2xl font-bold text-textColor mb-2">No Projects Found</h3>
                         <p className="text-textColor/60 mb-6">
-                            {loadError || 'Try adjusting your filters or search query'}
+                            {publicEmptyCopy('emptyProjects')}
                         </p>
                         <button
                             onClick={() => {
