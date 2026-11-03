@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -20,8 +20,8 @@ contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
 `origin/main` via PR #1 and PR #2 (see §5). Phase 3 (collaboration & review
-systems), phase 4 (Lab ↔ dashboard) and phase 5 (mock testimonials) are
-**local only** — no push, PR, merge, external issue, or external
+systems), phase 4 (Lab ↔ dashboard), phase 5 (mock testimonials) and phase 6
+(chat/chatbot/email review + profile & settings real APIs) are **local only** — no push, PR, merge, external issue, or external
 service was used.
 
 ---
@@ -39,6 +39,8 @@ service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Chat / chatbot / email review (phase 6) | unauthenticated socket role spoofing, no room membership checks, public LLM endpoint with client-side-only redaction, email send reporting false success, broken `/email/settings` route, phantom user id | read-only source review with file/line findings; no live/external testing |
+| Profile & Settings → real APIs (phase 6) | 4 missing API methods, webhooks on an in-memory mock store, dead Delete Account button, 8 fabricated trend badges | real `/settings/*` + `GET /profile` wiring, `Promise.allSettled`, honest error states, working confirmation modal |
 | Mock testimonials (phase 5) | invented client quotes were served to visitors; the original 8 records were later deleted | the same 8 records restored verbatim as real, tagged, preview-only DB documents with owner add/delete/publish controls, backup files and a versioned cache |
 | Lab ↔ dashboard (phase 4) | Lab page used 4 fake experiments; Projects/Skills/Interests pages shipped ~700 lines of invented fallback data | real `/api/public/*` records for projects, skills and hobbies; new `/dashboard/lab`; clearly tagged, owner-deletable sample data |
 | Collaboration & review (phase 3) | anonymous review reads, `auth`-only moderation, unscoped workspaces, dead invite links, fake reviews/testimonials, public applicant documents | owner-only guards, hashed `Invite` flow + accept page, private uploads, membership checks, honest empty states, 21 new regression checks |
@@ -527,6 +529,123 @@ If a different single project link was meant, it is a one-line change in
 
 ---
 
+## 3f. Phase 6 — read-only review of chat / chatbot / email + profile & settings wired to real APIs
+
+All work is local on `arena/f176a951-e-folio`. **No push, PR, merge, external
+issue or external service.** No live database, SMTP server or LLM provider was
+contacted; no offensive/live-external testing was performed. The NetGate URL
+was **not replaced or changed** in any project, dataset, config or document —
+`src/data/labSamples.json` and `src/data/testimonialSamples.json` still hold
+`https://net-gate-portal.netlify.app/` exactly as phase 5 left them.
+
+### A. Chat system — review findings (read-only, not fixed)
+
+| Severity | Finding | Location |
+|---|---|---|
+| **HIGH** | Socket `authenticate` never verifies a JWT. A client supplies `userId`, `name`, `email`, **`role`** directly; a non-objectId string even mints a synthetic user with `role: userData.role \|\| 'owner'`. Any visitor can claim owner. | `server/socket/chat.handler.enhanced.js:13-60` |
+| **HIGH** | `system_alert`, `project_update`, `collaboration_request` and `send_notification` handlers have no authorisation: any connected socket can broadcast arbitrary notifications to everyone or to all "owners" (spoofing / phishing). | `chat.handler.enhanced.js:90-195` |
+| **HIGH** | `join_room` / `send_message` on the socket and REST `GET /rooms/:id/messages`, `POST /messages`, `GET /search`, `POST /:id/pin`, `DELETE /:id/pin`, `POST /:id/read` have **no room-membership check** — private-room messages are readable/writable by any authenticated user. | `chat.handler.enhanced.js:196-330`; `server/controllers/chat.controller.js:114,139,269,293,313,434` |
+| **MEDIUM** | `GET /api/chat/search` interpolates raw `q` into `$regex` (ReDoS / regex injection) and does not scope results to the caller's rooms. | `chat.controller.js:269-288` |
+| **MEDIUM** | Uploads write to a **relative** `uploads/chat` path and are returned as `/uploads/chat/...`; `server/server.js:144` serves `server/uploads` statically with no auth, so private chat attachments become public URLs (the same class of bug fixed for applicant CVs in phase 3). Depending on cwd the files may instead be written outside the served root and 404. Only the filename extension is checked, not the MIME type. | `server/routes/chat.routes.js:29-49`; `chat.controller.js:355` |
+| **MEDIUM** | `GET /api/chatbot/stream` sets `Access-Control-Allow-Origin: *`, overriding the server's restrictive CORS so any origin can consume the LLM quota. | `server/controllers/chatbot.controller.js:64` |
+| **LOW** | `room.remove()` / `message.remove()` are removed in Mongoose 7+; `req.app.get('io')` is used without a guard; ~25 catch blocks return raw `error.message` in 500 responses. | `chat.controller.js:104,210` and throughout |
+| **LOW** | Legacy `server/socket/chat.handler.js` is entirely unauthenticated (in-memory rooms, client-declared role). It is not mounted (`server.js:26` uses the enhanced handler) but remains in the tree. | `server/socket/chat.handler.js:8-40` |
+
+`src/components/dashboard/ChatSystemStyled.jsx` itself is fine: it uses relative
+`/api/chat/*` URLs with a bearer token and checks `response.ok` / content type.
+
+### B. Chatbot / AI assistant — review findings (read-only, not fixed)
+
+| Severity | Finding | Location |
+|---|---|---|
+| **HIGH** | **Fabricated answers presented as AI.** `gemini.service.js` has ~30 hard-coded persona lines ("I've been coding for about 5 years", "senior full-stack", fixed tech stacks). When no provider is reachable it returns `success:true` with `model:'enhanced-fallback'` and randomly picks one. The frontend has a second set of `fallbackResponses` for API failures (`model:'fallback'`). Neither is visibly labelled as unavailable to a visitor. | `server/services/gemini.service.js:37-70,220-255`; `src/components/AIChatbot.jsx:190-215,375-392` |
+| **HIGH** | **Sensitive-data redaction is client-side only.** `sanitizeResponse()` scrubs paths, `.env`, keys, tokens, endpoints in the browser, but the server returns raw model output. Calling `POST /api/chatbot/chat` directly bypasses it entirely. The public endpoint is unauthenticated with `conversationHistory` of unbounded length → prompt injection / token exhaustion. | `AIChatbot.jsx:174-188`; `chatbot.controller.js:7-40`; `chatbot.routes.js:8-9` |
+| **HIGH** | `keyRotator.service.js` scrapes a third-party GitHub repo of "free LLM API keys", calls untrusted keyless endpoints, and mutates `process.env.OPENAI_API_KEY` at runtime. A public chatbot therefore forwards visitor prompts to external services — a confidentiality/supply-chain concern (already in the backlog; **do not execute** it). | `server/services/keyRotator.service.js:5,13-20,58,80` |
+| **MEDIUM** | `GET /api/chatbot/test` is only `auth`, not `isOwner`; `streamChat` emits `error.message` to the client on failure. | `chatbot.routes.js:12`; `chatbot.controller.js:84` |
+| **MEDIUM** | Both public endpoints share `rateLimiter(20)` (20 requests / 15 min per IP) — generous for an expensive LLM call and trivially rotated across IPs; no per-message or per-history length cap. | `chatbot.routes.js:8-9`; `rateLimitMiddleware.js:78-86` |
+
+### C. Email system — review findings (read-only, not fixed)
+
+| Severity | Finding | Location |
+|---|---|---|
+| **HIGH** | `sendEmail` ignores the transport result. Phase 3 made `utils/email.js` return `success:false, simulated:true` when SMTP is not configured, but the controller still saves the message and replies **`success:true, 'Email sent successfully'`** regardless. | `server/controllers/email.controller.js:238-258` |
+| **HIGH** | Route ordering: `router.get('/:id')` is registered at line 83 **before** `router.get('/settings')` at line 134, so `GET /api/email/settings` is captured by `getEmailById('settings')` → cast error / 500. `PUT /settings` works. | `server/routes/email.routes.js:83,134-135` |
+| **MEDIUM** | `searchEmails` **overwrites** `query.$or` (the sender/recipient scoping) when `q` is supplied, and uses unescaped user regex. | `email.controller.js:540-576` |
+| **MEDIUM** | `getValidUserId()` still falls back to the phantom ObjectId `507f1f77bcf86cd799439011` (the same bug fixed in other controllers during phase 3). Drafts, labels, folders, templates, quick responses, scheduled mail and email settings can be written under that fabricated user. | `email.controller.js:15-21` (used at ~20 call sites) |
+| **MEDIUM** | `downloadAttachment` is a no-op stub returning `success:true` with no file; `blockSender` is a no-op stub claiming "Sender blocked". `formatEmailHTML` interpolates raw body text into HTML. | `email.controller.js:1095-1113,1214-1220,1245+` |
+| **MEDIUM** | Attachments are passed to nodemailer as `path: att.url` — a client-controlled string used as a filesystem path. Uploads use a relative `uploads/email-attachments` destination and are exposed by the public `/uploads` static mount. | `email.controller.js:243`; `email.routes.js:50-65` |
+| **LOW** | `deleteEmails` / `archiveEmails` / `markSpam` update by `_id` with no owner scoping (all routes are `isOwner`, so limited impact); `updateEmailSettings` passes `req.body` straight into `findOneAndUpdate` (mass assignment, can overwrite `user`); `limit`/`sortBy` are unvalidated; many 500s leak `error.message`. | `email.controller.js:365-415,948-960,1195-1212` |
+
+`EmailManagerEnhanced.jsx` is already on the real `/api/email/*` endpoints.
+
+### D. Profile & Settings → real APIs (implemented)
+
+The two dashboard pages called real endpoints already, but four required
+methods did not exist, webhooks pointed at a mock store, one destructive button
+was dead, and both pages rendered invented/partial data. Changes:
+
+- **`src/services/api.service.js`**
+  - Added `deleteApiKey` → `DELETE /settings/api-keys/:keyId`,
+    `terminateSession` → `DELETE /settings/sessions/:sessionId`,
+    `deleteAccount` → `POST /settings/delete-account`,
+    `exportUserData` → `GET /settings/export`. Previously those four buttons
+    threw `TypeError: apiService.X is not a function`.
+  - Repointed `getWebhooks` / `createWebhook` / `deleteWebhook` from the
+    **in-memory** `/api/webhooks` controller (`webhooks.controller.js:6` —
+    `let webhooks = []`) to the real Mongo-backed
+    `GET|POST /settings/webhooks` and `DELETE /settings/webhooks/:webhookId`
+    (`WebHook` model). `updateWebhook` / `testWebhook` now return an honest
+    `success:false` instead of silently hitting the mock store.
+- **`src/components/dashboard/SettingsStyled.jsx`**
+  - `loadUserSettings` now uses `Promise.allSettled` (one failing source no
+    longer blanks the whole page) with an honest `loadError` banner + retry.
+  - **Delete My Account** was a dead button (`showDeleteModal` was set but no
+    modal existed). It now opens a real confirmation modal collecting the
+    password and `DELETE` confirmation, and posts both to the real API (the
+    controller requires `confirmation === 'DELETE'` plus a valid password).
+  - Export user data now checks `response.success` before downloading; key,
+    webhook and session actions surface the API's `message` on failure.
+- **`src/components/dashboard/Profile.jsx`**
+  - `loadProfileData` now uses `Promise.allSettled` across 13 sources and reads
+    the authoritative **`GET /api/profile`** record (previously it only merged
+    `GET /api/settings`'s `data.profile` subset). `/settings` remains a
+    fallback. Adds a `loadError` banner + retry.
+  - Removed **8 fabricated trend badges** (`+23%`, `+12%`, `+8`, `+15%`,
+    `+5`, `+34%`, `+18`, `+2`) that were hard-coded next to real counters, and
+    replaced three metrics the API never returns with `—` instead of `0`.
+    The trend badge now renders only when a real change value exists.
+- **`server/controllers/settings.controller.js`** — `updateUserSettings` no
+  longer echoes `error.message` back to the browser on failure.
+- `tests/profile-settings-api.test.mjs` — 8 static regression checks,
+  including one that asserts the NetGate/project links are unchanged.
+
+### Known gaps left open (review only, no fix applied)
+
+- `/api/settings/sessions` is a real endpoint but no login flow ever creates a
+  `Session` document, and `req.sessionId` is never set by the auth middleware
+  (`settings.controller.js:190,419`). The sessions list will be empty and
+  `changePassword` cannot identify the current session. Fixing this needs a
+  server-side session-on-login design, not a frontend change.
+- `createWebhook` in `settings.controller.js` immediately POSTs to the
+  user-supplied URL (`testWebhook`, line 765) — owner-initiated SSRF surface.
+- The `/settings` Socket.IO namespace has no authentication: `join` accepts any
+  `userId` and `settings:update` broadcasts to all connected clients
+  (`server/socket/settings.handler.js:7-18`). Its targeted emit also uses
+  `io.to()` on the root server rather than `settingsNamespace.to()`, so it never
+  reaches the joined room.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 674 warnings**, parity `--strict`
+  **0 live gaps**, security audit `--strict` **HIGH/MEDIUM/LOW 0**, build
+  21.34s / PWA 205 entries.
+- 61 Node-only regression checks: 9 dashboard + 21 collaboration/review +
+  12 lab/dashboard + 11 testimonial sample/preview + **8 profile/settings**.
+- `git diff --check` clean; masked secret scan clean.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -551,7 +670,12 @@ If a different single project link was meant, it is a one-line change in
    `aiSocket.js` are unwired raw-WS handlers.
 9. `customEventTracking.destroy()` is implemented but not wired into unmount;
    `DashboardHomeStyled.jsx` `data.type` switch and unused `wsRef` need review.
-10. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
+10. Chat/chatbot/email follow-ups from §3f: verify socket JWTs and room
+    membership, move LLM redaction server-side, disable `keyRotator.service.js`,
+    honour the SMTP failure result in `sendEmail`, fix the `/email/settings`
+    route order, remove the phantom user id, implement attachment download /
+    blocklist, and move private uploads out of the static root.
+11. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
     `|| echo` on lint/test. Now that checks are real, remove the swallowing.
 
 ---
@@ -565,5 +689,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4 and 5 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5 and 6 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

@@ -44,6 +44,7 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [loadError, setLoadError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
     const [activeSection, setActiveSection] = useState('profile');
     const [qrCode, setQrCode] = useState('');
@@ -257,73 +258,87 @@ const Profile = () => {
     }, []);
 
     const loadProfileData = async () => {
-        try {
-            setLoading(true);
-            const [
-                statsRes, activityRes, projectsRes, skillsRes,
-                achievementsRes, certsRes, experienceRes, educationRes,
-                testimonialsRes, languagesRes, interestsRes, settingsRes
-            ] = await Promise.all([
-                apiService.getProfileStats(),
-                apiService.getRecentActivity(),
-                apiService.getTopProjects(),
-                apiService.getUserSkills(),
-                apiService.getAchievements(),
-                apiService.getCertifications(),
-                apiService.getWorkExperience(),
-                apiService.getEducation(),
-                apiService.getTestimonials(),
-                apiService.getLanguages(),
-                apiService.getInterests(),
-                apiService.getUserSettings()
-            ]);
+        setLoading(true);
+        setLoadError('');
+        const results = await Promise.allSettled([
+            apiService.getProfile(),
+            apiService.getProfileStats(),
+            apiService.getRecentActivity(),
+            apiService.getTopProjects(),
+            apiService.getUserSkills(),
+            apiService.getAchievements(),
+            apiService.getCertifications(),
+            apiService.getWorkExperience(),
+            apiService.getEducation(),
+            apiService.getTestimonials(),
+            apiService.getLanguages(),
+            apiService.getInterests(),
+            apiService.getUserSettings()
+        ]);
+        const ok = result => (result.status === 'fulfilled' && result.value?.success ? result.value : null);
+        const [profileRes, statsRes, activityRes, projectsRes, skillsRes,
+            achievementsRes, certsRes, experienceRes, educationRes,
+            testimonialsRes, languagesRes, interestsRes, settingsRes] = results.map(ok);
+        const list = res => (res?.data ?? (Array.isArray(res?.testimonials) ? res.testimonials : []));
 
-            if (statsRes.success) setProfileStats(statsRes.data);
-            if (activityRes.success) setRecentActivity(activityRes.data);
-            if (projectsRes.success) setTopProjects(projectsRes.data);
-            if (skillsRes.success) setSkills(skillsRes.data);
-            if (achievementsRes.success) setAchievements(achievementsRes.data);
-            if (certsRes.success) setCertifications(certsRes.data);
-            if (experienceRes.success) setWorkExperience(experienceRes.data);
-            if (educationRes.success) setEducation(educationRes.data);
-            if (testimonialsRes.success) setTestimonials(testimonialsRes.data);
-            if (languagesRes.success) setLanguages(languagesRes.data);
-            if (interestsRes.success) setInterests(interestsRes.data);
+        if (statsRes) setProfileStats(statsRes.data);
+        if (activityRes) setRecentActivity(list(activityRes));
+        if (projectsRes) setTopProjects(list(projectsRes));
+        if (skillsRes) setSkills(list(skillsRes));
+        if (achievementsRes) setAchievements(list(achievementsRes));
+        if (certsRes) setCertifications(list(certsRes));
+        if (experienceRes) setWorkExperience(list(experienceRes));
+        if (educationRes) setEducation(list(educationRes));
+        if (testimonialsRes) setTestimonials(list(testimonialsRes));
+        if (languagesRes) setLanguages(list(languagesRes));
+        if (interestsRes) setInterests(list(interestsRes));
 
-            // Merge real settings profile so the dashboard mirrors the About page / any editor
-            if (settingsRes.success && settingsRes.data?.profile) {
-                const p = settingsRes.data.profile;
-                setProfile(prev => ({
-                    ...prev,
-                    name: p.name || prev.name,
-                    email: p.email || prev.email,
-                    username: p.username || prev.username,
-                    bio: p.bio ?? prev.bio,
-                    tagline: p.tagline ?? prev.tagline,
-                    role: p.role ?? prev.role,
-                    company: p.company ?? prev.company,
-                    location: p.location ?? prev.location,
-                    website: p.website ?? prev.website,
-                    phone: p.phone ?? prev.phone,
-                    avatar: p.avatar || prev.avatar,
-                    socialLinks: {
-                        github: p.github ?? prev.socialLinks.github,
-                        linkedin: p.linkedin ?? prev.socialLinks.linkedin,
-                        twitter: p.twitter ?? prev.socialLinks.twitter,
-                        facebook: p.facebook ?? prev.socialLinks.facebook,
-                        instagram: p.instagram ?? prev.socialLinks.instagram,
-                        telegram: p.telegram ?? prev.socialLinks.telegram,
-                        whatsapp: p.whatsapp ?? prev.socialLinks.whatsapp,
-                        youtube: p.youtube ?? prev.socialLinks.youtube
-                    }
-                }));
-                if (p.avatar) setAvatarPreview(p.avatar);
-            }
-        } catch (err) {
-            console.error('Failed to load profile data:', err);
-        } finally {
-            setLoading(false);
+        // Authoritative owner profile from GET /api/profile. The settings
+        // endpoint is used only as a fallback for fields the profile record
+        // does not carry. Both are real database reads — nothing is invented.
+        const p = profileRes?.data || settingsRes?.data?.profile;
+        if (p) {
+            setProfile(prev => ({
+                ...prev,
+                name: p.name ?? prev.name,
+                email: p.email ?? prev.email,
+                username: p.username ?? prev.username,
+                bio: p.bio ?? prev.bio,
+                tagline: p.tagline ?? prev.tagline,
+                role: p.role ?? prev.role,
+                company: p.company ?? prev.company,
+                location: p.location ?? prev.location,
+                website: p.website ?? prev.website,
+                phone: p.phone ?? prev.phone,
+                avatar: p.avatar || prev.avatar,
+                coverImage: p.coverImage || prev.coverImage,
+                hourlyRate: p.hourlyRate ?? prev.hourlyRate,
+                yearsOfExperience: p.yearsOfExperience ?? prev.yearsOfExperience,
+                availability: p.availability ?? prev.availability,
+                timezone: p.timezone ?? prev.timezone,
+                socialLinks: {
+                    ...prev.socialLinks,
+                    ...(p.socialLinks || {}),
+                    github: p.socialLinks?.github ?? p.github ?? prev.socialLinks.github,
+                    linkedin: p.socialLinks?.linkedin ?? p.linkedin ?? prev.socialLinks.linkedin,
+                    twitter: p.socialLinks?.twitter ?? p.twitter ?? prev.socialLinks.twitter,
+                    facebook: p.socialLinks?.facebook ?? p.facebook ?? prev.socialLinks.facebook,
+                    instagram: p.socialLinks?.instagram ?? p.instagram ?? prev.socialLinks.instagram,
+                    telegram: p.socialLinks?.telegram ?? p.telegram ?? prev.socialLinks.telegram,
+                    whatsapp: p.socialLinks?.whatsapp ?? p.whatsapp ?? prev.socialLinks.whatsapp,
+                    youtube: p.socialLinks?.youtube ?? p.youtube ?? prev.socialLinks.youtube
+                }
+            }));
+            if (p.avatar) setAvatarPreview(p.avatar);
+            if (p.coverImage) setCoverPreview(p.coverImage);
+            if (p.availability) setAvailability(p.availability);
         }
+
+        const failures = results.filter(result => result.status === 'rejected' || !ok(result)).length;
+        if (failures > 0) {
+            setLoadError(`${failures} profile source(s) are temporarily unavailable. Only data returned by the API is shown.`);
+        }
+        setLoading(false);
     };
 
     const generateQRCode = async () => {
@@ -542,7 +557,7 @@ const Profile = () => {
         {
             label: 'Profile Views',
             value: profileStats?.totalViews || 0,
-            change: '+23%',
+            change: null,
             changeType: 'increase',
             icon: Eye,
             color: '#06b6d4',
@@ -552,7 +567,7 @@ const Profile = () => {
         {
             label: 'Projects',
             value: profileStats?.totalProjects || 0,
-            change: '+12%',
+            change: null,
             changeType: 'increase',
             icon: Code,
             color: '#8b5cf6',
@@ -562,7 +577,7 @@ const Profile = () => {
         {
             label: 'Collaborators',
             value: profileStats?.collaborators || 0,
-            change: '+8',
+            change: null,
             changeType: 'increase',
             icon: Users,
             color: '#ec4899',
@@ -571,8 +586,8 @@ const Profile = () => {
         },
         {
             label: 'Engagement Rate',
-            value: profileStats?.engagementRate || '0%',
-            change: '+15%',
+            value: profileStats?.engagementRate ?? '—',
+            change: null,
             changeType: 'increase',
             icon: TrendingUp,
             color: '#10b981',
@@ -581,8 +596,8 @@ const Profile = () => {
         },
         {
             label: 'Completed Projects',
-            value: profileStats?.completedProjects || 0,
-            change: '+5',
+            value: profileStats?.completedProjects ?? '—',
+            change: null,
             changeType: 'increase',
             icon: CheckCircle,
             color: '#f59e0b',
@@ -591,8 +606,8 @@ const Profile = () => {
         },
         {
             label: 'Total Likes',
-            value: profileStats?.totalLikes || 0,
-            change: '+34%',
+            value: profileStats?.totalLikes ?? '—',
+            change: null,
             changeType: 'increase',
             icon: Heart,
             color: '#ef4444',
@@ -602,7 +617,7 @@ const Profile = () => {
         {
             label: 'Messages',
             value: profileStats?.messages || 0,
-            change: '+18',
+            change: null,
             changeType: 'increase',
             icon: MessageSquare,
             color: '#3b82f6',
@@ -612,7 +627,7 @@ const Profile = () => {
         {
             label: 'Achievements',
             value: achievements.length || 0,
-            change: '+2',
+            change: null,
             changeType: 'increase',
             icon: Trophy,
             color: '#eab308',
@@ -683,6 +698,15 @@ const Profile = () => {
     return (
         <DashboardLayout>
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                {loadError && (
+                    <div role="status" className="flex flex-wrap items-center gap-3 m-6 mb-0 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                        <AlertCircle size={16} />
+                        <span>{loadError}</span>
+                        <button type="button" onClick={loadProfileData} className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-500/50 hover:bg-amber-500/20">
+                            <RotateCw size={13} /> Retry
+                        </button>
+                    </div>
+                )}
                 {/* Hero Section with Cover */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -1546,12 +1570,14 @@ const Profile = () => {
                                                         <div className={`w-12 h-12 rounded-xl ${stat.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                                                             <stat.icon size={24} style={{ color: stat.color }} />
                                                         </div>
-                                                        <div className={`px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 ${
-                                                            stat.changeType === 'increase' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                                                        }`}>
-                                                            {stat.changeType === 'increase' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                                                            {stat.change}
-                                                        </div>
+                                                        {stat.change && (
+                                                            <div className={`px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 ${
+                                                                stat.changeType === 'increase' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                                            }`}>
+                                                                {stat.changeType === 'increase' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                                                {stat.change}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <p className="text-slate-400 text-sm mb-2">{stat.label}</p>
                                                     <h3 className="text-3xl font-bold text-white mb-4">

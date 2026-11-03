@@ -50,6 +50,9 @@ const Settings = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
     const [profileImage, setProfileImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(user?.avatar || '');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -281,32 +284,39 @@ const Settings = () => {
     }, [connected, socket, user?.id, success, warning, updateUser, changeTheme]);
 
     const loadUserSettings = async () => {
-        try {
-            setLoading(true);
-            const [settingsRes, apiKeysRes, webhooksRes, sessionsRes] = await Promise.all([
-                apiService.getUserSettings(),
-                apiService.getApiKeys(),
-                apiService.getWebhooks(),
-                apiService.getActiveSessions()
-            ]);
+        setLoading(true);
+        setLoadError('');
+        const [settingsRes, apiKeysRes, webhooksRes, sessionsRes] = await Promise.allSettled([
+            apiService.getUserSettings(),
+            apiService.getApiKeys(),
+            apiService.getWebhooks(),
+            apiService.getActiveSessions()
+        ]);
+        const value = result => (result.status === 'fulfilled' ? result.value : null);
+        const available = (result, key) => {
+            const payload = value(result);
+            return payload?.success ? (payload[key] || payload.data || []) : null;
+        };
 
-            if (settingsRes.success) {
-                setSettings(prev => ({ ...prev, ...settingsRes.data }));
-            }
-            if (apiKeysRes.success) {
-                setApiKeys(apiKeysRes.data);
-            }
-            if (webhooksRes.success) {
-                setWebhooks(webhooksRes.data);
-            }
-            if (sessionsRes.success) {
-                setSessions(sessionsRes.data);
-            }
-        } catch (err) {
-            console.error('Failed to load settings:', err);
-        } finally {
-            setLoading(false);
+        const settingsData = value(settingsRes);
+        if (settingsData?.success && settingsData.data) {
+            setSettings(prev => ({ ...prev, ...settingsData.data }));
         }
+        const keys = available(apiKeysRes, 'data');
+        if (keys) setApiKeys(keys);
+        const hooks = available(webhooksRes, 'data');
+        if (hooks) setWebhooks(hooks);
+        const activeSessions = available(sessionsRes, 'data');
+        if (activeSessions) setSessions(activeSessions);
+
+        const failures = [settingsRes, apiKeysRes, webhooksRes, sessionsRes].filter(
+            result => result.status === 'rejected' || result.value?.success === false
+        ).length;
+        if (failures > 0) {
+            // Show only what the API actually returned; never invent values.
+            setLoadError(`${failures} settings source(s) are temporarily unavailable. Loaded data is shown; retry in a moment.`);
+        }
+        setLoading(false);
     };
 
     const validateForm = (tab) => {
@@ -481,6 +491,8 @@ const Settings = () => {
             if (response.success) {
                 setApiKeys([...apiKeys, response.apiKey]);
                 success('API key generated successfully!');
+            } else {
+                showError(response.message || 'Failed to generate API key');
             }
         } catch (err) {
             showError('Failed to generate API key');
@@ -493,6 +505,8 @@ const Settings = () => {
             if (response.success) {
                 setApiKeys(apiKeys.filter(key => key._id !== keyId));
                 success('API key deleted successfully!');
+            } else {
+                showError(response.message || 'Failed to delete API key');
             }
         } catch (err) {
             showError('Failed to delete API key');
@@ -516,6 +530,8 @@ const Settings = () => {
             if (response.success) {
                 setWebhooks([...webhooks, response.webhook]);
                 success('Webhook added successfully!');
+            } else {
+                showError(response.message || 'Failed to add webhook');
             }
         } catch (err) {
             showError('Failed to add webhook');
@@ -528,6 +544,8 @@ const Settings = () => {
             if (response.success) {
                 setWebhooks(webhooks.filter(wh => wh._id !== webhookId));
                 success('Webhook deleted successfully!');
+            } else {
+                showError(response.message || 'Failed to delete webhook');
             }
         } catch (err) {
             showError('Failed to delete webhook');
@@ -540,6 +558,8 @@ const Settings = () => {
             if (response.success) {
                 setSessions(sessions.filter(s => s._id !== sessionId));
                 success('Session terminated successfully!');
+            } else {
+                showError(response.message || 'Failed to terminate session');
             }
         } catch (err) {
             showError('Failed to terminate session');
@@ -547,28 +567,36 @@ const Settings = () => {
     };
 
     const handleDeleteAccount = async () => {
-        const confirmation = prompt('Type "DELETE" to confirm account deletion:');
-        if (confirmation !== 'DELETE') {
-            warning('Account deletion cancelled');
+        if (deleteConfirmation !== 'DELETE' || !deletePassword) {
+            showError('Enter your password and type DELETE to confirm.');
             return;
         }
-
         try {
-            const response = await apiService.deleteAccount();
+            const response = await apiService.deleteAccount({
+                password: deletePassword,
+                confirmation: deleteConfirmation
+            });
             if (response.success) {
+                setShowDeleteModal(false);
+                setDeletePassword('');
+                setDeleteConfirmation('');
                 success('Account deleted successfully');
-                setTimeout(() => {
-                    logout();
-                }, 2000);
+                setTimeout(() => { logout(); }, 2000);
+            } else {
+                showError(response.message || 'Failed to delete account');
             }
         } catch (err) {
-            showError('Failed to delete account');
+            showError(err?.message || 'Failed to delete account');
         }
     };
 
     const exportData = async () => {
         try {
             const response = await apiService.exportUserData();
+            if (!response?.success) {
+                showError(response?.message || 'Failed to export data');
+                return;
+            }
             const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -618,6 +646,17 @@ const Settings = () => {
                 </motion.button>
             }
         >
+            <div className="flex flex-col gap-4 p-6 pb-0">
+                {loadError && (
+                    <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                        <AlertTriangle size={16} />
+                        <span>{loadError}</span>
+                        <button type="button" onClick={loadUserSettings} className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-500/50 hover:bg-amber-500/20">
+                            <RefreshCw size={13} /> Retry
+                        </button>
+                    </div>
+                )}
+            </div>
             <div className="flex flex-col lg:flex-row gap-6 p-6">
                 {/* Sidebar */}
                 <div className="lg:w-64 flex-shrink-0">
@@ -1699,6 +1738,67 @@ const Settings = () => {
                                     </div>
                                 </div>
                             )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Delete account — password + confirmation required by the real API */}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        onClick={() => setShowDeleteModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-slate-800 rounded-xl p-6 max-w-md w-full border border-red-500/40"
+                        >
+                            <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                                <AlertTriangle size={20} className="text-red-400" /> Delete account
+                            </h3>
+                            <p className="text-sm text-slate-400 mb-4">
+                                This calls <code className="text-cyan-300">POST /api/settings/delete-account</code> and permanently
+                                removes your user, projects, collaborations, analytics, API keys, webhooks and sessions.
+                            </p>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Current password</label>
+                            <input
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-sm"
+                                placeholder="Current password"
+                            />
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Type DELETE to confirm</label>
+                            <input
+                                type="text"
+                                value={deleteConfirmation}
+                                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                                className="w-full mb-4 px-3 py-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-sm"
+                                placeholder="DELETE"
+                            />
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowDeleteModal(false); setDeletePassword(''); setDeleteConfirmation(''); }}
+                                    className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-lg font-semibold"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteAccount}
+                                    className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600"
+                                >
+                                    Delete permanently
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

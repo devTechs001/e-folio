@@ -317,35 +317,34 @@ class ApiService {
         return this.request('/projects/favorites');
     }
 
-    // Webhooks APIs
+    // Webhooks APIs — the settings controller persists these in MongoDB
+    // (WebHook model). The older /api/webhooks controller keeps an in-memory
+    // array, so the dashboard must not use it for owner settings.
     async getWebhooks() {
-        return this.request('/webhooks');
+        return this.request('/settings/webhooks');
     }
 
     async createWebhook(webhookData) {
-        return this.request('/webhooks', {
+        return this.request('/settings/webhooks', {
             method: 'POST',
             body: JSON.stringify(webhookData)
         });
     }
 
-    async updateWebhook(id, webhookData) {
-        return this.request(`/webhooks/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(webhookData)
-        });
-    }
-
     async deleteWebhook(id) {
-        return this.request(`/webhooks/${id}`, {
+        return this.request(`/settings/webhooks/${id}`, {
             method: 'DELETE'
         });
     }
 
-    async testWebhook(id) {
-        return this.request(`/webhooks/${id}/test`, {
-            method: 'POST'
-        });
+    // The DB-backed settings API has no update/test endpoints. Fail honestly
+    // instead of silently falling back to the legacy in-memory webhook store.
+    async updateWebhook() {
+        return { success: false, message: 'Webhook updates are not available on the settings API' };
+    }
+
+    async testWebhook() {
+        return { success: false, message: 'Webhook tests are not available on the settings API' };
     }
 
     // Collaboration APIs
@@ -1375,6 +1374,29 @@ class ApiService {
             method: 'POST',
             body: JSON.stringify(data)
         });
+    }
+
+    async deleteApiKey(keyId) {
+        return this.request(`/settings/api-keys/${keyId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async terminateSession(sessionId) {
+        return this.request(`/settings/sessions/${sessionId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async deleteAccount(payload) {
+        return this.request('/settings/delete-account', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    }
+
+    async exportUserData() {
+        return this.request('/settings/export');
     }
 
     // Portfolio Editor APIs
