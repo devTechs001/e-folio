@@ -3159,6 +3159,48 @@ class ApiService {
             return { success: false, data: null };
         }
     }
+
+    // ---- User Workspaces: real CV / portfolio / account APIs ----
+
+    /** Owner-only list of registered non-owner accounts (`/api/admin/users`). */
+    async getAdminUsers(params = {}) {
+        return this.request('/admin/users', { params });
+    }
+
+    /** Public portfolio of another user (`/api/public/portfolio/:username`). */
+    async getPublicPortfolio(username) {
+        return this.request(`/public/portfolio/${encodeURIComponent(username)}`);
+    }
+
+    /** CV export (`/api/cv/export/:format`). JSON returns the raw CV document. */
+    async exportCV(format = 'json') {
+        return this.request(`/cv/export/${encodeURIComponent(format)}`);
+    }
+
+    /** Built-in portfolio templates (`/api/portfolio/templates`). */
+    async getPortfolioTemplates() {
+        try {
+            return await this.request('/portfolio/templates');
+        } catch (error) {
+            return { success: false, data: [], message: error.message };
+        }
+    }
+
+    /** Apply a built-in template (`POST /api/portfolio/templates`). */
+    async applyPortfolioTemplate(templateId) {
+        return this.request('/portfolio/templates', {
+            method: 'POST',
+            body: JSON.stringify({ templateId })
+        });
+    }
+
+    /** Owner-only: notify another account in real time. */
+    async notifyUser(userId, payload) {
+        return this.request(`/notifications/user/${encodeURIComponent(userId)}`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    }
 }
 
 export default new ApiService();

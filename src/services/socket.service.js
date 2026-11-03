@@ -3,6 +3,10 @@ import { io } from 'socket.io-client';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
+// Shared connection state for the notification namespace. Components can
+// subscribe without owning the socket, so live/polling status stays in sync.
+const socketEventStatus = { connected: false, error: '', listeners: new Set() };
+
 class SocketService {
     constructor() {
         this.socket = null;
@@ -15,6 +19,11 @@ class SocketService {
         // created, and keep their subscriptions across reconnects.
         this.listeners = new Map();
         this.trackingListeners = new Map();
+        // Authenticated /notifications namespace: private, per-user rooms.
+        this.notificationSocket = null;
+        this.notificationRefs = 0;
+        this.notificationListeners = new Map();
+        this.notificationsConnected = false;
     }
 
     #addListener(map, event, callback) {
@@ -84,6 +93,8 @@ class SocketService {
 
     // Disconnect from server
     disconnect() {
+        // The root socket and the notification namespace have independent
+        // lifecycles: reconnecting chat must not drop private notifications.
         if (this.socket) {
             this.socket.removeAllListeners();
             this.socket.disconnect();
@@ -191,6 +202,94 @@ class SocketService {
     // Listen for settings updates
     onSettingsUpdated(callback) {
         this.on('settings:updated', callback);
+    }
+
+
+    /**
+     * Owner/user notification namespace. Unlike the legacy root `notification`
+     * broadcast, this namespace verifies the JWT and delivers only to the
+     * recipient's `user:<id>` room.
+     */
+    connectNotifications() {
+        this.notificationRefs += 1;
+        if (this.notificationSocket?.connected) return this.notificationSocket;
+        if (this.notificationSocket) {
+            const refs = this.notificationRefs;
+            this.disconnectNotifications(true);
+            this.notificationRefs = refs;
+        }
+
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+
+        socketEventStatus.connected = false;
+        this.notificationSocket = io(`${SOCKET_URL}/notifications`, {
+            auth: { token },
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 10000,
+            reconnectionAttempts: 20
+        });
+        this.#attach(this.notificationListeners, this.notificationSocket);
+        this.notificationSocket.on('connect', () => {
+            this.notificationsConnected = true;
+            socketEventStatus.connected = true;
+            socketEventStatus.error = '';
+            this.#emitStatus();
+        });
+        this.notificationSocket.on('disconnect', () => {
+            this.notificationsConnected = false;
+            socketEventStatus.connected = false;
+            this.#emitStatus();
+        });
+        this.notificationSocket.on('connect_error', error => {
+            this.notificationsConnected = false;
+            socketEventStatus.connected = false;
+            socketEventStatus.error = error?.message || 'Connection failed';
+            this.#emitStatus();
+        });
+        return this.notificationSocket;
+    }
+
+    disconnectNotifications(force = false) {
+        if (!force && this.notificationRefs > 0) this.notificationRefs -= 1;
+        if (!force && this.notificationRefs > 0) return;
+        if (this.notificationSocket) {
+            this.notificationSocket.removeAllListeners();
+            this.notificationSocket.disconnect();
+            this.notificationSocket = null;
+        }
+        this.notificationsConnected = false;
+        socketEventStatus.connected = false;
+        if (force) this.notificationRefs = 0;
+        this.#emitStatus();
+    }
+
+    onNotificationEvent(event, callback) {
+        this.#addListener(this.notificationListeners, event, callback);
+        this.notificationSocket?.on(event, callback);
+    }
+
+    offNotificationEvent(event, callback) {
+        this.#removeListener(this.notificationListeners, event, callback);
+        this.notificationSocket?.off(event, callback);
+    }
+
+    subscribeNotificationStatus(callback) {
+        socketEventStatus.listeners.add(callback);
+        callback({ ...socketEventStatus, listeners: undefined });
+        return () => socketEventStatus.listeners.delete(callback);
+    }
+
+    #emitStatus() {
+        for (const callback of socketEventStatus.listeners) {
+            try { callback({ connected: socketEventStatus.connected, error: socketEventStatus.error }); } catch { /* ignore */ }
+        }
+    }
+
+    isNotificationsConnected() {
+        return this.notificationsConnected && Boolean(this.notificationSocket?.connected);
     }
 
     // Get connection status

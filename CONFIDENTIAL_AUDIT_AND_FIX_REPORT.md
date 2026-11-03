@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,10 +19,11 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phases 3–7 (collaboration & review,
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–8 (collaboration & review,
 Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
-settings real APIs, About data + CV/portfolio/accounts + review) are **local
-only** — no push, PR, merge, external issue, or external service was used.
+settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
+workspaces + real-time notifications + NEX Store link) are **local only** — no
+push, PR, merge, external issue, or external service was used.
 
 ---
 
@@ -39,6 +40,8 @@ only** — no push, PR, merge, external issue, or external service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Enhanced user workspaces + real-time notifications (phase 8) | one Profile card with 4 buttons; no account console; notifications broadcast on the root socket | `/dashboard/user-workspaces` with account creation, completeness, versions, templates, publish/export, user directory and DB-backed inbox; JWT-authenticated `/notifications` namespace with REST polling fallback |
+| NEX Store link (phase 8) | plain repeated anchor with `rel="noreferrer"` | one shared canonical URL (unchanged) plus banner/compact/card variants with copy, share, QR, offline hint and safe external-link attributes |
 | About data + CV/portfolio/accounts (phase 7) | Profile page did not reflect the public About data; new accounts got no CV/portfolio; public CV/portfolio pages called localhost | shared About data module used by both pages, real get-or-create CV/portfolio APIs, working public pages, real Profile card |
 | Projects / dashboard APIs / security review (phase 7) | public `links` leak, unguarded interaction counters, broken tasks `limit` filter, open registration, public uploads | read-only source review with file/line findings; no live/external testing |
 | Chat / chatbot / email review (phase 6) | unauthenticated socket role spoofing, no room membership checks, public LLM endpoint with client-side-only redaction, email send reporting false success, broken `/email/settings` route, phantom user id | read-only source review with file/line findings; no live/external testing |
@@ -762,6 +765,58 @@ this workspace.
 
 ---
 
+## 3h. Phase 8 — enhanced CV/portfolio/account workspaces, private real-time notifications, and the NEX Store link
+
+Request: *"ENHAC EHTE CREATE CV AND portfolios for other users UI with more features, real time notifications, the enhence the nex store link on the projects page"*. All three parts were implemented locally. The existing NEX Store destination was **not** replaced, and no NetGate / project link was touched.
+
+### A. Implemented — richer "create CV & portfolios for other users" UI
+
+A new dashboard page at `/dashboard/user-workspaces` (`User Workspaces`, available to `owner` and `user`) replaces the single Profile card as the full workspace console. It is also linked from the Profile → Portfolio card.
+
+| Area | Features | Real API |
+| --- | --- | --- |
+| Create account | inline form with validation, real server error messages, copyable same-origin registration link, public-form link, success card with public URLs, optional welcome notification. The returned token is **discarded**, so the signed-in owner keeps their session. | `POST /api/auth/register`; `POST /api/notifications/user/:userId` |
+| My CV & portfolio | create/refresh records, readiness badges, real publish state, publish/unpublish, CV JSON export, links to both editors and both public pages, copy-link and client-generated QR code | `GET /api/cv`, `GET /api/portfolio/config`, `POST /api/portfolio/publish`, `POST /api/portfolio/unpublish`, `GET /api/cv/export/json` |
+| Completeness | 10-item checklist + progress bar computed **only** from the CV/portfolio documents the APIs returned (no sample values, no invented counts) | `GET /api/cv`, `GET /api/portfolio/config` |
+| Versions & templates | CV version save/restore, portfolio version restore, built-in template apply with the server-side config backup | `GET/POST /api/cv/versions`, `POST /api/cv/versions/:id/restore`, `GET /api/portfolio/versions`, `POST /api/portfolio/versions/:id/restore`, `GET/POST /api/portfolio/templates` |
+| Other users (owner only) | real user directory with search, per-user read-only workspace inspection, public CV/portfolio links, and a per-user real-time notification composer | `GET /api/admin/users`, `GET /api/public/cv/:username`, `GET /api/public/portfolio/:username` |
+| Notifications | DB-backed inbox with unread count, live/polling indicator, mark-read / mark-all / dismiss / delete / clear / live test, typed toasts and honest empty/error states | `GET /api/notifications`, `GET /api/notifications/unread`, `POST /api/notifications/...`, `DELETE /api/notifications/...` |
+
+`GET /api/portfolio/config` now also returns the real `isPublished` and `publishedAt` fields so the UI can show publish status instead of guessing. No sample records were added anywhere.
+
+### B. Implemented — private real-time notifications
+
+- New **`/notifications` Socket.IO namespace** (`server/socket/notifications.handler.js`), registered in `server/server.js`. It verifies the same JWT as the REST API, joins each connection to `user:<id>`, and emits `notification:new` / `notification:updated` **only to that room**. This replaces the previous `io.emit('notification', ...)` in `createNotification`, which broadcast every notification to every connected client.
+- `publishUserNotification()` persists a real `Notification` document and then delivers it. Failures are caught and logged: a notification problem can never break registration, CV save or portfolio publish.
+- Event sources now create real notifications: **new account** (new holder + all owners), **CV workspace created / CV saved**, **portfolio workspace created / published / unpublished**. Read/dismiss/delete events emit `notification:updated` so other tabs stay in sync.
+- New owner-only `POST /api/notifications/user/:userId` validates the ObjectId and target user before creating a notification, so the dashboard can message another account holder without touching their session or records.
+- Client `socketService.connectNotifications()` is ref-counted and buffers listeners across reconnects; `useWorkspaceNotifications()` always loads `/api/notifications` as the source of truth, subscribes to the namespace, shows toasts, and **falls back to a 30 s REST poll with a visible "Polling" badge when the socket is down**. It never claims a live connection that does not exist and never fabricates notifications.
+- `SocketProvider` now force-closes the notification namespace on logout/account switch; the root chat socket and notification namespace have independent lifecycles so reconnecting chat cannot drop private notifications.
+
+### C. Implemented — enhanced NEX Store link on the projects page
+
+- `src/utils/nexStore.js` holds the **single unchanged URL** `https://nex-store-pro.netlify.app/`, safe anchor attributes (`noopener noreferrer`, `no-referrer`) and the link's real metadata.
+- `NexStoreCard.jsx` + `NexStoreCard.css` replace the plain anchors in `src/pages/Projects.jsx` (banner) and `src/components/Projects.jsx` (compact header + CTA card). Enhancements: featured badge and description, accessible open button, **copy link**, **native share** (with copy fallback), a **client-generated QR code**, an offline hint, a locally recorded open count, ARIA labels, focus states and responsive styling.
+- No link was replaced or reverted. `https://net-gate-portal.netlify.app/` remains in `src/data/labSamples.json`, `src/data/testimonialSamples.json` and the testimonial seeder, and a regression check asserts it.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity `--strict` **0 live gaps** (518 route definitions / 619 frontend calls), static security audit `--strict` **0 findings**, build **≈22 s** (23.84 s / 21.64 s on two runs), PWA **210 precache entries (6934.29 KiB)**.
+- **83** Node-only regression checks: 9 dashboard + 21 collaboration/review + 12 lab/dashboard + 11 testimonial + 8 profile/settings + 10 About/workspace + **12 new enhanced-workspace / realtime / NEX Store** checks (`tests/user-workspace-realtime.test.mjs`, also wired as `test:user-workspace` in both package files).
+- `git diff --check` clean; masked secret scan clean across 23 changed/new files; no NetGate or project-link file changed.
+- No Express/Mongo/SMTP/LLM/Cloudinary runtime was started, so the socket handshake, DB notification writes and publish flow are **not runtime-verified**. No live or external/offensive testing was performed.
+- Local only: no push, PR, merge, external issue, or external service was used.
+
+### Known gaps left open (not fixed)
+
+- `POST /api/auth/register` remains open (5/hour/IP, 6-char minimum, 7-day `role:'user'` token) from §3g; the new owner-only notify endpoint is guarded, but registration approval/verification is not.
+- `GET /api/public/portfolio/:username` still returns a portfolio regardless of `isPublished` (§3g finding); the UI reports the real publish flag but does not change public visibility.
+- Notification documents have no retention/TTL policy; `POST /api/notifications/user/:userId` has no per-target rate limit.
+- The legacy root-namespace `notification` broadcasts in `server/socket/chat.handler.enhanced.js` are unchanged (a read-only finding), and the other §3g projects/dashboard/security findings remain unfixed.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -796,7 +851,13 @@ this workspace.
     escape search regexes, cap `limit`, fix the `/dashboard/tasks?limit` filter,
     validate tracking payloads, and move chat/email uploads out of the public
     static root.
-12. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
+12. Phase 8 follow-ups: runtime-verify the `/notifications` JWT handshake and
+    room isolation with a real server, add a TTL/retention policy for
+    `Notification` documents and a rate limit on
+    `POST /api/notifications/user/:userId`, and gate the public portfolio route on
+    `isPublished`. Also review the remaining legacy root-namespace
+    `notification` broadcasts.
+13. CI still uses Node 18 (local is 22), `npm install --legacy-peer-deps`, and
     `|| echo` on lint/test. Now that checks are real, remove the swallowing.
 
 ---
@@ -810,5 +871,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6 and 7 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6, 7 and 8 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

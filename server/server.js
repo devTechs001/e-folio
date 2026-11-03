@@ -32,6 +32,7 @@ const UserModel = require('./models/User.model');
 const security = require('./config/security');
 const { apiLimiter } = require('./middleware/rateLimitMiddleware');
 const { registerTrackingRealtime } = require('./socket/tracking.handler');
+const { registerNotificationsRealtime } = require('./socket/notifications.handler');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -207,6 +208,7 @@ chatHandler(io);
 const settingsHandler = require('./socket/settings.handler');
 settingsHandler(io);
 registerTrackingRealtime(io);
+registerNotificationsRealtime(io);
 
 // Pass Socket.IO instance to collaboration controller
 const collaborationController = require('./controllers/collaboration.controller');

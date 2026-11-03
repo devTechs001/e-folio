@@ -110,6 +110,10 @@ const AdminPanel = lazy(() => import('../components/dashboard/AdminPanel').catch
     console.error('Failed to load AdminPanel:', err);
     return { default: () => <div>Error loading Admin Panel</div> };
 }));
+const UserWorkspaceManager = lazy(() => import('../components/dashboard/UserWorkspaceManager').catch(err => {
+    console.error('Failed to load UserWorkspaceManager:', err);
+    return { default: () => <div>Error loading User Workspaces</div> };
+}));
 
 // Wrapper components to avoid primitive value error
 const LazyDashboardHome = () => {
@@ -328,6 +332,15 @@ const LazyAdminPanel = () => {
         </Suspense>
     );
 };
+const LazyUserWorkspaceManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>}>
+            <UserWorkspaceManager />
+        </Suspense>
+    );
+};
 
 const Dashboard = () => {
     return (
@@ -427,6 +440,16 @@ const DashboardContent = () => {
             badge: 'New',
             category: 'Content',
             description: 'Create and manage your CV'
+        },
+        {
+            path: '/dashboard/user-workspaces',
+            icon: 'fas fa-users-cog',
+            label: 'User Workspaces',
+            component: LazyUserWorkspaceManager,
+            roles: ['owner', 'user'],
+            badge: 'Live',
+            category: 'Content',
+            description: 'Create accounts, CVs, portfolios and real-time notifications'
         },
         {
             path: '/dashboard/skills',

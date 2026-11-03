@@ -8,6 +8,7 @@ import ProjectModal from './ProjectModal';
 import ProjectShare from './ProjectShare';
 import ImageLightbox from './ImageLightbox';
 import ProjectFilters from './ProjectFilters';
+import NexStoreCard from '../components/NexStoreCard';
 import '../styles/Projects.css';
 
 const Projects = () => {
@@ -391,16 +392,9 @@ const Projects = () => {
                         Explore my portfolio of innovative solutions and creative implementations
                     </p>
 
-                    <div className="flex justify-center mb-8">
-                        <a
-                            href="https://nex-store-pro.netlify.app/"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="cta-btn cta-btn-primary"
-                        >
-                            <i className="fa-solid fa-store mr-2"></i>
-                            Open NEX Store
-                        </a>
+                    {/* Enhanced featured link: same destination, real copy/share/QR actions. */}
+                    <div className="flex justify-center mb-8 w-full">
+                        <NexStoreCard variant="banner" />
                     </div>
 
                     {/* Stats Cards */}

@@ -9,6 +9,7 @@ const {
     deleteNotification,
     deleteAllNotifications,
     createNotification,
+    createNotificationForUser,
     dismissNotification
 } = require('../controllers/notifications.controller');
 
@@ -17,6 +18,8 @@ router.use(auth);
 router.get('/', getNotifications);
 router.get('/unread', getUnreadNotifications);
 router.post('/mark-all-read', markAllAsRead);
+// Owner-only: real-time notification addressed to another registered user.
+router.post('/user/:userId', isOwner, createNotificationForUser);
 router.post('/:notificationId/read', markAsRead);
 router.post('/:notificationId/dismiss', dismissNotification);
 router.delete('/', isOwner, deleteAllNotifications);

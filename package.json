@@ -30,7 +30,7 @@
     "audit:security": "node server/scripts/security-audit.js",
     "test:load": "node server/tests/load/smoke-load.js",
     "check": "npm run lint && npm test && npm run build",
-    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs",
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs",
     "test:dashboards": "node tests/dashboard-api.test.mjs",
     "test:collaboration": "node tests/collaboration-review.test.mjs",
     "seed:lab": "node server/scripts/seedLabSamples.js",
@@ -44,7 +44,8 @@
     "testimonials:unpublish": "node server/scripts/seedTestimonialSamples.js --unpublish",
     "test:testimonials": "node tests/testimonial-samples.test.mjs",
     "test:profile-settings": "node tests/profile-settings-api.test.mjs",
-    "test:about-workspace": "node tests/about-user-workspace.test.mjs"
+    "test:about-workspace": "node tests/about-user-workspace.test.mjs",
+    "test:user-workspace": "node tests/user-workspace-realtime.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

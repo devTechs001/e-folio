@@ -1863,6 +1863,7 @@ const Profile = () => {
                                                 </button>
                                                 <Link to="/dashboard/cv-editor" className="px-4 py-2 border border-slate-600 text-slate-200 rounded-lg text-sm hover:border-cyan-400">CV Editor</Link>
                                                 <Link to="/dashboard/portfolio-editor" className="px-4 py-2 border border-slate-600 text-slate-200 rounded-lg text-sm hover:border-cyan-400">Portfolio Editor</Link>
+                                                <Link to="/dashboard/user-workspaces" className="px-4 py-2 bg-purple-500/15 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold hover:bg-purple-500/25">User Workspaces</Link>
                                             </div>
                                             {workspaceMessage && (
                                                 <div className="text-xs text-amber-300 mb-3">{workspaceMessage}</div>
@@ -1876,7 +1877,7 @@ const Profile = () => {
                                             <div className="flex flex-wrap gap-3 text-xs">
                                                 {publicLinks.cv && <a href={publicLinks.cv} className="text-cyan-300 hover:underline">Public CV: {publicLinks.cv}</a>}
                                                 {publicLinks.portfolio && <a href={publicLinks.portfolio} className="text-cyan-300 hover:underline">Public portfolio: {publicLinks.portfolio}</a>}
-                                                <Link to="/register" className="text-slate-400 hover:underline">Create account for another user</Link>
+                                                <Link to="/dashboard/user-workspaces" className="text-slate-400 hover:underline">Create account for another user</Link>
                                             </div>
                                         </div>
 
