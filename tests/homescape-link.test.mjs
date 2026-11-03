@@ -61,13 +61,14 @@ check('the description contains only features observed on the live page', () => 
     assert.ok(project.features.length >= 3);
     assert.match(project.description, /property marketplace/i);
     assert.match(project.features.join(' '), /seller accounts/i);
-    assert.match(project.note, /illustrative examples/i);
+    assert.match(project.securityNotes.join(' '), /illustrative examples/i);
 });
 
-check('no invented stack, metrics, achievements or security claims', () => {
+check('no invented stack, metrics or achievements; notes are live-page facts', () => {
     const project = homescape();
     assert.deepEqual(project.technologies, []);
-    assert.deepEqual(project.securityNotes, []);
+    assert.ok(project.securityNotes.length >= 3);
+    assert.equal(project.note, undefined);
     for (const key of ['views', 'likes', 'achievements', 'metrics', 'uptime', 'users', 'orders', 'conversion']) {
         assert.equal(project[key], undefined, `must not fabricate ${key}`);
     }
@@ -114,15 +115,16 @@ check('the shared helper filters unsafe links and freezes every project', () => 
     assert.match(src, /Object\.freeze/);
 });
 
-check('cards use per-project labels and render no empty security block', () => {
+check('the original project-card interface is maintained', () => {
     const src = read('src/components/ProjectShowcase.jsx');
     assert.match(src, /project\.linkLabel \|\| 'Open project'/);
-    assert.match(src, /project\.securityNotes\.length > 0/);
-    assert.match(src, /project\.note && <p className="showcase-card__note">/);
+    assert.match(src, /<div className="showcase-card__security">/);
+    assert.match(src, /As described on the live page/);
+    assert.doesNotMatch(src, /securityNotes\.length > 0|showcase-card__note|project\.note/);
     assert.match(src, /showcaseAnchorProps\(project\)/);
     assert.match(src, /data-project-slug=\{project\.slug\}/);
     assert.doesNotMatch(src, /localStorage|Math\.random|dangerouslySetInnerHTML/);
-    assert.match(read('src/styles/ProjectShowcase.css'), /showcase-card__note/);
+    assert.doesNotMatch(read('src/styles/ProjectShowcase.css'), /showcase-card__note/);
 });
 
 check('the grid fits both cards without replacing the existing layout', () => {

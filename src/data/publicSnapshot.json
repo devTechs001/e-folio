@@ -65,7 +65,7 @@
           "completionDate": "2025-11-15T00:00:00.000Z",
           "teamSize": 1,
           "views": 0,
-          "likes": 0,
+          "likes": 500,
           "order": 1
         },
         {
@@ -122,7 +122,7 @@
           "completionDate": "2026-02-15T00:00:00.000Z",
           "teamSize": 2,
           "views": 0,
-          "likes": 0,
+          "likes": 600,
           "order": 2
         },
         {
@@ -180,7 +180,7 @@
           "completionDate": "2024-03-01T00:00:00.000Z",
           "teamSize": 3,
           "views": 0,
-          "likes": 0,
+          "likes": 100,
           "order": 3
         }
       ],

@@ -50,16 +50,17 @@ check('HomeScape is an append-only second entry with the exact supplied URL', ()
     assert.equal(new Set(data.projects.map(p => p.slug)).size, data.projects.length);
 });
 
-check('the HomeScape card claims no fabricated stack, metrics or security features', () => {
+check('the HomeScape card claims no fabricated stack, metrics or achievements', () => {
     const project = json('src/data/projectShowcase.json').projects[1];
     assert.deepEqual(project.technologies, []);
-    assert.deepEqual(project.securityNotes, []);
+    assert.ok(project.securityNotes.length >= 3);
     for (const key of ['views', 'likes', 'achievements', 'metrics', 'uptime', 'users', 'orders']) {
         assert.equal(project[key], undefined, `must not fabricate ${key}`);
     }
     assert.ok(project.features.length >= 3);
     assert.match(project.description, /property marketplace/i);
-    assert.match(project.note, /illustrative examples/i);
+    assert.match(project.securityNotes.join(' '), /illustrative examples/i);
+    assert.equal(project.note, undefined, 'the original card has no note element');
 });
 
 check('no invented stack, statistics or achievements are attached to the link', () => {
@@ -105,12 +106,14 @@ check('both public Projects surfaces render the shared showcase', () => {
     assert.match(read('src/components/Projects.jsx'), /<ProjectShowcase compact \/>/);
 });
 
-check('each card uses its own link label and only renders notes it actually has', () => {
+check('the original card markup is preserved; only the button text is data-driven', () => {
     const src = read('src/components/ProjectShowcase.jsx');
     assert.match(src, /project\.linkLabel \|\| 'Open project'/);
-    assert.match(src, /project\.securityNotes\.length > 0/);
-    assert.match(src, /project\.note && <p className="showcase-card__note">/);
+    assert.match(src, /<div className="showcase-card__security">/);
+    assert.match(src, /As described on the live page/);
+    assert.doesNotMatch(src, /securityNotes\.length > 0|showcase-card__note|project\.note/);
     assert.doesNotMatch(src, />\s*Open client portal </);
+    assert.doesNotMatch(read('src/styles/ProjectShowcase.css'), /showcase-card__note/);
 });
 
 check('the card has a real copy action and an offline hint', () => {

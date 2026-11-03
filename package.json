@@ -30,7 +30,7 @@
     "audit:security": "node server/scripts/security-audit.js",
     "test:load": "node server/tests/load/smoke-load.js",
     "check": "npm run lint && npm test && npm run build",
-    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs && node tests/public-fallback.test.mjs && node tests/ecommerce-link.test.mjs && node tests/homescape-link.test.mjs",
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs && node tests/public-fallback.test.mjs && node tests/ecommerce-link.test.mjs && node tests/homescape-link.test.mjs && node tests/project-likes.test.mjs",
     "test:dashboards": "node tests/dashboard-api.test.mjs",
     "test:collaboration": "node tests/collaboration-review.test.mjs",
     "seed:lab": "node server/scripts/seedLabSamples.js",
@@ -54,7 +54,8 @@
     "test:public-fallback": "node tests/public-fallback.test.mjs",
     "snapshot:build": "node scripts/build-public-snapshot.mjs",
     "test:ecommerce-link": "node tests/ecommerce-link.test.mjs",
-    "test:homescape-link": "node tests/homescape-link.test.mjs"
+    "test:homescape-link": "node tests/homescape-link.test.mjs",
+    "test:project-likes": "node tests/project-likes.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

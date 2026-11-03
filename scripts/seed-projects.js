@@ -7,6 +7,9 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
+// The `likes` values are owner-specified display/seed values for the project
+// cards: starting presentation numbers, NOT measured engagement.
+// The API/DB remains the source of truth for real like counts.
 const projects = [
     {
         title: "E-Commerce Platform",
@@ -18,7 +21,7 @@ const projects = [
         featured: true,
         tags: ["Full-Stack", "E-Commerce", "Real-time", "Payment Integration"],
         views: 1245,
-        likes: 42,
+        likes: 500,
         links: {
             github: "https://github.com/devTechs001/ecommerce-platform",
             live: "https://ominbiz-solution.netlify.app/",
@@ -48,7 +51,7 @@ const projects = [
         featured: true,
         tags: ["Real-time", "Chat", "Messaging", "Socket.io", "Communication"],
         views: 856,
-        likes: 34,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/GB-chat",
             live: "https://gbchat.netlify.app/",
@@ -78,7 +81,7 @@ const projects = [
         featured: true,
         tags: ["Streaming", "Movies", "Entertainment", "API Integration", "Media"],
         views: 1243,
-        likes: 56,
+        likes: 100,
         links: {
             github: "https://github.com/devTechs001/moview-watch",
             live: "https://cinemaflx.netlify.app/",

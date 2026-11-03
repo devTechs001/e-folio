@@ -66,10 +66,15 @@ check('snapshot values are verbatim from the local backup and seed files', () =>
         assert.ok(seed.includes(skill.name), `${skill.name} must come from the seed file`);
     }
     const projectsSeed = read('scripts/seed-projects.js');
+    const seedLikes = new Map(
+        [...projectsSeed.matchAll(/title:\s*"([^"]+)"[\s\S]*?likes:\s*(\d+)/g)]
+            .map(match => [match[1], Number(match[2])])
+    );
     for (const project of snapshot.sections.projects.projects) {
         assert.ok(projectsSeed.includes(project.title), `${project.title} must come from the seed file`);
         assert.equal(project.views, 0);
-        assert.equal(project.likes, 0);
+        // Owner-specified display values are carried over from the seed file.
+        assert.equal(project.likes, seedLikes.get(project.title));
     }
     const lab = json('src/data/labSamples.json');
     assert.equal(snapshot.sections.labProjects.projects.length, lab.samples.length);

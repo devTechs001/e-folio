@@ -46,8 +46,11 @@
         "Saved properties, owner inquiries and viewing appointments",
         "Indicative price estimates based on active asking prices"
       ],
-      "note": "Showcase homes on the live page are labelled illustrative examples; they are not available to buy or rent.",
-      "securityNotes": [],
+      "securityNotes": [
+        "Showcase homes are labelled illustrative examples and are not available to buy or rent",
+        "Indicative price estimates are based on active asking prices",
+        "Buyers can contact owners and request viewing appointments"
+      ],
       "category": "Web",
       "status": "live",
       "technologies": [],

@@ -70,7 +70,9 @@ const projects = seedProjects.map((project, index) => ({
     completionDate: project.completionDate || null,
     teamSize: project.teamSize ?? 1,
     views: 0,
-    likes: 0,
+    // Owner-specified display values from the published seed file (see the
+    // comment in scripts/seed-projects.js). Not measured engagement.
+    likes: Number(project.likes) || 0,
     order: index + 1
 }));
 

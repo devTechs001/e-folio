@@ -59,15 +59,6 @@
   color: var(--showcase-muted);
 }
 
-.showcase-card__note {
-  margin: -0.2rem 0 0;
-  padding-left: 0.7rem;
-  border-left: 2px solid var(--showcase-border);
-  font-size: 0.78rem;
-  line-height: 1.55;
-  color: var(--showcase-muted);
-}
-
 .showcase-card__features,
 .showcase-card__security ul {
   list-style: none;
