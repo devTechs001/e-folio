@@ -17,6 +17,8 @@ import {
 } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/api.service';
+import socketService from '../../services/socket.service';
+import { normalizeAnalytics, EMPTY_ANALYTICS } from '../../utils/analyticsData';
 import toast from 'react-hot-toast';
 
 const Analytics = () => {
@@ -42,26 +44,16 @@ const Analytics = () => {
   const [goals, setGoals] = useState([]);
   const [abTests, setAbTests] = useState([]);
 
-  // Fetch Analytics Data from Database
+  // Fetch every section from the real analytics endpoints. A failed request
+  // produces an explicit empty state — never generated demo numbers.
   const loadAnalytics = useCallback(async () => {
     try {
       setRefreshing(true);
       const [
-        overviewData,
-        trafficData,
-        behaviorData,
-        conversionData,
-        technicalData,
-        socialData,
-        seoData,
-        competitorData,
-        goalsData,
-        eventsData,
-        heatmapData,
-        abTestData,
-        retentionData,
-        funnelData,
-        alertsData
+        overviewData, trafficData, behaviorData, conversionData,
+        technicalData, socialData, seoData, competitorData, goalsData,
+        eventsData, heatmapData, abTestData, retentionData, funnelData,
+        alertsData, topProjectsData, realtimeSnapshot
       ] = await Promise.all([
         apiService.getAnalyticsOverview(timeRange, filters),
         apiService.getTrafficAnalytics(timeRange, filters),
@@ -77,10 +69,12 @@ const Analytics = () => {
         apiService.getABTestResults(),
         apiService.getUserRetention(timeRange),
         apiService.getConversionFunnel(timeRange),
-        apiService.getAnalyticsAlerts()
+        apiService.getAnalyticsAlerts(),
+        apiService.getAnalyticsTopProjects(),
+        apiService.getRealtimeAnalytics({ timeRange })
       ]);
 
-      setAnalyticsData({
+      const normalized = normalizeAnalytics({
         overview: overviewData,
         traffic: trafficData,
         behavior: behaviorData,
@@ -89,360 +83,65 @@ const Analytics = () => {
         social: socialData,
         seo: seoData,
         competitor: competitorData,
+        goals: goalsData,
         events: eventsData,
         heatmap: heatmapData,
+        abTests: abTestData,
         retention: retentionData,
-        funnel: funnelData
+        funnel: funnelData,
+        alerts: alertsData,
+        topProjects: topProjectsData,
+        realtime: realtimeSnapshot
       });
 
-      setGoals(goalsData);
-      setAbTests(abTestData);
-      setNotifications(alertsData);
-      
+      setAnalyticsData(normalized);
+      setGoals(normalized.goals);
+      setAbTests(normalized.abTests);
+      setNotifications(normalized.notifications);
+      if (normalized.unavailable.length) {
+        console.warn('Analytics sections unavailable:', normalized.unavailable.join(', '));
+      }
     } catch (error) {
       console.error('Failed to load analytics:', error);
       toast.error('Failed to load analytics data');
-      // Fallback to demo data
-      setAnalyticsData(generateEnhancedDemoData());
+      setAnalyticsData(EMPTY_ANALYTICS);
+      setGoals([]);
+      setAbTests([]);
+      setNotifications([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, [timeRange, filters]);
 
-  // Real-time WebSocket Connection
+  // Real-time updates use the Socket.IO /tracking namespace. The old code
+  // opened a raw WebSocket at ws://localhost:3001, which the server never
+  // served, so the "realtime" view was permanently stale.
   useEffect(() => {
-    if (viewMode === 'realtime') {
-      let ws;
-
-      try {
-        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          console.log('WebSocket connected for real-time analytics');
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            setRealtimeData(prev => ({
-              ...prev,
-              ...data
-            }));
-          } catch (parseError) {
-            console.error('Error parsing WebSocket message:', parseError);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-        };
-
-        ws.onclose = (event) => {
-          console.log('WebSocket closed:', event.code, event.reason);
-        };
-      } catch (error) {
-        console.error('Failed to establish WebSocket connection:', error);
+    if (viewMode !== 'realtime') return undefined;
+    const handleEvent = (envelope) => {
+      if (!envelope || typeof envelope !== 'object') return;
+      setRealtimeData(prev => ({ ...prev, ...envelope.payload, lastEvent: envelope.type, lastEventAt: Date.now() }));
+      if (typeof envelope.payload?.activeUsers === 'number') {
+        setAnalyticsData(prev => prev ? { ...prev, realtimeUsers: envelope.payload.activeUsers } : prev);
       }
-
-      return () => {
-        if (ws) {
-          ws.close();
-        }
-      };
-    }
+    };
+    socketService.connectTracking();
+    socketService.onTrackingEvent(handleEvent);
+    return () => {
+      socketService.offTrackingEvent(handleEvent);
+      socketService.disconnectTracking();
+    };
   }, [viewMode]);
 
-  // Auto-refresh
+  // Auto-refresh (skip hidden tabs).
   useEffect(() => {
     loadAnalytics();
-    const interval = setInterval(loadAnalytics, 60000); // Refresh every minute
+    const interval = setInterval(() => {
+      if (!document.hidden) loadAnalytics();
+    }, 60000);
     return () => clearInterval(interval);
   }, [loadAnalytics]);
-
-  // Generate Enhanced Demo Data (fallback)
-  const generateEnhancedDemoData = () => {
-    const days = timeRange === '24h' ? 1 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    
-    return {
-      overview: {
-        summary: {
-          totalViews: 45678,
-          uniqueVisitors: 12345,
-          avgSessionDuration: 245,
-          bounceRate: 42.5,
-          conversionRate: 3.8,
-          pageviewsPerSession: 4.2,
-          newVsReturning: { new: 65, returning: 35 },
-          realtimeUsers: 24,
-          totalRevenue: 15420,
-          goalCompletions: 156
-        },
-        trends: {
-          viewsChange: 12.5,
-          visitorsChange: 8.3,
-          engagementChange: 15.7,
-          conversionChange: -2.3,
-          revenueChange: 24.8
-        },
-        chartData: Array.from({ length: days }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (days - 1 - i));
-          return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            views: Math.floor(Math.random() * 500) + 300,
-            visitors: Math.floor(Math.random() * 200) + 100,
-            engagement: Math.floor(Math.random() * 300) + 150,
-            conversions: Math.floor(Math.random() * 30) + 10,
-            revenue: Math.floor(Math.random() * 500) + 200,
-            bounceRate: Math.floor(Math.random() * 20) + 30
-          };
-        }),
-        hourlyData: Array.from({ length: 24 }, (_, i) => ({
-          hour: `${i}:00`,
-          views: Math.floor(Math.random() * 150) + 50,
-          visitors: Math.floor(Math.random() * 80) + 20,
-          conversions: Math.floor(Math.random() * 10) + 2
-        }))
-      },
-      traffic: {
-        sources: [
-          { source: 'Direct', visits: 8234, percentage: 35.2, change: 12.3, bounce: 38.5, avgDuration: 312 },
-          { source: 'Google Search', visits: 6891, percentage: 29.5, change: 15.7, bounce: 42.1, avgDuration: 245 },
-          { source: 'LinkedIn', visits: 4123, percentage: 17.6, change: 8.9, bounce: 35.2, avgDuration: 356 },
-          { source: 'GitHub', visits: 2456, percentage: 10.5, change: -3.2, bounce: 28.9, avgDuration: 412 },
-          { source: 'Twitter', visits: 1689, percentage: 7.2, change: 6.4, bounce: 45.3, avgDuration: 189 }
-        ],
-        referrers: [
-          { url: 'linkedin.com/in/profile', visits: 2345, conversions: 45 },
-          { url: 'github.com/repositories', visits: 1876, conversions: 38 },
-          { url: 'dev.to/articles', visits: 1234, conversions: 28 },
-          { url: 'medium.com/stories', visits: 987, conversions: 22 },
-          { url: 'stackoverflow.com/users', visits: 756, conversions: 15 }
-        ],
-        campaigns: [
-          { name: 'Summer Portfolio Boost', clicks: 3456, conversions: 89, cost: 450, roi: 285 },
-          { name: 'LinkedIn Ads Campaign', clicks: 2134, conversions: 56, cost: 320, roi: 195 },
-          { name: 'Twitter Promotion', clicks: 1876, conversions: 42, cost: 180, roi: 156 },
-          { name: 'GitHub Sponsor', clicks: 1234, conversions: 38, cost: 0, roi: 999 }
-        ],
-        keywords: [
-          { keyword: 'full stack developer portfolio', searches: 1234, clicks: 456, ctr: 36.9, position: 3.2 },
-          { keyword: 'react developer hire', searches: 987, clicks: 312, ctr: 31.6, position: 4.5 },
-          { keyword: 'javascript projects', searches: 876, clicks: 289, ctr: 33.0, position: 2.8 },
-          { keyword: 'web developer freelance', searches: 765, clicks: 234, ctr: 30.6, position: 5.1 }
-        ]
-      },
-      behavior: {
-        pageViews: [
-          { page: 'Home', views: 12456, uniqueViews: 8234, avgTime: 145, bounceRate: 38.5, exitRate: 22.3, entrances: 9876 },
-          { page: 'Projects', views: 9876, uniqueViews: 6543, avgTime: 312, bounceRate: 28.9, exitRate: 18.5, entrances: 7654 },
-          { page: 'About', views: 7654, uniqueViews: 5432, avgTime: 187, bounceRate: 42.1, exitRate: 25.7, entrances: 4321 },
-          { page: 'Skills', views: 5432, uniqueViews: 3876, avgTime: 156, bounceRate: 45.3, exitRate: 31.2, entrances: 3210 },
-          { page: 'Contact', views: 4321, uniqueViews: 3456, avgTime: 234, bounceRate: 35.2, exitRate: 65.4, entrances: 2109 },
-          { page: 'Blog', views: 3210, uniqueViews: 2345, avgTime: 398, bounceRate: 32.1, exitRate: 28.9, entrances: 1987 }
-        ],
-        userFlow: [
-          { from: 'Home', to: 'Projects', users: 5643, dropoff: 15.2 },
-          { from: 'Projects', to: 'Project Detail', users: 4123, dropoff: 12.8 },
-          { from: 'Project Detail', to: 'Contact', users: 2345, dropoff: 25.3 },
-          { from: 'About', to: 'Skills', users: 3456, dropoff: 18.9 },
-          { from: 'Skills', to: 'Projects', users: 2876, dropoff: 14.5 }
-        ],
-        eventTracking: [
-          { event: 'Project Card Click', count: 5678, uniqueUsers: 3456, avgPerUser: 1.64 },
-          { event: 'Resume Download', count: 1234, uniqueUsers: 987, avgPerUser: 1.25 },
-          { event: 'Contact Form Submit', count: 456, uniqueUsers: 423, avgPerUser: 1.08 },
-          { event: 'Social Share', count: 789, uniqueUsers: 654, avgPerUser: 1.21 },
-          { event: 'Demo Link Click', count: 3456, uniqueUsers: 2345, avgPerUser: 1.47 },
-          { event: 'GitHub Repository Click', count: 2345, uniqueUsers: 1876, avgPerUser: 1.25 }
-        ],
-        searchTerms: [
-          { term: 'react projects', searches: 234, results: 12, clicks: 89 },
-          { term: 'node.js', searches: 187, results: 8, clicks: 67 },
-          { term: 'full stack', searches: 156, results: 15, clicks: 54 },
-          { term: 'contact', searches: 123, results: 1, clicks: 98 }
-        ]
-      },
-      conversion: {
-        funnel: [
-          { stage: 'Landing Page', users: 10000, conversion: 100, dropoff: 0 },
-          { stage: 'Browsed Projects', users: 6500, conversion: 65, dropoff: 35 },
-          { stage: 'Viewed Project Details', users: 4200, conversion: 42, dropoff: 23 },
-          { stage: 'Clicked Contact', users: 1800, conversion: 18, dropoff: 24 },
-          { stage: 'Filled Form', users: 650, conversion: 6.5, dropoff: 11.5 },
-          { stage: 'Submitted', users: 520, conversion: 5.2, dropoff: 1.3 }
-        ],
-        goals: [
-          { name: 'Contact Form Submission', completions: 456, value: 5000, conversionRate: 3.7 },
-          { name: 'Resume Downloads', completions: 1234, value: 2000, conversionRate: 10.0 },
-          { name: 'Project Demo Views', completions: 3456, value: 1500, conversionRate: 27.8 },
-          { name: 'Social Media Follow', completions: 789, value: 800, conversionRate: 6.4 },
-          { name: 'Newsletter Signup', completions: 567, value: 1200, conversionRate: 4.6 }
-        ],
-        attribution: [
-          { channel: 'LinkedIn', firstClick: 234, lastClick: 345, linear: 289, timeDecay: 312 },
-          { channel: 'Google', firstClick: 456, lastClick: 234, linear: 345, timeDecay: 298 },
-          { channel: 'Direct', firstClick: 123, lastClick: 456, linear: 289, timeDecay: 378 },
-          { channel: 'GitHub', firstClick: 89, lastClick: 123, linear: 106, timeDecay: 115 }
-        ],
-        cohortAnalysis: Array.from({ length: 8 }, (_, week) => ({
-          week: `Week ${week + 1}`,
-          users: Math.floor(Math.random() * 500) + 200,
-          retention: Array.from({ length: 8 - week }, (_, i) => 
-            Math.floor(Math.random() * 40) + (60 - i * 5)
-          )
-        }))
-      },
-      technical: {
-        devices: [
-          { device: 'Desktop', count: 12345, percentage: 52.8, avgSession: 312, bounceRate: 35.2 },
-          { device: 'Mobile', count: 8976, percentage: 38.4, avgSession: 187, bounceRate: 48.3 },
-          { device: 'Tablet', count: 2056, percentage: 8.8, avgSession: 245, bounceRate: 42.1 }
-        ],
-        browsers: [
-          { name: 'Chrome', users: 14567, percentage: 62.3, version: '120.0' },
-          { name: 'Safari', users: 5432, percentage: 23.2, version: '17.2' },
-          { name: 'Firefox', users: 2156, percentage: 9.2, version: '121.0' },
-          { name: 'Edge', users: 1234, percentage: 5.3, version: '120.0' }
-        ],
-        os: [
-          { name: 'Windows', users: 10234, percentage: 43.8 },
-          { name: 'macOS', users: 7654, percentage: 32.7 },
-          { name: 'iOS', users: 3456, percentage: 14.8 },
-          { name: 'Android', users: 1987, percentage: 8.5 },
-          { name: 'Linux', users: 58, percentage: 0.2 }
-        ],
-        screenResolutions: [
-          { resolution: '1920x1080', users: 8976, percentage: 38.4 },
-          { resolution: '1366x768', users: 5432, percentage: 23.2 },
-          { resolution: '2560x1440', users: 3456, percentage: 14.8 },
-          { resolution: '1536x864', users: 2345, percentage: 10.0 },
-          { resolution: 'Mobile', users: 3180, percentage: 13.6 }
-        ],
-        loadTimes: {
-          avg: 1.8,
-          median: 1.5,
-          p95: 3.2,
-          p99: 5.1,
-          byPage: [
-            { page: 'Home', avg: 1.2, median: 1.0, p95: 2.1 },
-            { page: 'Projects', avg: 2.3, median: 1.9, p95: 4.2 },
-            { page: 'About', avg: 1.5, median: 1.2, p95: 2.8 }
-          ]
-        },
-        errors: [
-          { error: '404 Not Found', count: 234, impact: 'medium' },
-          { error: 'Image Load Failed', count: 89, impact: 'low' },
-          { error: 'API Timeout', count: 23, impact: 'high' },
-          { error: 'JavaScript Error', count: 45, impact: 'medium' }
-        ]
-      },
-      locations: [
-        { country: 'United States', city: 'New York', visits: 4567, percentage: 19.5, lat: 40.7128, lng: -74.0060 },
-        { country: 'United Kingdom', city: 'London', visits: 3456, percentage: 14.8, lat: 51.5074, lng: -0.1278 },
-        { country: 'India', city: 'Mumbai', visits: 3210, percentage: 13.7, lat: 19.0760, lng: 72.8777 },
-        { country: 'Canada', city: 'Toronto', visits: 2876, percentage: 12.3, lat: 43.6532, lng: -79.3832 },
-        { country: 'Germany', city: 'Berlin', visits: 2345, percentage: 10.0, lat: 52.5200, lng: 13.4050 },
-        { country: 'France', city: 'Paris', visits: 1987, percentage: 8.5, lat: 48.8566, lng: 2.3522 },
-        { country: 'Australia', city: 'Sydney', visits: 1654, percentage: 7.1, lat: -33.8688, lng: 151.2093 },
-        { country: 'Singapore', city: 'Singapore', visits: 1432, percentage: 6.1, lat: 1.3521, lng: 103.8198 },
-        { country: 'Japan', city: 'Tokyo', visits: 1234, percentage: 5.3, lat: 35.6762, lng: 139.6503 },
-        { country: 'Netherlands', city: 'Amsterdam', visits: 645, percentage: 2.8, lat: 52.3676, lng: 4.9041 }
-      ],
-      social: {
-        shares: [
-          { platform: 'LinkedIn', shares: 1234, clicks: 3456, engagement: 28.5 },
-          { platform: 'Twitter', shares: 987, clicks: 2345, engagement: 23.8 },
-          { platform: 'Facebook', shares: 654, clicks: 1876, engagement: 28.7 },
-          { platform: 'Reddit', shares: 456, clicks: 1234, engagement: 27.0 },
-          { platform: 'WhatsApp', shares: 345, clicks: 987, engagement: 28.6 }
-        ],
-        mentions: [
-          { platform: 'Twitter', mentions: 234, sentiment: 'positive', reach: 45678 },
-          { platform: 'LinkedIn', mentions: 189, sentiment: 'positive', reach: 123456 },
-          { platform: 'Reddit', mentions: 67, sentiment: 'neutral', reach: 23456 }
-        ],
-        followers: {
-          linkedin: { count: 12345, growth: 12.5, engagement: 8.9 },
-          github: { count: 3456, growth: 23.4, engagement: 15.2 },
-          twitter: { count: 5678, growth: 8.7, engagement: 6.4 },
-          dev: { count: 2345, growth: 34.2, engagement: 12.3 }
-        }
-      },
-      seo: {
-        rankings: [
-          { keyword: 'full stack developer', position: 12, previousPosition: 18, searches: 12000, difficulty: 78 },
-          { keyword: 'react portfolio', position: 5, previousPosition: 8, searches: 3400, difficulty: 45 },
-          { keyword: 'web developer hire', position: 23, previousPosition: 29, searches: 8900, difficulty: 82 },
-          { keyword: 'javascript expert', position: 15, previousPosition: 15, searches: 5600, difficulty: 65 }
-        ],
-        backlinks: [
-          { domain: 'dev.to', links: 23, authority: 92, dofollow: 23 },
-          { domain: 'medium.com', links: 18, authority: 94, dofollow: 15 },
-          { domain: 'linkedin.com', links: 45, authority: 99, dofollow: 0 },
-          { domain: 'github.com', links: 67, authority: 96, dofollow: 67 }
-        ],
-        pageSpeed: {
-          mobile: { score: 92, fcp: 1.2, lcp: 2.1, cls: 0.05, tti: 2.8 },
-          desktop: { score: 98, fcp: 0.8, lcp: 1.2, cls: 0.02, tti: 1.5 }
-        },
-        indexStatus: {
-          indexed: 45,
-          notIndexed: 3,
-          blocked: 0,
-          errors: 2
-        }
-      },
-      topProjects: [
-        { name: 'E-Commerce Platform', views: 2345, likes: 234, shares: 45, demos: 567, conversions: 23 },
-        { name: 'Social Media Dashboard', views: 1987, likes: 198, shares: 38, demos: 432, conversions: 18 },
-        { name: 'AI Chatbot', views: 1654, likes: 176, shares: 42, demos: 389, conversions: 21 },
-        { name: 'Task Management App', views: 1432, likes: 145, shares: 29, demos: 312, conversions: 15 },
-        { name: 'Weather Application', views: 1234, likes: 134, shares: 25, demos: 278, conversions: 12 },
-        { name: 'Portfolio Template', views: 1098, likes: 121, shares: 31, demos: 234, conversions: 14 }
-      ],
-      realtimeActivity: generateRealtimeActivity(),
-      realtimeUsers: 24
-    };
-  };
-
-  const generateRealtimeActivity = () => {
-    const activities = [
-      'Viewed Home page',
-      'Clicked on Project',
-      'Downloaded Resume',
-      'Submitted Contact Form',
-      'Viewed Skills section',
-      'Shared on LinkedIn',
-      'Viewed About page',
-      'Played Project Demo',
-      'Clicked GitHub Link',
-      'Signed up for Newsletter',
-      'Opened Chat Widget',
-      'Viewed Blog Post',
-      'Clicked Email Link',
-      'Bookmarked Portfolio',
-      'Clicked Hire Me Button'
-    ];
-
-    const locations = [
-      'New York, US', 'London, UK', 'Mumbai, IN', 'Toronto, CA',
-      'Berlin, DE', 'Paris, FR', 'Sydney, AU', 'Singapore, SG',
-      'Tokyo, JP', 'Amsterdam, NL'
-    ];
-
-    return Array.from({ length: 15 }, (_, i) => ({
-      id: i,
-      action: activities[Math.floor(Math.random() * activities.length)],
-      location: locations[Math.floor(Math.random() * locations.length)],
-      timestamp: new Date(Date.now() - Math.random() * 600000).toLocaleTimeString(),
-      device: ['Desktop', 'Mobile', 'Tablet'][Math.floor(Math.random() * 3)],
-      browser: ['Chrome', 'Safari', 'Firefox', 'Edge'][Math.floor(Math.random() * 4)],
-      isNewUser: Math.random() > 0.6
-    }));
-  };
 
   // Export Functions
   const exportData = async (format = 'csv') => {
@@ -583,7 +282,7 @@ const Analytics = () => {
     );
   }
 
-  const data = analyticsData || generateEnhancedDemoData();
+  const data = analyticsData || EMPTY_ANALYTICS;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
@@ -608,6 +307,14 @@ const Analytics = () => {
                   <span className="text-green-400 text-sm font-medium">
                     {data.realtimeUsers} online now
                   </span>
+                </div>
+              )}
+
+              {/* Honest signal when one or more API sections failed. */}
+              {data.unavailable && data.unavailable.length > 0 && (
+                <div className="mb-4 px-4 py-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
+                  Some analytics sections could not be loaded
+                  ({data.unavailable.join(', ')}). Showing only verified data.
                 </div>
               )}
 
@@ -1724,11 +1431,11 @@ const Analytics = () => {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-slate-300 font-medium">{page.page}</h4>
                       <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
-                        {Math.floor(Math.random() * 10) + 1} active
+                        {page.uniqueViews || 0} unique
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-slate-500">
-                      <span>{Math.floor(Math.random() * 50) + 10} views/min</span>
+                      <span>{page.views || 0} views</span>
                     </div>
                   </div>
                 ))}

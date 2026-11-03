@@ -98,13 +98,16 @@ const DashboardProvider = ({ children }) => {
             refreshDashboard();
         };
 
-        socketService.on('stats_update', onStatsUpdate);
-        socketService.on('new_activity', onStatsUpdate);
-        socketService.on('notification', onStatsUpdate);
+        const events = ['stats_update', 'new_activity', 'notification'];
+        for (const event of events) socketService.on(event, onStatsUpdate);
+        // The server's live feed is the authenticated /tracking namespace;
+        // listening only to legacy event names left this context never firing.
+        socketService.connectTracking();
+        socketService.onTrackingEvent(onStatsUpdate);
         return () => {
-            socketService.off('stats_update', onStatsUpdate);
-            socketService.off('new_activity', onStatsUpdate);
-            socketService.off('notification', onStatsUpdate);
+            for (const event of events) socketService.off(event, onStatsUpdate);
+            socketService.offTrackingEvent(onStatsUpdate);
+            socketService.disconnectTracking();
         };
     }, [refreshDashboard]);
 

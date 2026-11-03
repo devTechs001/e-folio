@@ -50,10 +50,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useSocket } from '../../contexts/SocketContext';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
+import socketService from '../../services/socket.service';
 import DashboardLayout from './DashboardLayout';
 import {
     LineChart,
@@ -74,13 +74,14 @@ import {
 } from 'recharts';
 import { format, formatDistanceToNow, subDays, isToday, parseISO, isValid } from 'date-fns';
 
+const REALTIME_EVENTS = ['stats_update', 'new_activity', 'notification', 'visitor_online', 'new_message'];
+
 const DashboardHome = () => {
     const { user } = useAuth();
     const { theme } = useTheme();
-    const { socket, connected } = useSocket();
     const { refreshDashboard } = useDashboard();
     const { success, error: showError } = useNotifications();
-    const wsRef = useRef(null);
+    const lastSocketRefresh = useRef(0);
 
     const [stats, setStats] = useState({
         totalProjects: 0,
@@ -132,57 +133,56 @@ const DashboardHome = () => {
         };
     }, []);
 
+    // The server publishes tracking events as { type, payload, timestamp }
+    // envelopes on the /tracking namespace. Older code assumed event names
+    // were embedded in `data.type` and patched local counters with payloads
+    // that never existed, so the dashboard stayed stale. Authoritative values
+    // are re-fetched (throttled) after any realtime event.
     const handleRealtimeUpdate = useCallback((data) => {
-        switch (data.type) {
+        if (!data || typeof data !== 'object') return;
+        const type = data.type;
+        const payload = data.payload !== undefined ? data.payload : data;
+
+        switch (type) {
             case 'stats_update':
-                setStats(prev => ({ ...prev, ...data.stats }));
+                setStats(prev => ({ ...prev, ...(data.stats || payload) }));
                 break;
             case 'new_activity':
-                setRecentActivity(prev => [data.activity, ...prev.slice(0, 9)]);
+                setRecentActivity(prev => [data.activity || payload, ...prev.slice(0, 9)]);
                 break;
             case 'notification':
-                setNotifications(prev => [data.notification || data, ...prev]);
+                setNotifications(prev => [data.notification || payload, ...prev]);
                 break;
             case 'visitor_online':
-                setOnlineUsers(data.count);
+                setOnlineUsers(data.count ?? payload.count ?? 0);
                 break;
             case 'new_message':
-                setStats(prev => ({
-                    ...prev,
-                    messages: prev.messages + 1
-                }));
+                setStats(prev => ({ ...prev, messages: (prev.messages || 0) + 1 }));
                 break;
             default:
                 break;
         }
         setLastUpdate(new Date());
+
+        const now = Date.now();
+        if (now - lastSocketRefresh.current < 5000) return;
+        lastSocketRefresh.current = now;
+        loadDashboardData(true);
     }, []);
 
-    const setupWebSocket = useCallback(() => {
-        // Use SocketContext for real-time updates
-        if (socket && connected) {
-            socket.on('stats_update', handleRealtimeUpdate);
-            socket.on('new_activity', handleRealtimeUpdate);
-            socket.on('notification', handleRealtimeUpdate);
-            socket.on('visitor_online', handleRealtimeUpdate);
-            socket.on('new_message', handleRealtimeUpdate);
-        }
-    }, [socket, connected, handleRealtimeUpdate]);
-
-    // Setup real-time socket listeners
+    // Setup real-time listeners on the shared service (buffered, so listeners
+    // registered before connect are not lost).
     useEffect(() => {
-        setupWebSocket();
-        
+        socketService.connectTracking();
+        socketService.onTrackingEvent(handleRealtimeUpdate);
+        for (const event of REALTIME_EVENTS) socketService.on(event, handleRealtimeUpdate);
+
         return () => {
-            if (socket) {
-                socket.off('stats_update', handleRealtimeUpdate);
-                socket.off('new_activity', handleRealtimeUpdate);
-                socket.off('notification', handleRealtimeUpdate);
-                socket.off('visitor_online', handleRealtimeUpdate);
-                socket.off('new_message', handleRealtimeUpdate);
-            }
+            socketService.offTrackingEvent(handleRealtimeUpdate);
+            for (const event of REALTIME_EVENTS) socketService.off(event, handleRealtimeUpdate);
+            socketService.disconnectTracking();
         };
-    }, [socket, connected, setupWebSocket, handleRealtimeUpdate]);
+    }, [handleRealtimeUpdate]);
 
     const loadDashboardData = async (silent = false) => {
         try {

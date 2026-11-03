@@ -8,6 +8,9 @@ class SocketService {
         this.socket = null;
         this.connected = false;
         this.trackingSocket = null;
+        // Several dashboards share the same owner namespace. Ref-count the
+        // consumers so one component unmounting does not disconnect the rest.
+        this.trackingRefs = 0;
         // Buffered listeners so components can subscribe before the socket is
         // created, and keep their subscriptions across reconnects.
         this.listeners = new Map();
@@ -91,8 +94,13 @@ class SocketService {
 
     /** Owner-only tracking namespace (replaces the dead raw /tracking WS). */
     connectTracking() {
+        this.trackingRefs += 1;
         if (this.trackingSocket?.connected) return this.trackingSocket;
-        if (this.trackingSocket) this.disconnectTracking();
+        if (this.trackingSocket) {
+            const refs = this.trackingRefs;
+            this.disconnectTracking(true);
+            this.trackingRefs = refs;
+        }
 
         const token = localStorage.getItem('token');
         this.trackingSocket = io(`${SOCKET_URL}/tracking`, {
@@ -107,12 +115,15 @@ class SocketService {
         return this.trackingSocket;
     }
 
-    disconnectTracking() {
+    disconnectTracking(force = false) {
+        if (!force && this.trackingRefs > 0) this.trackingRefs -= 1;
+        if (!force && this.trackingRefs > 0) return;
         if (this.trackingSocket) {
             this.trackingSocket.removeAllListeners();
             this.trackingSocket.disconnect();
             this.trackingSocket = null;
         }
+        if (force) this.trackingRefs = 0;
     }
 
     onTrackingEvent(callback) {
