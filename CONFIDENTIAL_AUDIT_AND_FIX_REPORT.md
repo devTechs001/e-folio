@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -20,7 +20,8 @@ contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
 `origin/main` via PR #1 and PR #2 (see §5). Phase 3 (collaboration & review
-systems) is **local only** — no push, PR, merge, external issue, or external
+systems), phase 4 (Lab ↔ dashboard) and phase 5 (mock testimonials) are
+**local only** — no push, PR, merge, external issue, or external
 service was used.
 
 ---
@@ -38,6 +39,7 @@ service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Mock testimonials (phase 5) | invented client quotes were served to visitors; the original 8 records were later deleted | the same 8 records restored verbatim as real, tagged, preview-only DB documents with owner add/delete/publish controls, backup files and a versioned cache |
 | Lab ↔ dashboard (phase 4) | Lab page used 4 fake experiments; Projects/Skills/Interests pages shipped ~700 lines of invented fallback data | real `/api/public/*` records for projects, skills and hobbies; new `/dashboard/lab`; clearly tagged, owner-deletable sample data |
 | Collaboration & review (phase 3) | anonymous review reads, `auth`-only moderation, unscoped workspaces, dead invite links, fake reviews/testimonials, public applicant documents | owner-only guards, hashed `Invite` flow + accept page, private uploads, membership checks, honest empty states, 21 new regression checks |
 
@@ -330,6 +332,9 @@ issue or external service was used for this phase.**
   now return `503`, `success:false`, `meta.populated:false` and empty arrays.
 - Deleted `getFallbackTestimonials()` (8 invented clients/quotes/avatars) from
   `src/pages/Testimonials.jsx`; it now shows an honest empty state with a retry.
+  (Phase 5 later restored those same 8 records on explicit request — as
+  tagged, preview-only, owner-deletable DB documents, never as a public
+  fallback. See §3e.)
 - `TestimonialManager.jsx` now calls owner-only `getAllTestimonials()` so
   pending/hidden testimonials can actually be moderated and match the stats.
 - Removed `getFallbackProjects()` (~490 lines of fabricated projects, views,
@@ -434,6 +439,94 @@ from the dashboard or by the local seed script.
 
 ---
 
+## 3e. Phase 5 — owner-controlled mock testimonial data (preview mode)
+
+All work is local on `arena/f176a951-e-folio`. **No push, PR, merge, external
+issue or external service was used.** No MongoDB was running, so no records were
+inserted into a live database; the owner inserts them from the dashboard or the
+local seed script. The linked site was fetched read-only to identify it (it is
+*NetGate — Captive Portal & Hotspot Management*); nothing was sent to it and no
+offensive testing was performed.
+
+### Deliberate scope decision
+
+Phase 3 removed the fabricated testimonial fallback because invented client
+quotes were served to real visitors. Phase 5 keeps that guarantee while
+restoring the **same 8 records** as explicitly requested: they are now real,
+owner-controlled database documents that are **clearly labelled**, **preview
+only** and **deletable**. Normal visitors still see only real, published
+testimonials (or an honest empty state). No other content was made mock —
+projects, skills, hobbies and analytics stay on the real APIs.
+
+### What was added
+
+- `src/data/testimonialSamples.json` — the 8 original records **verbatim** (names,
+  positions, companies, quotes, ratings, dates, projects, tags, avatars,
+  `featured` / `verified`), recovered from the pre-phase-3 frontend array. Tag
+  `testimonial-sample`; project URL `https://net-gate-portal.netlify.app/`
+  replaces the previous project link `https://e-folio-pro.netlify.app`.
+- `server/backups/testimonials/` — `original-fallback-testimonials.json`
+  (exact 8 records as they were), `testimonial-samples.backup.json` (full
+  canonical copy) and `README.md`. `npm run backup:testimonials` writes a
+  timestamped export of **every** testimonial in MongoDB; the seeder takes one
+  automatically before it writes anything. Real client data is never
+  overwritten or deleted.
+- `server/scripts/seedTestimonialSamples.js` — idempotent local CLI:
+  `--seed` (default), `--remove` (only tagged records), `--export`, `--restore
+  --file`, `--publish`, `--unpublish`. Samples are inserted with
+  `visible: false`, `website = project URL`, `source: 'import'` and the tag.
+  Exposed as `npm run seed:testimonials`, `seed:testimonials:remove`,
+  `backup:testimonials`, `restore:testimonials`, etc.
+- `src/components/dashboard/TestimonialSamplesPanel.jsx` — mounted in
+  **Dashboard → Testimonials**. Owner controls: **Add sample data**, **Delete all
+  samples** / per-row Delete, **Publish / Unpublish**, **Preview mode** (inline
+  mock cards), **Preview on public page** / **Exit public preview**, live counts
+  of samples vs. real testimonials, and the project link.
+- `src/pages/Testimonials.jsx` — owner-only **preview mode** (`?preview=1` or
+  `testimonial_preview` in localStorage). In preview, tagged samples are merged
+  from the owner endpoint and every sample card carries a
+  `SAMPLE · PREVIEW` badge in grid, list and carousel views plus a top banner.
+  Outside preview, mock data is never fetched. The browser cache key is now
+  versioned (`public_testimonials_v2`) and the old key is cleared, so a stale
+  pre-phase-3 fabricated list cannot reappear.
+- `src/data/labSamples.json` — the existing placeholder link on the
+  `[SAMPLE] Network Recon Suite` project was replaced with the supplied
+  `https://net-gate-portal.netlify.app/` live/demo URL.
+
+### Interpretation note
+
+"replace the existing one in project" was read as replacing the old project
+link (`https://e-folio-pro.netlify.app`) with the supplied NetGate URL **inside
+the sample data only**, rather than rewriting deployment configuration across
+the whole repository (which would conflict with "all are needed as they were").
+`render.yaml`, the deployment docs and all real project records are unchanged.
+If a different single project link was meant, it is a one-line change in
+`src/data/labSamples.json`.
+
+### Verification
+
+- `npm run check`: **0 errors** (678 warnings), endpoint parity `--strict`
+  **0 live gaps**, security audit `--strict` **HIGH/MEDIUM/LOW 0**, build
+  22.17s / PWA 205 entries.
+- 53 Node-only regression checks: 9 dashboard + 21 collaboration/review +
+  12 lab/dashboard + **11 testimonial sample/preview** checks.
+- `git diff --check` clean; masked secret scan clean.
+
+### How to use
+
+1. Start the backend with its MongoDB configured (`server/.env`).
+2. **Dashboard → Testimonials → Sample testimonials → Add sample data**, or
+   `npm run seed:testimonials`. A full DB backup is written first.
+3. Click **Preview mode** to see the mock cards, or **Preview on public page**
+   (`/?preview=1`) to see them in the real public layout with badges.
+4. Delete them individually, with **Delete all samples** / `npm run
+   seed:testimonials:remove`, or publish them deliberately if you want them
+   visible. `npm run backup:testimonials` / `npm run restore:testimonials --
+   --file <path>` round-trips the real data.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -472,5 +565,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3 and 4 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4 and 5 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

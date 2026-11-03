@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import apiService from '../../services/api.service';
 import '../../styles/TestimonialManager.css';
+import TestimonialSamplesPanel from './TestimonialSamplesPanel';
 
 const TestimonialManager = () => {
     const [testimonials, setTestimonials] = useState([]);
@@ -358,6 +359,9 @@ const TestimonialManager = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Owner-controlled mock testimonial data (preview-only, deletable) */}
+            <TestimonialSamplesPanel onChanged={loadTestimonials} />
 
             {/* Statistics Dashboard */}
             {stats && (

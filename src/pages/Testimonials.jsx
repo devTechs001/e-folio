@@ -1,7 +1,30 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
+import { useAuth } from '../contexts/AuthContext';
+import sampleDataset from '../data/testimonialSamples.json';
 import '../styles/Testimonials.css';
+
+const SAMPLE_TAG = sampleDataset.tag;
+const PREVIEW_KEY = 'testimonial_preview';
+// Versioned so an older browser cache can never reintroduce pre-phase-3
+// invented testimonial records.
+const CACHE_KEY = 'public_testimonials_v2';
+const LEGACY_CACHE_KEY = 'public_testimonials';
+
+const isSampleTestimonial = (item) =>
+  Array.isArray(item?.tags) && item.tags.includes(SAMPLE_TAG);
+
+const readPreviewFlag = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preview') === '1') return true;
+    if (params.get('preview') === '0') return false;
+    return localStorage.getItem(PREVIEW_KEY) === 'on';
+  } catch (error) {
+    return false;
+  }
+};
 
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState([]);
@@ -22,30 +45,47 @@ const Testimonials = () => {
   const [animateCards, setAnimateCards] = useState(false);
   const carouselRef = useRef(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
+  const { isOwner: checkOwner } = useAuth();
+  const owner = typeof checkOwner === 'function' ? checkOwner() : false;
+  const [previewMode, setPreviewMode] = useState(readPreviewFlag);
+  const [sampleCount, setSampleCount] = useState(0);
 
   const loadTestimonials = useCallback(async () => {
     setLoadError('');
     try {
-      const cached = cacheService.get('public_testimonials');
+      // Never use a cached list while previewing samples.
+      const cached = previewMode ? null : cacheService.get(CACHE_KEY);
+      let real = [];
+
       if (cached) {
-        setTestimonials(cached);
-        setLoading(false);
-        return;
-      }
-
-      const response = await apiService.getTestimonials();
-
-      if (response.success && Array.isArray(response.testimonials) && response.testimonials.length > 0) {
-        cacheService.set('public_testimonials', response.testimonials, CACHE_TTL.TEN_MINUTES);
-        setTestimonials(response.testimonials);
+        real = cached;
       } else {
-        // An empty collection is an honest empty state. Never substitute
-        // invented clients, quotes, ratings or avatars as social proof.
-        setTestimonials([]);
-        if (!response.success) {
-          setLoadError(response.message || 'Testimonials are temporarily unavailable.');
+        const response = await apiService.getTestimonials();
+        real = response?.success && Array.isArray(response.testimonials)
+          ? response.testimonials
+          : [];
+        if (!previewMode) {
+          cacheService.set(CACHE_KEY, real, CACHE_TTL.TEN_MINUTES);
+        }
+        if (!response?.success) {
+          setLoadError(response?.message || 'Testimonials are temporarily unavailable.');
         }
       }
+
+      // An empty collection is an honest empty state. Mock data only ever
+      // appears in OWNER preview mode and is always clearly labelled.
+      let display = real;
+      if (previewMode && owner) {
+        const admin = await apiService.getAllTestimonials({ limit: 100 });
+        const all = admin?.success && Array.isArray(admin.testimonials) ? admin.testimonials : [];
+        const samples = all.filter(isSampleTestimonial);
+        setSampleCount(samples.length);
+        const seen = new Set(real.map(item => item._id || item.id || item.name));
+        display = [...real, ...samples.filter(item => !seen.has(item._id || item.id || item.name))];
+      } else {
+        setSampleCount(0);
+      }
+      setTestimonials(display);
     } catch (error) {
       console.error('Error loading testimonials:', error);
       setTestimonials([]);
@@ -53,7 +93,7 @@ const Testimonials = () => {
     } finally {
       setLoading(false);
     }
-  }, [setTestimonials, setLoading]);
+  }, [previewMode, owner]);
 
   useEffect(() => {
     loadTestimonials();
@@ -73,12 +113,34 @@ const Testimonials = () => {
   useEffect(() => {
     const handleSettingsChange = (e) => {
       console.log('[Testimonials] Settings changed, refreshing data...');
-      cacheService.delete('public_testimonials');
+      cacheService.delete(CACHE_KEY);
       loadTestimonials();
     };
     window.addEventListener('settingsChanged', handleSettingsChange);
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
   }, [loadTestimonials]);
+
+  // Drop the pre-version cache once so fabricated fallback records cannot
+  // survive in a returning visitor's browser.
+  useEffect(() => {
+    cacheService.delete(LEGACY_CACHE_KEY);
+  }, []);
+
+  const togglePreview = () => {
+    const next = !previewMode;
+    setPreviewMode(next);
+    try {
+      if (next) localStorage.setItem(PREVIEW_KEY, 'on');
+      else localStorage.removeItem(PREVIEW_KEY);
+      const url = new URL(window.location.href);
+      if (next) url.searchParams.set('preview', '1');
+      else url.searchParams.delete('preview');
+      window.history.replaceState({}, '', url.toString());
+    } catch (error) {
+      // URL/storage may be unavailable; preview still works for this render.
+    }
+    cacheService.delete(CACHE_KEY);
+  };
 
   const filteredAndSortedTestimonials = testimonials
     .filter(testimonial => {
@@ -259,6 +321,24 @@ const Testimonials = () => {
       )}
 
       <div className="container mx-auto px-4">
+        {previewMode && (
+          <div className="testimonial-preview-banner" role="status">
+            <span className="testimonial-preview-badge">PREVIEW MODE</span>
+            <span>
+              {owner
+                ? `Sample testimonials are mock data (${sampleCount} shown). They are not published to normal visitors.`
+                : 'Preview mode is on. Sign in as owner to see the labelled sample data.'}
+            </span>
+            <button type="button" onClick={togglePreview} className="testimonial-preview-exit">
+              Exit preview
+            </button>
+          </div>
+        )}
+        {owner && !previewMode && (
+          <button type="button" onClick={togglePreview} className="testimonial-preview-open">
+            <i className="fas fa-eye"></i> Preview sample testimonials
+          </button>
+        )}
         {/* Header */}
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="inline-flex items-center gap-3 px-6 py-3 mb-8 glass-badge">
@@ -601,7 +681,7 @@ const Testimonials = () => {
                 {currentTestimonials.map((testimonial, index) => (
                   <div
                     key={index}
-                    className="testimonial-card-enhanced"
+                    className={`testimonial-card-enhanced ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
                     data-aos="fade-up"
                     data-aos-delay={index * 50}
                     onClick={() => openModal(testimonial)}
@@ -614,6 +694,9 @@ const Testimonials = () => {
                         className="card-avatar"
                       />
                       <div className="card-badges">
+                        {isSampleTestimonial(testimonial) && (
+                          <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                        )}
                         {testimonial.featured && (
                           <span className="badge badge-featured">
                             <i className="fas fa-star"></i>
@@ -701,7 +784,7 @@ const Testimonials = () => {
                 {currentTestimonials.map((testimonial, index) => (
                   <div
                     key={index}
-                    className="testimonial-list-item"
+                    className={`testimonial-list-item ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
                     data-aos="fade-right"
                     data-aos-delay={index * 50}
                     onClick={() => openModal(testimonial)}
@@ -715,6 +798,9 @@ const Testimonials = () => {
                       <div className="list-header">
                         <div>
                           <h4 className="list-name">
+                            {isSampleTestimonial(testimonial) && (
+                              <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                            )}
                             {testimonial.name}
                             {testimonial.verified && (
                               <i className="fas fa-shield-check text-green-500 text-sm ml-2"></i>
@@ -767,12 +853,15 @@ const Testimonials = () => {
                   {filteredAndSortedTestimonials.map((testimonial, index) => (
                     <div
                       key={index}
-                      className={`carousel-slide ${index === activeCarouselIndex ? 'active' : ''}`}
+                      className={`carousel-slide ${index === activeCarouselIndex ? 'active' : ''} ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
                       style={{
                         transform: `translateX(${(index - activeCarouselIndex) * 100}%)`
                       }}
                     >
                       <div className="carousel-content">
+                        {isSampleTestimonial(testimonial) && (
+                          <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                        )}
                         <div className="carousel-quote-mark">
                           <i className="fas fa-quote-left"></i>
                         </div>
