@@ -135,7 +135,7 @@ class SettingsController {
             console.error('Update settings error:', error);
             res.status(500).json({
                 success: false,
-                message: error.message || 'Failed to update settings'
+                message: 'Failed to update settings'
             });
         }
     }

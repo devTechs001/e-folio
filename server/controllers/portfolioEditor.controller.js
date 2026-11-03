@@ -3,6 +3,7 @@ const PortfolioVersion = require('../models/PortfolioVersion');
 const User = require('../models/User.model');
 const fs = require('fs').promises;
 const path = require('path');
+const { publishUserNotification } = require('../socket/notifications.handler');
 
 class PortfolioEditorController {
     // Get portfolio configuration
@@ -17,12 +18,21 @@ class PortfolioEditorController {
             if (!config) {
                 // Create default configuration
                 config = await this.createDefaultConfig(userId);
+                publishUserNotification(userId, {
+                    type: 'portfolio',
+                    title: 'Portfolio workspace created',
+                    message: 'Your portfolio record is ready. Open the Portfolio Editor to customise it.',
+                    link: '/dashboard/portfolio-editor',
+                    metadata: { event: 'portfolio_created' }
+                }).catch(() => {});
             }
 
             res.json({
                 success: true,
                 data: config.config,
                 version: config.version,
+                isPublished: Boolean(config.isPublished),
+                publishedAt: config.publishedAt || null,
                 updatedAt: config.updatedAt
             });
         } catch (error) {
@@ -249,6 +259,14 @@ class PortfolioEditorController {
                 url: portfolioUrl
             });
 
+            publishUserNotification(userId, {
+                type: 'portfolio',
+                title: 'Portfolio published',
+                message: 'Your portfolio is now published and available on its public page.',
+                link: `/portfolio/${user.username || user._id}`,
+                metadata: { event: 'portfolio_published', url: portfolioUrl }
+            }).catch(() => {});
+
             res.json({
                 success: true,
                 message: 'Portfolio published successfully',
@@ -289,6 +307,14 @@ class PortfolioEditorController {
             await User.findByIdAndUpdate(userId, {
                 portfolioPublished: false
             });
+
+            publishUserNotification(userId, {
+                type: 'portfolio',
+                title: 'Portfolio unpublished',
+                message: 'Your portfolio is no longer published.',
+                link: '/dashboard/user-workspaces',
+                metadata: { event: 'portfolio_unpublished' }
+            }).catch(() => {});
 
             res.json({
                 success: true,

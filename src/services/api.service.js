@@ -1,6 +1,9 @@
 // API Service for Frontend-Backend Communication
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Same-origin relative default: browser-facing code must never call
+// localhost (the preview browser is not the sandbox). In production
+// VITE_API_URL is an absolute backend URL and still takes precedence.
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 const DEFAULT_TIMEOUT_MS = 15000;
 
 class ApiService {
@@ -70,6 +73,10 @@ class ApiService {
                     signal: signal || controller.signal
                 });
 
+                // Technical messages below are INTERNAL / DEV-ONLY. Public
+                // pages must never render them: loadPublicSection() catches
+                // them, records them via recordDevIssue() for the dev
+                // diagnostics panel, and serves the saved local copy instead.
                 // Check if response is HTML (indicates error page)
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('text/html')) {
@@ -317,35 +324,34 @@ class ApiService {
         return this.request('/projects/favorites');
     }
 
-    // Webhooks APIs
+    // Webhooks APIs — the settings controller persists these in MongoDB
+    // (WebHook model). The older /api/webhooks controller keeps an in-memory
+    // array, so the dashboard must not use it for owner settings.
     async getWebhooks() {
-        return this.request('/webhooks');
+        return this.request('/settings/webhooks');
     }
 
     async createWebhook(webhookData) {
-        return this.request('/webhooks', {
+        return this.request('/settings/webhooks', {
             method: 'POST',
             body: JSON.stringify(webhookData)
         });
     }
 
-    async updateWebhook(id, webhookData) {
-        return this.request(`/webhooks/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(webhookData)
-        });
-    }
-
     async deleteWebhook(id) {
-        return this.request(`/webhooks/${id}`, {
+        return this.request(`/settings/webhooks/${id}`, {
             method: 'DELETE'
         });
     }
 
-    async testWebhook(id) {
-        return this.request(`/webhooks/${id}/test`, {
-            method: 'POST'
-        });
+    // The DB-backed settings API has no update/test endpoints. Fail honestly
+    // instead of silently falling back to the legacy in-memory webhook store.
+    async updateWebhook() {
+        return { success: false, message: 'Webhook updates are not available on the settings API' };
+    }
+
+    async testWebhook() {
+        return { success: false, message: 'Webhook tests are not available on the settings API' };
     }
 
     // Collaboration APIs
@@ -1377,6 +1383,29 @@ class ApiService {
         });
     }
 
+    async deleteApiKey(keyId) {
+        return this.request(`/settings/api-keys/${keyId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async terminateSession(sessionId) {
+        return this.request(`/settings/sessions/${sessionId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async deleteAccount(payload) {
+        return this.request('/settings/delete-account', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    }
+
+    async exportUserData() {
+        return this.request('/settings/export');
+    }
+
     // Portfolio Editor APIs
     async getPortfolioConfig() {
         try {
@@ -1718,7 +1747,7 @@ class ApiService {
             return await this.request('/reviews/featured');
         } catch (error) {
             console.warn('Featured reviews unavailable');
-            return { success: true, reviews: [] };
+            return { success: false, reviews: [], message: error.message };
         }
     }
 
@@ -1864,6 +1893,33 @@ class ApiService {
             console.error('Error fetching testimonials:', error);
             return { success: false, message: error.message };
         }
+    }
+
+    // Owner-only list for the dashboard. The public endpoint returns only
+    // visible entries, which made pending testimonials impossible to moderate
+    // even though the owner stats endpoint counted them.
+    async getAllTestimonials(params = {}) {
+        try {
+            const query = new URLSearchParams(params);
+            const qs = query.toString();
+            return await this.request(`/testimonials${qs ? `?${qs}` : ''}`);
+        } catch (error) {
+            console.error('Error fetching all testimonials:', error);
+            return { success: false, testimonials: [], message: error.message };
+        }
+    }
+
+    // Invite recipients are anonymous until they accept, so these endpoints
+    // are deliberately public (rate limited server-side).
+    async validateInviteToken(token) {
+        return this.request(`/collaborators/invite/validate/${encodeURIComponent(token)}`);
+    }
+
+    async acceptInvite(token, payload) {
+        return this.request(`/collaborators/invite/accept/${encodeURIComponent(token)}`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
     }
 
     async createTestimonial(testimonialData) {
@@ -2271,7 +2327,7 @@ class ApiService {
             return await this.request('/reviews?count=true');
         } catch (error) {
             console.warn('Reviews count unavailable');
-            return { success: true, data: { total: 0, approved: 0, pending: 0, rejected: 0 } };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -2280,7 +2336,7 @@ class ApiService {
             return await this.request('/reviews?average=true');
         } catch (error) {
             console.warn('Average review rating unavailable');
-            return { success: true, data: { average: 0, totalReviews: 0 } };
+            return { success: false, data: {}, message: error.message };
         }
     }
 
@@ -3109,6 +3165,65 @@ class ApiService {
             console.warn('Failed to fetch template:', error);
             return { success: false, data: null };
         }
+    }
+
+    // ---- User Workspaces: real CV / portfolio / account APIs ----
+
+    /** Owner-only list of registered non-owner accounts (`/api/admin/users`). */
+    async getAdminUsers(params = {}) {
+        return this.request('/admin/users', { params });
+    }
+
+    /** Public portfolio of another user (`/api/public/portfolio/:username`). */
+    async getPublicPortfolio(username) {
+        return this.request(`/public/portfolio/${encodeURIComponent(username)}`);
+    }
+
+    /** CV export (`/api/cv/export/:format`). JSON returns the raw CV document. */
+    async exportCV(format = 'json') {
+        return this.request(`/cv/export/${encodeURIComponent(format)}`);
+    }
+
+    /** Built-in portfolio templates (`/api/portfolio/templates`). */
+    async getPortfolioTemplates() {
+        try {
+            return await this.request('/portfolio/templates');
+        } catch (error) {
+            return { success: false, data: [], message: error.message };
+        }
+    }
+
+    /** Apply a built-in template (`POST /api/portfolio/templates`). */
+    async applyPortfolioTemplate(templateId) {
+        return this.request('/portfolio/templates', {
+            method: 'POST',
+            body: JSON.stringify({ templateId })
+        });
+    }
+
+    /** Owner-only: notify another account in real time. */
+    async notifyUser(userId, payload) {
+        return this.request(`/notifications/user/${encodeURIComponent(userId)}`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    }
+
+    // ---- Security Audit / Resources dashboard (owner-only, local data) ----
+
+    /** Run/reuse the offline static security audit (`?refresh=1` forces a run). */
+    async getSecurityAudit(params = {}) {
+        return this.request('/admin/security-audit', { params });
+    }
+
+    /** Real, non-secret control and environment-presence facts. */
+    async getSecurityControls() {
+        return this.request('/admin/security-controls');
+    }
+
+    /** Local resource inventory: file metadata only, never contents. */
+    async getResources() {
+        return this.request('/admin/resources');
     }
 }
 

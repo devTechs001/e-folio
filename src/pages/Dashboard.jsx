@@ -98,6 +98,10 @@ const HobbiesManager = lazy(() => import('../components/dashboard/HobbiesManager
     console.error('Failed to load HobbiesManager:', err);
     return { default: () => <div>Error loading Hobbies Manager</div> };
 }));
+const LabManager = lazy(() => import('../components/dashboard/LabManager').catch(err => {
+    console.error('Failed to load LabManager:', err);
+    return { default: () => <div>Error loading Lab Manager</div> };
+}));
 const CVEditor = lazy(() => import('../components/dashboard/CVEditorStyled').catch(err => {
     console.error('Failed to load CVEditor:', err);
     return { default: () => <div>Error loading CV Editor</div> };
@@ -105,6 +109,18 @@ const CVEditor = lazy(() => import('../components/dashboard/CVEditorStyled').cat
 const AdminPanel = lazy(() => import('../components/dashboard/AdminPanel').catch(err => {
     console.error('Failed to load AdminPanel:', err);
     return { default: () => <div>Error loading Admin Panel</div> };
+}));
+const UserWorkspaceManager = lazy(() => import('../components/dashboard/UserWorkspaceManager').catch(err => {
+    console.error('Failed to load UserWorkspaceManager:', err);
+    return { default: () => <div>Error loading User Workspaces</div> };
+}));
+const SecurityAuditDashboard = lazy(() => import('../components/dashboard/SecurityAuditDashboard').catch(err => {
+    console.error('Failed to load SecurityAuditDashboard:', err);
+    return { default: () => <div>Error loading Security Audit</div> };
+}));
+const ResourcesPage = lazy(() => import('../components/dashboard/ResourcesPage').catch(err => {
+    console.error('Failed to load ResourcesPage:', err);
+    return { default: () => <div>Error loading Resources</div> };
 }));
 
 // Wrapper components to avoid primitive value error
@@ -123,6 +139,15 @@ const LazyProjectManager = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>}>
             <ProjectManager />
+        </Suspense>
+    );
+};
+const LazyLabManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+            <LabManager />
         </Suspense>
     );
 };
@@ -315,6 +340,33 @@ const LazyAdminPanel = () => {
         </Suspense>
     );
 };
+const LazyUserWorkspaceManager = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>}>
+            <UserWorkspaceManager />
+        </Suspense>
+    );
+};
+const LazySecurityAuditDashboard = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>}>
+            <SecurityAuditDashboard />
+        </Suspense>
+    );
+};
+const LazyResourcesPage = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>}>
+            <ResourcesPage />
+        </Suspense>
+    );
+};
 
 const Dashboard = () => {
     return (
@@ -366,6 +418,16 @@ const DashboardContent = () => {
             description: 'Manage your projects'
         },
         {
+            path: '/dashboard/lab',
+            icon: 'fas fa-flask',
+            label: 'Lab',
+            component: LazyLabManager,
+            roles: ['owner', 'collaborator'],
+            badge: null,
+            category: 'Main',
+            description: 'Lab experiments, toolkit and deletable sample data'
+        },
+        {
             path: '/dashboard/analytics',
             icon: 'fas fa-chart-bar',
             label: 'Analytics',
@@ -404,6 +466,36 @@ const DashboardContent = () => {
             badge: 'New',
             category: 'Content',
             description: 'Create and manage your CV'
+        },
+        {
+            path: '/dashboard/security-audit',
+            icon: 'fas fa-shield-alt',
+            label: 'Security Audit',
+            component: LazySecurityAuditDashboard,
+            roles: ['owner'],
+            badge: null,
+            category: 'Security',
+            description: 'Offline static security audit, findings and controls'
+        },
+        {
+            path: '/dashboard/resources',
+            icon: 'fas fa-folder-open',
+            label: 'Resources',
+            component: LazyResourcesPage,
+            roles: ['owner'],
+            badge: null,
+            category: 'Security',
+            description: 'Local file inventory and curated security references'
+        },
+        {
+            path: '/dashboard/user-workspaces',
+            icon: 'fas fa-users-cog',
+            label: 'User Workspaces',
+            component: LazyUserWorkspaceManager,
+            roles: ['owner', 'user'],
+            badge: 'Live',
+            category: 'Content',
+            description: 'Create accounts, CVs, portfolios and real-time notifications'
         },
         {
             path: '/dashboard/skills',

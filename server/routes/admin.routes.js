@@ -2,9 +2,27 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User.model');
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const rateLimit = require('express-rate-limit');
+const {
+    getSecurityAudit,
+    getSecurityControls,
+    getResources
+} = require('../controllers/securityDashboard.controller');
 
 router.use(auth);
 router.use(isOwner);
+
+// The audit walks the checkout, so forced re-runs are deliberately rate limited.
+const auditLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 12,
+    message: { success: false, message: 'Too many audit runs. Please try again shortly.' }
+});
+
+// Owner-only Security Audit / Resources dashboard data (local & offline).
+router.get('/security-audit', auditLimiter, getSecurityAudit);
+router.get('/security-controls', getSecurityControls);
+router.get('/resources', getResources);
 
 // List all users with activity data
 router.get('/users', async (req, res) => {

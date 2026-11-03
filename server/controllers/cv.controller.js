@@ -1,4 +1,5 @@
 const CurriculumVitae = require('../models/CurriculumVitae');
+const { publishUserNotification } = require('../socket/notifications.handler');
 
 exports.getCV = async (req, res) => {
   try {
@@ -6,6 +7,13 @@ exports.getCV = async (req, res) => {
     if (!cv) {
       cv = new CurriculumVitae({ userId: req.user._id });
       await cv.save();
+      publishUserNotification(req.user._id, {
+        type: 'cv',
+        title: 'CV workspace created',
+        message: 'Your CV record is ready. Open the CV Editor to add your details.',
+        link: '/dashboard/cv-editor',
+        metadata: { event: 'cv_created' }
+      }).catch(() => {});
     }
     res.json({ success: true, data: cv });
   } catch (err) {
@@ -29,6 +37,13 @@ exports.saveCV = async (req, res) => {
     if (achievements) cv.achievements = achievements;
     if (settings) cv.settings = settings;
     await cv.save();
+    publishUserNotification(req.user._id, {
+      type: 'cv',
+      title: 'CV saved',
+      message: 'Your CV changes were saved successfully.',
+      link: '/dashboard/cv-editor',
+      metadata: { event: 'cv_saved' }
+    }).catch(() => {});
     res.json({ success: true, data: cv, message: 'CV saved successfully' });
   } catch (err) {
     console.error('Save CV error:', err);

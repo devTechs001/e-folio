@@ -1,8 +1,12 @@
 // routes/collaboration.routes.js
+// Canonical collaboration router. Mounted at /api/collaboration and, as a
+// backwards-compatible alias, at /api/collaboration-requests. Both prefixes
+// must expose the same paths because the dashboard currently mixes them.
 const express = require('express');
 const router = express.Router();
 const { auth, isOwner } = require('../middleware/auth.middleware');
 const { rateLimiter } = require('../middleware/rateLimitMiddleware');
+const { collaborationUpload } = require('../middleware/upload.middleware');
 const {
     getCollaborationRequests,
     getCollaborationStats,
@@ -19,25 +23,32 @@ const {
     getCollaboratorActivity,
     submitCollaborationRequest,
     uploadRequestFile,
+    downloadRequestFile,
     updateRequestStatus,
     resendInvite,
     getRequestActivity
 } = require('../controllers/collaboration.controller');
 
-// Public routes (rate limited) - most frequently accessed first
+// Public routes (rate limited). The upload route needs multer: the controller
+// reads req.files, so registering it bare made every upload fail with 400.
 router.post('/submit', rateLimiter(10), submitCollaborationRequest);
-router.post('/upload', rateLimiter(10), uploadRequestFile);
+router.post('/upload', rateLimiter(10), collaborationUpload.array('files', 5), uploadRequestFile);
+router.get('/files/:filename', auth, isOwner, downloadRequestFile);
 
-// Collaborator-facing routes (auth only, accessible by collaborators)
-router.get('/collaborators', auth, getCollaborators);
-router.get('/invites/pending', auth, getPendingInvites);
-router.get('/activity', auth, getCollaboratorActivity);
+// Collaborator-facing routes. These return site-wide data, so they are
+// owner-only rather than merely authenticated.
+router.get('/collaborators', auth, isOwner, getCollaborators);
+router.get('/invites/pending', auth, isOwner, getPendingInvites);
+router.get('/activity', auth, isOwner, getCollaboratorActivity);
 
 // Owner-only routes below
 router.get('/export', auth, isOwner, exportRequests);
 router.get('/stats', auth, isOwner, getCollaborationStats);
 
-// Bulk operations before /:id to prevent :id from catching "bulk"
+// Bulk operations (both historical spellings) before /:id so the parameter
+// router cannot swallow "bulk".
+router.post('/bulk/approve', auth, isOwner, bulkApproveRequests);
+router.post('/bulk/reject', auth, isOwner, bulkRejectRequests);
 router.post('/requests/bulk/approve', auth, isOwner, bulkApproveRequests);
 router.post('/requests/bulk/reject', auth, isOwner, bulkRejectRequests);
 

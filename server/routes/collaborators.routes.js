@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 const {
     getCollaborators,
     getCollaboratorStats,
@@ -25,14 +26,16 @@ const {
     validateInviteToken
 } = require('../controllers/collaborators.controller');
 
-// All routes require authentication
+// Invite recipients do not have an account yet, so these two routes MUST stay
+// anonymous. They are rate limited and look up the hash of the token instead of
+// trusting anything from the client.
+router.get('/invite/validate/:token', rateLimiter(20), validateInviteToken);
+router.post('/invite/accept/:token', rateLimiter(10), acceptInvite);
+
+// Everything below requires authentication...
 router.use(auth);
 
-// Public routes (authenticated users)
-router.get('/invite/validate/:token', validateInviteToken);
-router.post('/invite/accept/:token', acceptInvite);
-
-// Owner-only routes
+// ...and owner privileges.
 router.use(isOwner);
 
 // Get collaborators

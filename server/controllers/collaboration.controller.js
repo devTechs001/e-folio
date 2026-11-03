@@ -1,5 +1,8 @@
 // controllers/collaboration.controller.js
 const mongoose = require('mongoose');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const CollaborationRequest = require('../models/CollaborationRequest');
 const User = require('../models/User.model');
 const Invite = require('../models/Invite.model');
@@ -7,15 +10,57 @@ const ActivityLog = require('../models/ActivityLog');
 const { generateInviteToken } = require('../utils');
 const { sendEmail } = require('../utils/email');
 const { Parser } = require('@json2csv/plainjs');
+const { PRIVATE_ROOT } = require('../middleware/upload.middleware');
 
+const INVITE_TTL_DAYS = 7;
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+})[c]);
+
+// A missing/invalid principal must never be replaced by a made-up ObjectId:
+// that silently attributed admin actions to a phantom user.
 const getValidUserId = (user) => {
-    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) {
-        return user._id;
-    }
-    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) {
-        return user.id;
-    }
-    return new mongoose.Types.ObjectId('507f1f77bcf86cd799439011');
+    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) return user._id;
+    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) return user.id;
+    return null;
+};
+
+const frontendUrlFor = (req) => String(
+    process.env.FRONTEND_URL || process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`
+).replace(/\/+$/, '');
+
+const emitAll = (req, event, payload) => {
+    const io = req.app && req.app.get('io');
+    if (io && typeof io.emit === 'function') io.emit(event, payload);
+};
+
+/**
+ * Approving a request must create a real Invite record. The raw token is only
+ * ever placed in the emailed link; the database stores its SHA-256 hash, which
+ * is exactly what validateInviteToken / acceptInvite look up. Previously the
+ * raw token was written to CollaborationRequest and no Invite was created, so
+ * every approval produced a link that could never be validated.
+ */
+const issueApprovalInvite = async ({ request, actorId, req, customMessage }) => {
+    const rawToken = generateInviteToken();
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
+    await Invite.create({
+        email: request.email.toLowerCase(),
+        role: 'collaborator',
+        permissions: [],
+        token: hashedToken,
+        invitedBy: actorId,
+        expiresAt,
+        customMessage: customMessage ? String(customMessage).slice(0, 2000) : undefined,
+        type: 'email',
+        maxUses: 1
+    });
+    return {
+        link: `${frontendUrlFor(req)}/accept-invite/${rawToken}`,
+        expiresAt
+    };
 };
 
 // Get collaboration requests with filtering
@@ -32,11 +77,12 @@ exports.getCollaborationRequests = async (req, res) => {
 
         // Search
         if (search) {
+            const safeSearch = escapeRegex(String(search).slice(0, 100));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
-                { message: { $regex: search, $options: 'i' } },
-                { company: { $regex: search, $options: 'i' } }
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { email: { $regex: safeSearch, $options: 'i' } },
+                { message: { $regex: safeSearch, $options: 'i' } },
+                { company: { $regex: safeSearch, $options: 'i' } }
             ];
         }
 
@@ -73,7 +119,7 @@ exports.getCollaborationRequests = async (req, res) => {
         });
     } catch (error) {
         console.error('Get requests error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -105,7 +151,7 @@ exports.getCollaborationStats = async (req, res) => {
         });
     } catch (error) {
         console.error('Get stats error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -113,58 +159,57 @@ exports.getCollaborationStats = async (req, res) => {
 exports.approveRequest = async (req, res) => {
     try {
         const { emailTemplate, customMessage, note } = req.body;
-        const request = await CollaborationRequest.findById(req.params.id);
+        const actorId = getValidUserId(req.user);
+        if (!actorId) {
+            return res.status(401).json({ success: false, message: 'Invalid session' });
+        }
 
+        const request = await CollaborationRequest.findById(req.params.id);
         if (!request) {
             return res.status(404).json({ success: false, message: 'Request not found' });
         }
-
         if (request.status !== 'pending') {
             return res.status(400).json({ success: false, message: 'Request already processed' });
         }
 
-        // Generate invite token
-        const inviteToken = generateInviteToken();
-        
-        // Use environment variable with fallback to prevent broken links
-        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
-        const inviteLink = `${frontendUrl}/register?token=${inviteToken}&email=${encodeURIComponent(request.email)}`;
-
-        // Update request
-        request.status = 'approved';
-        request.processedAt = new Date();
-        request.processedBy = getValidUserId(req.user);
-        request.inviteLink = inviteLink;
-        request.inviteToken = inviteToken;
-        if (note) {
-            request.notes.push({
-                content: note,
-                addedBy: getValidUserId(req.user),
-                addedAt: new Date()
-            });
-        }
-
-        await request.save();
-
-        // Send approval email
-        const emailContent = getEmailTemplate(emailTemplate, {
-            name: request.name,
-            inviteLink,
-            customMessage
+        const { link, expiresAt } = await issueApprovalInvite({
+            request, actorId, req, customMessage
         });
 
-        await sendEmail({
+        request.status = 'approved';
+        request.processedAt = new Date();
+        request.processedBy = actorId;
+        // Owner-only field used by the dashboard to re-share a link. The raw
+        // token itself is no longer duplicated in inviteToken.
+        request.inviteLink = link;
+        request.inviteToken = undefined;
+        request.inviteExpiresAt = expiresAt;
+        request.inviteSentAt = new Date();
+        if (note) {
+            request.notes.push({ content: note, addedBy: actorId, addedAt: new Date() });
+        }
+        await request.save();
+
+        const emailContent = getEmailTemplate(emailTemplate, {
+            name: request.name,
+            inviteLink: link,
+            customMessage
+        });
+        const delivery = await sendEmail({
             to: request.email,
             subject: 'Your Collaboration Request Has Been Approved!',
             html: emailContent
         });
+        const delivered = delivery?.success === true;
+        if (!delivered) {
+            console.warn('[collaboration] approval email not delivered for request', request._id);
+        }
 
-        // Emit socket event
-        req.app.get('io').emit('collaboration_request_updated', {
+        emitAll(req, 'collaboration_request_updated', {
             id: request._id,
             status: 'approved'
         });
-        req.app.get('io').emit('request_approved', {
+        emitAll(req, 'request_approved', {
             id: request._id,
             name: request.name,
             email: request.email,
@@ -173,8 +218,12 @@ exports.approveRequest = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Request approved successfully',
-            inviteLink,
+            message: delivered
+                ? 'Request approved successfully'
+                : 'Request approved, but the invitation email could not be delivered',
+            inviteLink: link,
+            inviteExpiresAt: expiresAt,
+            email: { delivered, simulated: delivery?.simulated === true },
             request: {
                 id: request._id,
                 status: request.status,
@@ -183,7 +232,7 @@ exports.approveRequest = async (req, res) => {
         });
     } catch (error) {
         console.error('Approve request error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -226,11 +275,11 @@ exports.rejectRequest = async (req, res) => {
         }
 
         // Emit socket event
-        req.app.get('io').emit('collaboration_request_updated', {
+        emitAll(req, 'collaboration_request_updated', {
             id: request._id,
             status: 'rejected'
         });
-        req.app.get('io').emit('request_rejected', {
+        emitAll(req, 'request_rejected', {
             id: request._id,
             name: request.name,
             email: request.email,
@@ -249,7 +298,7 @@ exports.rejectRequest = async (req, res) => {
         });
     } catch (error) {
         console.error('Reject request error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -257,49 +306,61 @@ exports.rejectRequest = async (req, res) => {
 exports.bulkApproveRequests = async (req, res) => {
     try {
         const { requestIds } = req.body;
+        const actorId = getValidUserId(req.user);
+        if (!actorId) {
+            return res.status(401).json({ success: false, message: 'Invalid session' });
+        }
+        if (!Array.isArray(requestIds) || requestIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'No request IDs supplied' });
+        }
 
         const requests = await CollaborationRequest.find({
-            _id: { $in: requestIds },
+            _id: { $in: requestIds.slice(0, 100) },
             status: 'pending'
         });
 
-        const approvedRequests = [];
+        const inviteLinks = [];
+        let undelivered = 0;
 
         for (const request of requests) {
-            const inviteToken = generateInviteToken();
-            const inviteLink = `${process.env.FRONTEND_URL}/register?token=${inviteToken}&email=${encodeURIComponent(request.email)}`;
-
+            const { link, expiresAt } = await issueApprovalInvite({ request, actorId, req });
             request.status = 'approved';
             request.processedAt = new Date();
-            request.processedBy = getValidUserId(req.user);
-            request.inviteLink = inviteLink;
-            request.inviteToken = inviteToken;
-
+            request.processedBy = actorId;
+            request.inviteLink = link;
+            request.inviteToken = undefined;
+            request.inviteExpiresAt = expiresAt;
+            request.inviteSentAt = new Date();
             await request.save();
 
-            // Send email
             const emailContent = getEmailTemplate('default', {
                 name: request.name,
-                inviteLink
+                inviteLink: link
             });
-
-            await sendEmail({
+            const delivery = await sendEmail({
                 to: request.email,
                 subject: 'Your Collaboration Request Has Been Approved!',
                 html: emailContent
             });
-
-            approvedRequests.push(request);
+            if (delivery?.success !== true) undelivered += 1;
+            inviteLinks.push({
+                requestId: request._id,
+                email: request.email,
+                inviteLink: link,
+                inviteExpiresAt: expiresAt
+            });
         }
 
         res.json({
             success: true,
-            message: `Approved ${approvedRequests.length} requests`,
-            count: approvedRequests.length
+            message: `Approved ${inviteLinks.length} requests`,
+            count: inviteLinks.length,
+            inviteLinks,
+            email: { undelivered }
         });
     } catch (error) {
         console.error('Bulk approve error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -323,7 +384,7 @@ exports.bulkRejectRequests = async (req, res) => {
         });
     } catch (error) {
         console.error('Bulk reject error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -340,10 +401,11 @@ exports.archiveRequest = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Request not found' });
         }
 
-        res.json({ success: true, message: 'Request archived' });
+        res.json({ success: true, message: 'Request archived'
+        });
     } catch (error) {
         console.error('Archive error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -376,7 +438,7 @@ exports.exportRequests = async (req, res) => {
         res.send(csv);
     } catch (error) {
         console.error('Export error:', error);
-        res.status(500).json({ success: false, message: 'Export failed', error: error.message });
+        res.status(500).json({ success: false, message: 'Export failed' });
     }
 };
 
@@ -394,7 +456,7 @@ exports.getRequestDetails = async (req, res) => {
         res.json({ success: true, request });
     } catch (error) {
         console.error('Get details error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -422,10 +484,11 @@ exports.addRequestNote = async (req, res) => {
 
         await request.save();
 
-        res.json({ success: true, message: 'Note added successfully' });
+        res.json({ success: true, message: 'Note added successfully'
+        });
     } catch (error) {
         console.error('Add note error:', error);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -434,27 +497,27 @@ function getEmailTemplate(template, data) {
     const templates = {
         default: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2>Welcome ${data.name}!</h2>
+                <h2>Welcome ${escapeHtml(data.name)}!</h2>
                 <p>Your collaboration request has been approved!</p>
-                <p>Click the button below to complete your registration:</p>
-                <a href="${data.inviteLink}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; margin: 20px 0;">
-                    Complete Registration
+                <p>Click the button below to accept your invitation:</p>
+                <a href="${escapeHtml(data.inviteLink)}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+                    Accept Invitation
                 </a>
-                ${data.customMessage ? `<p>${data.customMessage}</p>` : ''}
+                ${data.customMessage ? `<p>${escapeHtml(data.customMessage)}</p>` : ''}
                 <p>This link will expire in 7 days.</p>
             </div>
         `,
         welcome: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7fafc; padding: 40px;">
                 <div style="background: white; border-radius: 12px; padding: 32px;">
-                    <h1 style="color: #1a202c; margin-bottom: 24px;">🎉 Welcome Aboard, ${data.name}!</h1>
+                    <h1 style="color: #1a202c; margin-bottom: 24px;">🎉 Welcome Aboard, ${escapeHtml(data.name)}!</h1>
                     <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
                         We're excited to have you join our collaboration platform!
                     </p>
                     <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
                         Your request has been approved. Click below to get started:
                     </p>
-                    <a href="${data.inviteLink}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; margin: 24px 0; font-weight: 600;">
+                    <a href="${escapeHtml(data.inviteLink)}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; margin: 24px 0; font-weight: 600;">
                         Get Started →
                     </a>
                     ${data.customMessage ? `<div style="background: #edf2f7; padding: 16px; border-radius: 8px; margin-top: 24px;"><p style="color: #2d3748; margin: 0;">${data.customMessage}</p></div>` : ''}
@@ -469,10 +532,10 @@ function getEmailTemplate(template, data) {
 function getRejectionEmailTemplate(name, reason) {
     return `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Hello ${name},</h2>
+            <h2>Hello ${escapeHtml(name)},</h2>
             <p>Thank you for your interest in collaborating with us.</p>
             <p>After careful consideration, we're unable to approve your request at this time.</p>
-            ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+            ${reason ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>` : ''}
             <p>We encourage you to reapply in the future.</p>
             <p>Best regards,<br>The Team</p>
         </div>
@@ -494,8 +557,7 @@ exports.submitCollaborationRequest = async (req, res) => {
         if (!name || !email || !message || !terms) {
             return res.status(400).json({
                 success: false,
-                message: 'Required fields missing: name, email, message, and terms acceptance'
-            });
+                message: 'Required fields missing: name, email, message, and terms acceptance' });
         }
 
         // Validate email format
@@ -503,8 +565,7 @@ exports.submitCollaborationRequest = async (req, res) => {
         if (!emailRegex.test(email)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid email format'
-            });
+                message: 'Invalid email format' });
         }
 
         const request = new CollaborationRequest({
@@ -545,7 +606,7 @@ exports.submitCollaborationRequest = async (req, res) => {
         await request.save();
 
         // Emit real-time socket events for the dashboard
-        if (req.app.get('io')) {
+        if (req.app && req.app.get('io')) {
             req.app.get('io').emit('new_collaboration_request', {
                 id: request._id,
                 name: request.name,
@@ -579,8 +640,7 @@ exports.getRequestById = async (req, res) => {
         if (!request) {
             return res.status(404).json({
                 success: false,
-                message: 'Request not found'
-            });
+                message: 'Request not found' });
         }
 
         res.json({
@@ -591,8 +651,7 @@ exports.getRequestById = async (req, res) => {
         console.error('Get request error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get request'
-        });
+            message: 'Failed to get request' });
     }
 };
 
@@ -608,12 +667,19 @@ exports.uploadRequestFile = async (req, res) => {
             });
         }
 
+        // Files live outside the static root. The only way back is the
+        // owner-authenticated /files/:filename route, so do not leak absolute
+        // filesystem paths to the applicant.
+        const urlFor = (filename) =>
+            `${req.protocol}://${req.get('host')}/api/collaboration-requests/files/${encodeURIComponent(filename)}`;
+
         res.json({
             success: true,
+            url: urlFor(files[0].filename),
             files: files.map(f => ({
                 filename: f.filename,
                 originalname: f.originalname,
-                path: f.path,
+                url: urlFor(f.filename),
                 size: f.size
             }))
         });
@@ -624,6 +690,20 @@ exports.uploadRequestFile = async (req, res) => {
             message: 'Failed to upload file'
         });
     }
+};
+
+// Owner-only download for applicant documents. The strict filename pattern
+// prevents path traversal; the file is never inside a publicly served folder.
+exports.downloadRequestFile = async (req, res) => {
+    const filename = String(req.params.filename || '');
+    if (!/^[0-9]+-[a-f0-9]{24}\.[a-z0-9]{1,12}$/.test(filename)) {
+        return res.status(400).json({ success: false, message: 'Invalid file name' });
+    }
+    const filePath = path.join(PRIVATE_ROOT, 'collaboration-requests', filename);
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ success: false, message: 'File not found' });
+    }
+    return res.sendFile(filePath);
 };
 
 // Update request status
@@ -639,8 +719,7 @@ exports.updateRequestStatus = async (req, res) => {
         if (!request) {
             return res.status(404).json({
                 success: false,
-                message: 'Request not found'
-            });
+                message: 'Request not found' });
         }
 
         res.json({
@@ -651,72 +730,81 @@ exports.updateRequestStatus = async (req, res) => {
         console.error('Update status error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update status'
-        });
+            message: 'Failed to update status' });
     }
 };
 
 // Resend invite
 exports.resendInvite = async (req, res) => {
     try {
-        const request = await CollaborationRequest.findById(req.params.id);
-
-        if (!request) {
-            return res.status(404).json({
-                success: false,
-                message: 'Request not found'
-            });
+        const actorId = getValidUserId(req.user);
+        if (!actorId) {
+            return res.status(401).json({ success: false, message: 'Invalid session' });
         }
 
+        const request = await CollaborationRequest.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
         if (request.status !== 'approved') {
             return res.status(400).json({
                 success: false,
-                message: 'Can only resend invites for approved requests'
-            });
+                message: 'Can only resend invites for approved requests' });
         }
 
-        if (!request.inviteToken) {
-            request.inviteToken = generateInviteToken();
-        }
-        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
-        const inviteLink = `${frontendUrl}/register?token=${request.inviteToken}&email=${encodeURIComponent(request.email)}`;
-        request.inviteLink = inviteLink;
+        // Retire old pending invites so only the freshest link remains valid,
+        // then issue a brand-new hashed Invite instead of reusing a token that
+        // was never registered in the first place.
+        await Invite.updateMany(
+            { email: request.email.toLowerCase(), status: 'pending' },
+            { $set: { status: 'cancelled' } }
+        );
+        const { link, expiresAt } = await issueApprovalInvite({ request, actorId, req });
+
+        request.inviteLink = link;
+        request.inviteToken = undefined;
+        request.inviteExpiresAt = expiresAt;
+        request.inviteSentAt = new Date();
         await request.save();
 
+        const safeName = escapeHtml(request.name);
+        const safeLink = escapeHtml(link);
         const emailContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <h2>Collaboration Invitation Reminder</h2>
-                <p>Hi ${request.name},</p>
-                <p>This is a reminder regarding your approved collaboration invitation. You can complete your account registration using the link below:</p>
-                <p><a href="${inviteLink}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation & Register</a></p>
-                <p style="color: #666; font-size: 13px;">Or copy this link to your browser: ${inviteLink}</p>
+                <p>Hi ${safeName},</p>
+                <p>Here is a fresh link to accept your collaboration invitation:</p>
+                <p><a href="${safeLink}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation</a></p>
+                <p style="color: #666; font-size: 13px;">Or copy this link to your browser: ${safeLink}</p>
             </div>
         `;
 
-        await sendEmail({
+        const delivery = await sendEmail({
             to: request.email,
             subject: 'Reminder: Your Collaboration Invitation',
             html: emailContent
         });
+        const delivered = delivery?.success === true;
 
         res.json({
             success: true,
-            message: 'Invite resent successfully',
-            inviteLink
+            message: delivered
+                ? 'Invite resent successfully'
+                : 'Invite reissued, but the email could not be delivered',
+            inviteLink: link,
+            inviteExpiresAt: expiresAt,
+            email: { delivered, simulated: delivery?.simulated === true }
         });
     } catch (error) {
         console.error('Resend invite error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to resend invite'
-        });
+        res.status(500).json({ success: false, message: 'Failed to resend invite' });
     }
 };
 
 // Get request activity
 exports.getRequestActivity = async (req, res) => {
     try {
-        const { requestId } = req.params;
+        const requestId = req.params.id || req.params.requestId;
         const request = await CollaborationRequest.findById(requestId)
             .populate('processedBy', 'name email')
             .populate('notes.addedBy', 'name email');
@@ -724,8 +812,7 @@ exports.getRequestActivity = async (req, res) => {
         if (!request) {
             return res.status(404).json({
                 success: false,
-                message: 'Request not found'
-            });
+                message: 'Request not found' });
         }
 
         // Build activity timeline from request data
@@ -778,8 +865,7 @@ exports.getRequestActivity = async (req, res) => {
         console.error('Get activity error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get activity'
-        });
+            message: 'Failed to get activity' });
     }
 };
 
@@ -789,14 +875,15 @@ const getCollaborators = async (req, res) => {
         const { search, role, status, sortBy = 'createdAt', order = 'desc' } = req.query;
 
         let query = { 
-            _id: { $ne: getValidUserId(req.user) } // Exclude current user
+            _id: { $ne: req.user?._id || req.user?.id } // Exclude current user
         };
 
         // Search
         if (search) {
+            const safeSearch = escapeRegex(String(search).slice(0, 100));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } }
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { email: { $regex: safeSearch, $options: 'i' } }
             ];
         }
 
@@ -842,7 +929,6 @@ const getCollaborators = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };
@@ -878,7 +964,6 @@ const getPendingInvites = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };
@@ -914,7 +999,6 @@ const getCollaboratorActivity = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };

@@ -10,7 +10,7 @@ const ScheduledEmail = require('../models/ScheduledEmail');
 const EmailSettings = require('../models/EmailSettings');
 const { sendEmail: sendEmailService } = require('../utils/email');
 const nodemailer = require('nodemailer');
-const { Parser } = require('json2csv');
+const { Parser } = require('@json2csv/plainjs');
 
 const getValidUserId = (user) => {
     if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) {

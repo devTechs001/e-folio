@@ -25,8 +25,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
+import { Link } from 'react-router-dom';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
+import {
+    ABOUT_WELCOME, ABOUT_ROLES, ABOUT_IMAGES, ABOUT_AVAILABILITY,
+    buildAboutProfile, aboutNameParts
+} from '../../utils/aboutPageData';
+import {
+    ensureUserWorkspace, publishUserPortfolio, publicUserLinks
+} from '../../utils/userWorkspace';
 import QRCode from 'qrcode';
 import '../../styles/ActionButtons.css';
 import {
@@ -44,6 +52,11 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [settingsProfile, setSettingsProfile] = useState(null);
+    const [workspaceStatus, setWorkspaceStatus] = useState(null);
+    const [workspaceBusy, setWorkspaceBusy] = useState(false);
+    const [workspaceMessage, setWorkspaceMessage] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
     const [activeSection, setActiveSection] = useState('profile');
     const [qrCode, setQrCode] = useState('');
@@ -257,73 +270,88 @@ const Profile = () => {
     }, []);
 
     const loadProfileData = async () => {
-        try {
-            setLoading(true);
-            const [
-                statsRes, activityRes, projectsRes, skillsRes,
-                achievementsRes, certsRes, experienceRes, educationRes,
-                testimonialsRes, languagesRes, interestsRes, settingsRes
-            ] = await Promise.all([
-                apiService.getProfileStats(),
-                apiService.getRecentActivity(),
-                apiService.getTopProjects(),
-                apiService.getUserSkills(),
-                apiService.getAchievements(),
-                apiService.getCertifications(),
-                apiService.getWorkExperience(),
-                apiService.getEducation(),
-                apiService.getTestimonials(),
-                apiService.getLanguages(),
-                apiService.getInterests(),
-                apiService.getUserSettings()
-            ]);
+        setLoading(true);
+        setLoadError('');
+        const results = await Promise.allSettled([
+            apiService.getProfile(),
+            apiService.getProfileStats(),
+            apiService.getRecentActivity(),
+            apiService.getTopProjects(),
+            apiService.getUserSkills(),
+            apiService.getAchievements(),
+            apiService.getCertifications(),
+            apiService.getWorkExperience(),
+            apiService.getEducation(),
+            apiService.getTestimonials(),
+            apiService.getLanguages(),
+            apiService.getInterests(),
+            apiService.getUserSettings()
+        ]);
+        const ok = result => (result.status === 'fulfilled' && result.value?.success ? result.value : null);
+        const [profileRes, statsRes, activityRes, projectsRes, skillsRes,
+            achievementsRes, certsRes, experienceRes, educationRes,
+            testimonialsRes, languagesRes, interestsRes, settingsRes] = results.map(ok);
+        const list = res => (res?.data ?? (Array.isArray(res?.testimonials) ? res.testimonials : []));
 
-            if (statsRes.success) setProfileStats(statsRes.data);
-            if (activityRes.success) setRecentActivity(activityRes.data);
-            if (projectsRes.success) setTopProjects(projectsRes.data);
-            if (skillsRes.success) setSkills(skillsRes.data);
-            if (achievementsRes.success) setAchievements(achievementsRes.data);
-            if (certsRes.success) setCertifications(certsRes.data);
-            if (experienceRes.success) setWorkExperience(experienceRes.data);
-            if (educationRes.success) setEducation(educationRes.data);
-            if (testimonialsRes.success) setTestimonials(testimonialsRes.data);
-            if (languagesRes.success) setLanguages(languagesRes.data);
-            if (interestsRes.success) setInterests(interestsRes.data);
+        if (statsRes) setProfileStats(statsRes.data);
+        if (activityRes) setRecentActivity(list(activityRes));
+        if (projectsRes) setTopProjects(list(projectsRes));
+        if (skillsRes) setSkills(list(skillsRes));
+        if (achievementsRes) setAchievements(list(achievementsRes));
+        if (certsRes) setCertifications(list(certsRes));
+        if (experienceRes) setWorkExperience(list(experienceRes));
+        if (educationRes) setEducation(list(educationRes));
+        if (testimonialsRes) setTestimonials(list(testimonialsRes));
+        if (languagesRes) setLanguages(list(languagesRes));
+        if (interestsRes) setInterests(list(interestsRes));
 
-            // Merge real settings profile so the dashboard mirrors the About page / any editor
-            if (settingsRes.success && settingsRes.data?.profile) {
-                const p = settingsRes.data.profile;
-                setProfile(prev => ({
-                    ...prev,
-                    name: p.name || prev.name,
-                    email: p.email || prev.email,
-                    username: p.username || prev.username,
-                    bio: p.bio ?? prev.bio,
-                    tagline: p.tagline ?? prev.tagline,
-                    role: p.role ?? prev.role,
-                    company: p.company ?? prev.company,
-                    location: p.location ?? prev.location,
-                    website: p.website ?? prev.website,
-                    phone: p.phone ?? prev.phone,
-                    avatar: p.avatar || prev.avatar,
-                    socialLinks: {
-                        github: p.github ?? prev.socialLinks.github,
-                        linkedin: p.linkedin ?? prev.socialLinks.linkedin,
-                        twitter: p.twitter ?? prev.socialLinks.twitter,
-                        facebook: p.facebook ?? prev.socialLinks.facebook,
-                        instagram: p.instagram ?? prev.socialLinks.instagram,
-                        telegram: p.telegram ?? prev.socialLinks.telegram,
-                        whatsapp: p.whatsapp ?? prev.socialLinks.whatsapp,
-                        youtube: p.youtube ?? prev.socialLinks.youtube
-                    }
-                }));
-                if (p.avatar) setAvatarPreview(p.avatar);
-            }
-        } catch (err) {
-            console.error('Failed to load profile data:', err);
-        } finally {
-            setLoading(false);
+        // Authoritative owner profile from GET /api/profile. The settings
+        // endpoint is used only as a fallback for fields the profile record
+        // does not carry. Both are real database reads — nothing is invented.
+        if (settingsRes?.data?.profile) setSettingsProfile(settingsRes.data.profile);
+        const p = profileRes?.data || settingsRes?.data?.profile;
+        if (p) {
+            setProfile(prev => ({
+                ...prev,
+                name: p.name ?? prev.name,
+                email: p.email ?? prev.email,
+                username: p.username ?? prev.username,
+                bio: p.bio ?? prev.bio,
+                tagline: p.tagline ?? prev.tagline,
+                role: p.role ?? prev.role,
+                company: p.company ?? prev.company,
+                location: p.location ?? prev.location,
+                website: p.website ?? prev.website,
+                phone: p.phone ?? prev.phone,
+                avatar: p.avatar || prev.avatar,
+                coverImage: p.coverImage || prev.coverImage,
+                hourlyRate: p.hourlyRate ?? prev.hourlyRate,
+                yearsOfExperience: p.yearsOfExperience ?? prev.yearsOfExperience,
+                availability: p.availability ?? prev.availability,
+                timezone: p.timezone ?? prev.timezone,
+                socialLinks: {
+                    ...prev.socialLinks,
+                    ...(p.socialLinks || {}),
+                    github: p.socialLinks?.github ?? p.github ?? prev.socialLinks.github,
+                    linkedin: p.socialLinks?.linkedin ?? p.linkedin ?? prev.socialLinks.linkedin,
+                    twitter: p.socialLinks?.twitter ?? p.twitter ?? prev.socialLinks.twitter,
+                    facebook: p.socialLinks?.facebook ?? p.facebook ?? prev.socialLinks.facebook,
+                    instagram: p.socialLinks?.instagram ?? p.instagram ?? prev.socialLinks.instagram,
+                    telegram: p.socialLinks?.telegram ?? p.telegram ?? prev.socialLinks.telegram,
+                    whatsapp: p.socialLinks?.whatsapp ?? p.whatsapp ?? prev.socialLinks.whatsapp,
+                    youtube: p.socialLinks?.youtube ?? p.youtube ?? prev.socialLinks.youtube
+                }
+            }));
+            if (p.avatar) setAvatarPreview(p.avatar);
+            if (p.coverImage) setCoverPreview(p.coverImage);
+            if (p.availability) setAvailability(p.availability);
         }
+
+        const failures = results.filter(result => result.status === 'rejected' || !ok(result)).length;
+        if (failures > 0) {
+            setLoadError(`${failures} profile source(s) are temporarily unavailable. Only data returned by the API is shown.`);
+        }
+        setLoading(false);
     };
 
     const generateQRCode = async () => {
@@ -542,7 +570,7 @@ const Profile = () => {
         {
             label: 'Profile Views',
             value: profileStats?.totalViews || 0,
-            change: '+23%',
+            change: null,
             changeType: 'increase',
             icon: Eye,
             color: '#06b6d4',
@@ -552,7 +580,7 @@ const Profile = () => {
         {
             label: 'Projects',
             value: profileStats?.totalProjects || 0,
-            change: '+12%',
+            change: null,
             changeType: 'increase',
             icon: Code,
             color: '#8b5cf6',
@@ -562,7 +590,7 @@ const Profile = () => {
         {
             label: 'Collaborators',
             value: profileStats?.collaborators || 0,
-            change: '+8',
+            change: null,
             changeType: 'increase',
             icon: Users,
             color: '#ec4899',
@@ -571,8 +599,8 @@ const Profile = () => {
         },
         {
             label: 'Engagement Rate',
-            value: profileStats?.engagementRate || '0%',
-            change: '+15%',
+            value: profileStats?.engagementRate ?? '—',
+            change: null,
             changeType: 'increase',
             icon: TrendingUp,
             color: '#10b981',
@@ -581,8 +609,8 @@ const Profile = () => {
         },
         {
             label: 'Completed Projects',
-            value: profileStats?.completedProjects || 0,
-            change: '+5',
+            value: profileStats?.completedProjects ?? '—',
+            change: null,
             changeType: 'increase',
             icon: CheckCircle,
             color: '#f59e0b',
@@ -591,8 +619,8 @@ const Profile = () => {
         },
         {
             label: 'Total Likes',
-            value: profileStats?.totalLikes || 0,
-            change: '+34%',
+            value: profileStats?.totalLikes ?? '—',
+            change: null,
             changeType: 'increase',
             icon: Heart,
             color: '#ef4444',
@@ -602,7 +630,7 @@ const Profile = () => {
         {
             label: 'Messages',
             value: profileStats?.messages || 0,
-            change: '+18',
+            change: null,
             changeType: 'increase',
             icon: MessageSquare,
             color: '#3b82f6',
@@ -612,7 +640,7 @@ const Profile = () => {
         {
             label: 'Achievements',
             value: achievements.length || 0,
-            change: '+2',
+            change: null,
             changeType: 'increase',
             icon: Trophy,
             color: '#eab308',
@@ -642,6 +670,46 @@ const Profile = () => {
         { key: 'stackoverflow', label: 'Stack Overflow', icon: Code, placeholder: 'https://stackoverflow.com/users/...', color: '#f48024' },
         { key: 'youtube', label: 'YouTube', icon: Video, placeholder: 'https://youtube.com/@username', color: '#ff0000' }
     ];
+
+    // Exactly the same view model as the public About page, built from the
+    // real /api/settings + /api/profile payloads.
+    const aboutView = buildAboutProfile(
+        { ...profile, ...(settingsProfile || {}) },
+        user
+    );
+    const aboutName = aboutNameParts(aboutView.name);
+    const publicLinks = publicUserLinks(user?.username || profile.username);
+
+    const createWorkspace = async () => {
+        setWorkspaceBusy(true);
+        setWorkspaceMessage('');
+        try {
+            const status = await ensureUserWorkspace();
+            setWorkspaceStatus(status);
+            setWorkspaceMessage(status.errors.length
+                ? `Workspace partially unavailable: ${status.errors.join('; ')}`
+                : 'Your CV and portfolio records are ready.');
+        } catch (error) {
+            setWorkspaceMessage(error?.message || 'Could not create CV / portfolio records.');
+        } finally {
+            setWorkspaceBusy(false);
+        }
+    };
+
+    const publishWorkspace = async () => {
+        setWorkspaceBusy(true);
+        setWorkspaceMessage('');
+        try {
+            const response = await publishUserPortfolio();
+            setWorkspaceMessage(response?.success
+                ? `Portfolio published: ${response.url || publicLinks.portfolio}`
+                : (response?.message || 'Portfolio publish failed.'));
+        } catch (error) {
+            setWorkspaceMessage(error?.message || 'Portfolio publish failed.');
+        } finally {
+            setWorkspaceBusy(false);
+        }
+    };
 
     const completeness = getProfileCompleteness();
 
@@ -683,6 +751,15 @@ const Profile = () => {
     return (
         <DashboardLayout>
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                {loadError && (
+                    <div role="status" className="flex flex-wrap items-center gap-3 m-6 mb-0 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                        <AlertCircle size={16} />
+                        <span>{loadError}</span>
+                        <button type="button" onClick={loadProfileData} className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-500/50 hover:bg-amber-500/20">
+                            <RotateCw size={13} /> Retry
+                        </button>
+                    </div>
+                )}
                 {/* Hero Section with Cover */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -1329,6 +1406,59 @@ const Profile = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         className="space-y-6"
                                     >
+                                        {/* Public About page data (same source as /#about) */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/30">
+                                            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                                                <div>
+                                                    <h3 className="text-xl font-semibold text-white">Public About page</h3>
+                                                    <p className="text-slate-400 text-sm mt-1">
+                                                        The fields rendered on the public About section, read from the same
+                                                        <code className="text-cyan-300"> /api/settings </code> and
+                                                        <code className="text-cyan-300"> /api/profile </code> records.
+                                                    </p>
+                                                </div>
+                                                <Link to="/#about" className="px-4 py-2 bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 rounded-lg text-sm hover:bg-cyan-500/25">
+                                                    View public page
+                                                </Link>
+                                            </div>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="bg-slate-900/50 rounded-lg p-4">
+                                                    <div className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-2">{ABOUT_WELCOME}</div>
+                                                    <div className="text-2xl font-bold text-white">{aboutName.first} <span className="text-cyan-400">{aboutName.second}</span></div>
+                                                    <div className="text-sm text-slate-400 mt-1">{aboutView.role || aboutView.tagline || '—'}</div>
+                                                    <p className="text-sm text-slate-300 mt-3 leading-relaxed line-clamp-4">
+                                                        {aboutView.bio || 'No bio published yet. Add one in Settings.'}
+                                                    </p>
+                                                    <div className="mt-3 text-xs text-emerald-300">{aboutView.availability || ABOUT_AVAILABILITY}</div>
+                                                </div>
+                                                <div className="bg-slate-900/50 rounded-lg p-4">
+                                                    <div className="text-xs font-semibold text-slate-300 mb-2">About roles &amp; images</div>
+                                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                                        {ABOUT_ROLES.map(role => (
+                                                            <span key={role} className="text-[11px] px-2 py-1 rounded-full bg-slate-800 text-slate-300">{role}</span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 mb-2">
+                                                        {ABOUT_IMAGES.length} rotating profile images · {aboutView.socialLinks.length} published links
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {aboutView.socialLinks.length === 0 && <span className="text-xs text-slate-500">No social links</span>}
+                                                        {aboutView.socialLinks.map(link => (
+                                                            <a key={link.key} href={link.url} target="_blank" rel="noopener noreferrer"
+                                                               className="text-xs px-2 py-1 rounded-lg border border-slate-600 text-cyan-300 hover:border-cyan-400">
+                                                                {link.name}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                    {aboutView.website && (
+                                                        <a href={aboutView.website} target="_blank" rel="noopener noreferrer" className="block mt-3 text-xs text-cyan-300 hover:underline truncate">
+                                                            {aboutView.website}
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Detailed About Information */}
                                         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
                                             <h3 className="text-xl font-semibold text-white mb-4">About Me</h3>
@@ -1546,12 +1676,14 @@ const Profile = () => {
                                                         <div className={`w-12 h-12 rounded-xl ${stat.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                                                             <stat.icon size={24} style={{ color: stat.color }} />
                                                         </div>
-                                                        <div className={`px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 ${
-                                                            stat.changeType === 'increase' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                                                        }`}>
-                                                            {stat.changeType === 'increase' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                                                            {stat.change}
-                                                        </div>
+                                                        {stat.change && (
+                                                            <div className={`px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 ${
+                                                                stat.changeType === 'increase' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                                            }`}>
+                                                                {stat.changeType === 'increase' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                                                {stat.change}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <p className="text-slate-400 text-sm mb-2">{stat.label}</p>
                                                     <h3 className="text-3xl font-bold text-white mb-4">
@@ -1712,14 +1844,51 @@ const Profile = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         className="space-y-6"
                                     >
+                                        {/* CV, portfolio and account system (real APIs) */}
+                                        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
+                                            <h3 className="text-xl font-semibold text-white mb-2">My CV &amp; Portfolio</h3>
+                                            <p className="text-slate-400 text-sm mb-4">
+                                                Every account gets its own CV and portfolio records. Created through
+                                                <code className="text-cyan-300"> GET /api/cv </code> and
+                                                <code className="text-cyan-300"> GET /api/portfolio/config</code>; published pages are public.
+                                            </p>
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                <button type="button" onClick={createWorkspace} disabled={workspaceBusy}
+                                                        className="px-4 py-2 bg-purple-500/15 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold hover:bg-purple-500/25 disabled:opacity-50">
+                                                    {workspaceBusy ? 'Working…' : 'Create / refresh my CV & portfolio'}
+                                                </button>
+                                                <button type="button" onClick={publishWorkspace} disabled={workspaceBusy}
+                                                        className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 rounded-lg text-sm font-semibold hover:bg-emerald-500/20 disabled:opacity-50">
+                                                    Publish portfolio
+                                                </button>
+                                                <Link to="/dashboard/cv-editor" className="px-4 py-2 border border-slate-600 text-slate-200 rounded-lg text-sm hover:border-cyan-400">CV Editor</Link>
+                                                <Link to="/dashboard/portfolio-editor" className="px-4 py-2 border border-slate-600 text-slate-200 rounded-lg text-sm hover:border-cyan-400">Portfolio Editor</Link>
+                                                <Link to="/dashboard/user-workspaces" className="px-4 py-2 bg-purple-500/15 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold hover:bg-purple-500/25">User Workspaces</Link>
+                                            </div>
+                                            {workspaceMessage && (
+                                                <div className="text-xs text-amber-300 mb-3">{workspaceMessage}</div>
+                                            )}
+                                            {workspaceStatus && (
+                                                <div className="flex flex-wrap gap-3 text-xs mb-3">
+                                                    <span className={workspaceStatus.cvReady ? 'text-emerald-300' : 'text-rose-300'}>CV: {workspaceStatus.cvReady ? 'ready' : 'unavailable'}</span>
+                                                    <span className={workspaceStatus.portfolioReady ? 'text-emerald-300' : 'text-rose-300'}>Portfolio: {workspaceStatus.portfolioReady ? 'ready' : 'unavailable'}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-wrap gap-3 text-xs">
+                                                {publicLinks.cv && <a href={publicLinks.cv} className="text-cyan-300 hover:underline">Public CV: {publicLinks.cv}</a>}
+                                                {publicLinks.portfolio && <a href={publicLinks.portfolio} className="text-cyan-300 hover:underline">Public portfolio: {publicLinks.portfolio}</a>}
+                                                <Link to="/dashboard/user-workspaces" className="text-slate-400 hover:underline">Create account for another user</Link>
+                                            </div>
+                                        </div>
+
                                         {/* Top Projects */}
                                         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
                                             <div className="flex items-center justify-between mb-6">
                                                 <h3 className="text-xl font-semibold text-white">Featured Projects</h3>
-                                                <button className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2">
+                                                <Link to="/dashboard/projects" className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2">
                                                     <Plus size={18} />
                                                     Add Project
-                                                </button>
+                                                </Link>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {topProjects.map((project, index) => (

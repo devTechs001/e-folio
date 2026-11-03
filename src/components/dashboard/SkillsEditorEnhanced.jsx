@@ -210,11 +210,14 @@ const SkillsEditorEnhanced = () => {
         } else {
             setSyncStatus('stale');
         }
+        // A local cache read does not need a 10 s timer; 30 s and no
+        // background-tab work avoids needless re-renders of the whole editor.
         const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
             const fresh = cacheService.get('skills');
             setSyncStatus(fresh ? 'synced' : 'stale');
             if (fresh) setLastSynced(new Date().toLocaleTimeString());
-        }, 10000);
+        }, 30000);
         return () => clearInterval(interval);
     }, []);
 

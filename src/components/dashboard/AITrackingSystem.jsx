@@ -15,6 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
+import socketService from '../../services/socket.service';
 import DashboardLayout from './DashboardLayout';
 import DeviceBreakdown from './AITracking/DeviceBreakdown';
 import GeographicDistribution from './AITracking/GeographicDistribution';
@@ -40,14 +41,16 @@ const AITrackingSystem = () => {
     const { user, isOwner } = useAuth();
     const { theme } = useTheme();
     const { success, error } = useNotifications();
-    const wsRef = useRef(null);
+    // The old raw WebSocket pointed at a server path that never existed and
+    // retried every 5 s forever. Use the authenticated /tracking Socket.IO
+    // namespace with ref-counted, cleanly removable listeners instead.
+    const trackingListenerRef = useRef(null);
+    const trackingEnvelopeRef = useRef(null);
 
     // State Management
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [realTimeEnabled, setRealTimeEnabled] = useState(false);
-    const [wsConnectionAttempts, setWsConnectionAttempts] = useState(0);
-    const maxRetryAttempts = 3;
     const [aiInsights, setAiInsights] = useState([]);
     const [notifications, setNotifications] = useState(true);
     const [viewMode, setViewMode] = useState('overview');
@@ -64,14 +67,21 @@ const AITrackingSystem = () => {
     useEffect(() => {
         if (isOwner()) {
             fetchInitialData();
-            setupWebSocket();
-            return () => {
-                if (wsRef.current) {
-                    wsRef.current.close();
-                }
-            };
         }
     }, [isOwner]);
+
+    // Subscribe only while realtime is enabled. An effect (rather than the
+    // toggle handler) avoids the stale-state bug where setupWebSocket() read
+    // the pre-toggle value and silently did nothing; the cleanup also covers
+    // unmount, so no listener or socket outlives this component.
+    useEffect(() => {
+        if (!isOwner() || !realTimeEnabled) {
+            stopWebSocket();
+            return undefined;
+        }
+        setupWebSocket();
+        return () => stopWebSocket();
+    }, [realTimeEnabled, isOwner]);
 
     // Time range effect
     useEffect(() => {
@@ -159,40 +169,35 @@ const AITrackingSystem = () => {
         }
     };
 
+    // Socket.IO handles reconnection itself; no bespoke retry loop is needed.
     const setupWebSocket = () => {
-        if (!realTimeEnabled) return;
+        if (trackingListenerRef.current) return;
+        const listener = envelope => trackingEnvelopeRef.current?.(envelope);
+        trackingListenerRef.current = listener;
+        socketService.onTrackingEvent(listener);
+        socketService.connectTracking();
+    };
 
-        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
-        wsRef.current = new WebSocket(`${wsUrl}/tracking`);
+    const stopWebSocket = () => {
+        // Only release a connection this component actually opened, so a
+        // sibling dashboard cannot lose its ref-counted tracking socket.
+        if (!trackingListenerRef.current) return;
+        socketService.offTrackingEvent(trackingListenerRef.current);
+        trackingListenerRef.current = null;
+        socketService.disconnectTracking();
+    };
 
-        wsRef.current.onopen = () => {
-            console.log('WebSocket connected');
-            setWsConnectionAttempts(0); // Reset attempts on successful connection
-            wsRef.current.send(JSON.stringify({ 
-                type: 'auth', 
-                token: localStorage.getItem('token') 
-            }));
-        };
-
-        wsRef.current.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            handleWebSocketMessage(data);
-        };
-
-        wsRef.current.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-
-        wsRef.current.onclose = () => {
-            console.log('WebSocket disconnected');
-            if (realTimeEnabled && wsConnectionAttempts < maxRetryAttempts) {
-                setWsConnectionAttempts(prev => prev + 1);
-                setTimeout(setupWebSocket, 5000);
-            } else if (wsConnectionAttempts >= maxRetryAttempts) {
-                console.log('Max retry attempts reached, disabling WebSocket');
-                setRealTimeEnabled(false);
-            }
-        };
+    // Map the `/tracking` envelope ({ type, payload }) onto the existing
+    // handler. Assigned every render so the listener never sees stale state.
+    trackingEnvelopeRef.current = envelope => {
+        const { type, payload = {} } = envelope || {};
+        if (!type || type === 'pong' || type === 'ready') return;
+        handleWebSocketMessage({
+            type,
+            visitor: payload.visitor || payload,
+            analytics: payload.analytics || payload,
+            message: payload.message
+        });
     };
 
     const handleWebSocketMessage = (data) => {
@@ -413,12 +418,7 @@ const AITrackingSystem = () => {
     };
 
     const toggleRealTime = () => {
-        setRealTimeEnabled(!realTimeEnabled);
-        if (!realTimeEnabled) {
-            setupWebSocket();
-        } else if (wsRef.current) {
-            wsRef.current.close();
-        }
+        setRealTimeEnabled(prev => !prev);
     };
 
     if (!isOwner()) {

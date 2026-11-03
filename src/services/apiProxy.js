@@ -5,7 +5,10 @@
 import axios from 'axios';
 
 // Base API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Same-origin relative default: browser-facing code must never call
+// localhost (the preview browser is not the sandbox). In production
+// VITE_API_URL is an absolute backend URL and still takes precedence.
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Create axios instance with defaults
 const apiClient = axios.create({

@@ -21,9 +21,9 @@ const projects = [
         likes: 42,
         links: {
             github: "https://github.com/devTechs001/ecommerce-platform",
-            live: "https://bizsolutionz.netlify.app/",
-            demo: "https://bizsolutionz.netlify.app/",
-            netlify: "https://bizsolutionz.netlify.app/"
+            live: "https://ominbiz-solution.netlify.app/",
+            demo: "https://ominbiz-solution.netlify.app/",
+            netlify: "https://ominbiz-solution.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d", caption: "Main E-commerce View" },

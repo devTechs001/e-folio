@@ -13,6 +13,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
+import { recordDevIssue, publicCopy } from '../utils/publicMessaging';
 import apiService from '../services/api.service';
 import '../styles/CollaborationRequest.css'
 
@@ -560,8 +561,8 @@ const CollaborationRequest = () => {
                 });
             } else {
                 // Handle API response errors
-                const errorMessage = response.message || 'Failed to submit request';
-                error(errorMessage);
+                recordDevIssue({ section: 'collaboration', detail: response.message || 'Submission was not successful' });
+                error(publicCopy('collaboration'));
                 console.error('Submission failed:', response);
                 
                 // Show retry suggestion
@@ -575,17 +576,10 @@ const CollaborationRequest = () => {
             console.error('Submission error:', err);
             
             // Enhanced error handling
-            let errorMessage = 'Failed to submit request. Please try again.';
-            
-            if (err.message?.includes('network')) {
-                errorMessage = 'Network error. Please check your connection and try again.';
-            } else if (err.message?.includes('timeout')) {
-                errorMessage = 'Request timed out. Please try again.';
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-            
-            error(errorMessage);
+            // Technical detail stays with developers; visitors get one short,
+            // non-technical sentence regardless of the underlying failure.
+            recordDevIssue({ section: 'collaboration', error: err });
+            error(publicCopy('collaboration'));
             
             // Log detailed error for debugging
             console.error('Detailed submission error:', {

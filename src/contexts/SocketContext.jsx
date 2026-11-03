@@ -26,6 +26,8 @@ export const SocketProvider = ({ children }) => {
     useEffect(() => {
         if (!user?.id) {
             socketService.disconnect();
+            // Logout must also close the private notification namespace.
+            socketService.disconnectNotifications(true);
             setConnected(false);
             return undefined;
         }
@@ -98,6 +100,7 @@ export const SocketProvider = ({ children }) => {
                 socketService.off(event, callback);
             }
             socketService.disconnect();
+            socketService.disconnectNotifications(true);
             setConnected(false);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps

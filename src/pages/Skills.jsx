@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Skills.css';
 
 const Skills = () => {
     const [technicalSkills, setTechnicalSkills] = useState([]);
     const [professionalSkills, setProfessionalSkills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [contentSource, setContentSource] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(true);
 
     const loadSkills = useCallback(async () => {
@@ -15,32 +18,28 @@ const Skills = () => {
             if (cached) {
                 setTechnicalSkills(cached.technical);
                 setProfessionalSkills(cached.professional);
+                setContentSource('live');
                 setLoading(false);
                 return;
             }
 
-            console.log('Fetching skills from API...');
-            const response = await apiService.request('/public/skills');
-            console.log('Skills API response:', response);
-            
-            if (response.success && response.skills && response.skills.length > 0) {
-                console.log(`Loaded ${response.skills.length} skills from database`);
-                const technical = response.skills.filter(s => s.type === 'technical');
-                const professional = response.skills.filter(s => s.type === 'professional');
-                
+            // Live API first, then the saved local copy. Visitors never see
+            // technical error text; developers keep it in the dev diagnostics.
+            const response = await loadPublicSection('skills');
+            const skills = Array.isArray(response.skills) ? response.skills : [];
+            const technical = skills.filter(item => item.type === 'technical');
+            const professional = skills.filter(item => item.type === 'professional');
+            setTechnicalSkills(technical);
+            setProfessionalSkills(professional);
+            setContentSource(response.source || '');
+            if (isLiveContent(response)) {
                 cacheService.set('public_skills', { technical, professional }, CACHE_TTL.TEN_MINUTES);
-                setTechnicalSkills(technical);
-                setProfessionalSkills(professional);
-            } else {
-                console.log('No skills from API, using fallback data');
-                setTechnicalSkills(getFallbackTechnicalSkills());
-                setProfessionalSkills(getFallbackProfessionalSkills());
             }
         } catch (error) {
-            console.error('Error loading skills:', error);
-            console.log('Using fallback skills due to error');
-            setTechnicalSkills(getFallbackTechnicalSkills());
-            setProfessionalSkills(getFallbackProfessionalSkills());
+            recordDevIssue({ section: 'skills', endpoint: PUBLIC_ENDPOINTS.skills, error });
+            setTechnicalSkills([]);
+            setProfessionalSkills([]);
+            setContentSource('');
         } finally {
             setLoading(false);
         }
@@ -60,31 +59,6 @@ const Skills = () => {
         return () => window.removeEventListener('settingsChanged', handleSettingsChange);
     }, [loadSkills]);
 
-    const getFallbackTechnicalSkills = () => [
-        { name: "HTML5", level: 90, icon: "fa-brands fa-html5" },
-        { name: "CSS3", level: 85, icon: "fa-brands fa-css3-alt" },
-        { name: "JavaScript", level: 80, icon: "fa-brands fa-js" },
-        { name: "React", level: 75, icon: "fa-brands fa-react" },
-        { name: "Python", level: 70, icon: "fa-brands fa-python" },
-        { name: "Node.js", level: 65, icon: "fa-brands fa-node-js" },
-        { name: "Git", level: 85, icon: "fa-brands fa-git-alt" },
-        { name: "Database", level: 60, icon: "fa-solid fa-database" },
-        { name: "TypeScript", level: 72, icon: "fa-brands fa-js" },
-        { name: "Docker", level: 68, icon: "fa-brands fa-docker" },
-        { name: "MongoDB", level: 75, icon: "fa-solid fa-database" },
-        { name: "Vue.js", level: 70, icon: "fa-brands fa-vuejs" }
-    ];
-
-    const getFallbackProfessionalSkills = () => [
-        { name: "Problem Solving", level: 90 },
-        { name: "Creativity", level: 85 },
-        { name: "Team Work", level: 95 },
-        { name: "Communication", level: 85 },
-        { name: "Leadership", level: 80 },
-        { name: "Time Management", level: 88 },
-        { name: "Adaptability", level: 92 },
-        { name: "Critical Thinking", level: 87 }
-    ];
 
     if (loading) {
         return (
@@ -139,6 +113,7 @@ const Skills = () => {
                     <p className="text-[var(--textColor)] text-base md:text-lg lg:text-xl mt-4 opacity-80 max-w-2xl mx-auto">
                         A comprehensive overview of my technical expertise and professional competencies
                     </p>
+                    <ArchiveNote source={contentSource} />
                 </div>
             </div>
             
@@ -238,7 +213,7 @@ const Skills = () => {
                                 {technicalSkills.length === 0 && (
                                     <div className="text-center py-12 text-[var(--textColor)] opacity-50">
                                         <i className="fas fa-inbox text-4xl mb-4"></i>
-                                        <p>No technical skills added yet</p>
+                                        <p>{publicEmptyCopy('emptySkills')}</p>
                                     </div>
                                 )}
                             </div>
@@ -373,7 +348,7 @@ const Skills = () => {
                                 {professionalSkills.length === 0 && (
                                     <div className="text-center py-12 text-[var(--textColor)] opacity-50">
                                         <i className="fas fa-inbox text-4xl mb-4"></i>
-                                        <p>No professional skills added yet</p>
+                                        <p>{publicEmptyCopy('emptySkills')}</p>
                                     </div>
                                 )}
                             </div>

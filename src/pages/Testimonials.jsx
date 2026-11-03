@@ -1,11 +1,38 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
+import { useAuth } from '../contexts/AuthContext';
+import sampleDataset from '../data/testimonialSamples.json';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, getSnapshotSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Testimonials.css';
+
+const SAMPLE_TAG = sampleDataset.tag;
+const PREVIEW_KEY = 'testimonial_preview';
+// Versioned so an older browser cache can never reintroduce pre-phase-3
+// invented testimonial records.
+const CACHE_KEY = 'public_testimonials_v2';
+const LEGACY_CACHE_KEY = 'public_testimonials';
+
+const isSampleTestimonial = (item) =>
+  Array.isArray(item?.tags) && item.tags.includes(SAMPLE_TAG);
+
+const readPreviewFlag = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preview') === '1') return true;
+    if (params.get('preview') === '0') return false;
+    return localStorage.getItem(PREVIEW_KEY) === 'on';
+  } catch (error) {
+    return false;
+  }
+};
 
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [contentSource, setContentSource] = useState('');
   const [filter, setFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,36 +48,52 @@ const Testimonials = () => {
   const [animateCards, setAnimateCards] = useState(false);
   const carouselRef = useRef(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
+  const { isOwner: checkOwner } = useAuth();
+  const owner = typeof checkOwner === 'function' ? checkOwner() : false;
+  const [previewMode, setPreviewMode] = useState(readPreviewFlag);
+  const [sampleCount, setSampleCount] = useState(0);
 
   const loadTestimonials = useCallback(async () => {
     try {
-      const cached = cacheService.get('public_testimonials');
-      if (cached) {
-        setTestimonials(cached);
-        setLoading(false);
-        return;
-      }
+      // Never use a cached list while previewing samples.
+      const cached = previewMode ? null : cacheService.get(CACHE_KEY);
+      let real = [];
+      let source = 'live';
 
-      console.log('Fetching testimonials from API...');
-      const response = await apiService.getTestimonials();
-      console.log('Testimonials API response:', response);
-
-      if (response.success && response.testimonials && response.testimonials.length > 0) {
-        console.log(`Loaded ${response.testimonials.length} testimonials from database`);
-        cacheService.set('public_testimonials', response.testimonials, CACHE_TTL.TEN_MINUTES);
-        setTestimonials(response.testimonials);
+      if (Array.isArray(cached) && cached.length) {
+        real = cached;
       } else {
-        console.log('No testimonials from API, using fallback data');
-        setTestimonials(getFallbackTestimonials());
+        // Live API first; the saved copy keeps the section complete and
+        // consistent. Technical failures are for developers only.
+        const response = await loadPublicSection('testimonials');
+        real = Array.isArray(response.testimonials) ? response.testimonials : [];
+        source = response.source || '';
+        if (isLiveContent(response) && !previewMode) {
+          cacheService.set(CACHE_KEY, real, CACHE_TTL.TEN_MINUTES);
+        }
       }
+      setContentSource(source);
+
+      let display = real;
+      if (previewMode && owner) {
+        const admin = await apiService.getAllTestimonials({ limit: 100 });
+        const all = admin?.success && Array.isArray(admin.testimonials) ? admin.testimonials : [];
+        const samples = all.filter(isSampleTestimonial);
+        setSampleCount(samples.length);
+        const seen = new Set(real.map(item => item._id || item.id || item.name));
+        display = [...real, ...samples.filter(item => !seen.has(item._id || item.id || item.name))];
+      } else {
+        setSampleCount(0);
+      }
+      setTestimonials(display);
     } catch (error) {
-      console.error('Error loading testimonials:', error);
-      console.log('Using fallback testimonials due to error');
-      setTestimonials(getFallbackTestimonials());
+      recordDevIssue({ section: 'testimonials', endpoint: PUBLIC_ENDPOINTS.testimonials, error });
+      setTestimonials(getSnapshotSection('testimonials').testimonials || []);
+      setContentSource('snapshot');
     } finally {
       setLoading(false);
     }
-  }, [setTestimonials, setLoading]);
+  }, [previewMode, owner]);
 
   useEffect(() => {
     loadTestimonials();
@@ -60,6 +103,7 @@ const Testimonials = () => {
   useEffect(() => {
     if (viewMode === 'carousel') {
       const interval = setInterval(() => {
+        if (typeof document !== 'undefined' && document.hidden) return;
         nextSlide();
       }, 5000);
       return () => clearInterval(interval);
@@ -70,119 +114,34 @@ const Testimonials = () => {
   useEffect(() => {
     const handleSettingsChange = (e) => {
       console.log('[Testimonials] Settings changed, refreshing data...');
-      cacheService.delete('public_testimonials');
+      cacheService.delete(CACHE_KEY);
       loadTestimonials();
     };
     window.addEventListener('settingsChanged', handleSettingsChange);
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
   }, [loadTestimonials]);
 
-  const getFallbackTestimonials = () => [
-    {
-      name: "Sarah Johnson",
-      position: "CEO",
-      company: "TechStart Inc.",
-      avatar: "https://images.unsplash.com/photo-1494790108756-2616b612b786?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Working with this developer was an absolute pleasure. They delivered our e-commerce platform ahead of schedule and exceeded all our expectations. The attention to detail and technical expertise is unmatched.",
-      featured: true,
-      verified: true,
-      date: new Date('2025-01-15'),
-      project: "E-commerce Platform",
-      tags: ["React", "Node.js", "MongoDB"]
-    },
-    {
-      name: "Michael Chen",
-      position: "CTO",
-      company: "InnovateTech Solutions",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Exceptional work on our AI-powered analytics dashboard. The developer's ability to understand complex requirements and translate them into elegant solutions is remarkable. Highly recommended!",
-      featured: true,
-      verified: true,
-      date: new Date('2025-02-20'),
-      project: "AI Analytics Dashboard",
-      tags: ["Python", "TensorFlow", "React"]
-    },
-    {
-      name: "Emily Rodriguez",
-      position: "Product Manager",
-      company: "Digital Dynamics",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "The portfolio website they built for us is stunning. It perfectly captures our brand identity and has significantly increased our conversion rates. Professional, creative, and reliable.",
-      featured: false,
-      verified: true,
-      date: new Date('2025-03-10'),
-      project: "Portfolio Website",
-      tags: ["React", "Tailwind", "Framer Motion"]
-    },
-    {
-      name: "David Kim",
-      position: "Founder",
-      company: "StartupHub",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Outstanding development work on our real-time chat application. The performance optimization and user experience improvements have been game-changing for our platform.",
-      featured: false,
-      verified: true,
-      date: new Date('2025-04-05'),
-      project: "Real-time Chat App",
-      tags: ["Socket.io", "Express", "Redis"]
-    },
-    {
-      name: "Jessica Taylor",
-      position: "Marketing Director",
-      company: "BrandBoost Agency",
-      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "The weather app they developed is both beautiful and functional. Our users love the intuitive interface and accurate forecasts. A truly talented developer!",
-      featured: false,
-      verified: true,
-      date: new Date('2025-05-12'),
-      project: "Weather App",
-      tags: ["React Native", "API Integration"]
-    },
-    {
-      name: "Robert Anderson",
-      position: "VP Engineering",
-      company: "CloudScale Systems",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Impressive work on our enterprise Java system. The microservices architecture they implemented has improved our scalability and performance significantly. Top-notch technical skills.",
-      featured: false,
-      verified: true,
-      date: new Date('2025-06-18'),
-      project: "Enterprise System",
-      tags: ["Java", "Spring Boot", "Microservices"]
-    },
-    {
-      name: "Amanda White",
-      position: "Design Lead",
-      company: "Creative Studios",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3",
-      rating: 5,
-      content: "Collaboration was seamless! They transformed our design mockups into pixel-perfect, performant web applications. Communication was excellent throughout.",
-      featured: true,
-      verified: true,
-      date: new Date('2025-07-22'),
-      project: "Design System Implementation",
-      tags: ["React", "Storybook", "Design Systems"]
-    },
-    {
-      name: "Chris Martinez",
-      position: "Operations Manager",
-      company: "LogiTech Solutions",
-      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3",
-      rating: 4,
-      content: "Great experience working together. The inventory management system has streamlined our operations significantly. Would definitely work with them again!",
-      featured: false,
-      verified: true,
-      date: new Date('2025-08-15'),
-      project: "Inventory Management",
-      tags: ["Vue.js", "Laravel", "MySQL"]
+  // Drop the pre-version cache once so fabricated fallback records cannot
+  // survive in a returning visitor's browser.
+  useEffect(() => {
+    cacheService.delete(LEGACY_CACHE_KEY);
+  }, []);
+
+  const togglePreview = () => {
+    const next = !previewMode;
+    setPreviewMode(next);
+    try {
+      if (next) localStorage.setItem(PREVIEW_KEY, 'on');
+      else localStorage.removeItem(PREVIEW_KEY);
+      const url = new URL(window.location.href);
+      if (next) url.searchParams.set('preview', '1');
+      else url.searchParams.delete('preview');
+      window.history.replaceState({}, '', url.toString());
+    } catch (error) {
+      // URL/storage may be unavailable; preview still works for this render.
     }
-  ];
+    cacheService.delete(CACHE_KEY);
+  };
 
   const filteredAndSortedTestimonials = testimonials
     .filter(testimonial => {
@@ -363,6 +322,24 @@ const Testimonials = () => {
       )}
 
       <div className="container mx-auto px-4">
+        {previewMode && owner && (
+          <div className="testimonial-preview-banner" role="status">
+            <span className="testimonial-preview-badge">PREVIEW MODE</span>
+            <span>
+              {owner
+                ? `Sample testimonials are mock data (${sampleCount} shown). They are not published to normal visitors.`
+                : 'Preview mode is on. Sign in as owner to see the labelled sample data.'}
+            </span>
+            <button type="button" onClick={togglePreview} className="testimonial-preview-exit">
+              Exit preview
+            </button>
+          </div>
+        )}
+        {owner && !previewMode && (
+          <button type="button" onClick={togglePreview} className="testimonial-preview-open">
+            <i className="fas fa-eye"></i> Preview sample testimonials
+          </button>
+        )}
         {/* Header */}
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="inline-flex items-center gap-3 px-6 py-3 mb-8 glass-badge">
@@ -391,6 +368,7 @@ const Testimonials = () => {
           <p className="text-lg md:text-xl text-textColor/60 max-w-4xl mx-auto leading-relaxed font-light">
             Real feedback from <span className="text-mainColor font-semibold">{stats.total}+ amazing clients</span> I've had the pleasure to work with
           </p>
+          <ArchiveNote source={contentSource} className="mt-3" />
 
           {/* Decorative Quote Marks */}
           <div className="relative mt-8">
@@ -672,7 +650,9 @@ const Testimonials = () => {
             <p className="empty-state-text">
               {searchTerm
                 ? `No results for "${searchTerm}". Try adjusting your search or filters.`
-                : 'Try adjusting your filters to see more testimonials.'}
+                : testimonials.length === 0
+                  ? publicEmptyCopy('emptyTestimonials')
+                  : 'Try adjusting your filters to see more testimonials.'}
             </p>
             <button
               onClick={() => {
@@ -695,7 +675,7 @@ const Testimonials = () => {
                 {currentTestimonials.map((testimonial, index) => (
                   <div
                     key={index}
-                    className="testimonial-card-enhanced"
+                    className={`testimonial-card-enhanced ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
                     data-aos="fade-up"
                     data-aos-delay={index * 50}
                     onClick={() => openModal(testimonial)}
@@ -708,6 +688,9 @@ const Testimonials = () => {
                         className="card-avatar"
                       />
                       <div className="card-badges">
+                        {isSampleTestimonial(testimonial) && (
+                          <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                        )}
                         {testimonial.featured && (
                           <span className="badge badge-featured">
                             <i className="fas fa-star"></i>
@@ -795,7 +778,7 @@ const Testimonials = () => {
                 {currentTestimonials.map((testimonial, index) => (
                   <div
                     key={index}
-                    className="testimonial-list-item"
+                    className={`testimonial-list-item ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
                     data-aos="fade-right"
                     data-aos-delay={index * 50}
                     onClick={() => openModal(testimonial)}
@@ -809,6 +792,9 @@ const Testimonials = () => {
                       <div className="list-header">
                         <div>
                           <h4 className="list-name">
+                            {isSampleTestimonial(testimonial) && (
+                              <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                            )}
                             {testimonial.name}
                             {testimonial.verified && (
                               <i className="fas fa-shield-check text-green-500 text-sm ml-2"></i>
@@ -861,12 +847,15 @@ const Testimonials = () => {
                   {filteredAndSortedTestimonials.map((testimonial, index) => (
                     <div
                       key={index}
-                      className={`carousel-slide ${index === activeCarouselIndex ? 'active' : ''}`}
+                      className={`carousel-slide ${index === activeCarouselIndex ? 'active' : ''} ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
                       style={{
                         transform: `translateX(${(index - activeCarouselIndex) * 100}%)`
                       }}
                     >
                       <div className="carousel-content">
+                        {isSampleTestimonial(testimonial) && (
+                          <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                        )}
                         <div className="carousel-quote-mark">
                           <i className="fas fa-quote-left"></i>
                         </div>

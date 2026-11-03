@@ -5,6 +5,7 @@ const security = require('../config/security');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User.model');
 const AppSettings = require('../models/AppSettings');
+const { publishUserNotification } = require('../socket/notifications.handler');
 
 const crypto = require('crypto');
 
@@ -81,6 +82,25 @@ router.post('/register', registerLimiter, async (req, res) => {
         }
 
         const user = await User.create({ name, username, email, password });
+
+        // Real-time account/workspace notifications. Best effort only: the
+        // registration must still succeed if notifications are unavailable.
+        publishUserNotification(user._id, {
+            type: 'account',
+            title: 'Account created',
+            message: `Welcome ${user.name}. Create your CV and portfolio from the User Workspaces page.`,
+            link: '/dashboard/user-workspaces',
+            metadata: { event: 'account_created', username: user.username }
+        }).catch(() => {});
+        User.find({ role: 'owner' }).select('_id').lean()
+            .then(owners => Promise.all(owners.map(owner => publishUserNotification(owner._id, {
+                type: 'account',
+                title: 'New account created',
+                message: `${user.name} (@${user.username}) now has an e-folio account.`,
+                link: '/dashboard/user-workspaces',
+                metadata: { event: 'account_created', username: user.username, userId: String(user._id) }
+            }))))
+            .catch(() => {});
 
         const token = security.signToken({ id: user._id, email: user.email, role: 'user' }, { expiresIn: '7d' });
 

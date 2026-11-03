@@ -107,8 +107,13 @@ const collaborationRequestSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    // inviteLink is owner-only and is returned by the admin API so an
+    // invitation can be re-shared. Raw tokens are never stored here: the
+    // Invite collection holds the SHA-256 hash used for validation.
     inviteLink: String,
-    inviteToken: String,
+    inviteToken: { type: String, select: false }, // legacy field, no longer written
+    inviteSentAt: Date,
+    inviteExpiresAt: Date,
     rejectionReason: String,
     
     // Additional tracking

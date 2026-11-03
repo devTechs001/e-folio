@@ -90,6 +90,7 @@ export const LandingPageThemeProvider = ({ children }) => {
         if (!autoChange) return;
 
         const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
             const themeKeys = Object.keys(landingPageThemes);
             const currentIndex = themeKeys.indexOf(currentTheme);
             const nextIndex = (currentIndex + 1) % themeKeys.length;

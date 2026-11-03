@@ -6,6 +6,8 @@ import ProjectFilters from './ProjectFilters';
 import ProjectCard from './ProjectCard';
 import ProjectModal from '../pages/ProjectModal';
 import ImageLightbox from '../pages/ImageLightbox';
+import NexStoreCard from './NexStoreCard';
+import ProjectShowcase from './ProjectShowcase';
 import '../styles/Projects.css';
 
 const Projects = () => {
@@ -52,15 +54,7 @@ const Projects = () => {
                 </motion.div>
 
                 <div className="projects-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
-                    <a
-                        href="https://nex-store-pro.netlify.app/"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="cta-btn cta-btn-primary"
-                        style={{ marginTop: '1rem' }}
-                    >
-                        Open NEX Store
-                    </a>
+                    <NexStoreCard variant="compact" />
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="btn-primary"
@@ -69,6 +63,8 @@ const Projects = () => {
                     </button>
                 </div>
             </div>
+
+            <ProjectShowcase compact />
 
             <ProjectFilters
                 filters={filters}
@@ -92,20 +88,7 @@ const Projects = () => {
             <div className="cta-section">
                 <div className="cta-card">
                     <div className="cta-content">
-                        <h2 className="projects-title" style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>
-                            Explore the NEX Store
-                        </h2>
-                        <p className="projects-subtitle" style={{ marginBottom: '1.5rem' }}>
-                            Open the store for all systems and apps in one place.
-                        </p>
-                        <a
-                            href="https://nex-store-pro.netlify.app/"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="cta-btn cta-btn-primary"
-                        >
-                            Open NEX Store
-                        </a>
+                        <NexStoreCard variant="card" />
                     </div>
                 </div>
             </div>

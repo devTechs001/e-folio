@@ -1,0 +1,83 @@
+{
+  "tag": "lab-sample",
+  "samples": [
+    {
+      "title": "[SAMPLE] Network Recon Suite",
+      "description": "Sample lab experiment: passive and active reconnaissance toolkit \u2014 port scanning, OSINT gathering, DNS enumeration and service fingerprinting. Preview: https://net-gate-portal.netlify.app/ (NetGate captive portal).",
+      "status": "beta",
+      "category": "Other",
+      "technologies": [
+        "Python",
+        "Nmap",
+        "Scapy",
+        "Docker"
+      ],
+      "tags": [
+        "cybersecurity",
+        "recon",
+        "networking"
+      ],
+      "links": {
+        "live": "https://net-gate-portal.netlify.app/",
+        "demo": "https://net-gate-portal.netlify.app/"
+      }
+    },
+    {
+      "title": "[SAMPLE] Wi-Fi Security Playground",
+      "description": "Sample lab experiment: hands-on wireless security practicals \u2014 WPA2/WPA3 capture, PMKID handshake analysis and deauth detection in a sandboxed hardware lab.",
+      "status": "development",
+      "category": "IoT",
+      "technologies": [
+        "Raspberry Pi",
+        "Wireshark",
+        "Python",
+        "Linux"
+      ],
+      "tags": [
+        "wireless",
+        "iot",
+        "hardware"
+      ],
+      "links": {
+        "github": "https://github.com/devTechs001/wifi-security-lab"
+      }
+    },
+    {
+      "title": "[SAMPLE] Web Pentest Lab (OWASP)",
+      "description": "Sample lab experiment: ethical web application practicals \u2014 SQLi, XSS, SSRF and IDOR walkthroughs against a deliberately vulnerable local target.",
+      "status": "experimental",
+      "category": "Web",
+      "technologies": [
+        "Docker",
+        "Node.js",
+        "PostgreSQL"
+      ],
+      "tags": [
+        "owasp",
+        "web-security",
+        "docker"
+      ],
+      "links": {
+        "github": "https://github.com/devTechs001/web-pentest-lab"
+      }
+    },
+    {
+      "title": "[SAMPLE] Cloud IAM Misconfig Sentinel",
+      "description": "Sample lab experiment: auditing utility for IAM role permission bloat and open object-storage buckets with remediation hints.",
+      "status": "live",
+      "category": "DevOps",
+      "technologies": [
+        "Node.js",
+        "Terraform",
+        "Docker"
+      ],
+      "tags": [
+        "cloud",
+        "devsecops"
+      ],
+      "links": {
+        "github": "https://github.com/devTechs001/cloud-iam-sentinel"
+      }
+    }
+  ]
+}

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import apiService from '../services/api.service';
+import ArchiveNote from '../components/ArchiveNote';
+import { loadPublicSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Interests.css';
 
 const Interests = () => {
     const [interests, setInterests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [contentSource, setContentSource] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const cardRefs = useRef([]);
@@ -15,154 +18,22 @@ const Interests = () => {
 
     const loadInterests = async () => {
         try {
-            const response = await apiService.getInterests();
-            if (response.success && response.interests) {
-                setInterests(response.interests);
-            } else {
-                setInterests(getFallbackInterests());
-            }
+            // Live API first, then the saved local copy, so the section stays
+            // complete. Technical failures are logged for developers only.
+            const response = await loadPublicSection('interests');
+            const items = Array.isArray(response.interests) ? response.interests
+                : Array.isArray(response.data) ? response.data : [];
+            setInterests(items);
+            setContentSource(response.source || '');
         } catch (error) {
-            console.error('Error loading interests:', error);
-            setInterests(getFallbackInterests());
+            recordDevIssue({ section: 'interests', endpoint: PUBLIC_ENDPOINTS.interests, error });
+            setInterests([]);
+            setContentSource('');
         } finally {
             setLoading(false);
         }
     };
 
-    const getFallbackInterests = () => [
-        {
-            id: 1,
-            icon: 'fas fa-code',
-            title: 'Programming',
-            description: 'Passionate about solving complex problems through code and building innovative solutions that make a difference.',
-            category: 'technical',
-            level: 95,
-            color: 'blue',
-            tags: ['Problem Solving', 'Algorithms', 'Best Practices'],
-            relatedTech: ['JavaScript', 'Python', 'Java']
-        },
-        {
-            id: 2,
-            icon: 'fas fa-palette',
-            title: 'Web Design',
-            description: 'Creating visually appealing and user-friendly interfaces that enhance the digital experience.',
-            category: 'creative',
-            level: 90,
-            color: 'purple',
-            tags: ['UI/UX', 'Visual Design', 'Typography'],
-            relatedTech: ['Figma', 'Adobe XD', 'CSS']
-        },
-        {
-            id: 3,
-            icon: 'fas fa-mobile-alt',
-            title: 'Mobile Development',
-            description: 'Exploring the world of mobile applications and creating responsive solutions for various platforms.',
-            category: 'technical',
-            level: 85,
-            color: 'cyan',
-            tags: ['iOS', 'Android', 'Cross-platform'],
-            relatedTech: ['React Native', 'Flutter', 'Swift']
-        },
-        {
-            id: 4,
-            icon: 'fas fa-robot',
-            title: 'AI & Machine Learning',
-            description: 'Fascinated by the potential of artificial intelligence and its applications in solving real-world problems.',
-            category: 'technical',
-            level: 80,
-            color: 'green',
-            tags: ['Neural Networks', 'Deep Learning', 'Data Science'],
-            relatedTech: ['TensorFlow', 'PyTorch', 'Scikit-learn']
-        },
-        {
-            id: 5,
-            icon: 'fas fa-link',
-            title: 'Blockchain Technology',
-            description: 'Interested in decentralized systems and their potential to revolutionize digital transactions.',
-            category: 'technical',
-            level: 75,
-            color: 'orange',
-            tags: ['Smart Contracts', 'DeFi', 'Web3'],
-            relatedTech: ['Ethereum', 'Solidity', 'Web3.js']
-        },
-        {
-            id: 6,
-            icon: 'fas fa-book-reader',
-            title: 'Continuous Learning',
-            description: 'Committed to staying updated with the latest technologies and industry best practices.',
-            category: 'personal',
-            level: 100,
-            color: 'indigo',
-            tags: ['Self-improvement', 'Documentation', 'Research'],
-            relatedTech: ['Online Courses', 'Books', 'Blogs']
-        },
-        {
-            id: 7,
-            icon: 'fas fa-users',
-            title: 'Community Building',
-            description: 'Enjoy participating in tech communities and sharing knowledge with fellow developers.',
-            category: 'social',
-            level: 88,
-            color: 'pink',
-            tags: ['Mentorship', 'Open Source', 'Networking'],
-            relatedTech: ['GitHub', 'Stack Overflow', 'Discord']
-        },
-        {
-            id: 8,
-            icon: 'fas fa-lightbulb',
-            title: 'Innovation',
-            description: 'Passionate about creating new solutions and pushing the boundaries of what\'s possible with technology.',
-            category: 'creative',
-            level: 92,
-            color: 'yellow',
-            tags: ['Creativity', 'Problem Solving', 'Ideation'],
-            relatedTech: ['Prototyping', 'MVPs', 'Research']
-        },
-        {
-            id: 9,
-            icon: 'fas fa-gamepad',
-            title: 'Game Development',
-            description: 'Creating interactive experiences and exploring game mechanics and storytelling through code.',
-            category: 'creative',
-            level: 70,
-            color: 'red',
-            tags: ['Game Design', '3D Graphics', 'Physics'],
-            relatedTech: ['Unity', 'Unreal Engine', 'WebGL']
-        },
-        {
-            id: 10,
-            icon: 'fas fa-cloud',
-            title: 'Cloud Computing',
-            description: 'Building scalable cloud-based solutions and understanding modern infrastructure.',
-            category: 'technical',
-            level: 82,
-            color: 'teal',
-            tags: ['DevOps', 'Serverless', 'Microservices'],
-            relatedTech: ['AWS', 'Azure', 'Docker']
-        },
-        {
-            id: 11,
-            icon: 'fas fa-shield-alt',
-            title: 'Cybersecurity',
-            description: 'Ensuring digital safety and understanding security best practices in application development.',
-            category: 'technical',
-            level: 78,
-            color: 'gray',
-            tags: ['Encryption', 'Penetration Testing', 'Security Audits'],
-            relatedTech: ['OWASP', 'Ethical Hacking', 'Security Protocols']
-        },
-        {
-            id: 12,
-            icon: 'fas fa-video',
-            title: 'Content Creation',
-            description: 'Sharing knowledge through tutorials, blogs, and video content to help others learn.',
-            category: 'social',
-            level: 85,
-            color: 'rose',
-            tags: ['Video Editing', 'Writing', 'Teaching'],
-            relatedTech: ['YouTube', 'Medium', 'Dev.to']
-        }
-    ];
 
     // 3D tilt effect handler
     const handleMouseMove = (e, index) => {
@@ -242,6 +113,7 @@ const Interests = () => {
                     <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mt-6" data-aos="fade-up">
                         Exploring passions and cultivating skills that drive innovation and creativity
                     </p>
+                    <ArchiveNote source={contentSource} className="mt-3" />
 
                     {/* Stats Overview */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-8">
@@ -423,7 +295,7 @@ const Interests = () => {
                 {filteredInterests.length === 0 && (
                     <div className="text-center py-20">
                         <i className="fas fa-heart-broken text-6xl text-textColor/30 mb-4"></i>
-                        <p className="text-textColor/50 text-xl">No interests found in this category.</p>
+                        <p className="text-textColor/50 text-xl">{publicEmptyCopy('emptyInterests')}</p>
                     </div>
                 )}
 

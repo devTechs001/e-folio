@@ -389,3 +389,167 @@
 @media (max-width: 640px) {
   .lab-section { padding: 56px 16px; }
 }
+/* --------------------------------------------------------------------------
+ * Phase 4: dashboard-linked data, sample badges and real skills/hobbies.
+ * -------------------------------------------------------------------------- */
+
+.lab-header-meta { flex-wrap: wrap; }
+
+.lab-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 5px 12px;
+  border: 1px solid transparent;
+}
+.lab-source-live { color: #10b981; background: color-mix(in srgb, #10b981 12%, transparent); border-color: color-mix(in srgb, #10b981 30%, transparent); }
+.lab-source-partial,
+.lab-source-sample { color: #f59e0b; background: color-mix(in srgb, #f59e0b 12%, transparent); border-color: color-mix(in srgb, #f59e0b 30%, transparent); }
+.lab-source-unavailable { color: #f87171; background: color-mix(in srgb, #f87171 12%, transparent); border-color: color-mix(in srgb, #f87171 30%, transparent); }
+
+.lab-dashboard-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.lab-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  color: var(--mainColor);
+  border: 1px solid color-mix(in srgb, var(--mainColor) 35%, transparent);
+  background: color-mix(in srgb, var(--mainColor) 10%, transparent);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.lab-dashboard-link:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--mainColor) 20%, transparent); }
+
+.lab-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #fca5a5;
+  background: color-mix(in srgb, #f87171 12%, transparent);
+  border: 1px solid color-mix(in srgb, #f87171 30%, transparent);
+}
+
+.lab-card-sample { border-style: dashed; }
+.lab-sample-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #fbbf24;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+}
+.lab-btn-delete {
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #fca5a5;
+  background: color-mix(in srgb, #f87171 10%, transparent);
+}
+.lab-btn-delete:hover { background: color-mix(in srgb, #f87171 22%, transparent); }
+.lab-btn-delete:disabled { opacity: 0.55; cursor: wait; }
+
+.lab-empty-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--mainColor);
+  text-decoration: none;
+}
+.lab-empty-link:hover { text-decoration: underline; }
+
+.lab-data-section {
+  margin-top: 56px;
+  padding: 30px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bgColor) 92%, #ffffff 8%);
+  border: 1px solid color-mix(in srgb, var(--textColor) 12%, transparent);
+}
+.lab-data-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.lab-data-heading h3 { font-size: 22px; font-weight: 800; color: var(--textColor); margin: 6px 0 4px; }
+.lab-data-heading p { font-size: 13px; color: color-mix(in srgb, var(--textColor) 60%, transparent); margin: 0; }
+.lab-data-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--mainColor);
+}
+.lab-data-empty { font-size: 14px; color: color-mix(in srgb, var(--textColor) 55%, transparent); }
+
+.lab-skill-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+.lab-skill-group { padding: 16px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--textColor) 10%, transparent); }
+.lab-skill-group h4 { font-size: 13px; font-weight: 800; color: var(--textColor); margin: 0 0 12px; display: flex; justify-content: space-between; }
+.lab-skill-group h4 span { color: var(--mainColor); }
+.lab-skill-list { display: flex; flex-direction: column; gap: 9px; }
+.lab-skill { display: grid; grid-template-columns: 1fr 70px 26px; align-items: center; gap: 8px; font-size: 12px; color: color-mix(in srgb, var(--textColor) 80%, transparent); }
+.lab-skill-bar { height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--textColor) 12%, transparent); overflow: hidden; }
+.lab-skill-bar div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--mainColor), #8b5cf6); }
+.lab-skill small { text-align: right; color: color-mix(in srgb, var(--textColor) 55%, transparent); }
+
+.lab-hobby-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.lab-hobby { padding: 18px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--textColor) 10%, transparent); background: color-mix(in srgb, var(--bgColor) 96%, #ffffff 4%); }
+.lab-hobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.lab-hobby-category { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--mainColor); }
+.lab-hobby-level { font-size: 11px; font-weight: 700; color: color-mix(in srgb, var(--textColor) 55%, transparent); }
+.lab-hobby h4 { font-size: 15px; font-weight: 800; color: var(--textColor); margin: 0 0 6px; }
+.lab-hobby p { font-size: 12px; line-height: 1.6; color: color-mix(in srgb, var(--textColor) 60%, transparent); margin: 0; }
+
+.lab-footer-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--textColor) 60%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--textColor) 20%, transparent);
+}
+.lab-footer-note code { padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--textColor) 10%, transparent); }
+
+@media (max-width: 640px) {
+  .lab-data-section { padding: 20px 16px; }
+  .lab-data-heading { align-items: flex-start; }
+}
+
+/* Friendly label shown when the saved portfolio copy is in use. */
+.lab-source-archive {
+  color: #38bdf8;
+  background: color-mix(in srgb, #38bdf8 12%, transparent);
+  border-color: color-mix(in srgb, #38bdf8 30%, transparent);
+}

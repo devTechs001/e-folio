@@ -6,16 +6,23 @@ const ActivityLog = require('../models/ActivityLog');
 const security = require('../config/security');
 const crypto = require('crypto');
 const { sendEmail } = require('../services/email.service');
-const { Parser } = require('json2csv');
+const { Parser } = require('@json2csv/plainjs');
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const frontendUrlFor = (req) => String(
+    process.env.FRONTEND_URL || process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`
+).replace(/\/+$/, '');
+const emitAll = (req, event, payload) => {
+    const io = req.app && req.app.get('io');
+    if (io && typeof io.emit === 'function') io.emit(event, payload);
+};
+
+// Never invent a principal: a stale/foreign token must not be able to write
+// activity logs or invites attributed to a phantom ObjectId.
 const getValidUserId = (user) => {
-    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) {
-        return user._id;
-    }
-    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) {
-        return user.id;
-    }
-    return new mongoose.Types.ObjectId('507f1f77bcf86cd799439011');
+    if (user?._id && mongoose.Types.ObjectId.isValid(user._id)) return user._id;
+    if (user?.id && mongoose.Types.ObjectId.isValid(user.id)) return user.id;
+    return null;
 };
 
 // Get all collaborators
@@ -24,14 +31,15 @@ exports.getCollaborators = async (req, res) => {
         const { search, role, status, sortBy = 'createdAt', order = 'desc' } = req.query;
 
         let query = { 
-            _id: { $ne: getValidUserId(req.user) } // Exclude current user
+            _id: { $ne: req.user?._id || req.user?.id } // Exclude current user
         };
 
         // Search
         if (search) {
+            const safeSearch = escapeRegex(String(search).slice(0, 100));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } }
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { email: { $regex: safeSearch, $options: 'i' } }
             ];
         }
 
@@ -76,29 +84,27 @@ exports.getCollaborators = async (req, res) => {
         console.error('Get collaborators error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
 // Get collaborator statistics
 exports.getCollaboratorStats = async (req, res) => {
     try {
-        const total = await User.countDocuments({ _id: { $ne: getValidUserId(req.user) } });
+        const total = await User.countDocuments({ _id: { $ne: req.user?._id || req.user?.id } });
         const active = await User.countDocuments({ 
-            _id: { $ne: getValidUserId(req.user) },
+            _id: { $ne: req.user?._id || req.user?.id },
             isActive: true
         });
         const inactive = await User.countDocuments({ 
-            _id: { $ne: getValidUserId(req.user) },
+            _id: { $ne: req.user?._id || req.user?.id },
             $or: [
                 { isActive: false },
                 { lastLoginAt: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
             ]
         });
         const suspended = await User.countDocuments({ 
-            _id: { $ne: getValidUserId(req.user) },
+            _id: { $ne: req.user?._id || req.user?.id },
             isActive: false
         });
         const pending = await Invite.countDocuments({ 
@@ -120,23 +126,23 @@ exports.getCollaboratorStats = async (req, res) => {
         console.error('Get stats error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
 // Invite collaborator
 exports.inviteCollaborator = async (req, res) => {
     try {
+        if (!getValidUserId(req.user)) {
+            return res.status(401).json({ success: false, message: 'Invalid session' });
+        }
         const { email, role, permissions, expiryDays, customMessage } = req.body;
 
         // Validate email
         if (!email) {
             return res.status(400).json({
                 success: false,
-                message: 'Email is required'
-            });
+                message: 'Email is required' });
         }
 
         // Check if user already exists
@@ -144,8 +150,7 @@ exports.inviteCollaborator = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: 'User with this email already exists'
-            });
+                message: 'User with this email already exists' });
         }
 
         // Check if there's already a pending invite
@@ -158,8 +163,7 @@ exports.inviteCollaborator = async (req, res) => {
         if (existingInvite) {
             return res.status(400).json({
                 success: false,
-                message: 'A pending invitation already exists for this email'
-            });
+                message: 'A pending invitation already exists for this email' });
         }
 
         // Generate invite token
@@ -181,7 +185,7 @@ exports.inviteCollaborator = async (req, res) => {
         });
 
         // Generate invite link
-        const inviteLink = `${process.env.FRONTEND_URL}/accept-invite/${inviteToken}`;
+        const inviteLink = `${frontendUrlFor(req)}/accept-invite/${inviteToken}`;
 
         // Send invitation email
         const emailContent = getInviteEmailTemplate({
@@ -207,7 +211,7 @@ exports.inviteCollaborator = async (req, res) => {
         });
 
         // Emit socket event
-        req.app.get('io').emit('new_invite_sent', {
+        emitAll(req, 'new_invite_sent', {
             email,
             role,
             invitedBy: req.user.name
@@ -227,15 +231,16 @@ exports.inviteCollaborator = async (req, res) => {
         console.error('Invite collaborator error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to send invitation',
-            error: error.message
-        });
+            message: 'Failed to send invitation' });
     }
 };
 
 // Generate invite link
 exports.generateInviteLink = async (req, res) => {
     try {
+        if (!getValidUserId(req.user)) {
+            return res.status(401).json({ success: false, message: 'Invalid session' });
+        }
         const { role, expiryDays, maxUses } = req.body;
 
         // Generate invite token
@@ -255,7 +260,7 @@ exports.generateInviteLink = async (req, res) => {
             type: 'link'
         });
 
-        const inviteLink = `${process.env.FRONTEND_URL}/accept-invite/${inviteToken}`;
+        const inviteLink = `${frontendUrlFor(req)}/accept-invite/${inviteToken}`;
 
         res.json({
             success: true,
@@ -271,9 +276,7 @@ exports.generateInviteLink = async (req, res) => {
         console.error('Generate invite link error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to generate invite link',
-            error: error.message
-        });
+            message: 'Failed to generate invite link' });
     }
 };
 
@@ -307,9 +310,7 @@ exports.getPendingInvites = async (req, res) => {
         console.error('Get pending invites error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -321,15 +322,13 @@ exports.resendInvite = async (req, res) => {
         if (!invite) {
             return res.status(404).json({
                 success: false,
-                message: 'Invite not found'
-            });
+                message: 'Invite not found' });
         }
 
         if (invite.status !== 'pending') {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot resend a non-pending invite'
-            });
+                message: 'Cannot resend a non-pending invite' });
         }
 
         // Generate new token
@@ -345,7 +344,7 @@ exports.resendInvite = async (req, res) => {
         await invite.save();
 
         // Generate new invite link
-        const inviteLink = `${process.env.FRONTEND_URL}/accept-invite/${inviteToken}`;
+        const inviteLink = `${frontendUrlFor(req)}/accept-invite/${inviteToken}`;
 
         // Resend email
         const emailContent = getInviteEmailTemplate({
@@ -370,9 +369,7 @@ exports.resendInvite = async (req, res) => {
         console.error('Resend invite error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to resend invitation',
-            error: error.message
-        });
+            message: 'Failed to resend invitation' });
     }
 };
 
@@ -384,8 +381,7 @@ exports.cancelInvite = async (req, res) => {
         if (!invite) {
             return res.status(404).json({
                 success: false,
-                message: 'Invite not found'
-            });
+                message: 'Invite not found' });
         }
 
         invite.status = 'cancelled';
@@ -399,9 +395,7 @@ exports.cancelInvite = async (req, res) => {
         console.error('Cancel invite error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to cancel invitation',
-            error: error.message
-        });
+            message: 'Failed to cancel invitation' });
     }
 };
 
@@ -414,16 +408,14 @@ exports.updateCollaboratorRole = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         // Prevent changing owner role
         if (collaborator.role === 'owner') {
             return res.status(403).json({
                 success: false,
-                message: 'Cannot change owner role'
-            });
+                message: 'Cannot change owner role' });
         }
 
         collaborator.role = role;
@@ -438,7 +430,7 @@ exports.updateCollaboratorRole = async (req, res) => {
         });
 
         // Emit socket event
-        req.app.get('io').emit('collaborator_updated', {
+        emitAll(req, 'collaborator_updated', {
             collaborator: {
                 id: collaborator._id,
                 name: collaborator.name,
@@ -454,9 +446,7 @@ exports.updateCollaboratorRole = async (req, res) => {
         console.error('Update role error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update role',
-            error: error.message
-        });
+            message: 'Failed to update role' });
     }
 };
 
@@ -469,8 +459,7 @@ exports.updateCollaboratorPermissions = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         collaborator.permissions = permissions;
@@ -492,9 +481,7 @@ exports.updateCollaboratorPermissions = async (req, res) => {
         console.error('Update permissions error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update permissions',
-            error: error.message
-        });
+            message: 'Failed to update permissions' });
     }
 };
 
@@ -506,16 +493,14 @@ exports.removeCollaborator = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         // Prevent removing owner
         if (collaborator.role === 'owner') {
             return res.status(403).json({
                 success: false,
-                message: 'Cannot remove owner'
-            });
+                message: 'Cannot remove owner' });
         }
 
         await User.deleteOne({ _id: collaborator._id });
@@ -529,7 +514,7 @@ exports.removeCollaborator = async (req, res) => {
         });
 
         // Emit socket event
-        req.app.get('io').emit('collaborator_removed', {
+        emitAll(req, 'collaborator_removed', {
             collaboratorId: collaborator._id
         });
 
@@ -541,9 +526,7 @@ exports.removeCollaborator = async (req, res) => {
         console.error('Remove collaborator error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to remove collaborator',
-            error: error.message
-        });
+            message: 'Failed to remove collaborator' });
     }
 };
 
@@ -555,15 +538,13 @@ exports.suspendCollaborator = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         if (collaborator.role === 'owner') {
             return res.status(403).json({
                 success: false,
-                message: 'Cannot suspend owner'
-            });
+                message: 'Cannot suspend owner' });
         }
 
         collaborator.status = 'suspended';
@@ -586,9 +567,7 @@ exports.suspendCollaborator = async (req, res) => {
         console.error('Suspend collaborator error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to suspend collaborator',
-            error: error.message
-        });
+            message: 'Failed to suspend collaborator' });
     }
 };
 
@@ -600,8 +579,7 @@ exports.reactivateCollaborator = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         collaborator.status = 'active';
@@ -624,9 +602,7 @@ exports.reactivateCollaborator = async (req, res) => {
         console.error('Reactivate collaborator error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to reactivate collaborator',
-            error: error.message
-        });
+            message: 'Failed to reactivate collaborator' });
     }
 };
 
@@ -638,8 +614,7 @@ exports.bulkRemoveCollaborators = async (req, res) => {
         if (!collaboratorIds || collaboratorIds.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No collaborators selected'
-            });
+                message: 'No collaborators selected' });
         }
 
         // Remove collaborators (excluding owners)
@@ -665,9 +640,7 @@ exports.bulkRemoveCollaborators = async (req, res) => {
         console.error('Bulk remove error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to remove collaborators',
-            error: error.message
-        });
+            message: 'Failed to remove collaborators' });
     }
 };
 
@@ -693,9 +666,7 @@ exports.bulkSuspendCollaborators = async (req, res) => {
         console.error('Bulk suspend error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to suspend collaborators',
-            error: error.message
-        });
+            message: 'Failed to suspend collaborators' });
     }
 };
 
@@ -718,16 +689,14 @@ exports.bulkActivateCollaborators = async (req, res) => {
         console.error('Bulk activate error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to activate collaborators',
-            error: error.message
-        });
+            message: 'Failed to activate collaborators' });
     }
 };
 
 // Export collaborators
 exports.exportCollaborators = async (req, res) => {
     try {
-        const collaborators = await User.find({ _id: { $ne: getValidUserId(req.user) } })
+        const collaborators = await User.find({ _id: { $ne: req.user?._id || req.user?.id } })
             .select('-password -resetPasswordToken -resetPasswordExpire')
             .sort({ createdAt: -1 });
 
@@ -753,9 +722,7 @@ exports.exportCollaborators = async (req, res) => {
         console.error('Export error:', error);
         res.status(500).json({
             success: false,
-            message: 'Export failed',
-            error: error.message
-        });
+            message: 'Export failed' });
     }
 };
 
@@ -789,9 +756,7 @@ exports.getCollaboratorActivity = async (req, res) => {
         console.error('Get activity error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -807,8 +772,7 @@ exports.getCollaboratorDetails = async (req, res) => {
         if (!collaborator) {
             return res.status(404).json({
                 success: false,
-                message: 'Collaborator not found'
-            });
+                message: 'Collaborator not found' });
         }
 
         // Get activity for this collaborator
@@ -838,9 +802,7 @@ exports.getCollaboratorDetails = async (req, res) => {
         console.error('Get details error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -863,16 +825,14 @@ exports.validateInviteToken = async (req, res) => {
         if (!invite) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid or expired invitation'
-            });
+                message: 'Invalid or expired invitation' });
         }
 
         // Check max uses
         if (invite.maxUses && invite.uses >= invite.maxUses) {
             return res.status(400).json({
                 success: false,
-                message: 'This invitation has reached its maximum usage'
-            });
+                message: 'This invitation has reached its maximum usage' });
         }
 
         res.json({
@@ -888,9 +848,7 @@ exports.validateInviteToken = async (req, res) => {
         console.error('Validate token error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
-        });
+            message: 'Server error' });
     }
 };
 
@@ -899,6 +857,12 @@ exports.acceptInvite = async (req, res) => {
     try {
         const { token } = req.params;
         const { name, password } = req.body;
+
+        if (!name || !password || String(password).length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: 'A name and a password of at least 8 characters are required' });
+        }
 
         const hashedToken = crypto
             .createHash('sha256')
@@ -914,17 +878,16 @@ exports.acceptInvite = async (req, res) => {
         if (!invite) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid or expired invitation'
-            });
+                message: 'Invalid or expired invitation' });
         }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email: invite.email });
         if (existingUser) {
-            return res.status(400).json({
+            return res.status(409).json({
                 success: false,
-                message: 'User already exists'
-            });
+                code: 'USER_EXISTS',
+                message: 'An account already exists for this email. Sign in instead.' });
         }
 
         // Generate a unique username from the invite email
@@ -966,7 +929,7 @@ exports.acceptInvite = async (req, res) => {
         });
 
         // Emit socket event
-        req.app.get('io').emit('collaborator_added', {
+        emitAll(req, 'collaborator_added', {
             collaborator: {
                 id: user._id,
                 name: user.name,
@@ -1001,9 +964,7 @@ exports.acceptInvite = async (req, res) => {
         console.error('Accept invite error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to accept invitation',
-            error: error.message
-        });
+            message: 'Failed to accept invitation' });
     }
 };
 

@@ -11,12 +11,14 @@ import NotificationProvider from './components/NotificationSystem';
 import ProtectedRoute from './components/ProtectedRoute';
 import MobileBottomNav from './components/MobileBottomNav';
 import LoadingScreen from './components/LoadingScreen';
+import DevDiagnostics from './components/DevDiagnostics';
 import './index.css';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const AcceptInvite = lazy(() => import('./pages/AcceptInvite'));
 const PublicReviews = lazy(() => import('./components/PublicReviews'));
 const CollaborationRequest = lazy(() => import('./components/CollaborationRequestStyled'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
@@ -61,6 +63,7 @@ const AppContent = () => {
                 } />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/accept-invite/:token" element={<AcceptInvite />} />
                 <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
                 <Route path="/collaborate" element={<CollaborationRequest />} />
@@ -93,6 +96,8 @@ const AppContent = () => {
               </Routes>
             </Suspense>
             {isDashboard && <MobileBottomNav />}
+            {/* Build-time literal: the dev panel is removed from production builds. */}
+            {import.meta.env.DEV && <DevDiagnostics />}
         </div>
     );
 };

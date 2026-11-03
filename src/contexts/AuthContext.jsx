@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api.service';
+import { ensureUserWorkspace } from '../utils/userWorkspace';
 
 const AuthContext = createContext(undefined);
 
@@ -171,10 +172,23 @@ const AuthProvider = ({ children }) => {
                 localStorage.setItem('efolio_user', JSON.stringify(data));
                 localStorage.setItem('efolio_role', 'user');
                 setLoading(false);
+                // New accounts get their own CV and portfolio records through
+                // the real get-or-create APIs. Best effort: registration still
+                // succeeds if the editors are temporarily unavailable, and the
+                // dashboard offers a retry via "Create my CV & Portfolio".
+                ensureUserWorkspace()
+                    .then(status => {
+                        if (status.errors.length) {
+                            console.warn('[register] workspace not fully created:', status.errors.join('; '));
+                        }
+                    })
+                    .catch(() => {});
                 return { success: true, user: data, role: 'user' };
             }
             setLoading(false);
-            return { success: false, error: 'Registration failed' };
+            // Surface the API's real reason (duplicate username, maintenance,
+            // registration disabled) instead of a generic message.
+            return { success: false, error: response?.message || 'Registration failed' };
         } catch (error) {
             setLoading(false);
             return { success: false, error: error.message || 'Registration failed' };

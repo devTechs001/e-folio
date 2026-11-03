@@ -4,7 +4,29 @@ const Review = require('../models/Review.model');
 const User = require('../models/User.model');
 const ActivityLog = require('../models/ActivityLog');
 const emailService = require('../services/email.service');
-const { Parser } = require('json2csv');
+const { Parser } = require('@json2csv/plainjs');
+
+// An unavailable database must never be disguised as real social proof. Every
+// degraded response is explicitly unsuccessful and explicitly unpopulated.
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const REVIEW_SORT_FIELDS = new Set(['createdAt', 'updatedAt', 'rating', 'name', 'status', 'featured']);
+const dbAvailable = () => mongoose.connection.readyState === 1;
+const emptyStats = () => ({ totalReviews: 0, approvedReviews: 0, pendingReviews: 0, rejectedReviews: 0, avgRating: 0 });
+const emptyAnalytics = () => ({ ratingDistribution: {}, thisMonth: 0, lastMonth: 0, responseRate: 0, categoryAverages: {} });
+const reportUnavailable = (res, label, error, extra = {}) => {
+    if (error) console.error(label, error);
+    return res.status(503).json({
+        success: false,
+        message: 'Review data is temporarily unavailable. No sample data is shown.',
+        meta: { populated: false },
+        ...extra
+    });
+};
+const clampInt = (value, fallback, min, max) => {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(Math.max(parsed, min), max);
+};
 
 // Create review (Public)
 exports.createReview = async (req, res) => {
@@ -175,7 +197,6 @@ exports.createReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to submit review',
-            error: error.message
         });
     }
 };
@@ -183,60 +204,11 @@ exports.createReview = async (req, res) => {
 // Get reviews with filtering (Owner only)
 exports.getReviews = async (req, res) => {
     try {
-        // Check if MongoDB connection is available
-        if (mongoose.connection.readyState !== 1) { // 1 means connected
-            // Return mock data when database is not available
-            const mockReviews = [
-                {
-                    _id: 'review_001',
-                    name: 'John Doe',
-                    email: 'john@example.com',
-                    rating: 5,
-                    comment: 'Excellent portfolio! Very impressive work.',
-                    title: 'Outstanding Work',
-                    categories: { design: 5, functionality: 5, performance: 5, support: 5 },
-                    projectId: 'project_001',
-                    recommend: true,
-                    status: 'approved',
-                    isPublic: true,
-                    featured: true,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                },
-                {
-                    _id: 'review_002',
-                    name: 'Jane Smith',
-                    email: 'jane@example.com',
-                    rating: 4,
-                    comment: 'Great design and clean code. Would love to see more projects.',
-                    title: 'Clean and Professional',
-                    categories: { design: 4, functionality: 4, performance: 4, support: 4 },
-                    projectId: 'project_002',
-                    recommend: true,
-                    status: 'approved',
-                    isPublic: true,
-                    featured: false,
-                    createdAt: new Date(Date.now() - 86400000), // 1 day ago
-                    updatedAt: new Date(Date.now() - 86400000)
-                }
-            ];
-
-            return res.json({
-                success: true,
-                reviews: mockReviews,
-                stats: {
-                    totalReviews: 12,
-                    approvedReviews: 10,
-                    pendingReviews: 2,
-                    rejectedReviews: 0,
-                    avgRating: 4.5
-                },
-                pagination: {
-                    page: 1,
-                    limit: 10,
-                    total: 2,
-                    pages: 1
-                }
+        if (!dbAvailable()) {
+            return reportUnavailable(res, 'Get reviews: database not connected', null, {
+                reviews: [],
+                stats: emptyStats(),
+                pagination: { page: 1, limit: 10, total: 0, pages: 0 }
             });
         }
 
@@ -279,13 +251,14 @@ exports.getReviews = async (req, res) => {
             query.rating = parseInt(rating);
         }
 
-        // Search
+        // Escape user input: an unescaped $regex is an injection/ReDoS vector.
         if (search) {
+            const safeSearch = escapeRegex(String(search).slice(0, 100));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
-                { comment: { $regex: search, $options: 'i' } },
-                { title: { $regex: search, $options: 'i' } }
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { email: { $regex: safeSearch, $options: 'i' } },
+                { comment: { $regex: safeSearch, $options: 'i' } },
+                { title: { $regex: safeSearch, $options: 'i' } }
             ];
         }
 
@@ -296,13 +269,15 @@ exports.getReviews = async (req, res) => {
             if (endDate) query.createdAt.$lte = new Date(endDate);
         }
 
-        const sortOptions = {};
-        sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+        const safeSortBy = REVIEW_SORT_FIELDS.has(sortBy) ? sortBy : 'createdAt';
+        const sortOptions = { [safeSortBy]: sortOrder === 'desc' ? -1 : 1 };
+        const safePage = clampInt(page, 1, 1, 100000);
+        const safeLimit = clampInt(limit, 10, 1, 100);
 
         const reviews = await Review.find(query)
             .sort(sortOptions)
-            .limit(parseInt(limit))
-            .skip((parseInt(page) - 1) * parseInt(limit));
+            .limit(safeLimit)
+            .skip((safePage - 1) * safeLimit);
 
         const total = await Review.countDocuments(query);
 
@@ -314,50 +289,17 @@ exports.getReviews = async (req, res) => {
             reviews,
             stats,
             pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
+                page: safePage,
+                limit: safeLimit,
                 total,
-                pages: Math.ceil(total / parseInt(limit))
+                pages: Math.ceil(total / safeLimit)
             }
         });
     } catch (error) {
-        console.error('Get reviews error:', error);
-        // Return mock data as fallback
-        const mockReviews = [
-            {
-                _id: 'review_001',
-                name: 'John Doe',
-                email: 'john@example.com',
-                rating: 5,
-                comment: 'Excellent portfolio! Very impressive work.',
-                title: 'Outstanding Work',
-                categories: { design: 5, functionality: 5, performance: 5, support: 5 },
-                projectId: 'project_001',
-                recommend: true,
-                status: 'approved',
-                isPublic: true,
-                featured: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            }
-        ];
-
-        res.json({
-            success: true,
-            reviews: mockReviews,
-            stats: {
-                totalReviews: 1,
-                approvedReviews: 1,
-                pendingReviews: 0,
-                rejectedReviews: 0,
-                avgRating: 5.0
-            },
-            pagination: {
-                page: 1,
-                limit: 10,
-                total: 1,
-                pages: 1
-            }
+        reportUnavailable(res, 'Get reviews error:', error, {
+            reviews: [],
+            stats: emptyStats(),
+            pagination: { page: 1, limit: 10, total: 0, pages: 0 }
         });
     }
 };
@@ -380,7 +322,6 @@ exports.getReviewById = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };
@@ -389,6 +330,8 @@ exports.getReviewById = async (req, res) => {
 exports.getPublicReviews = async (req, res) => {
     try {
         const { limit = 6, sortBy = 'createdAt', featured = false } = req.query;
+        const safeSortBy = REVIEW_SORT_FIELDS.has(sortBy) ? sortBy : 'createdAt';
+        const safeLimit = clampInt(limit, 6, 1, 50);
 
         let query = {
             status: 'approved',
@@ -401,8 +344,8 @@ exports.getPublicReviews = async (req, res) => {
 
         const reviews = await Review.find(query)
             .select('name rating comment title categories createdAt featured')
-            .sort({ [sortBy]: -1 })
-            .limit(parseInt(limit));
+            .sort({ [safeSortBy]: -1 })
+            .limit(safeLimit);
 
         const avgRating = await Review.aggregate([
             { $match: { status: 'approved', isPublic: true } },
@@ -420,7 +363,6 @@ exports.getPublicReviews = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };
@@ -428,40 +370,8 @@ exports.getPublicReviews = async (req, res) => {
 // Get featured reviews
 exports.getFeaturedReviews = async (req, res) => {
     try {
-        // Check if MongoDB connection is available
-        if (mongoose.connection.readyState !== 1) { // 1 means connected
-            // Return mock data when database is not available
-            const mockReviews = [
-                {
-                    _id: 'review_001',
-                    name: 'John Doe',
-                    rating: 5,
-                    comment: 'Excellent portfolio! Very impressive work.',
-                    title: 'Outstanding Work',
-                    categories: { design: 5, functionality: 5, performance: 5, support: 5 },
-                    createdAt: new Date()
-                },
-                {
-                    _id: 'review_002',
-                    name: 'Jane Smith',
-                    rating: 4,
-                    comment: 'Great design and clean code. Would love to see more projects.',
-                    title: 'Clean and Professional',
-                    categories: { design: 4, functionality: 4, performance: 4, support: 4 },
-                    createdAt: new Date(Date.now() - 86400000) // 1 day ago
-                },
-                {
-                    _id: 'review_003',
-                    name: 'Alex Johnson',
-                    rating: 5,
-                    comment: 'Incredible attention to detail. Highly recommended!',
-                    title: 'Attention to Detail',
-                    categories: { design: 5, functionality: 5, performance: 5, support: 5 },
-                    createdAt: new Date(Date.now() - 172800000) // 2 days ago
-                }
-            ];
-
-            return res.json({ success: true, reviews: mockReviews });
+        if (!dbAvailable()) {
+            return reportUnavailable(res, 'Featured reviews: database not connected', null, { reviews: [] });
         }
 
         const reviews = await Review.find({
@@ -475,21 +385,7 @@ exports.getFeaturedReviews = async (req, res) => {
 
         res.json({ success: true, reviews });
     } catch (error) {
-        console.error('Get featured reviews error:', error);
-        // Return mock data as fallback
-        const mockReviews = [
-            {
-                _id: 'review_001',
-                name: 'John Doe',
-                rating: 5,
-                comment: 'Excellent portfolio! Very impressive work.',
-                title: 'Outstanding Work',
-                categories: { design: 5, functionality: 5, performance: 5, support: 5 },
-                createdAt: new Date()
-            }
-        ];
-
-        res.json({ success: true, reviews: mockReviews });
+        reportUnavailable(res, 'Get featured reviews error:', error, { reviews: [] });
     }
 };
 
@@ -566,7 +462,6 @@ exports.moderateReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to moderate review',
-            error: error.message
         });
     }
 };
@@ -628,7 +523,6 @@ exports.replyToReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to send reply',
-            error: error.message
         });
     }
 };
@@ -664,7 +558,6 @@ exports.bulkModerateReviews = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Bulk moderation failed',
-            error: error.message
         });
     }
 };
@@ -693,7 +586,6 @@ exports.bulkDeleteReviews = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Bulk deletion failed',
-            error: error.message
         });
     }
 };
@@ -724,7 +616,6 @@ exports.toggleFeaturedReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update featured status',
-            error: error.message
         });
     }
 };
@@ -755,7 +646,6 @@ exports.toggleReviewVisibility = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update visibility',
-            error: error.message
         });
     }
 };
@@ -793,7 +683,6 @@ exports.updateReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update review',
-            error: error.message
         });
     }
 };
@@ -829,7 +718,6 @@ exports.deleteReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete review',
-            error: error.message
         });
     }
 };
@@ -844,7 +732,6 @@ exports.getReviewStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };
@@ -852,29 +739,8 @@ exports.getReviewStats = async (req, res) => {
 // Get review analytics
 exports.getReviewAnalytics = async (req, res) => {
     try {
-        // Check if MongoDB connection is available
-        if (mongoose.connection.readyState !== 1) { // 1 means connected
-            // Return mock data when database is not available
-            const mockAnalytics = {
-                ratingDistribution: {
-                    5: 8,
-                    4: 3,
-                    3: 1,
-                    2: 0,
-                    1: 0
-                },
-                thisMonth: 5,
-                lastMonth: 3,
-                responseRate: 85.7,
-                categoryAverages: {
-                    avgDesign: 4.7,
-                    avgFunctionality: 4.5,
-                    avgPerformance: 4.8,
-                    avgSupport: 4.6
-                }
-            };
-
-            return res.json({ success: true, analytics: mockAnalytics });
+        if (!dbAvailable()) {
+            return reportUnavailable(res, 'Review analytics: database not connected', null, { analytics: emptyAnalytics() });
         }
 
         // Rating distribution
@@ -934,28 +800,7 @@ exports.getReviewAnalytics = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Get analytics error:', error);
-        // Return mock data as fallback
-        const mockAnalytics = {
-            ratingDistribution: {
-                5: 1,
-                4: 0,
-                3: 0,
-                2: 0,
-                1: 0
-            },
-            thisMonth: 1,
-            lastMonth: 0,
-            responseRate: 100.0,
-            categoryAverages: {
-                avgDesign: 5.0,
-                avgFunctionality: 5.0,
-                avgPerformance: 5.0,
-                avgSupport: 5.0
-            }
-        };
-
-        res.json({ success: true, analytics: mockAnalytics });
+        reportUnavailable(res, 'Get analytics error:', error, { analytics: emptyAnalytics() });
     }
 };
 
@@ -975,7 +820,6 @@ exports.getReviewsByRating = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: error.message
         });
     }
 };
@@ -1029,7 +873,6 @@ exports.exportReviews = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Export failed',
-            error: error.message
         });
     }
 };
@@ -1056,7 +899,6 @@ exports.archiveReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to archive review',
-            error: error.message
         });
     }
 };
@@ -1083,7 +925,6 @@ exports.restoreReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to restore review',
-            error: error.message
         });
     }
 };
@@ -1302,7 +1143,6 @@ exports.likeReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to like review',
-            error: error.message
         });
     }
 };
@@ -1344,7 +1184,6 @@ exports.unlikeReview = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to unlike review',
-            error: error.message
         });
     }
 };
