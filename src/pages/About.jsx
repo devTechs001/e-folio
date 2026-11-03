@@ -54,6 +54,8 @@ const About = () => {
 
     useEffect(() => {
         const interval = setInterval(() => {
+            // Pause background-tab work: a hidden carousel only burns CPU.
+            if (typeof document !== 'undefined' && document.hidden) return;
             setCurrentImageIndex(prev => (prev + 1) % ABOUT_IMAGES.length);
         }, 5000);
         return () => clearInterval(interval);

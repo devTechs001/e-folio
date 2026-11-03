@@ -18,7 +18,6 @@ import AIChatbot from '../components/AIChatbot';
 import '../styles/LandingPage.css';
 
 const LandingPage = () => {
-    const [isLoading, setIsLoading] = useState(true);
     const [showBanner, setShowBanner] = useState(true);
     const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -27,10 +26,9 @@ const LandingPage = () => {
         trackingService.init();
         trackingService.trackPageView('/', 'Home - E-Folio Portfolio');
 
-        // Simulate page load
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 1000);
+        // No artificial delay: the page renders as soon as its chunk is ready.
+        // The previous 1000 ms fake loader was the largest perceived lag on
+        // every visit; real data sections show their own honest load states.
 
         // Track scroll progress (rAF-throttled to avoid re-render on every pixel)
         let ticking = false;
@@ -48,7 +46,6 @@ const LandingPage = () => {
         window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => {
-            clearTimeout(timer);
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
@@ -75,26 +72,6 @@ const LandingPage = () => {
             description: 'Always available'
         }
     ];
-
-    if (isLoading) {
-        return (
-            <div className="landing-loader">
-                <div className="loader-content">
-                    <div className="loader-logo">
-                        <i className="fas fa-code"></i>
-                        <div className="loader-logo-glow"></div>
-                    </div>
-                    <h2 className="loader-text">
-                        Danie<span className="text-mainColor">Tech</span>
-                    </h2>
-                    <div className="loader-bar">
-                        <div className="loader-progress"></div>
-                    </div>
-                    <p className="loader-status">Loading amazing portfolio...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="landing-page relative pb-20 lg:pb-0">

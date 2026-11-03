@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -19,12 +19,12 @@ prompt was declined in favour of "the normal way"). No penetration-test or
 contract scope was assumed. Security work is limited to source review, local
 hardening, and authorised local tests. Under the explicit **"merge to main"**
 instruction, phase 1 and phase 2 were merged into this repository's own
-`origin/main` via PR #1 and PR #2 (see §5). Phases 3–9 (collaboration & review,
+`origin/main` via PR #1 and PR #2 (see §5). Phases 3–10 (collaboration & review,
 Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
-Resources page) are **local only** — no push, PR, merge, external issue, or
-external service was used.
+Resources page, live preview + lagging issues) are **local only** — no push, PR,
+merge, external issue, or external service was used.
 
 ---
 
@@ -41,8 +41,9 @@ external service was used.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Live preview + lagging issues (phase 10) | browser-facing code called localhost and hung 15 s per request; 1 s fake loader; dead raw WS retrying every 5 s; uncached file scans | same-origin `/api` + proxy fixes, no artificial loader, hidden-tab timer guards, authenticated tracking namespace, 30 s inventory caches, preview-safe Vite host/proxy |
 | Security Audit dashboard (phase 9) | audit results only existed as terminal output from `npm run audit:security` | owner-only `/dashboard/security-audit` with real cached/rate-limited audit API, findings, checks, controls, environment presence and JSON export |
-| Resources page (phase 9) | no inventory of local docs/backups/scripts/tests; no curated reference list | owner-only `/dashboard/resources` with allowlisted metadata-only file inventory, filters, JSON/CSV export and 16 verified security references |
+| Resources page (phase 9) | no inventory of local docs/backups/scripts/tests; no curated reference list | owner-only `/dashboard/resources` with allowlisted metadata-only file inventory, filters, JSON/CSV export and 15 verified security references (9 external + 6 internal) |
 | Enhanced user workspaces + real-time notifications (phase 8) | one Profile card with 4 buttons; no account console; notifications broadcast on the root socket | `/dashboard/user-workspaces` with account creation, completeness, versions, templates, publish/export, user directory and DB-backed inbox; JWT-authenticated `/notifications` namespace with REST polling fallback |
 | NEX Store link (phase 8) | plain repeated anchor with `rel="noreferrer"` | one shared canonical URL (unchanged) plus banner/compact/card variants with copy, share, QR, offline hint and safe external-link attributes |
 | About data + CV/portfolio/accounts (phase 7) | Profile page did not reflect the public About data; new accounts got no CV/portfolio; public CV/portfolio pages called localhost | shared About data module used by both pages, real get-or-create CV/portfolio APIs, working public pages, real Profile card |
@@ -861,6 +862,46 @@ Request: *"the security audit,,dashboard,,resources,,page"*. Read as one dashboa
 
 ---
 
+## 3j. Phase 10 — live preview + lagging issues
+
+Request: *"previre live,,laggin gissues"*. Two parts: make the app available as a live preview, and remove the sources of perceived lag. Both were done locally; no NetGate/project link was changed, no external service was contacted and no mock data was injected.
+
+### A. Live preview
+
+- A Vite dev server is running on **port 5173**, bound to `0.0.0.0` (`server.host: true`), with `server.allowedHosts` permitting the Arena `.e2b.app` preview host alongside localhost. No host/origin rejection was reported by the platform.
+- HTTP smoke checks with a preview-like `Host` header: `/`, `/src/main.jsx`, `/src/App.jsx`, `/src/pages/LandingPage.jsx`, `/src/components/dashboard/SecurityAuditDashboard.jsx`, `/src/data/securityResources.json` and `/src/services/api.service.js` all returned **200**. The dev server was ready in **185 ms**.
+- `/api/*` is proxied to the backend origin. With no Express/Mongo server running in this sandbox, a probe returned **500 in 17 ms** instead of leaving the browser waiting on a 15 s `localhost` timeout. API-backed sections therefore show their real "unavailable" states — this is deliberate: no sample/fabricated data was substituted.
+- The dashboard requires a real owner JWT, so the preview shows the public landing page and login form; there is no auth bypass or preview-only fake account.
+
+### B. Lagging issues found and fixed
+
+| # | Lagging issue | Fix |
+| --- | --- | --- |
+| 1 | `api.service.js`, `apiProxy.js` and `AIAssistantStyled.jsx` defaulted to `http://localhost:5000/api` — a browser outside the sandbox cannot reach it, so every request hung until the 15 s abort timeout | same-origin relative `/api` default; `VITE_API_URL` still wins in production |
+| 2 | `socket.service.js` defaulted to `http://localhost:5000` | derive the origin from an absolute `VITE_API_URL`/`VITE_SOCKET_URL`, otherwise `window.location.origin` |
+| 3 | `vite.config.js` used `VITE_API_URL` directly as a proxy target, producing `/api/api/...` when the value ends in `/api`; Socket.IO and backend static paths were not proxied | strip the trailing `/api`, proxy `/api`, `/socket.io` (`ws: true`), `/uploads` and `/portfolios` |
+| 4 | `LandingPage.jsx` showed a **fake 1000 ms loading screen** on every visit | removed the artificial timer and loader; the page renders as soon as its chunk is ready |
+| 5 | Carousel/theme/cache timers kept firing in hidden tabs, and `SkillsEditorEnhanced` re-rendered every 10 s | hidden-tab guards on the About + Testimonials carousels and the landing theme auto-change; 10 s cache poll → 30 s + hidden-tab guard |
+| 6 | `AITrackingSystem.jsx` opened a raw `ws://localhost:5000/tracking` that the server never served, then retried every 5 s forever (including after unmount); the realtime toggle also read stale state and silently never connected | replaced with the authenticated `/tracking` Socket.IO namespace (`connectTracking` / `onTrackingEvent` / `disconnectTracking`) driven by an effect on `realTimeEnabled`, with ref-counted, removable listeners and no bespoke retry loop |
+| 7 | `/api/admin/security-controls` re-read five source files and `/api/admin/resources` re-walked ~102 files on every request | 30 s in-memory caches with an honest `cached: true` flag (audit already had a 60 s cache) |
+| 8 | Heavy shared libraries were discovered and pre-bundled on the first page request, forcing a reload | `optimizeDeps.include` now pre-bundles React, framer-motion, lucide-react, AOS, socket.io-client, qrcode, html2canvas and the chart libraries at server start |
+
+### C. Verification
+
+- `npm run check` exit 0: lint **0 errors / 673 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **21.61s**, PWA **214 precache entries (6966.12 KiB)**.
+- **106** Node-only regression checks: 9 dashboard + 21 collaboration/review + 12 lab/dashboard + 11 testimonial + 8 profile/settings + 10 About/workspace + 12 enhanced-workspace/realtime/NEX Store + 13 Security Audit / Resources + **10 new live-preview / lagging-issue** checks (`tests/live-preview-lag.test.mjs`, wired as `test:live-preview` in both package files).
+- `git diff --check` clean; masked secret scan clean; no NetGate/project-link file changed.
+- Local only: no push, PR, merge, external issue, external probing or offensive testing.
+
+### D. Remaining performance gaps (not fixed)
+
+- Production chunks over 500 kB remain (`AIAssistantStyled` ~1,580 kB, `dash.all.min` ~992 kB, `charts` ~605 kB, `hls` ~521 kB); they are lazy-loaded but still precached by the service worker (214 entries / ~6.9 MB).
+- `index.html` loads a Google Fonts stylesheet with four font families; self-hosting or subsetting would cut first paint on slow links.
+- No browser-level profiling was performed (no browser automation is available in this sandbox), so the fixes above are source-level and verified with HTTP smoke checks rather than measured FPS/Lighthouse numbers.
+
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -870,8 +911,8 @@ Request: *"the security audit,,dashboard,,resources,,page"*. Read as one dashboa
 3. **Runtime-verify** realtime event envelopes, `getRealtimeAnalytics()` payload
    shape, `assertProductionConfig()` startup, CORS/no-origin behaviour,
    the new owner-only `/files/:filename` download route, error messages, and
-   rate limits. No server instance was
-   started (server deps are not installed; `corepack pnpm` is available).
+   rate limits. No Express/Mongo backend instance was started
+   (server deps are not installed; `corepack pnpm` is available).
 4. **Decide on `compat.routes.js` static responses** — `meta.populated:false`,
    `501`, and `403` are honest placeholders, not finished features.
 5. **Remove or gate `keyRotator.service.js`**; review public ingestion routes for
@@ -907,6 +948,10 @@ Request: *"the security audit,,dashboard,,resources,,page"*. Read as one dashboa
     routes with a real server and owner JWT, consider gating
     `GET /api/admin/resources` further in production, and add a link checker for
     the curated external references (without sending any workspace data).
+15. Phase 10 follow-ups: run a real browser profiling pass (Lighthouse / Core
+    Web Vitals) once a backend and browser automation are available, split the
+    remaining >500 kB lazy chunks, and self-host/subset the Google Fonts
+    stylesheet.
 
 ---
 
@@ -919,5 +964,5 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8 and 9 are local-only work on `arena/f176a951-e-folio`; they have
+this repository. Phases 3, 4, 5, 6, 7, 8, 9 and 10 are local-only work on `arena/f176a951-e-folio`; they have
 **not** been pushed, opened as a PR, or merged.

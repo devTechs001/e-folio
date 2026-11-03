@@ -7,6 +7,11 @@ export default defineConfig(({ command, mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
   const isGitHubPages = env.GITHUB_PAGES === 'true'
+  // VITE_API_URL normally ends in /api. A proxy target must be the origin,
+  // otherwise /api/foo becomes /api/api/foo. With no env (live preview) the
+  // backend origin is the local Express port; the dev server proxies it.
+  const configuredApi = env.VITE_API_URL || ''
+  const backendTarget = (configuredApi.replace(/\/api\/?$/, '') || 'http://localhost:5000')
   
   return {
     plugins: [
@@ -136,10 +141,10 @@ export default defineConfig(({ command, mode }) => {
       // Permit the Arena live-preview host as well as local development.
       allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'],
       proxy: {
-        '/api': {
-          target: env.VITE_API_URL || 'http://localhost:5000',
-          changeOrigin: true
-        }
+        '/api': { target: backendTarget, changeOrigin: true },
+        '/socket.io': { target: backendTarget, changeOrigin: true, ws: true },
+        '/uploads': { target: backendTarget, changeOrigin: true },
+        '/portfolios': { target: backendTarget, changeOrigin: true }
       }
     },
 
@@ -152,7 +157,14 @@ export default defineConfig(({ command, mode }) => {
     
     // Optimize dependencies
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom']
+      // Pre-bundle the heavy shared libraries at server start instead of
+      // discovering them on the first page request (which forced a reload).
+      include: [
+        'react', 'react-dom', 'react-router-dom',
+        'framer-motion', 'lucide-react', 'aos',
+        'socket.io-client', 'qrcode', 'html2canvas',
+        'chart.js', 'react-chartjs-2', 'recharts'
+      ]
     },
     
     // Define global variables

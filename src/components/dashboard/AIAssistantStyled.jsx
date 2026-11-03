@@ -18,7 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import { useAuth } from '../../contexts/AuthContext';
 import ApiService from '../../services/api.service';
-const AI_API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const AI_API_BASE = import.meta.env.VITE_API_URL || '/api';
 import DashboardLayout from './DashboardLayout';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark, docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';

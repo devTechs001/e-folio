@@ -13,7 +13,15 @@ const { runAudit } = require('../scripts/security-audit');
 
 const ROOT = path.resolve(__dirname, '../..');
 const AUDIT_TTL_MS = 60 * 1000;
+const INVENTORY_TTL_MS = 30 * 1000;
 let auditCache = null;
+let controlsCache = null;
+let resourcesCache = null;
+
+// Reading five source files or walking ~100 resource files on every dashboard
+// request is wasted work. Results are cached briefly and flagged as cached.
+const fromCache = entry => (entry && entry.expiresAt > Date.now() ? entry.data : null);
+const toCache = data => ({ data, expiresAt: Date.now() + INVENTORY_TTL_MS });
 
 const readSource = rel => {
     try {
@@ -58,6 +66,10 @@ const getSecurityAudit = async (req, res) => {
 
 const getSecurityControls = async (req, res) => {
     try {
+        const cached = fromCache(controlsCache);
+        if (cached) {
+            return res.json({ success: true, data: { ...cached, cached: true } });
+        }
         const serverSrc = readSource('server/server.js');
         const authSrc = readSource('server/middleware/auth.middleware.js');
         const configSrc = readSource('server/config/security.js');
@@ -123,28 +135,28 @@ const getSecurityControls = async (req, res) => {
             }
         ];
 
-        res.json({
-            success: true,
-            data: {
-                controls,
-                enabledCount: controls.filter(control => control.enabled).length,
-                total: controls.length,
-                environment: {
-                    production: security.isProduction(),
-                    // Secret presence is checked by assertProductionConfig(); the
-                    // value is never read here or returned to the dashboard.
-                    jwtSecretSource: 'server/config/security.js',
-                    ownerCredentialSet: Boolean(process.env.OWNER_PASSWORD || process.env.OWNER_PASSWORD_HASH),
-                    mongoUriSet: Boolean(process.env.MONGODB_URI),
-                    clientUrlSet: Boolean(process.env.CLIENT_URL)
-                },
-                // Count only: the issue messages can contain configuration detail.
-                configurationIssueCount: security.assertProductionConfig().length,
-                generatedAt: new Date().toISOString(),
-                mode: 'source-inspection',
-                note: 'Detected in local source and environment presence. This is not a live runtime probe; secret values are never returned.'
-            }
-        });
+        const data = {
+            controls,
+            enabledCount: controls.filter(control => control.enabled).length,
+            total: controls.length,
+            environment: {
+                production: security.isProduction(),
+                // Secret presence is checked by assertProductionConfig(); the
+                // value is never read here or returned to the dashboard.
+                jwtSecretSource: 'server/config/security.js',
+                ownerCredentialSet: Boolean(process.env.OWNER_PASSWORD || process.env.OWNER_PASSWORD_HASH),
+                mongoUriSet: Boolean(process.env.MONGODB_URI),
+                clientUrlSet: Boolean(process.env.CLIENT_URL)
+            },
+            // Count only: the issue messages can contain configuration detail.
+            configurationIssueCount: security.assertProductionConfig().length,
+            generatedAt: new Date().toISOString(),
+            mode: 'source-inspection',
+            note: 'Detected in local source and environment presence. This is not a live runtime probe; secret values are never returned.',
+            cached: false
+        };
+        controlsCache = toCache(data);
+        res.json({ success: true, data });
     } catch (error) {
         console.error('Security controls lookup failed:', error);
         res.status(500).json({ success: false, message: 'Security controls could not be read' });
@@ -203,6 +215,10 @@ const walk = (dir, out = []) => {
 
 const getResources = async (req, res) => {
     try {
+        const cached = fromCache(resourcesCache);
+        if (cached) {
+            return res.json({ success: true, data: { ...cached, cached: true } });
+        }
         const items = [];
         for (const group of RESOURCE_GROUPS) {
             const base = path.join(ROOT, group.dir);
@@ -242,20 +258,20 @@ const getResources = async (req, res) => {
             };
         });
 
-        res.json({
-            success: true,
-            data: {
-                items: visible,
-                categories,
-                totalItems: items.length,
-                returnedItems: visible.length,
-                totalBytes: items.reduce((sum, item) => sum + item.sizeBytes, 0),
-                truncated,
-                generatedAt: new Date().toISOString(),
-                mode: 'local-filesystem',
-                note: 'File names and metadata only. Contents, real .env files and private uploads are never returned.'
-            }
-        });
+        const data = {
+            items: visible,
+            categories,
+            totalItems: items.length,
+            returnedItems: visible.length,
+            totalBytes: items.reduce((sum, item) => sum + item.sizeBytes, 0),
+            truncated,
+            generatedAt: new Date().toISOString(),
+            mode: 'local-filesystem',
+            note: 'File names and metadata only. Contents, real .env files and private uploads are never returned.',
+            cached: false
+        };
+        resourcesCache = toCache(data);
+        res.json({ success: true, data });
     } catch (error) {
         console.error('Resource inventory failed:', error);
         res.status(500).json({ success: false, message: 'Resource inventory could not be read' });

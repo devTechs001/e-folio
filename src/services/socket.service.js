@@ -1,7 +1,15 @@
 // Socket.io Service for Real-time Communication
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+// Prefer an explicit socket URL, then the configured absolute backend origin,
+// then the page's own origin. Never call localhost from browser-facing code:
+// the live-preview browser is not the sandbox running the dev server.
+const configuredSocketOrigin =
+    import.meta.env.VITE_SOCKET_URL ||
+    (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
+const SOCKET_URL = /^(https?|wss?):\/\//.test(configuredSocketOrigin)
+    ? configuredSocketOrigin
+    : (typeof window !== 'undefined' ? window.location.origin : '');
 
 // Shared connection state for the notification namespace. Components can
 // subscribe without owning the socket, so live/polling status stays in sync.

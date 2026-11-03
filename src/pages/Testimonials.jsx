@@ -103,6 +103,7 @@ const Testimonials = () => {
   useEffect(() => {
     if (viewMode === 'carousel') {
       const interval = setInterval(() => {
+        if (typeof document !== 'undefined' && document.hidden) return;
         nextSlide();
       }, 5000);
       return () => clearInterval(interval);
