@@ -43,11 +43,13 @@ check('technology labels are no longer tiny', () => {
 
 check('the card area keeps a consistent viewpoint with real scrollers', () => {
     const css = read('src/styles/SkillsModern.css');
-    assert.match(css, /\.sk-cardview \{[\s\S]*?max-height: clamp\(420px, 68vh, 760px\)[\s\S]*?overflow-y: auto/);
+    assert.match(css, /\.sk-cardview \{[\s\S]*?max-height: clamp\(360px, 56vh, 560px\)[\s\S]*?overflow-y: auto/);
     assert.match(css, /\.sk-cardview::-webkit-scrollbar-thumb/);
     assert.match(css, /\.sk-items \{[\s\S]*?overflow-y: auto/);
     assert.match(css, /\.sk-items::-webkit-scrollbar-thumb/);
-    assert.match(css, /\.sk-card \{[\s\S]*?height: clamp\(320px, 46vh, 440px\)/);
+    // Phase 27: small, scrollable technology cards.
+    assert.match(css, /\.sk-card \{[\s\S]*?height: clamp\(220px, 30vh, 300px\)/);
+    assert.match(css, /\.sk-card \{ height: 240px; \}/);
     assert.match(css, /\.sk-chipbar \{ flex-wrap: nowrap; overflow-x: auto/);
     assert.match(css, /\.sk-scroll-hint/);
 });

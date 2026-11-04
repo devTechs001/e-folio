@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review → testimonial thumbnail → CV-grouped modern Skills page → technology typography / card scrollers → first-page hero + drawer |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review → testimonial thumbnail → CV-grouped modern Skills page → technology typography / card scrollers → first-page hero + drawer → real header icons / compact cards |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -40,10 +40,12 @@ Projects feature restoration, the page remodel, and the Lab subsystem review)
 were local until the owner's explicit **"push change"** instruction in phase 25
 (§3y), which reversed the earlier **"not yet"** for a push only. They were
 pushed to the active branch `arena/b1b14834-e-folio`, creating that remote
-branch. Phase 25 and phase 26 (§3y–§3z) were pushed to the same branch
-after the owner's explicit **"push changes now"** instructions. **No PR or
-merge has been used for phases 22–26**; the "not yet" restraint still applies
-to PRs and merges.
+branch. Phases 25–27 (§3y–§3aa) were pushed to the same branch after the
+owner's explicit **"push changes now"** / **"push all"** instructions. The
+owner then said **"comit t mian"**, which reversed the earlier **"not yet"**
+restraint for PRs/merges: phases 22–27 were merged into `main` from the active
+branch via PR **PR_NUMBER**. PR #4 (an older, unrelated branch) was left open
+and untouched.
 
 ---
 
@@ -60,7 +62,8 @@ to PRs and merges.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
-| UI polish: fonts, card viewpoint, hero + drawer (phase 26) | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
+| UI polish: fonts, card viewpoint, hero + drawer (phase 26) |
+| Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
 | Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
 | Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
@@ -1797,6 +1800,86 @@ PR #4 remains open and untouched.
 
 ---
 
+## 3aa. Phase 27 — real header icons, a modern desktop header, compact scrollable technology cards, and the merge to main
+
+Requested as *"the header as well,,restyle it well wiht real icons,,the
+technologies oin skills(restyle the cards to atleast small(scrollable) ,,push
+all,,comit t mian"*.
+
+### Real icons in the header
+
+A read-only check of the installed `@fortawesome/fontawesome-free` stylesheet
+confirmed that several classes used by the header do not exist in that free
+set — most notably `fa-sparkles`. Those glyphs therefore never rendered. The
+header (desktop **and** drawer) now uses real `lucide-react` SVG components:
+
+- `NAV_SECTIONS` carries an `Icon` component per section (`User`, `Settings2`,
+  `GraduationCap`, `Heart`, `FolderGit2`, `MessageSquare`, `Mail`), rendered
+  through a small `NavIcon` helper in both nav bars.
+- Logo `Code2`; dashboard `LayoutDashboard`; collaborate `Handshake` and
+  `Sparkles`; theme `Sun`/`Moon`; fullscreen `Maximize2`/`Minimize2`; menu
+  `Menu`/`X`; drawer actions `ArrowRight`, `X`. The old CSS hamburger bars were
+  replaced with a real menu/close icon, and the active-section dot is now a
+  CSS dot instead of a font glyph.
+- **No `fas fa-*` class remains in `src/pages/Header.jsx`.** All links,
+  routes, section scrolling, theme/fullscreen toggles, active states, overlay
+  and close behaviour are unchanged. The pre-existing
+  `ThisButtonDoesThings` label was again left alone: it is behaviour, not an
+  icon.
+
+`src/styles/HeaderModern.css` (loaded last) restyles the desktop header: a
+glass gradient surface on scroll, modern nav pills with a real icon hover,
+rounded gradient buttons, explicit SVG sizing for every icon, a styled mobile
+menu button, `focus-visible` rings and reduced-motion overrides.
+
+### Small, scrollable technology cards
+
+The phase-26 card viewport was still tall. The technology/Skills cards are now
+compact while keeping every scroller:
+
+| Property | Phase 26 | Phase 27 |
+| --- | --- | --- |
+| Card height | `clamp(320px, 46vh, 440px)` | **`clamp(220px, 30vh, 300px)`** |
+| Mobile card height | `360px` | **`240px`** |
+| Card viewport | `clamp(420px, 68vh, 760px)` | **`clamp(360px, 56vh, 560px)`** |
+| Mobile viewport | `64vh` | **`52vh`** |
+
+Card padding, header spacing, icon box and item row padding were tightened to
+match, and the horizontal chip scroller remains. The **fonts were not reduced**
+— item labels stay at 1.05rem — because the owner specifically asked for
+larger technology type in phase 26. Each card's `.sk-items` list still scrolls
+independently, and the outer `.sk-cardview` keeps its own themed scroller and
+keyboard-focusable region.
+
+### Push and merge to main
+
+The explicit **"push all"** and **"comit t mian"** instructions reversed the
+remaining **"not yet"** restraint. All phase-27 changes were committed and
+pushed to `arena/b1b14834-e-folio`, then merged into `main` from that branch
+via **PR PR_NUMBER** using `gh pr merge <number> --merge`. The PR body
+contained no code, credential or configuration value. `main` was not pushed
+to directly, history was not rewritten, and PR #4 (old branch) was left open.
+
+### Verification (static only)
+
+- `npm test` exit 0: **295** Node-only regression checks (**7** new in
+  `tests/header-icons.test.mjs`, plus the phase-26 suite updated for the new
+  compact sizes). `npm run check` exit 0: lint **0 errors**, endpoint parity
+  `--strict` **0 live gaps**, static security audit `--strict` **HIGH 0 /
+  MEDIUM 0 / LOW 0**, production build and PWA precache regenerated. The Vite
+  dev preview served `/`, `/skills`, `Header.jsx` and all three header/page
+  stylesheets with 200. `git diff --check` clean; masked secret scan clean.
+- Protected project card, showcase, seed, sample, backup and NetGate files
+  were not touched; 14 grid + 2 showcase records and the 600 counter floor are
+  unchanged.
+- **Not verified:** a browser render of the new header icons, desktop header,
+  drawer or compact scrollable cards, and no mobile/touch test. No runtime
+  API/DB, SMTP/LLM/Cloudinary call, external write beyond the authorised
+  push/PR/merge, or offensive test in this phase. Runtime confirmation is
+  backlog 32.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1934,6 +2017,10 @@ PR #4 remains open and untouched.
     with its header/close button and scrolls, and the Skills card viewport
     keeps a consistent height while each card scrolls independently. No
     headless browser or touch device was available in this sandbox.
+32. Phase 27 follow-up: in a browser, visually confirm every header and drawer
+    icon renders as an SVG, the desktop nav pills/active state look right, and
+    the compact Skills cards still scroll both inside each card and as a
+    group. No headless browser or touch device was available in this sandbox.
 
 ---
 
@@ -1980,5 +2067,9 @@ a single retry succeeded. PR #4 remains open and untouched. Phases 22–24
 **"not yet"** for a push only; the remote branch was created at `1874a26`.
 The phase 25 changes were committed and pushed to the same branch. After the
 explicit **"push changes noe"** instruction, the phase 26 UI-polish changes
-(§3z) were committed and pushed to that branch as well. **No PR or merge** has
-been used for phases 22–26.
+(§3z) were committed and pushed to that branch as well. After the explicit
+**"push all,,comit t mian"** instruction, the phase 27 changes (§3aa) were
+pushed and **phases 22–27 were merged into `main` from the active branch via
+PR PR_NUMBER** with `gh pr merge <number> --merge`. That instruction reversed
+the earlier **"not yet"** restraint for PRs/merges. `main` was never pushed
+to directly and PR #4 remains open and untouched.

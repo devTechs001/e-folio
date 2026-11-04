@@ -181,7 +181,7 @@
 /* Phase 26: one consistent viewpoint for the card area, with its own
    scroller, so the section keeps a predictable height on every screen. */
 .sk-cardview {
-    max-height: clamp(420px, 68vh, 760px);
+    max-height: clamp(360px, 56vh, 560px);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 0.25rem 0.65rem 0.6rem 0.25rem;
@@ -222,9 +222,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    height: clamp(320px, 46vh, 440px);
+    height: clamp(220px, 30vh, 300px);
     overflow: hidden;
-    padding: 1.35rem 1.35rem 1.15rem;
+    padding: 1.05rem 1.1rem 0.9rem;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.09);
     background: linear-gradient(165deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.02));
@@ -245,15 +245,15 @@
     box-shadow: 0 26px 54px -30px rgba(0, 0, 0, 0.9);
 }
 
-.sk-card-head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.1rem; }
+.sk-card-head { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem; }
 .sk-card-icon {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
     background: color-mix(in srgb, var(--mainColor, #00efff) 16%, transparent);
     border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 30%, transparent);
     color: var(--mainColor, #00efff);
@@ -308,7 +308,7 @@
     border-radius: 999px;
 }
 .sk-item {
-    padding: 0.7rem 0;
+    padding: 0.55rem 0;
     border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 .sk-item:first-child { border-top: 0; padding-top: 0; }
@@ -363,8 +363,8 @@
     .sk-grid { grid-template-columns: 1fr; }
     .sk-chipbar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.5rem; scrollbar-width: thin; }
     .sk-chip { flex: 0 0 auto; }
-    .sk-card { height: 360px; }
-    .sk-cardview { max-height: 64vh; }
+    .sk-card { height: 240px; }
+    .sk-cardview { max-height: 52vh; }
 }
 
 @media (prefers-reduced-motion: reduce) {
