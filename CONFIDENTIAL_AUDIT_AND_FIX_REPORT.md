@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -27,11 +27,12 @@ Resources page, live preview + lagging issues, CellarKeep client-portal link in
 Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
 subsequently merged into this repository's own `origin/main` via PR #3
 (merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
-Phases 14–19 (§3n–§3s: HomeScape property-marketplace link, owner-specified
+Phases 14–20 (§3n–§3t: HomeScape property-marketplace link, owner-specified
 starting like counts, restored projects, filter buttons, page restyle, the
 tracking conflict fix, twelve owner project links, public Lab copy,
-zero-value cleanup, the working-link replacement, and public/server/dashboard
-counter synchronisation with a 600 minimum) are **local only** on the active branch
+zero-value cleanup, the working-link replacement, public/server/dashboard
+counter synchronisation with a 600 minimum, and the review-submission repair)
+are **local only** on the active branch
 `arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
 service has been used for them.
 
@@ -50,6 +51,7 @@ service has been used for them.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Review submission + sync (phase 20) | post-save email/logging failures turned an already-saved review into a 500, step-3 ratings sent nested objects, `new_review` went to a room no socket joined, and there was no offline path | normalised input, success returned before isolated side effects, numeric star payloads, canonical id/status broadcasts on the public namespace, cross-tab signals and polling, and an honest device-only outbox that never claims a queued review was submitted |
 | Project → server → dashboard sync (phase 19) | the public page listened for socket events the server never emitted, anonymous visitors had no socket, dashboard saves sent no refresh signal, and the offline snapshot reset every view count to zero | one canonical broadcast on a read-only public namespace, matching root/legacy listeners, hidden-tab-aware 30 s polling, cross-tab dashboard signals, server-authoritative like/view counts, and owner-specified likes AND views of at least 600 on all eight cards |
 | Working-link replacement (phase 18) | five restored project cards still pointed at retired GitHub Pages / wallet URLs | those five links swapped for owner-supplied working deployments; the separate directory was removed; all working links and the protected NetGate link untouched |
 | Owner project links (phase 17) | the front end published only 3 live projects and none of the owner-supplied deployments | 12 owner URLs verified read-only and published in a shared JSON catalogue with a horizontal scroller; partial live lists completed from local saved records |
@@ -1276,6 +1278,41 @@ Request: *"review the project page, server, dashboard syncing (nothing changes) 
 
 ---
 
+## 3t. Phase 20 — repair public review submission and its server/dashboard sync
+
+Request: *"review system fails (fails to submit reviews) same to projects"* — i.e. fix the review path end to end the way §3s fixed projects. Local work and a local commit only; no MongoDB, Express instance, browser automation or socket runtime was available, so no live submission claim is made.
+
+### What was actually broken
+
+| # | Finding | Where |
+| --- | --- | --- |
+| 1 | `createReview` ran the owner lookup, two emails, a socket emit and an activity log **before** answering, with only the emails guarded. Any failure after `Review.create` returned HTTP 500 — the visitor saw "Failed to submit review" even though their review was already saved. | `server/controllers/reviews.controller.js` |
+| 2 | `Object.keys(categories)` threw when the floating form omitted `categories`; swallowed by the email catch, so the owner notification was silently lost. | same |
+| 3 | Step-3 `StarRating` called `onChange({ ...value, [category]: star })` for a numeric `value`, producing a **nested object**. `categories.design = { design: 4 }` fails Mongoose's `Number` cast → 500. | `src/components/ReviewForm.jsx` |
+| 4 | The form's fourth category was `content`, but the model defines `support` — that rating was silently dropped. Slug `projectId` values from saved copies also caused a `CastError`. | `ReviewForm.jsx`, `server/models/Review.model.js` |
+| 5 | The floating form never checked the server's 10-character minimum, so an empty/short comment produced a 400 with an opaque message. | `src/components/ReviewFloatingButton.jsx` |
+| 6 | `new_review` was emitted to `user_<ownerId>` — **no socket ever joins that room** (the notifications namespace uses `user:<id>`). The dashboard also had no `review_updated` listener, so submissions and approvals never appeared without a manual reload. | `reviews.controller.js`, `ReviewsManager.jsx` |
+| 7 | No offline path existed: with the backend unreachable (as in this sandbox's preview) every submission failed outright. | public review forms |
+
+### Fixes
+
+- **Reliable server write** — `normaliseReviewInput()` coerces `rating`, trims/bounds text, sanitises the four model category keys to integers and drops non-ObjectId project ids. Validation now returns the same friendly messages. `dbAvailable()` produces an honest `503` / `meta.populated:false` instead of a misleading 500.
+- **Success cannot be undone by side effects** — the `201 success` response is sent immediately after `Review.create`. Owner email, private notification, confirmation email and activity logging run afterwards through `Promise.allSettled` + `safeSideEffect`, each individually guarded. `ActivityLog` in `moderateReview`/`deleteReview` was made non-fatal for the same reason.
+- **Canonical sync (same pattern as §3s)** — `emitPublicEvent` broadcasts `review:submitted` and `review:changed` on the read-only `/public-projects` namespace **and** the root socket, carrying **ids/status only** (never names, emails or review text). `moderateReview`, `updateReview`, `deleteReview`, both bulk actions and both toggles broadcast after their write. Detailed `new_review` data now goes to the authenticated `/notifications` namespace via `emitToUser`, which joins `user:<id>`.
+- **Anonymous-safe client** — `socket.service.js` gained a ref-counted `subscribePublicReviews()` sharing the unauthenticated socket with projects. `PublicReviews.jsx` refreshes on broadcast, cross-tab signal, `online`, `visibilitychange` and a hidden-tab-aware 30 s poll. `ReviewsManager.jsx` listens to the root signals and the private notification namespace, polls silently, and refreshes from its owner-only list rather than prepending a partial payload.
+- **Frontend correctness** — the star widget now emits a plain number; the form uses `support`, sends only schema-valid fields and omits non-ObjectId project ids; the floating form enforces the 10-character minimum.
+- **Honest offline outbox** — `src/utils/reviewOutbox.js` saves a real visitor submission on **their own device** when the service is unreachable, with the explicit message *"Saved on this device — not yet submitted. It will be sent automatically when the service is available."* It retries on mount, `online` and after a successful send, serialises flushes, and never publishes a queued review or displays it as approved social proof. Only timestamp/id-only signals cross tabs. Validation and duplicate rejections are final, so the queue cannot grow without bound. `apiService` still has **no fake success fallback**.
+- **Untouched** — all owner-only review routes and the `rateLimiter(5)` on `/submit`, the `Review` model, the eight saved testimonials, the NetGate link and all protected seed/backup/lab/sample files, card markup/CSS and the phase-19 project sync. Attachments remain UI-only because the review model has no attachment field (backlog item 25).
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity `--strict` **0 live code gaps**, static security audit `--strict` **HIGH/MED/LOW 0**, **226** Node-only regression checks, build **27.18s**, PWA **217 precache entries (7021.74 KiB)**.
+- New `tests/review-submission.test.mjs` (14 checks) covers input normalisation, response-before-side-effects, PII-free broadcasts, the corrected notification room, numeric star payloads, form/floating validation, honest queuing, signal hygiene, both client sync paths, protected routes and confidentiality. Existing `tests/collaboration-review.test.mjs` checks still pass.
+- `git diff --check` clean; masked secret scan clean; both local previews return 200.
+- **Not verified:** a real MongoDB insert, SMTP delivery, socket delivery in a browser, or the outbox retry against a live backend. Backlog item 25. No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call, browser-level performance claim or offensive testing. Local commit only.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1368,6 +1405,14 @@ Request: *"review the project page, server, dashboard syncing (nothing changes) 
     record) before multi-instance deployment. Then run `npm run seed-projects`
     so live documents carry the 600 display floor. No database, socket
     runtime or browser automation was available in this sandbox.
+25. Phase 20 follow-up: with a live Express/Mongo backend, submit a review
+    through both forms and confirm the `201`, the moderation `review:changed`
+    broadcast, the owner-only `/notifications` delivery, the public list
+    refresh, and outbox retry after a simulated outage. Replace the in-memory
+    outbox's retry with server-side idempotency keys before multi-device use,
+    and decide whether review attachments should be added to the model (they
+    are currently UI-only). No database or browser automation was available
+    in this sandbox.
 
 ---
 

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Star, Quote, ThumbsUp, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api.service';
+import socketService from '../services/socket.service';
+import { subscribeReviewsChanged, flushReviewOutbox } from '../utils/reviewOutbox';
 import ReviewForm from './ReviewForm';
 
 const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
@@ -19,6 +21,31 @@ const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
 
     useEffect(() => {
         loadReviews();
+    }, [limit]);
+
+    // Same sync path as the Projects page: a submission, an approval or a
+    // deletion broadcasts an id/status signal; polling and cross-tab signals
+    // cover the case where sockets are unavailable. Only approved reviews are
+    // ever rendered, so queued/offline submissions stay private.
+    useEffect(() => {
+        const refresh = () => {
+            if (typeof document === 'undefined' || !document.hidden) loadReviews();
+        };
+        const unsubscribeSocket = socketService.subscribePublicReviews(refresh);
+        const unsubscribeCrossTab = subscribeReviewsChanged(refresh);
+        const interval = setInterval(refresh, 30000);
+        const onVisible = () => { if (!document.hidden) refresh(); };
+        const onOnline = () => { void flushReviewOutbox(); refresh(); };
+        document.addEventListener('visibilitychange', onVisible);
+        window.addEventListener('online', onOnline);
+        return () => {
+            unsubscribeSocket();
+            unsubscribeCrossTab();
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', onVisible);
+            window.removeEventListener('online', onOnline);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [limit]);
 
     const loadReviews = async () => {

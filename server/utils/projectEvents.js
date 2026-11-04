@@ -41,4 +41,19 @@ const emitProjectStats = (payload = {}, ioInstance) => {
     io.emit('project_changed', { action: data.action, ...data });
 };
 
-module.exports = { PUBLIC_PROJECTS_NAMESPACE, PROJECT_STATS_EVENT, emitProjectStats };
+/**
+ * Broadcast a non-sensitive content-change signal on the same read-only
+ * namespace. Payloads must contain ids/status only — never reviewer names,
+ * emails or review text. Public pages and dashboards use this to refresh
+ * themselves from their own authorised endpoints.
+ */
+const emitPublicEvent = (event, payload = {}, ioInstance) => {
+    const io = ioInstance || global.io;
+    if (!io || typeof io.of !== 'function' || typeof io.emit !== 'function') return;
+    if (typeof event !== 'string' || !event.startsWith('review:')) return;
+    const data = Object.freeze({ ...payload, at: new Date().toISOString() });
+    io.of(PUBLIC_PROJECTS_NAMESPACE).emit(event, data);
+    io.emit(event, data);
+};
+
+module.exports = { PUBLIC_PROJECTS_NAMESPACE, PROJECT_STATS_EVENT, emitProjectStats, emitPublicEvent };

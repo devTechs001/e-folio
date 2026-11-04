@@ -1,5 +1,5 @@
 // components/ReviewForm.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Star, Send, X, CheckCircle, Upload, Trash2, Image as ImageIcon,
@@ -10,6 +10,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from './NotificationSystem';
 import apiService from '../services/api.service';
+import { submitReview, flushReviewOutbox, subscribeReviewsChanged } from '../utils/reviewOutbox';
 
 const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
     const { theme } = useTheme();
@@ -26,7 +27,7 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
             design: 0,
             functionality: 0,
             performance: 0,
-            content: 0
+            support: 0
         },
         recommend: true,
         projectId: projectId
@@ -44,6 +45,20 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     
     const fileInputRef = useRef(null);
+
+    // A review queued while the backend was down is retried as soon as this
+    // page is opened or the connection returns. Queued reviews are never
+    // rendered as published social proof.
+    useEffect(() => {
+        const retry = () => { void flushReviewOutbox(); };
+        retry();
+        window.addEventListener('online', retry);
+        const unsubscribe = subscribeReviewsChanged(retry);
+        return () => {
+            window.removeEventListener('online', retry);
+            unsubscribe();
+        };
+    }, []);
     const totalSteps = 3;
 
     const emojis = ['😊', '😃', '😍', '👍', '👏', '🎉', '💯', '⭐', '🔥', '💪', '✨', '🚀'];
@@ -189,22 +204,34 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
 
         try {
             setSubmitting(true);
-            const response = await apiService.createReview({
-                ...formData,
-                attachments
-            });
-            
-            if (response.success) {
-                setSubmitted(true);
-                showSuccess('Review submitted successfully!');
-                
-                setTimeout(() => {
-                    onSuccess?.();
-                    onClose();
-                }, 2000);
-            } else {
-                showError(response.message || 'Failed to submit review');
+            // Only send fields the API persists. The model uses `support`;
+            // slug project ids from saved copies are omitted, and attachments
+            // are never part of a review document.
+            const payload = {
+                name: String(formData.name || '').trim(),
+                email: String(formData.email || '').trim(),
+                rating: Number(formData.rating),
+                title: String(formData.title || '').trim(),
+                comment: String(formData.comment || '').trim(),
+                categories: formData.categories,
+                recommend: formData.recommend,
+                projectId: /^[0-9a-fA-F]{24}$/.test(String(formData.projectId || ''))
+                    ? formData.projectId
+                    : undefined
+            };
+            const result = await submitReview(payload);
+
+            if (!result.success) {
+                showError(result.message);
+                return;
             }
+
+            setSubmitted(true);
+            showSuccess(result.message);
+            setTimeout(() => {
+                onSuccess?.();
+                onClose();
+            }, 2000);
         } catch (error) {
             console.error('Review submission error:', error);
             showError('Error submitting review. Please try again.');
@@ -222,7 +249,7 @@ const ReviewForm = ({ onClose, onSuccess, projectId = null }) => {
     };
 
 
-const StarRating = ({ value, onChange, size = 32, label = '', category = null }) => {
+const StarRating = ({ value, onChange, size = 32, label = '' }) => {
         const [hoveredStar, setHoveredStar] = useState(0);
         const displayValue = hoveredStar || value;
         
@@ -247,7 +274,7 @@ const StarRating = ({ value, onChange, size = 32, label = '', category = null })
                             whileTap={{ scale: 0.9 }}
                             onMouseEnter={() => setHoveredStar(star)}
                             onMouseLeave={() => setHoveredStar(0)}
-                            onClick={() => onChange(category ? { ...value, [category]: star } : star)}
+                            onClick={() => onChange(star)}
                         >
                             <Star 
                                 size={size} 
@@ -749,7 +776,6 @@ const StarRating = ({ value, onChange, size = 32, label = '', category = null })
                                                             categories: { ...formData.categories, [category]: rating }
                                                         })}
                                                         size={24}
-                                                        category={category}
                                                     />
                                                 </div>
                                             ))}

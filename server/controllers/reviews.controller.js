@@ -5,6 +5,7 @@ const User = require('../models/User.model');
 const ActivityLog = require('../models/ActivityLog');
 const emailService = require('../services/email.service');
 const { Parser } = require('@json2csv/plainjs');
+const { emitPublicEvent } = require('../utils/projectEvents');
 
 // An unavailable database must never be disguised as real social proof. Every
 // degraded response is explicitly unsuccessful and explicitly unpopulated.
@@ -29,57 +30,79 @@ const clampInt = (value, fallback, min, max) => {
 };
 
 // Create review (Public)
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REVIEW_CATEGORY_KEYS = ['design', 'functionality', 'performance', 'support'];
+
+// Optional visitor fields must never be able to turn a valid submission into
+// a Mongoose CastError (a slug project id, a nested rating object, a string
+// rating, an undefined categories map, ...).
+const normaliseReviewInput = body => {
+    const source = body && typeof body === 'object' ? body : {};
+    const text = value => (typeof value === 'string' ? value.trim() : '');
+    const rawCategories = source.categories && typeof source.categories === 'object' && !Array.isArray(source.categories)
+        ? source.categories
+        : {};
+    const categories = {};
+    for (const key of REVIEW_CATEGORY_KEYS) {
+        const value = Number(rawCategories[key]);
+        categories[key] = Number.isFinite(value) ? Math.min(5, Math.max(0, Math.round(value))) : 0;
+    }
+    const projectId = /^[0-9a-fA-F]{24}$/.test(String(source.projectId || '')) ? source.projectId : undefined;
+    return {
+        name: text(source.name).slice(0, 120),
+        email: text(source.email).toLowerCase().slice(0, 200),
+        rating: Number(source.rating),
+        comment: text(source.comment).slice(0, 2000),
+        title: text(source.title).slice(0, 150),
+        categories,
+        projectId,
+        recommend: source.recommend !== false
+    };
+};
+
+// A review already stored in the database must always produce a success
+// response. Notification / logging work is isolated from that outcome.
+const safeSideEffect = async (label, task) => {
+    try { await task(); } catch (error) { console.error(label, error?.message || error); }
+};
+
+// Public pages and the owner dashboard refresh themselves from their own
+// authorised endpoints when a review is submitted or moderated.
+const notifyReviewChange = (req, action, reviewId, status) => {
+    emitPublicEvent('review:changed', { action, reviewId: String(reviewId), status }, req.app.get('io'));
+};
+
 exports.createReview = async (req, res) => {
+    const { name, email, rating, comment, title, categories, projectId, recommend } = normaliseReviewInput(req.body);
+
+    if (!name || !rating || !comment) {
+        return res.status(400).json({ success: false, message: 'Name, rating, and comment are required' });
+    }
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+    if (comment.length < 10) {
+        return res.status(400).json({ success: false, message: 'Comment must be at least 10 characters' });
+    }
+    if (email && !EMAIL_RE.test(email)) {
+        return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
     try {
-        const {
-            name,
-            email,
-            rating,
-            comment,
-            title,
-            categories,
-            projectId,
-            recommend
-        } = req.body;
-
-        // Validation
-        if (!name || !rating || !comment) {
-            return res.status(400).json({
+        if (!dbAvailable()) {
+            return res.status(503).json({
                 success: false,
-                message: 'Name, rating, and comment are required'
+                message: 'Review service is temporarily unavailable. Please try again shortly.',
+                meta: { populated: false }
             });
         }
 
-        if (rating < 1 || rating > 5) {
-            return res.status(400).json({
-                success: false,
-                message: 'Rating must be between 1 and 5'
-            });
-        }
-
-        if (comment.length < 10) {
-            return res.status(400).json({
-                success: false,
-                message: 'Comment must be at least 10 characters'
-            });
-        }
-
-        // Validate email format if provided
+        // Duplicate protection is scoped to the same email within 24 hours.
         if (email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid email format'
-                });
-            }
-
-            // Check for duplicate review from same email
             const existingReview = await Review.findOne({
                 email,
                 createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
             });
-
             if (existingReview) {
                 return res.status(400).json({
                     success: false,
@@ -88,29 +111,43 @@ exports.createReview = async (req, res) => {
             }
         }
 
-        // Create review
         const review = await Review.create({
             name,
-            email,
+            email: email || undefined,
             rating,
             comment,
-            title,
-            categories: categories || {},
+            title: title || undefined,
+            categories,
             projectId,
-            recommend: recommend !== undefined ? recommend : true,
+            recommend,
             status: 'pending',
             ipAddress: req.ip,
             userAgent: req.headers['user-agent']
         });
 
-        // Notify owner
-        const owner = await User.findOne({ role: 'owner' });
-        if (owner) {
-            try {
-                await emailService.send({
+        // Broadcast ids/status only. Reviewer names, emails and review text
+        // are never sent to public listeners.
+        emitPublicEvent('review:submitted', {
+            reviewId: String(review._id),
+            status: review.status
+        }, req.app.get('io'));
+
+        // Answer as soon as the record exists. All side effects below are
+        // fire-and-forget and individually guarded.
+        res.status(201).json({
+            success: true,
+            message: 'Review submitted successfully! It will be published after moderation.',
+            review: { id: review._id, status: review.status }
+        });
+
+        void Promise.allSettled([
+            safeSideEffect('[review] owner notification failed', async () => {
+                const owner = await User.findOne({ role: 'owner' });
+                if (!owner) return;
+                await safeSideEffect('[review] owner email failed', () => emailService.send({
                     to: owner.email,
                     subject: 'New Review Received',
-                    template: 'new-testimonial', // Using testimonial template for consistency
+                    template: 'new-testimonial',
                     data: {
                         name,
                         rating,
@@ -123,81 +160,41 @@ exports.createReview = async (req, res) => {
                         date: new Date().toLocaleString(),
                         year: new Date().getFullYear()
                     }
-                });
-            } catch (emailError) {
-                console.error('Failed to send review notification email:', emailError);
-            }
-
-            // Socket notification
-            if (req.app.get('io')) {
-                req.app.get('io').to(`user_${owner._id}`).emit('new_review', {
-                    id: review._id,
+                }));
+                // The old `user_<id>` room was never joined by any socket.
+                // Deliver owner-only detail through the authenticated
+                // /notifications namespace instead.
+                global.notificationsRealtime?.emitToUser(owner._id, 'new_review', {
+                    id: String(review._id),
                     name,
                     rating,
                     comment,
                     createdAt: review.createdAt
                 });
-            }
-        }
-
-        // Send confirmation to reviewer
-        if (email) {
-            try {
-                await emailService.send({
-                    to: email,
-                    subject: 'Thank You for Your Review',
-                    template: 'testimonial-approved', // Using testimonial template for consistency
-                    data: {
-                        name,
-                        content: comment,
-                        rating,
-                        portfolioUrl: process.env.CLIENT_URL || 'https://yourportfolio.com',
-                        year: new Date().getFullYear()
-                    }
-                });
-            } catch (emailError) {
-                console.error('Failed to send review confirmation email:', emailError);
-            }
-        }
-
-        // Log activity (only if user is authenticated)
-        if (req.user) {
-            await ActivityLog.create({
-                userId: req.user.id,
-                action: 'review_submitted',
-                details: `New review from ${name} with ${rating} stars`,
-                metadata: {
-                    reviewId: review._id,
+            }),
+            ...(email ? [safeSideEffect('[review] confirmation email failed', () => emailService.send({
+                to: email,
+                subject: 'Thank You for Your Review',
+                template: 'testimonial-approved',
+                data: {
+                    name,
+                    content: comment,
                     rating,
-                    email
+                    portfolioUrl: process.env.CLIENT_URL || 'https://yourportfolio.com',
+                    year: new Date().getFullYear()
                 }
-            });
-        } else {
-            await ActivityLog.create({
+            }))] : []),
+            safeSideEffect('[review] activity log failed', () => ActivityLog.create({
+                userId: req.user?.id,
                 action: 'review_submitted',
-                details: `New public review from ${name} with ${rating} stars`,
-                metadata: {
-                    reviewId: review._id,
-                    rating,
-                    email
-                }
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Review submitted successfully! It will be published after moderation.',
-            review: {
-                id: review._id,
-                status: review.status
-            }
-        });
+                metadata: { reviewId: review._id, rating, email: email || undefined },
+                ip: req.ip,
+                userAgent: req.headers['user-agent']
+            }))
+        ]);
     } catch (error) {
-        console.error('Create review error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to submit review',
-        });
+        console.error('Create review error:', error?.message || error);
+        res.status(500).json({ success: false, message: 'Failed to submit review' });
     }
 };
 
@@ -412,6 +409,7 @@ exports.moderateReview = async (req, res) => {
         review.moderatedAt = new Date();
 
         await review.save();
+        notifyReviewChange(req, 'moderated', review._id, status);
 
         // Send notification to reviewer
         if (review.email && status === 'approved') {
@@ -433,16 +431,12 @@ exports.moderateReview = async (req, res) => {
             }
         }
 
-        // Log activity
-        await ActivityLog.create({
-            user: req.user.id,
+        // Logging must never turn a successful moderation into a 500.
+        void safeSideEffect('[review] moderation log failed', () => ActivityLog.create({
+            userId: req.user.id,
             action: 'review_moderated',
-            details: `Review from ${review.name} ${status}`,
-            metadata: {
-                reviewId: review._id,
-                status
-            }
-        });
+            metadata: { reviewId: review._id, status }
+        }));
 
         // Socket notification
         if (req.app.get('io')) {
@@ -549,6 +543,7 @@ exports.bulkModerateReviews = async (req, res) => {
             }
         );
 
+        notifyReviewChange(req, 'bulk-moderated', targetIds[0], status);
         res.json({
             success: true,
             message: `${targetIds.length} reviews ${status}`
@@ -576,6 +571,7 @@ exports.bulkDeleteReviews = async (req, res) => {
         }
 
         await Review.deleteMany({ _id: { $in: targetIds } });
+        notifyReviewChange(req, 'bulk-deleted', targetIds[0]);
 
         res.json({
             success: true,
@@ -605,6 +601,7 @@ exports.toggleFeaturedReview = async (req, res) => {
 
         review.featured = featured;
         await review.save();
+        notifyReviewChange(req, 'featured', review._id, review.status);
 
         res.json({
             success: true,
@@ -635,6 +632,7 @@ exports.toggleReviewVisibility = async (req, res) => {
 
         review.isPublic = isPublic;
         await review.save();
+        notifyReviewChange(req, 'visibility', review._id, review.status);
 
         res.json({
             success: true,
@@ -672,6 +670,7 @@ exports.updateReview = async (req, res) => {
         if (categories) review.categories = categories;
 
         await review.save();
+        notifyReviewChange(req, 'updated', review._id, review.status);
 
         res.json({
             success: true,
@@ -700,14 +699,14 @@ exports.deleteReview = async (req, res) => {
         }
 
         await review.deleteOne();
+        notifyReviewChange(req, 'deleted', req.params.id);
 
-        // Log activity
-        await ActivityLog.create({
-            user: req.user.id,
+        // Logging must never turn a successful deletion into a 500.
+        void safeSideEffect('[review] deletion log failed', () => ActivityLog.create({
+            userId: req.user.id,
             action: 'review_deleted',
-            details: `Deleted review from ${review.name}`,
             metadata: { reviewId: req.params.id }
-        });
+        }));
 
         res.json({
             success: true,
