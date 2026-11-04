@@ -92,14 +92,17 @@ exports.trackPageView = asyncHandler(async (req, res) => {
     const pagePath = typeof page === 'object' && page !== null ? page.path : page;
     const pageTitle = typeof page === 'object' && page !== null ? (page.title || title) : title;
 
-    // Find or create session (atomic upsert to prevent race conditions)
+    // Find or create session (atomic upsert to prevent race conditions).
+    // MongoDB rejects a single update that writes the same path through two
+    // different operators ("Updating the path 'pagesViewed' would create a
+    // conflict at 'pagesViewed'"). Fields written by $inc, $push and $max
+    // must therefore NOT also be listed in $setOnInsert. Those operators
+    // create the field on an inserted document, which preserves the old
+    // zero/empty defaults without a duplicate path write.
     const update = {
         $setOnInsert: {
             sessionId,
             startTime: new Date(),
-            pagesViewed: 0,
-            pageJourney: [],
-            scrollDepth: 0,
             interactions: 0
         },
         $push: {
@@ -112,12 +115,9 @@ exports.trackPageView = asyncHandler(async (req, res) => {
             }
         },
         $inc: { pagesViewed: 1 },
-        $set: { lastActivity: new Date() }
+        $set: { lastActivity: new Date() },
+        $max: { scrollDepth: Number(scrollDepth) || 0 }
     };
-
-    if (scrollDepth) {
-        update.$max = { scrollDepth };
-    }
 
     const session = await TrackingSession.findOneAndUpdate(
         { sessionId },

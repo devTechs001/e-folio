@@ -14,6 +14,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
+import socketService from '../../services/socket.service';
+import { subscribeReviewsChanged } from '../../utils/reviewOutbox';
 import DashboardLayout from './DashboardLayout';
 
 const ReviewsManager = () => {
@@ -74,9 +76,9 @@ const ReviewsManager = () => {
     ];
 
     // Load data functions
-    const loadReviews = useCallback(async () => {
+    const loadReviews = useCallback(async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const params = {
                 status: filter,
                 sortBy,
@@ -103,7 +105,7 @@ const ReviewsManager = () => {
             console.error('Error loading reviews:', err);
             error('Failed to load reviews');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }, [filter, sortBy, sortOrder, currentPage, reviewsPerPage, searchQuery, ratingFilter, dateRange, error]);
 
@@ -127,10 +129,13 @@ const ReviewsManager = () => {
 
     // Event handlers
     const handleNewReview = useCallback((review) => {
-        setReviews(prev => [review, ...prev]);
-        info(`New review from ${review.name}`);
+        // Refresh from the owner-only list endpoint instead of prepending a
+        // partial payload: the real record is the source of truth and pending
+        // rows must carry the schema's _id before moderation can act on them.
+        loadReviews(true);
+        info(`New review from ${review?.name || 'a visitor'}`);
         loadAnalytics();
-    }, [info, loadAnalytics]);
+    }, [info, loadAnalytics, loadReviews]);
 
     // Load data
     useEffect(() => {
@@ -139,14 +144,40 @@ const ReviewsManager = () => {
             loadAnalytics();
             loadFeaturedReviews();
 
-            // Socket listeners
-            on('new_review', handleNewReview);
+            // The server used to emit `new_review` to a room no socket joined.
+            // Detailed owner-only notifications now arrive on the authenticated
+            // /notifications namespace; id/status signals arrive on the root.
+            const refresh = () => { loadReviews(true); loadAnalytics(); };
+            on('review:submitted', refresh);
+            on('review:changed', refresh);
+            socketService.onNotificationEvent('new_review', handleNewReview);
 
             return () => {
-                off('new_review', handleNewReview);
+                off('review:submitted', refresh);
+                off('review:changed', refresh);
+                socketService.offNotificationEvent('new_review', handleNewReview);
             };
         }
     }, [isOwner, on, off, handleNewReview, loadReviews, loadAnalytics, loadFeaturedReviews]);
+
+    // Hidden-tab-aware polling + cross-tab signals keep the moderation queue
+    // in step with a submission made in another tab or by another visitor.
+    useEffect(() => {
+        const refresh = () => {
+            if (typeof document === 'undefined' || document.hidden) return;
+            if (isOwner()) loadReviews(true);
+        };
+        const unsubscribe = subscribeReviewsChanged(refresh);
+        const interval = setInterval(refresh, 30000);
+        const onVisible = () => { if (!document.hidden) refresh(); };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            unsubscribe();
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', onVisible);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadReviews]);
 
     // Filter and search effects
 

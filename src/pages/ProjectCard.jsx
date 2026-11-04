@@ -78,8 +78,10 @@ const ProjectCard = ({
 
                     <div className="list-footer">
                         <div className="list-stats">
-                            <span><i className="fa-solid fa-eye"></i> {project.views || 0}</span>
-                            <span 
+                            {Number(project.views) > 0 && (
+                                <span><i className="fa-solid fa-eye"></i> {project.views}</span>
+                            )}
+                            <span
                                 className="clickable-stat"
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -87,7 +89,7 @@ const ProjectCard = ({
                                 }}
                                 title="Like this project"
                             >
-                                <i className="fa-solid fa-heart"></i> {likes || 0}
+                                <i className="fa-solid fa-heart"></i>{Number(likes) > 0 ? ` ${likes}` : ''}
                             </span>
                             {project.completionDate && (
                                 <span><i className="fa-solid fa-calendar"></i> {new Date(project.completionDate).toLocaleDateString()}</span>
@@ -226,12 +228,14 @@ const ProjectCard = ({
                         )}
 
                         <div className="quick-view-stats">
+                            {Number(project.views) > 0 && (
+                                <div className="stat">
+                                    <i className="fa-solid fa-eye"></i>
+                                    <span>{project.views}</span>
+                                </div>
+                            )}
                             <div className="stat">
-                                <i className="fa-solid fa-eye"></i>
-                                <span>{project.views || 0}</span>
-                            </div>
-                            <div className="stat">
-                                <span 
+                                <span
                                     className="clickable-stat"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -240,7 +244,7 @@ const ProjectCard = ({
                                     title="Like this project"
                                 >
                                     <i className="fa-solid fa-heart"></i>
-                                    <span>{likes || 0}</span>
+                                    {Number(likes) > 0 && <span>{likes}</span>}
                                 </span>
                             </div>
                             {project.duration && (

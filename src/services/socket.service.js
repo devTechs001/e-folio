@@ -32,6 +32,10 @@ class SocketService {
         this.notificationRefs = 0;
         this.notificationListeners = new Map();
         this.notificationsConnected = false;
+        // Public, unauthenticated namespace for portfolio project counts.
+        // Anonymous visitors use this instead of the authenticated root socket.
+        this.publicProjectsSocket = null;
+        this.publicProjectsRefs = 0;
     }
 
     #addListener(map, event, callback) {
@@ -298,6 +302,68 @@ class SocketService {
 
     isNotificationsConnected() {
         return this.notificationsConnected && Boolean(this.notificationSocket?.connected);
+    }
+
+    // Shared, unauthenticated socket for read-only public content events.
+    // Ref-counted: the project and review subscribers can coexist without
+    // either one disconnecting the other's connection.
+    #ensurePublicSocket() {
+        if (!this.publicProjectsSocket) {
+            this.publicProjectsSocket = io(`${SOCKET_URL}/public-projects`, {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 10000,
+                reconnectionAttempts: 10
+            });
+            this.publicProjectsSocket.on('connect_error', err => {
+                // A missing backend must never break a public page; the
+                // polling fallback still refreshes the content.
+                if (import.meta.env.DEV) console.warn('[public content] socket unavailable:', err?.message);
+            });
+        }
+        return this.publicProjectsSocket;
+    }
+
+    #releasePublicSocket() {
+        this.publicProjectsRefs -= 1;
+        if (this.publicProjectsRefs > 0) return;
+        const socket = this.publicProjectsSocket;
+        if (socket) {
+            socket.removeAllListeners();
+            socket.disconnect();
+        }
+        this.publicProjectsSocket = null;
+        this.publicProjectsRefs = 0;
+    }
+
+    /**
+     * Subscribe to public project-count broadcasts. No authentication and no
+     * user data are sent; the namespace is read-only. Works for anonymous
+     * visitors, unlike the root socket owned by SocketContext.
+     */
+    subscribePublicProjects(callback) {
+        if (typeof callback !== 'function') return () => {};
+        this.publicProjectsRefs += 1;
+        const socket = this.#ensurePublicSocket();
+        socket.on('project:stats', callback);
+        return () => {
+            socket.off('project:stats', callback);
+            this.#releasePublicSocket();
+        };
+    }
+
+    /** Public review submission/moderation signals (ids and status only). */
+    subscribePublicReviews(callback) {
+        if (typeof callback !== 'function') return () => {};
+        this.publicProjectsRefs += 1;
+        const socket = this.#ensurePublicSocket();
+        const events = ['review:changed', 'review:submitted'];
+        events.forEach(event => socket.on(event, callback));
+        return () => {
+            events.forEach(event => socket.off(event, callback));
+            this.#releasePublicSocket();
+        };
     }
 
     // Get connection status

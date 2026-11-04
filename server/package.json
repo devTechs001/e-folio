@@ -14,7 +14,7 @@
     "seed:enterprise": "node scripts/seed-enterprise-projects.js",
     "seed:complete": "node scripts/seed-all-projects.js",
     "seed:reset": "node seed-data.js",
-    "test": "node scripts/check-endpoint-parity.js --strict && node scripts/security-audit.js --strict && node ../tests/dashboard-api.test.mjs && node ../tests/collaboration-review.test.mjs && node ../tests/lab-page.test.mjs && node ../tests/testimonial-samples.test.mjs && node ../tests/profile-settings-api.test.mjs && node ../tests/about-user-workspace.test.mjs && node ../tests/user-workspace-realtime.test.mjs && node ../tests/security-resources-page.test.mjs && node ../tests/live-preview-lag.test.mjs && node ../tests/project-showcase.test.mjs && node ../tests/public-fallback.test.mjs && node ../tests/ecommerce-link.test.mjs",
+    "test": "node scripts/check-endpoint-parity.js --strict && node scripts/security-audit.js --strict && node ../tests/dashboard-api.test.mjs && node ../tests/collaboration-review.test.mjs && node ../tests/lab-page.test.mjs && node ../tests/testimonial-samples.test.mjs && node ../tests/profile-settings-api.test.mjs && node ../tests/about-user-workspace.test.mjs && node ../tests/user-workspace-realtime.test.mjs && node ../tests/security-resources-page.test.mjs && node ../tests/live-preview-lag.test.mjs && node ../tests/project-showcase.test.mjs && node ../tests/public-fallback.test.mjs && node ../tests/ecommerce-link.test.mjs && node ../tests/homescape-link.test.mjs && node ../tests/project-likes.test.mjs && node ../tests/tracking-conflict.test.mjs && node ../tests/project-sync.test.mjs && node ../tests/review-submission.test.mjs && node ../tests/projects-page-filters.test.mjs && node ../tests/project-links.test.mjs",
     "audit:endpoints": "node scripts/check-endpoint-parity.js",
     "audit:security": "node scripts/security-audit.js",
     "test:load": "node tests/load/smoke-load.js",
@@ -41,7 +41,14 @@
     "test:project-showcase": "node ../tests/project-showcase.test.mjs",
     "test:public-fallback": "node ../tests/public-fallback.test.mjs",
     "snapshot:build": "node ../scripts/build-public-snapshot.mjs",
-    "test:ecommerce-link": "node ../tests/ecommerce-link.test.mjs"
+    "test:ecommerce-link": "node ../tests/ecommerce-link.test.mjs",
+    "test:homescape-link": "node ../tests/homescape-link.test.mjs",
+    "test:project-likes": "node ../tests/project-likes.test.mjs",
+    "test:tracking-conflict": "node ../tests/tracking-conflict.test.mjs",
+    "test:projects-page": "node ../tests/projects-page-filters.test.mjs",
+    "test:project-links": "node ../tests/project-links.test.mjs",
+    "test:project-sync": "node ../tests/project-sync.test.mjs",
+    "test:review-submission": "node ../tests/review-submission.test.mjs"
   },
   "keywords": [
     "portfolio",

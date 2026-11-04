@@ -7,6 +7,12 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
+// Phase 19: `likes` and `views` are owner-specified display/seed values for
+// the project cards. The owner asked for every counter to read at least 600,
+// so values below that floor were raised to exactly 600 and existing values
+// above it were kept. These are starting presentation numbers and are
+// NOT measured engagement. No analytics figure was invented or republished;
+// the live API/DB remains the source of truth for real counts once connected.
 const projects = [
     {
         title: "E-Commerce Platform",
@@ -18,7 +24,7 @@ const projects = [
         featured: true,
         tags: ["Full-Stack", "E-Commerce", "Real-time", "Payment Integration"],
         views: 1245,
-        likes: 42,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/ecommerce-platform",
             live: "https://ominbiz-solution.netlify.app/",
@@ -48,7 +54,7 @@ const projects = [
         featured: true,
         tags: ["Real-time", "Chat", "Messaging", "Socket.io", "Communication"],
         views: 856,
-        likes: 34,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/GB-chat",
             live: "https://gbchat.netlify.app/",
@@ -78,7 +84,7 @@ const projects = [
         featured: true,
         tags: ["Streaming", "Movies", "Entertainment", "API Integration", "Media"],
         views: 1243,
-        likes: 56,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/moview-watch",
             live: "https://cinemaflx.netlify.app/",
@@ -96,6 +102,142 @@ const projects = [
         challenges: "Integrating TMDB API, implementing video streaming, and building recommendation engine",
         achievements: ["5000+ registered users", "50,000+ movies streamed", "4.8/5 user rating"],
         priority: "high",
+        visibility: "public"
+    },
+    // Phase 18: the five legacy GitHub Pages / wallet links below were retired
+    // in favour of the owner-supplied working deployments. Existing working
+    // links (OmniBiz, GBChat, CinemaFlix) and the protected NetGate link were
+    // deliberately left alone.
+    // Recovered verbatim from the pre-phase-4 getFallbackProjects() array in
+    // the local Git history (commit 3520894). These five records are the
+    // remaining original projects; the other three (E-Commerce Platform,
+    // GB Chat, Moview Watch/CinemaFlix) are kept above with their current
+    // published links and the owner-specified minimum display counters set in
+    // phase 19. Invented achievement badges were dropped; likes and views use
+    // only the owner-supplied floor of 600, never fabricated analytics.
+    {
+        title: "Portfolio Website",
+        description: "Modern portfolio website built with React, featuring smooth animations and responsive design.",
+        fullDescription: "A stunning portfolio website showcasing projects and skills with beautiful animations, dark mode support, and optimal performance. Built with modern React practices and styled with Tailwind CSS for a sleek, professional appearance.",
+        technologies: ["React", "Tailwind CSS", "Framer Motion", "TypeScript"],
+        category: "Web",
+        status: "Live",
+        featured: false,
+        tags: ["Portfolio", "Animation", "Responsive", "TypeScript"],
+        views: 600,
+        likes: 600,
+        links: {
+            github: "https://github.com/devTechs001/portfolio-website",
+            live: "https://home-scape-platform.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d", caption: "Portfolio Home" },
+            { url: "https://images.unsplash.com/photo-1522252234503-e356532cafd5", caption: "Projects Section" },
+            { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d", caption: "About Page" }
+        ],
+        completionDate: "2023-12-20",
+        teamSize: 1,
+        priority: "standard",
+        visibility: "public"
+    },
+    {
+        title: "Task Management App",
+        description: "React-based task management application with real-time updates and collaborative features.",
+        fullDescription: "A powerful task management solution with real-time collaboration, drag-and-drop interface, team workspaces, and productivity analytics. Perfect for remote teams and project management.",
+        technologies: ["React", "Firebase", "Redux", "Material-UI", "Chart.js"],
+        category: "Mobile",
+        status: "Live",
+        featured: false,
+        tags: ["Productivity", "Real-time", "Collaboration", "PWA"],
+        views: 600,
+        likes: 600,
+        links: {
+            github: "https://github.com/devTechs001/task-manager",
+            live: "https://schedule-manager-ap.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "Task Dashboard" },
+            { url: "https://images.unsplash.com/photo-1586880244406-5564e8cb497d", caption: "Kanban Board" },
+            { url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173", caption: "Analytics View" }
+        ],
+        completionDate: "2023-11-10",
+        teamSize: 2,
+        priority: "standard",
+        visibility: "public"
+    },
+    {
+        title: "AI Image Generator",
+        description: "Advanced AI-powered image generation platform using stable diffusion models and neural networks.",
+        fullDescription: "Cutting-edge AI image generation platform utilizing stable diffusion technology. Features include text-to-image generation, image editing with AI, style transfer, upscaling, and custom model training capabilities.",
+        technologies: ["React", "TensorFlow.js", "Python", "FastAPI", "WebGL", "Docker"],
+        category: "AI/ML",
+        status: "Beta",
+        featured: true,
+        tags: ["AI", "Machine Learning", "Image Processing", "Deep Learning"],
+        views: 600,
+        likes: 600,
+        links: {
+            github: "https://github.com/devTechs001/ai-image-generator",
+            live: "https://ai-image-editor-pro.netlify.app/"
+        },
+        images: [
+            { url: "https://picsum.photos/800/600?random=4", caption: "AI Generated Art" },
+            { url: "https://picsum.photos/800/600?random=41", caption: "Style Transfer Interface" },
+            { url: "https://picsum.photos/800/600?random=42", caption: "Gallery View" }
+        ],
+        completionDate: "2024-02-01",
+        teamSize: 3,
+        priority: "standard",
+        visibility: "public"
+    },
+    {
+        title: "Social Media Dashboard",
+        description: "Comprehensive dashboard for social media analytics with real-time data visualization.",
+        fullDescription: "All-in-one social media analytics dashboard providing insights from multiple platforms. Features real-time metrics, engagement tracking, sentiment analysis, competitor analysis, and automated reporting.",
+        technologies: ["React", "D3.js", "Chart.js", "Python", "Flask", "PostgreSQL", "Redis"],
+        category: "Web",
+        status: "Live",
+        featured: true,
+        tags: ["Analytics", "Data Visualization", "Dashboard", "API Integration"],
+        views: 600,
+        likes: 600,
+        links: {
+            github: "https://github.com/devTechs001/analytics-dashboard",
+            live: "https://net-gate.netlify.app/"
+        },
+        images: [
+            { url: "https://picsum.photos/800/600?random=5", caption: "Analytics Dashboard" },
+            { url: "https://picsum.photos/800/600?random=51", caption: "Engagement Metrics" },
+            { url: "https://picsum.photos/800/600?random=52", caption: "Report Generation" }
+        ],
+        completionDate: "2023-10-25",
+        teamSize: 2,
+        priority: "standard",
+        visibility: "public"
+    },
+    {
+        title: "Blockchain Wallet",
+        description: "Secure cryptocurrency wallet with multi-chain support and DeFi integration.",
+        fullDescription: "Next-generation cryptocurrency wallet supporting multiple blockchains. Features include secure key management, token swaps, NFT gallery, staking, DeFi protocol integration, and portfolio tracking.",
+        technologies: ["React", "Web3.js", "Ethers.js", "Solidity", "IPFS", "TypeScript"],
+        category: "Blockchain",
+        status: "Live",
+        featured: true,
+        tags: ["Web3", "Cryptocurrency", "DeFi", "NFT", "Security"],
+        views: 600,
+        likes: 600,
+        links: {
+            github: "https://github.com/devTechs001/blockchain-wallet",
+            live: "https://fintech-banking.netlify.app/"
+        },
+        images: [
+            { url: "https://picsum.photos/800/600?random=6", caption: "Wallet Dashboard" },
+            { url: "https://picsum.photos/800/600?random=61", caption: "Token Swap Interface" },
+            { url: "https://picsum.photos/800/600?random=62", caption: "NFT Gallery" }
+        ],
+        completionDate: "2024-03-05",
+        teamSize: 4,
+        priority: "standard",
         visibility: "public"
     }
 ];

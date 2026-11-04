@@ -66,7 +66,7 @@ const ShowcaseCard = ({ project }) => {
 
             <div className="showcase-card__actions">
                 <a {...anchor} className="showcase-card__open">
-                    Open client portal <ArrowUpRight size={16} aria-hidden="true" />
+                    {project.linkLabel || 'Open project'} <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
                 <button
                     type="button"

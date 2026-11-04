@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
+import { publishProjectsChanged } from '../../utils/projectSync';
 import ApiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
 import ProjectModal from '../../pages/ProjectModal';
@@ -807,6 +808,7 @@ const ProjectManagerEnhanced = () => {
             setShowAddModal(false);
             success('Project created successfully!');
             loadAnalytics();
+            publishProjectsChanged();
             // Trigger cache refresh for public projects page
             try {
                 await ApiService.request('/public/projects/refresh', { method: 'POST' });
@@ -836,6 +838,7 @@ const ProjectManagerEnhanced = () => {
             setShowEditModal(false);
             setSelectedProject(null);
             success('Project updated successfully!');
+            publishProjectsChanged();
         } catch (err) {
             console.error('Error updating project:', err);
             error(err.response?.data?.message || err.message || 'Failed to update project');
@@ -850,6 +853,7 @@ const ProjectManagerEnhanced = () => {
             setProjectToDelete(null);
             success('Project deleted successfully!');
             loadAnalytics();
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to delete project');
         }
@@ -894,6 +898,7 @@ const ProjectManagerEnhanced = () => {
             setShowBulkActions(false);
             success(`Deleted ${selectedProjects.length} projects`);
             loadAnalytics();
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to delete projects');
         }
@@ -911,6 +916,7 @@ const ProjectManagerEnhanced = () => {
             }
             setProjects(projects.map(p => p.id === id ? { ...p, featured: !p.featured } : p));
             success(project.featured ? 'Removed from featured' : 'Added to featured');
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to update project');
         }
@@ -929,6 +935,7 @@ const ProjectManagerEnhanced = () => {
             setProjects([response.project, ...projects]);
             success('Project duplicated successfully!');
             loadAnalytics();
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to duplicate project');
         }
@@ -949,6 +956,7 @@ const ProjectManagerEnhanced = () => {
             // Always update local state
             setProjects(projects.map(p => p.id === id ? { ...p, hidden: !p.hidden } : p));
             success(project.hidden ? 'Project is now visible' : 'Project is now hidden');
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to update project visibility');
         }
@@ -966,6 +974,7 @@ const ProjectManagerEnhanced = () => {
             }
             setProjects(projects.map(p => p.id === id ? { ...p, archived: !p.archived } : p));
             success(project.archived ? 'Project restored from archive' : 'Project archived');
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to archive project');
         }
@@ -983,6 +992,7 @@ const ProjectManagerEnhanced = () => {
             }
             setProjects(projects.map(p => p.id === id ? { ...p, pinned: !p.pinned } : p));
             success(project.pinned ? 'Project unpinned' : 'Project pinned');
+            publishProjectsChanged();
         } catch (err) {
             error('Failed to pin project');
         }

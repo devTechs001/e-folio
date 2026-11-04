@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03",
+  "generatedAt": "2026-11-04",
   "description": "Saved copy of local backup/seed records. Used by public pages only when the live API cannot supply a section. Live data always wins.",
   "sources": [
     "scripts/seed-projects.js",
@@ -64,8 +64,8 @@
           "imageUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
           "completionDate": "2025-11-15T00:00:00.000Z",
           "teamSize": 1,
-          "views": 0,
-          "likes": 0,
+          "views": 1245,
+          "likes": 600,
           "order": 1
         },
         {
@@ -121,8 +121,8 @@
           "imageUrl": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
           "completionDate": "2026-02-15T00:00:00.000Z",
           "teamSize": 2,
-          "views": 0,
-          "likes": 0,
+          "views": 856,
+          "likes": 600,
           "order": 2
         },
         {
@@ -179,12 +179,251 @@
           "imageUrl": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
           "completionDate": "2024-03-01T00:00:00.000Z",
           "teamSize": 3,
-          "views": 0,
-          "likes": 0,
+          "views": 1243,
+          "likes": 600,
           "order": 3
+        },
+        {
+          "id": "snapshot-portfolio-website",
+          "title": "Portfolio Website",
+          "description": "Modern portfolio website built with React, featuring smooth animations and responsive design.",
+          "fullDescription": "A stunning portfolio website showcasing projects and skills with beautiful animations, dark mode support, and optimal performance. Built with modern React practices and styled with Tailwind CSS for a sleek, professional appearance.",
+          "technologies": [
+            "React",
+            "Tailwind CSS",
+            "Framer Motion",
+            "TypeScript"
+          ],
+          "category": "Web",
+          "status": "Live",
+          "featured": false,
+          "tags": [
+            "Portfolio",
+            "Animation",
+            "Responsive",
+            "TypeScript"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/portfolio-website",
+            "live": "https://home-scape-platform.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
+              "caption": "Portfolio Home"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1522252234503-e356532cafd5",
+              "caption": "Projects Section"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+              "caption": "About Page"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
+          "imageUrl": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
+          "completionDate": "2023-12-20",
+          "teamSize": 1,
+          "views": 600,
+          "likes": 600,
+          "order": 4
+        },
+        {
+          "id": "snapshot-task-management-app",
+          "title": "Task Management App",
+          "description": "React-based task management application with real-time updates and collaborative features.",
+          "fullDescription": "A powerful task management solution with real-time collaboration, drag-and-drop interface, team workspaces, and productivity analytics. Perfect for remote teams and project management.",
+          "technologies": [
+            "React",
+            "Firebase",
+            "Redux",
+            "Material-UI",
+            "Chart.js"
+          ],
+          "category": "Mobile",
+          "status": "Live",
+          "featured": false,
+          "tags": [
+            "Productivity",
+            "Real-time",
+            "Collaboration",
+            "PWA"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/task-manager",
+            "live": "https://schedule-manager-ap.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
+              "caption": "Task Dashboard"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1586880244406-5564e8cb497d",
+              "caption": "Kanban Board"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173",
+              "caption": "Analytics View"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
+          "imageUrl": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
+          "completionDate": "2023-11-10",
+          "teamSize": 2,
+          "views": 600,
+          "likes": 600,
+          "order": 5
+        },
+        {
+          "id": "snapshot-ai-image-generator",
+          "title": "AI Image Generator",
+          "description": "Advanced AI-powered image generation platform using stable diffusion models and neural networks.",
+          "fullDescription": "Cutting-edge AI image generation platform utilizing stable diffusion technology. Features include text-to-image generation, image editing with AI, style transfer, upscaling, and custom model training capabilities.",
+          "technologies": [
+            "React",
+            "TensorFlow.js",
+            "Python",
+            "FastAPI",
+            "WebGL",
+            "Docker"
+          ],
+          "category": "AI/ML",
+          "status": "Beta",
+          "featured": true,
+          "tags": [
+            "AI",
+            "Machine Learning",
+            "Image Processing",
+            "Deep Learning"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/ai-image-generator",
+            "live": "https://ai-image-editor-pro.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://picsum.photos/800/600?random=4",
+              "caption": "AI Generated Art"
+            },
+            {
+              "url": "https://picsum.photos/800/600?random=41",
+              "caption": "Style Transfer Interface"
+            },
+            {
+              "url": "https://picsum.photos/800/600?random=42",
+              "caption": "Gallery View"
+            }
+          ],
+          "thumbnail": "https://picsum.photos/800/600?random=4",
+          "imageUrl": "https://picsum.photos/800/600?random=4",
+          "completionDate": "2024-02-01",
+          "teamSize": 3,
+          "views": 600,
+          "likes": 600,
+          "order": 6
+        },
+        {
+          "id": "snapshot-social-media-dashboard",
+          "title": "Social Media Dashboard",
+          "description": "Comprehensive dashboard for social media analytics with real-time data visualization.",
+          "fullDescription": "All-in-one social media analytics dashboard providing insights from multiple platforms. Features real-time metrics, engagement tracking, sentiment analysis, competitor analysis, and automated reporting.",
+          "technologies": [
+            "React",
+            "D3.js",
+            "Chart.js",
+            "Python",
+            "Flask",
+            "PostgreSQL",
+            "Redis"
+          ],
+          "category": "Web",
+          "status": "Live",
+          "featured": true,
+          "tags": [
+            "Analytics",
+            "Data Visualization",
+            "Dashboard",
+            "API Integration"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/analytics-dashboard",
+            "live": "https://net-gate.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://picsum.photos/800/600?random=5",
+              "caption": "Analytics Dashboard"
+            },
+            {
+              "url": "https://picsum.photos/800/600?random=51",
+              "caption": "Engagement Metrics"
+            },
+            {
+              "url": "https://picsum.photos/800/600?random=52",
+              "caption": "Report Generation"
+            }
+          ],
+          "thumbnail": "https://picsum.photos/800/600?random=5",
+          "imageUrl": "https://picsum.photos/800/600?random=5",
+          "completionDate": "2023-10-25",
+          "teamSize": 2,
+          "views": 600,
+          "likes": 600,
+          "order": 7
+        },
+        {
+          "id": "snapshot-blockchain-wallet",
+          "title": "Blockchain Wallet",
+          "description": "Secure cryptocurrency wallet with multi-chain support and DeFi integration.",
+          "fullDescription": "Next-generation cryptocurrency wallet supporting multiple blockchains. Features include secure key management, token swaps, NFT gallery, staking, DeFi protocol integration, and portfolio tracking.",
+          "technologies": [
+            "React",
+            "Web3.js",
+            "Ethers.js",
+            "Solidity",
+            "IPFS",
+            "TypeScript"
+          ],
+          "category": "Blockchain",
+          "status": "Live",
+          "featured": true,
+          "tags": [
+            "Web3",
+            "Cryptocurrency",
+            "DeFi",
+            "NFT",
+            "Security"
+          ],
+          "links": {
+            "github": "https://github.com/devTechs001/blockchain-wallet",
+            "live": "https://fintech-banking.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://picsum.photos/800/600?random=6",
+              "caption": "Wallet Dashboard"
+            },
+            {
+              "url": "https://picsum.photos/800/600?random=61",
+              "caption": "Token Swap Interface"
+            },
+            {
+              "url": "https://picsum.photos/800/600?random=62",
+              "caption": "NFT Gallery"
+            }
+          ],
+          "thumbnail": "https://picsum.photos/800/600?random=6",
+          "imageUrl": "https://picsum.photos/800/600?random=6",
+          "completionDate": "2024-03-05",
+          "teamSize": 4,
+          "views": 600,
+          "likes": 600,
+          "order": 8
         }
       ],
-      "count": 3
+      "count": 8
     },
     "skills": {
       "success": true,

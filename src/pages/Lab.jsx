@@ -148,6 +148,16 @@ const Lab = () => {
 
   const sampleCount = useMemo(() => projects.filter(isSample).length, [projects]);
 
+  // A zero metric is not useful public information: only populated values
+  // become cards, so the page never prints a bare 0.
+  const metricCards = useMemo(() => ([
+    { key: 'experiments', icon: FlaskConical, value: projects.length, label: 'Experiments' },
+    { key: 'live', icon: Rocket, value: metrics.live || 0, label: 'Live' },
+    { key: 'beta', icon: Wrench, value: metrics.beta || 0, label: 'Beta' },
+    { key: 'development', icon: Globe, value: metrics.development || 0, label: 'In Development' },
+    { key: 'samples', icon: Trash2, value: sampleCount, label: 'Samples' }
+  ].filter(card => card.value > 0)), [projects.length, metrics, sampleCount]);
+
   const skillGroups = useMemo(() => skills.reduce((acc, skill) => {
     const key = skill.category || skill.type || 'Other';
     if (!acc[key]) acc[key] = [];
@@ -223,8 +233,7 @@ const Lab = () => {
             My <span className="text-mainColor gradient-text">Lab</span>
           </h2>
           <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto">
-            Live experiments, the toolkit behind them, and what I tinker with off the
-            bench — all pulled from the same records managed in the dashboard.
+            Experiments, the toolkit behind them, and what I tinker with off the bench.
           </p>
 
           <div className="lab-header-meta mt-3">
@@ -232,17 +241,17 @@ const Lab = () => {
               <FlaskConical size={12} />
               {dataStatus === 'archive' ? 'From the portfolio archive' : 'Latest from the portfolio'}
             </span>
-            {connected && (
+            {owner && connected && (
               <motion.span className="lab-live" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
                 <span className="lab-live-dot"></span> Live socket synced
               </motion.span>
             )}
-            {sampleCount > 0 && (
+            {owner && sampleCount > 0 && (
               <span className="lab-source lab-source-sample">
                 <FlaskConical size={12} /> {sampleCount} deletable sample{sampleCount !== 1 ? 's' : ''}
               </span>
             )}
-            {liveUpdate && (
+            {owner && liveUpdate && (
               <motion.span className="lab-live lab-live-refresh" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <RefreshCw size={12} className="lab-live-refresh-spin" /> Synced
               </motion.span>
@@ -263,34 +272,22 @@ const Lab = () => {
           <ArchiveNote source={contentSource} />
         </div>
 
-        {/* Metrics Row */}
-        <div className="lab-metrics">
-          <div className="lab-metric">
-            <FlaskConical size={18} />
-            <div><strong>{projects.length}</strong><span>Experiments</span></div>
+        {/* Metrics Row — only non-zero values are shown. */}
+        {metricCards.length > 0 && (
+          <div className="lab-metrics">
+            {metricCards.map(card => (
+              <div className="lab-metric" key={card.key}>
+                {React.createElement(card.icon, { size: 18 })}
+                <div><strong>{card.value}</strong><span>{card.label}</span></div>
+              </div>
+            ))}
           </div>
-          <div className="lab-metric">
-            <Rocket size={18} />
-            <div><strong>{metrics.live || 0}</strong><span>Live</span></div>
-          </div>
-          <div className="lab-metric">
-            <Wrench size={18} />
-            <div><strong>{metrics.beta || 0}</strong><span>Beta</span></div>
-          </div>
-          <div className="lab-metric">
-            <Globe size={18} />
-            <div><strong>{metrics.development || 0}</strong><span>In Development</span></div>
-          </div>
-          <div className="lab-metric">
-            <Trash2 size={18} />
-            <div><strong>{sampleCount}</strong><span>Samples</span></div>
-          </div>
-        </div>
+        )}
 
         {/* Search & Filter Controls */}
         <div className="lab-controls flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
           <div className="lab-filters" role="tablist" aria-label="Filter lab projects">
-            {filters.map(f => (
+            {filters.filter(f => f.key === 'all' || f.count > 0).map(f => (
               <button
                 key={f.key}
                 role="tab"
@@ -299,7 +296,7 @@ const Lab = () => {
                 onClick={() => setActiveFilter(f.key)}
               >
                 {f.label}
-                <span className="lab-filter-count">{f.count}</span>
+                {f.count > 0 && <span className="lab-filter-count">{f.count}</span>}
               </button>
             ))}
           </div>
@@ -441,7 +438,7 @@ const Lab = () => {
             <div>
               <span className="lab-data-eyebrow"><ToolkitIcon size={13} /> Real data · Skills</span>
               <h3>Toolkit behind the experiments</h3>
-              <p>Grouped from the same skills you manage in the dashboard.</p>
+              <p>A grouped view of the tools used across the experiments.</p>
             </div>
             {owner && (
               <Link to="/dashboard/skills" className="lab-dashboard-link">Manage skills <ArrowUpRight size={13} /></Link>
@@ -456,10 +453,14 @@ const Lab = () => {
                     {items.slice(0, 8).map((skill, i) => (
                       <div className="lab-skill" key={skill._id || skill.id || i}>
                         <span>{skill.name}</span>
-                        <div className="lab-skill-bar">
-                          <div style={{ width: `${Math.min(100, Math.max(0, Number(skill.level) || 0))}%` }} />
-                        </div>
-                        <small>{Number(skill.level) || 0}</small>
+                        {Number(skill.level) > 0 && (
+                          <>
+                            <div className="lab-skill-bar">
+                              <div style={{ width: `${Math.min(100, Number(skill.level))}%` }} />
+                            </div>
+                            <small>{Number(skill.level)}</small>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -477,7 +478,7 @@ const Lab = () => {
             <div>
               <span className="lab-data-eyebrow"><Heart size={13} /> Real data · Hobbies</span>
               <h3>Off the bench</h3>
-              <p>The interests stored in the Hobbies manager.</p>
+              <p>Things I explore away from the bench.</p>
             </div>
             {owner && (
               <Link to="/dashboard/hobbies" className="lab-dashboard-link">Manage hobbies <ArrowUpRight size={13} /></Link>

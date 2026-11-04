@@ -9,8 +9,8 @@
 |---|---|
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
-| Branch | `arena/f176a951-e-folio` (from `main` `6d12a9f`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz |
+| Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -24,8 +24,17 @@ Lab ↔ dashboard, mock testimonials, chat/chatbot/email review + profile &
 settings real APIs, About data + CV/portfolio/accounts + review, enhanced user
 workspaces + real-time notifications + NEX Store link, Security Audit dashboard +
 Resources page, live preview + lagging issues, CellarKeep client-portal link in
-Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
-**local only** — no push, PR, merge, external issue, or external service was used.
+Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
+subsequently merged into this repository's own `origin/main` via PR #3
+(merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
+Phases 14–20 (§3n–§3t: HomeScape property-marketplace link, owner-specified
+starting like counts, restored projects, filter buttons, page restyle, the
+tracking conflict fix, twelve owner project links, public Lab copy,
+zero-value cleanup, the working-link replacement, public/server/dashboard
+counter synchronisation with a 600 minimum, and the review-submission repair)
+are **local only** on the active branch
+`arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
+service has been used for them.
 
 ---
 
@@ -42,6 +51,15 @@ Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) are
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Review submission + sync (phase 20) | post-save email/logging failures turned an already-saved review into a 500, step-3 ratings sent nested objects, `new_review` went to a room no socket joined, and there was no offline path | normalised input, success returned before isolated side effects, numeric star payloads, canonical id/status broadcasts on the public namespace, cross-tab signals and polling, and an honest device-only outbox that never claims a queued review was submitted |
+| Project → server → dashboard sync (phase 19) | the public page listened for socket events the server never emitted, anonymous visitors had no socket, dashboard saves sent no refresh signal, and the offline snapshot reset every view count to zero | one canonical broadcast on a read-only public namespace, matching root/legacy listeners, hidden-tab-aware 30 s polling, cross-tab dashboard signals, server-authoritative like/view counts, and owner-specified likes AND views of at least 600 on all eight cards |
+| Working-link replacement (phase 18) | five restored project cards still pointed at retired GitHub Pages / wallet URLs | those five links swapped for owner-supplied working deployments; the separate directory was removed; all working links and the protected NetGate link untouched |
+| Owner project links (phase 17) | the front end published only 3 live projects and none of the owner-supplied deployments | 12 owner URLs verified read-only and published in a shared JSON catalogue with a horizontal scroller; partial live lists completed from local saved records |
+| Public Lab copy + zero values (phase 17) | the Lab told visitors where skills/hobbies are stored and printed bare `0` metrics, filter counts, skill levels and card counters | neutral public copy, owner-only technical badges, zero-valued items omitted everywhere (never fabricated into non-zero numbers) |
+| Projects page + filters (phase 16) | only 3 grid projects remained; technology filters were hidden behind a toggle; plain page shell | 8 original records restored from local history (10 projects total with the 2 featured cards), visible technology chip scroller with counts, scroll progress/reveal cues and a modern glass page shell; `ProjectCard` untouched |
+| Tracking conflict (phase 16) | `findOneAndUpdate` wrote `pagesViewed` through both `$setOnInsert` and `$inc` (plus `pageJourney` and `scrollDepth`), producing the pasted MongoServerError | conflicting paths removed from `$setOnInsert`; `$inc`/`$push`/`$max` now own them, `$max` always runs, 8 static regression checks |
+| Project likes (phase 15) | the three public project cards showed the old low seed counts; the offline snapshot hardcoded `likes: 0` | owner-specified 500 / 600 / 100 carried from the seed into the snapshot; card markup, all other project records and all links unchanged, values labelled as display numbers rather than measured engagement |
+| HomeScape link → Projects (phase 14) | no entry for the property marketplace; the card button text was hardcoded for one project | `https://homescape-pro.netlify.app/` appended as a second record in the shared showcase JSON, data-driven button label and conditional notes, 13 new regression checks; NetGate/NEX Store/CellarKeep/OmniBiz links untouched |
 | E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
 | Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
@@ -1022,6 +1040,279 @@ The retired BizSolutionz URL and the `demo-ecommerce` placeholder no longer appe
 
 ---
 
+## 3n. Phase 14 — add the HomeScape property marketplace to Projects
+
+Request: *"[https://homescape-pro.netlify.app/](https://homescape-pro.netlify.app/)"*, followed by *"continue"* on the new active branch. As with the earlier bare-link request (§3k), this was handled as **an append-only new Projects entry**, not as a replacement for any existing project link. The destination was read once, read-only: it serves **"HomeScape - Find Your Perfect Home | HomeScape"**, a property marketplace with listing search by type/city/price, seller accounts, price estimates, saved properties, owner inquiries, viewing appointments, and showcase homes clearly labelled as illustrative examples. No workspace code, data or credential was sent to that site. The URL is stored exactly as supplied, including its trailing slash.
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `src/data/projectShowcase.json` | Appended a second reviewed record (`homescape-property-marketplace`). The CellarKeep record keeps its URL, title, description, features and security notes; the only addition to it is an optional `linkLabel` so its button still reads "Open client portal". |
+| `src/components/ProjectShowcase.jsx` | The open-button label is now per-project (`linkLabel`), an optional factual `note` can be shown, and the "As described on the live page" block renders only when a project actually has security notes. Both cards render automatically from the shared array. |
+| `src/styles/ProjectShowcase.css` | Added a small style for the factual note. The existing auto-fit grid already lays out two cards, so no layout rule was replaced. |
+| `tests/project-showcase.test.mjs`, `tests/homescape-link.test.mjs` | 15 showcase checks (3 added) plus 13 new HomeScape checks; `test:homescape-link` wired into both `test` scripts. |
+
+`server/scripts/seedProjectShowcase.js` needed no edit: it already iterates the shared JSON and upserts one `portfolio-showcase`-tagged record per entry, so `npm run seed:showcase` against a configured MongoDB will add HomeScape without touching existing project documents. There is no database in this sandbox, so no write was performed. No seed or backup file was overwritten or deleted.
+
+### Explicitly not changed
+
+- The **NetGate link** (`https://net-gate-portal.netlify.app/`) and all its files — this honours the standing "do not replace the previous NetGate link in projects" instruction. Also untouched: NEX Store, CellarKeep, the OmniBiz E-Commerce links, the generated public snapshot, `scripts/seed-projects.js`, and every other project record and link.
+- No invented technology stack, views, likes, metrics or achievements. The HomeScape record has an empty `technologies` array; its description and features come only from the live page copy, and its showcase homes are described as illustrative rather than live listings. (Its notes field was revised in phase 15 — see below.)
+- No push, PR, merge, external issue, external write or offensive testing. This phase is local-only on `arena/28000c5e-e-folio`.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **19.71s**, PWA **216 precache entries (7001.15 KiB)**.
+- **157** Node-only regression checks in total (**13** new HomeScape checks and **3** added to the project-showcase suite). `git diff --check` clean; masked secret scan clean.
+- The built JS contains the new URL **1 time** (inlined from the shared JSON) and the retired/placeholder E-Commerce URLs **0 times**; the production build still contains no dev-diagnostics panel. Both live previews (5173 dev / 4173 production build) return 200 and the dev preview serves the new card.
+- NetGate URL counts are unchanged in `src/data/labSamples.json`, `src/data/testimonialSamples.json`, `server/backups/testimonials/*` and `src/data/publicSnapshot.json`; the new URL appears in exactly one `src/` or `server/` source file (the shared showcase JSON).
+
+**Revision (phase 15):** after the owner asked to *"maintain the project cards
+interface the way they were"*, the `ProjectShowcase.jsx` / `ProjectShowcase.css`
+changes listed in the table above were reverted. The added note paragraph, the
+conditional notes block and the `.showcase-card__note` rule no longer exist;
+only the data-driven button label remains. The HomeScape record now carries three
+factual, verbatim observations from the live page in the original notes block,
+with no invented security claim. See §3o. The verification numbers below are the
+phase-14 totals as recorded at the time.
+
+## 3o. Phase 15 — owner-specified starting like counts; card interface maintained
+
+Requests: *"maintain the project cards interface the way they were"*, then *"add some likes, for each project (500,600,100, and s…), maintain the other projects as well, there are 8 of them, leave that"*.
+
+The three supplied numbers were applied, in the order given, to the three published public project cards: **E-Commerce Platform 500, GB Chat 600, CinemaFlix 100**. These are **owner-specified display/seed values** — starting presentation numbers, **not measured engagement**. No claim of real user activity is made, and the API/database remains the source of truth for real like counts. Every other project record (including the eight the owner asked to leave alone), every existing link, and the card interface itself were left untouched.
+
+### Card-interface preservation (phase 14 revised)
+
+The phase-14 showcase-card additions were removed in response to the first request: the extra note paragraph, the conditional hiding of the "As described on the live page" block, and the new `.showcase-card__note` CSS rule are gone. `ProjectShowcase.jsx` markup and `ProjectShowcase.css` are now identical to their pre-phase-14 state, apart from one content-only line: the open-button text comes from `project.linkLabel` so each card describes its own link. For the original CellarKeep card that text is unchanged ("Open client portal"). The HomeScape record now supplies three factual notes taken from the live page for the original notes block; no security claim was invented. The HomeScape link itself remains in place.
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `scripts/seed-projects.js` | the three `likes` values (42/34/56) replaced with 500/600/100, with a comment labelling them as owner-specified display values. `views` (1245/856/1243), titles, descriptions, technologies, `featured`, tags and all `links` are unchanged. |
+| `scripts/build-public-snapshot.mjs` | the project mapping now carries `Number(project.likes) \|\| 0` from the seed instead of hardcoding `likes: 0`; `views: 0` is unchanged. |
+| `src/data/publicSnapshot.json` | regenerated with `npm run snapshot:build`, so the offline/public project cards show the three values. |
+| `tests/public-fallback.test.mjs`, `tests/project-likes.test.mjs` | the earlier "snapshot likes must be 0" assertion now checks that likes come from the seed file; 10 new checks; `test:project-likes` wired into both `test` scripts. |
+
+No component, stylesheet, route, controller or model was changed. `src/components/ProjectCard.jsx` already renders `{likes} likes` from the project object, so the existing card interface displays the values without any UI change. No like count was written into the showcase cards, the testimonial samples, the lab samples, or any other seed/backup dataset.
+
+### Explicitly not changed
+
+- The **NetGate link** and all its files, the NEX Store, CellarKeep and OmniBiz links, all GitHub links, and every other project record (including the eight the owner said to leave alone).
+- `views` stays zero in the snapshot; no views, ratings, achievements, uptime or user counts were added or fabricated.
+
+> **Phase 19 revision:** the owner subsequently asked for *"likes and views ... a count 600 and above"*. The three 500/600/100 values and the five zero-valued restored records were therefore raised to the owner-supplied floor of **600**, and the snapshot now carries `views` from the seed instead of hardcoding zero. Existing seed views above 600 (1245/856/1243) were kept. These remain owner-specified **display** values, never measured engagement. See §3s.
+- No push, PR, merge, external issue, external write or offensive testing. Local-only work on `arena/28000c5e-e-folio`.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **21.62s**, PWA **216 precache entries (7001.00 KiB)**.
+- **167** Node-only regression checks in total (**10** new project-likes checks). `git diff --check` clean; masked secret scan clean.
+- Built JS contains the three values via the regenerated snapshot; both live previews (5173 dev / 4173 production build) return 200.
+- NetGate URL counts unchanged (3/1/1/3); the eight testimonial/backup records and every other seed file retain their original values.
+
+## 3p. Phase 16 — restore the eight original projects, add filter buttons, restyle the page, fix the tracking conflict
+
+Requests: *"add the filters button for different projects as they were not zero technologies"*, *"add all the projects that were there (have to be 10 in total, they exist, earlier there were 8 projects, before you started editing projects system), review"*, a pasted `MongoServerError: Updating the path 'pagesViewed' would create a conflict at 'pagesViewed'` stack, and *"restyle the projects page (modern look and feel (with scrollers) (the cards are fine (dont touch) only the page"*.
+
+### Review of the projects system
+
+The local clone was unshallowed with a **read-only fetch of this repository's own history** (no code left the workspace). The pre-phase-4 `getFallbackProjects()` array in `src/pages/Projects.jsx` at commit `3520894` held exactly **eight** records: E-Commerce Platform, Portfolio Website, Task Management App, AI Image Generator, Social Media Dashboard, Blockchain Wallet, GB Chat and Moview Watch. Phase 4 removed those hard-coded fallbacks; the current build kept three of them (E-Commerce Platform with the published OmniBiz link, GB Chat, and CinemaFlix = Moview Watch renamed), plus two featured showcase cards added later (CellarKeep, HomeScape).
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `scripts/seed-projects.js` | Appended the **five missing originals** (Portfolio Website, Task Management App, AI Image Generator, Social Media Dashboard, Blockchain Wallet), recovered verbatim from local Git history. Fabricated view counts and invented achievement badges were dropped; likes and views start at zero. The three existing records keep their published links and the owner-specified 500/600/100 likes. |
+| `src/data/publicSnapshot.json` | Regenerated with `npm run snapshot:build`: **8 grid project cards**. Together with the 2 featured showcase cards, the Projects page now shows **10 projects in total**. Every restored record has a non-empty `technologies` array, so the filter buttons have real data. Original image URLs (including the historical placeholder images) were kept verbatim from history; nothing was invented. |
+| `src/pages/Projects.jsx` | Added **visible filter buttons**: a horizontal technology-chip scroller with left/right arrows, per-tech project counts and `aria-pressed` state, derived from `allTechnologies` (which comes from the projects' own technologies). Also a scroll-progress bar, guarded scroll-reveal sections, a jump-to-projects control and passive-listener/resize/observer cleanup. Existing category pills and the advanced filter panel are retained. |
+| `src/styles/Projects.css` | Appended a modern page shell: layered gradient/grid background, glass control panel, refined header/stat/category/CTA styling, chip-scroller styling, reveal transitions and `prefers-reduced-motion` support. **No `.project-card` or `.projects-grid` selector was overridden.** |
+| `server/controllers/tracking.controller.js` | Fixed the MongoDB conflict described below. |
+| `tests/tracking-conflict.test.mjs`, `tests/projects-page-filters.test.mjs`, `tests/project-likes.test.mjs`, `package.json`, `server/package.json` | 8 new tracking checks, 13 new page/filter checks, the likes suite updated for 8 records, and both `test` scripts wired. |
+
+### The MongoDB error
+
+The pasted stack came from `trackPageView`'s `findOneAndUpdate`: `$setOnInsert` set `pagesViewed: 0`, `pageJourney: []` and `scrollDepth: 0`, while `$inc`, `$push` and `$max` wrote those same paths. MongoDB rejects one update that writes a path through two different operators. Those three fields were removed from `$setOnInsert`; `$inc`, `$push` and `$max` create them on an inserted document, which preserves the previous zero/empty defaults. `$max` now always runs with `Number(scrollDepth) \|\| 0` so an inserted session still gets `scrollDepth: 0`. `{ upsert: true, new: true }` is unchanged, and the other visitor-ping upsert was checked for the same pattern. No live MongoDB was available, so runtime verification is backlog item 21.
+
+### Explicitly not changed
+
+- The **NetGate link** and all its files, the NEX Store / CellarKeep / OmniBiz / HomeScape links, every other project/seed dataset, and the testimonial and lab backups.
+- `src/components/ProjectCard.jsx` and `src/styles/ProjectCard.css` — the cards are exactly as they were, as requested. Only the page was restyled.
+- No push, PR, merge, external issue, external write or offensive testing. No fabricated metrics: the five restored records have zero likes/views and no achievement badges.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **28.23s**, PWA **216 precache entries (7015.73 KiB)**.
+- **188** Node-only regression checks in total (**8** tracking-conflict and **13** page/filter checks). `git diff --check` clean; masked secret scan clean.
+- Snapshot: 8 project records, all with non-empty technologies, 4+ distinct categories; 8 + 2 showcase = **10**. NetGate URL counts unchanged (3/1/1/3).
+- Both live previews (5173 dev / 4173 production build) return 200 and serve the new page.
+
+## 3q. Phase 17 — owner-supplied project links, public Lab copy, zero values and the front-end catalogue
+
+> **Revision (§3r):** the separate "Project directory" scroller described
+> below was removed at the owner's request. The twelve URLs are now a
+> documented local inventory; five of them replace the dead project links in §3r.
+
+
+Requests: *"in my lab there is unworthy info to the public, like where I store the skills and project"*, *"ensure there are no zero values"*, a list of **12 project URLs to add**, and *"the front still shows 3"*.
+
+### Read-only verification of the twelve links
+
+Each owner-supplied URL was fetched read-only on 2026-11-04 to capture its real page title. No code left the workspace. The catalogue stores **only a title and a link** — no stacks, likes, views, achievements, metrics or live-status claims were invented.
+
+| URL | Page title |
+| --- | --- |
+| `https://net-gate.netlify.app/` | NetGate — Smart Network Portal |
+| `https://bizsolutionz.netlify.app/` | OmniBiz - Complete Business Management Platform |
+| `https://home-scape-platform.netlify.app/` | RealEstateHub - Find Your Dream Property |
+| `https://fintech-banking.netlify.app/` | SecureBank - Enterprise Banking |
+| `https://ai-image-editor-pro.netlify.app/` | AI Media Studio - Transform, Create, Inspire |
+| `https://kazi-find.netlify.app/` | Kazi Find (title from the repository's own earlier project record) |
+| `https://cinemaflx.netlify.app/` | CinemaFlix - Watch Unlimited Movies |
+| `https://schedule-manager-ap.netlify.app/` | AI Schedule Manager - Boost Your Productivity |
+| `https://gbchat.netlify.app/` | GBChat - Ultimate Messaging |
+| `https://virtualtourist.netlify.app/` | Virtual Tourist - Explore the World |
+| `https://mediaplaier.netlify.app/` | AI Video Player Enterprise |
+| `https://elimu-pro-beta.netlify.app/` | Elimu Pro - Empowering Kenyan Developers |
+
+Notes: the Kazi Find link returned a Netlify 404 during verification; its title comes from this repository's earlier project record and the link is published as supplied, with no availability claim. CinemaFlix and AI Schedule Manager redirect to `/status.html` and `/login`; their page titles are still valid. The several marketing numbers shown on some of those pages were **not** used as portfolio metrics.
+
+### Why the front end showed only 3
+
+`loadPublicSection('projects')` returned the live API's records whenever they were non-empty, and the bundled saved copy was used **only** when the API failed or returned nothing. A live database publishing three records therefore hid the other saved projects. `src/pages/Projects.jsx` now completes any live list with the saved local records (union by normalised title, live values kept), labels a completed section as the archive rather than as live data, and caches only genuinely live-only responses. This is a source-level fix; no browser-level measurement was performed.
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `src/data/projectLinks.json`, `src/utils/projectLinks.js` | New shared catalogue of the 12 owner URLs and their verified titles; HTTPS-only filtering, safe external-link attributes, hostname derived from the URL itself. |
+| `src/pages/Projects.jsx` | New horizontal "Project directory" scroller with 12 link cards and arrow controls; live/saved merge so the grid is never reduced to a partial live subset; zero-valued summary cards omitted. |
+| `src/styles/Projects.css` | Page-level styles for the directory scroller. No `.project-card` / `.projects-grid` override. |
+| `src/pages/Lab.jsx` | Removed public-facing storage/dashboard wording ("managed in the dashboard", "stored in the Hobbies manager", "pulled from the same records"); technical connection/sample/sync badges are now owner-only; zero-valued metrics, filter counts and skill levels are never rendered. Owner-only management detail is retained. |
+| `src/pages/ProjectCard.jsx`, `src/pages/ProjectModal.jsx` | Zero-valued view/like counters are hidden rather than printed as `0`. This is the only card change and it is a data-honesty fix, **not** a visual restyle — the like controls stay fully functional and no other markup changed. |
+| `tests/project-links.test.mjs`, `tests/ecommerce-link.test.mjs`, `package.json`, `server/package.json` | New regression suite; the retired-deployment scan now allows the legacy URL **only** as the separate owner-supplied link (the E-Commerce Platform record still points at OmniBiz); both `test` scripts wired. |
+
+### No zero values
+
+Zero-valued public data is omitted, never fabricated into a non-zero number: Lab metrics/filter counts/skill levels, Projects summary totals, and card/modal view and like counters. The 12 new catalogue entries carry no numeric fields at all. The saved project records keep their existing values (the three owner-specified 500/600/100 display counts and the zero counters used by the offline snapshot); only their rendering changed.
+
+### Explicitly not changed
+
+- The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). The new `https://net-gate.netlify.app/` is a **separate, additional** link, not a replacement.
+- NEX Store, CellarKeep, `https://ominbiz-solution.netlify.app/` and `https://homescape-pro.netlify.app/` links; all seed/backup/testimonial/lab datasets; the eight saved project records and the two featured cards.
+- No push, PR, merge, external issue, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **24.75s**, PWA **216 precache entries (7021.72 KiB)**.
+- **200** Node-only regression checks in total (**12** new project-links / Lab / zero-value checks). `git diff --check` clean; masked secret scan clean.
+- Production JS contains all 12 owner URLs and the `project-links-strip` scroller; production CSS contains the scroller styles; no production dev-panel strings.
+- 12 owner URLs present exactly once, all HTTPS with no credentials; 8 saved grid records + 2 featured cards unchanged; NetGate counts unchanged.
+- Both live previews (5173 dev / 4173 production build) return 200.
+
+## 3r. Phase 18 — replace the dead project links with the owner's working URLs
+
+The owner rejected the separate "Project directory" added in §3q: *"no just replace the link with the new working ones, commit"*. A narrow scope question was answered: **keep every already-working link and replace only the five dead GitHub Pages / wallet links**. The directory section, its CSS and the now-unused loader module were removed.
+
+### Link mapping
+
+Only `scripts/seed-projects.js` and the regenerated `src/data/publicSnapshot.json` changed. The mapping uses the closest published deployment from the owner's list, based on the page titles verified read-only in §3q. Project titles, descriptions, technologies and all other fields are unchanged; the owner can re-map any pair.
+
+| Project card | Retired link | New working link | Page title |
+| --- | --- | --- | --- |
+| Portfolio Website | `https://devtechs001.github.io/portfolio` | `https://home-scape-platform.netlify.app/` | RealEstateHub - Find Your Dream Property |
+| Task Management App | `https://devtechs001.github.io/task-manager` | `https://schedule-manager-ap.netlify.app/` | AI Schedule Manager - Boost Your Productivity |
+| AI Image Generator | `https://devtechs001.github.io/ai-image-generator` | `https://ai-image-editor-pro.netlify.app/` | AI Media Studio - Transform, Create, Inspire |
+| Social Media Dashboard | `https://devtechs001.github.io/analytics-dashboard` | `https://net-gate.netlify.app/` | NetGate — Smart Network Portal |
+| Blockchain Wallet | `https://wallet.devtechs001.com` | `https://fintech-banking.netlify.app/` | SecureBank - Enterprise Banking |
+
+### Deliberately left alone
+
+- E-Commerce Platform → `https://ominbiz-solution.netlify.app/`, GB Chat → `https://gbchat.netlify.app/`, CinemaFlix → `https://cinemaflx.netlify.app/` (all still working).
+- CellarKeep → `https://liqourstor.netlify.app/client` and HomeScape → `https://homescape-pro.netlify.app/` (featured showcase cards).
+- The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). `https://net-gate.netlify.app/` is a different, owner-supplied deployment used as one project link, not a replacement.
+- All other seed/backups/testimonial/lab datasets, the eight saved project records, the two featured cards, and the §3q fixes (complete front-end catalogue, Lab copy cleanup, no zero values).
+
+The remaining owner URLs stay in `src/data/projectLinks.json` as the documented local inventory; they are no longer rendered as a public directory.
+
+### Verification
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, **198** Node-only regression checks, build **23.41s**, PWA **216 precache entries (7015.49 KiB)**.
+- `git diff --check` clean; masked secret scan clean; both live previews return 200.
+- No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing. Local commit only.
+
+---
+
+## 3s. Phase 19 — public Projects ↔ server ↔ dashboard counter synchronisation
+
+Request: *"review the project page, server, dashboard syncing (nothing changes) in the public page, at least likes and views to have a count 600 and above"*, with a local `commit`. This is a source-level review and local fix only: no MongoDB, Express instance, browser automation or socket runtime was available, so no live sync claim is made.
+
+### What was actually broken
+
+| # | Finding | Where |
+| --- | --- | --- |
+| 1 | The public page listened for `project:updated`, `project:liked`, `project:viewed`, `project:created`. The server emits `project_changed`, `project_updated`, `project_view`, `project_like`. **No name overlapped**, so no dashboard edit ever reached the page. | `src/pages/Projects.jsx` socket effect vs `server/controllers/public.controller.js` / `projectController.js` |
+| 2 | `SocketContext` connects the root socket **only when `user?.id` exists**. Public visitors are anonymous and had no socket at all, so even correctly-named events could not arrive. | `src/contexts/SocketContext.jsx` |
+| 3 | `likeProject` / `unlikeProject` / `viewProject` persisted to MongoDB but emitted **no socket event whatsoever**. | `server/controllers/projectController.js` |
+| 4 | `toggleProjectLike` read `req.session?.likes`, but no session middleware is installed. `req.session` was always undefined, so every click counted as a new like and unlike never worked. | `server/controllers/public.controller.js` |
+| 5 | The dashboard's create/update/delete/toggle handlers never dispatched `settingsChanged`; the public page also held `public_projects` in a 10-minute cache. The only refresh signal was never sent. | `ProjectManagerEnhanced.jsx`, `Projects.jsx` |
+| 6 | Views and likes used **two different API prefixes** (`/public/projects/:id/view` vs `/projects/:id/like`) with different controllers and different semantics; the like button also added a local odd/even offset on top of the record's likes, double-counting. | `Projects.jsx`, `api.service.js` |
+| 7 | The offline snapshot generator hardcoded `views: 0` for every project, so a backend outage silently reset all public view counts to zero. The five restored records also had `likes: 0`/`views: 0`. | `scripts/build-public-snapshot.mjs`, `scripts/seed-projects.js` |
+
+### Fixes
+
+- **One canonical broadcaster** — `server/utils/projectEvents.js` emits `project:stats` on the new read-only `/public-projects` namespace **and** `project_changed` on the root socket. It is called after every like, view, create, update and delete in both project controllers, so a database write can no longer happen without a matching public broadcast. A delete broadcast omits counters rather than sending zeros.
+- **Anonymous-safe realtime** — `server/socket/public-projects.handler.js` registers the unauthenticated namespace (no auth middleware, no user data, no client-to-server commands). `socket.service.js` adds `subscribePublicProjects()`, a ref-counted, listener-buffered connection that does **not** depend on `SocketContext`'s logged-in-only socket. The public page normalises every payload and matches by id **or** title, so a saved archive copy with a slug id still picks up an edit to the real record. Canonical and legacy root event names are both handled for signed-in sessions.
+- **Reliable fallback + cross-tab signals** — `src/utils/projectSync.js` publishes a timestamp-only change signal (`storage` event + `BroadcastChannel` + window event); nine dashboard mutation handlers publish it. The public page refreshes immediately on that signal, on `visibilitychange`, and on a hidden-tab-aware 30 s poll. `loadProjects(true)` bypasses and clears the 10-minute cache, and polling does not re-trigger the initial loading spinner.
+- **Server-authoritative counters** — both buttons now use the same `/public/projects/:id/...` prefix and set the displayed number from the persisted response. The local odd/even offset was removed. Slug ids from archive copies return a clean 404 instead of a `CastError`/500. `toggleProjectLike` now uses a bounded in-process like registry so unlike works; its legacy `project_like` event is kept for existing listeners.
+- **Owner-specified 600 floor** — all eight published records now have `likes >= 600` **and** `views >= 600`. Values below the floor were raised to exactly 600; existing seed views above it (1245 / 856 / 1243) were kept. The snapshot generator now carries `Number(project.views)` as well as `Number(project.likes)` from the seed. These are **owner-specified display/seed values, NOT measured engagement** — no analytics figure was invented or republished, and live API/DB data remains authoritative once connected. No card markup, card CSS, link, NetGate file, showcase record or other seed/backup dataset changed.
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity `--strict` **0 live code gaps**, static security audit `--strict` **HIGH/MED/LOW 0**, **212** Node-only regression checks, build **25.72s**, PWA **216 precache entries (7017.60 KiB)**.
+- New `tests/project-sync.test.mjs` (14 checks) covers the emitter, namespace registration, all six mutation broadcasts, session-free like tracking, anonymous socket subscription, event-name alignment, hidden-tab polling, cross-tab publishing, server-authoritative counters, the 600 floor, protected files and confidentiality. `tests/project-likes.test.mjs` was rewritten for the 600 minimum; `tests/public-fallback.test.mjs` and `tests/projects-page-filters.test.mjs` were updated to assert both counters come from the seed.
+- `git diff --check` clean; masked secret scan clean; both local previews return 200.
+- **Not verified:** live socket delivery, MongoDB writes, dashboard→public behaviour in a real browser, or the new like registry under concurrency. Backlog item 24. No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call, browser-level performance claim or offensive testing. Local commit only.
+
+---
+
+## 3t. Phase 20 — repair public review submission and its server/dashboard sync
+
+Request: *"review system fails (fails to submit reviews) same to projects"* — i.e. fix the review path end to end the way §3s fixed projects. Local work and a local commit only; no MongoDB, Express instance, browser automation or socket runtime was available, so no live submission claim is made.
+
+### What was actually broken
+
+| # | Finding | Where |
+| --- | --- | --- |
+| 1 | `createReview` ran the owner lookup, two emails, a socket emit and an activity log **before** answering, with only the emails guarded. Any failure after `Review.create` returned HTTP 500 — the visitor saw "Failed to submit review" even though their review was already saved. | `server/controllers/reviews.controller.js` |
+| 2 | `Object.keys(categories)` threw when the floating form omitted `categories`; swallowed by the email catch, so the owner notification was silently lost. | same |
+| 3 | Step-3 `StarRating` called `onChange({ ...value, [category]: star })` for a numeric `value`, producing a **nested object**. `categories.design = { design: 4 }` fails Mongoose's `Number` cast → 500. | `src/components/ReviewForm.jsx` |
+| 4 | The form's fourth category was `content`, but the model defines `support` — that rating was silently dropped. Slug `projectId` values from saved copies also caused a `CastError`. | `ReviewForm.jsx`, `server/models/Review.model.js` |
+| 5 | The floating form never checked the server's 10-character minimum, so an empty/short comment produced a 400 with an opaque message. | `src/components/ReviewFloatingButton.jsx` |
+| 6 | `new_review` was emitted to `user_<ownerId>` — **no socket ever joins that room** (the notifications namespace uses `user:<id>`). The dashboard also had no `review_updated` listener, so submissions and approvals never appeared without a manual reload. | `reviews.controller.js`, `ReviewsManager.jsx` |
+| 7 | No offline path existed: with the backend unreachable (as in this sandbox's preview) every submission failed outright. | public review forms |
+
+### Fixes
+
+- **Reliable server write** — `normaliseReviewInput()` coerces `rating`, trims/bounds text, sanitises the four model category keys to integers and drops non-ObjectId project ids. Validation now returns the same friendly messages. `dbAvailable()` produces an honest `503` / `meta.populated:false` instead of a misleading 500.
+- **Success cannot be undone by side effects** — the `201 success` response is sent immediately after `Review.create`. Owner email, private notification, confirmation email and activity logging run afterwards through `Promise.allSettled` + `safeSideEffect`, each individually guarded. `ActivityLog` in `moderateReview`/`deleteReview` was made non-fatal for the same reason.
+- **Canonical sync (same pattern as §3s)** — `emitPublicEvent` broadcasts `review:submitted` and `review:changed` on the read-only `/public-projects` namespace **and** the root socket, carrying **ids/status only** (never names, emails or review text). `moderateReview`, `updateReview`, `deleteReview`, both bulk actions and both toggles broadcast after their write. Detailed `new_review` data now goes to the authenticated `/notifications` namespace via `emitToUser`, which joins `user:<id>`.
+- **Anonymous-safe client** — `socket.service.js` gained a ref-counted `subscribePublicReviews()` sharing the unauthenticated socket with projects. `PublicReviews.jsx` refreshes on broadcast, cross-tab signal, `online`, `visibilitychange` and a hidden-tab-aware 30 s poll. `ReviewsManager.jsx` listens to the root signals and the private notification namespace, polls silently, and refreshes from its owner-only list rather than prepending a partial payload.
+- **Frontend correctness** — the star widget now emits a plain number; the form uses `support`, sends only schema-valid fields and omits non-ObjectId project ids; the floating form enforces the 10-character minimum.
+- **Honest offline outbox** — `src/utils/reviewOutbox.js` saves a real visitor submission on **their own device** when the service is unreachable, with the explicit message *"Saved on this device — not yet submitted. It will be sent automatically when the service is available."* It retries on mount, `online` and after a successful send, serialises flushes, and never publishes a queued review or displays it as approved social proof. Only timestamp/id-only signals cross tabs. Validation and duplicate rejections are final, so the queue cannot grow without bound. `apiService` still has **no fake success fallback**.
+- **Untouched** — all owner-only review routes and the `rateLimiter(5)` on `/submit`, the `Review` model, the eight saved testimonials, the NetGate link and all protected seed/backup/lab/sample files, card markup/CSS and the phase-19 project sync. Attachments remain UI-only because the review model has no attachment field (backlog item 25).
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity `--strict` **0 live code gaps**, static security audit `--strict` **HIGH/MED/LOW 0**, **226** Node-only regression checks, build **27.18s**, PWA **217 precache entries (7021.74 KiB)**.
+- New `tests/review-submission.test.mjs` (14 checks) covers input normalisation, response-before-side-effects, PII-free broadcasts, the corrected notification room, numeric star payloads, form/floating validation, honest queuing, signal hygiene, both client sync paths, protected routes and confidentiality. Existing `tests/collaboration-review.test.mjs` checks still pass.
+- `git diff --check` clean; masked secret scan clean; both local previews return 200.
+- **Not verified:** a real MongoDB insert, SMTP delivery, socket delivery in a browser, or the outbox retry against a live backend. Backlog item 25. No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call, browser-level performance claim or offensive testing. Local commit only.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1084,6 +1375,44 @@ The retired BizSolutionz URL and the `demo-ecommerce` placeholder no longer appe
     so existing E-Commerce project documents also pick up the new OmniBiz
     link; the local file changes take effect immediately in the offline
     snapshot but cannot rewrite live DB records without a database.
+19. Phase 14 follow-up: run `npm run seed:showcase` against a configured
+    MongoDB so the new HomeScape record appears in `/dashboard/projects` and
+    `GET /api/public/projects` alongside the CellarKeep record; no database
+    was available in this sandbox.
+20. Phase 15 follow-up: run `npm run seed-projects` against a configured
+    MongoDB so live project documents also carry the owner-specified starting
+    like counts. No database was available in this sandbox, and these values
+    are display numbers, not measured engagement.
+21. Phase 16 follow-up: runtime-verify the tracking fix against a real
+    MongoDB (`POST /api/tracking/pageview` on a fresh session and on an
+    existing one), and run `npm run seed-projects` so the eight restored
+    project records also exist as live documents. No database was available
+    in this sandbox.
+22. Phase 17 follow-up: with a live backend, confirm the merged Projects
+    list renders all eight saved records plus the twelve owner links, and
+    seed the twelve links into MongoDB if they should also be editable
+    dashboard records. The Kazi Find link returned a Netlify 404 during
+    read-only verification; confirm the intended deployment URL. No
+    database or browser automation was available in this sandbox.
+23. Phase 18 follow-up: confirm the five re-mapped links on the live site and
+    run `npm run seed-projects` against a configured MongoDB so live project
+    documents also carry the working URLs. No database was available here.
+24. Phase 19 follow-up: with a live Express/Mongo backend, verify that a
+    dashboard project edit and a public like/view click both reach every open
+    public Projects page through `/public-projects`, that the 30 s poll and
+    cross-tab signals behave as expected, and that the in-process like
+    registry is replaced with a durable store (Redis or a per-visitor DB
+    record) before multi-instance deployment. Then run `npm run seed-projects`
+    so live documents carry the 600 display floor. No database, socket
+    runtime or browser automation was available in this sandbox.
+25. Phase 20 follow-up: with a live Express/Mongo backend, submit a review
+    through both forms and confirm the `201`, the moderation `review:changed`
+    broadcast, the owner-only `/notifications` delivery, the public list
+    refresh, and outbox retry after a simulated outage. Replace the in-memory
+    outbox's retry with server-side idempotency keys before multi-device use,
+    and decide whether review attachments should be added to the model (they
+    are currently UI-only). No database or browser automation was available
+    in this sandbox.
 
 ---
 
@@ -1096,5 +1425,19 @@ own `origin/main`. Phase 2 (dashboards → real APIs) is committed on the active
 branch `arena/b2d05e3d-e-folio` and merged into `main` in the same way via a
 second PR (merge commit `6d12a9ffd9f3709022a2c1d5671eb5e137c9f230`).
 No code was shared with any third party, external tracker, or service outside
-this repository. Phases 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 are local-only work on `arena/f176a951-e-folio`; they have
-**not** been pushed, opened as a PR, or merged.
+this repository.
+
+After the later explicit **"push t main"** instruction, phases 3–13 (12 commits,
+115 changed files) were pushed from `arena/f176a951-e-folio`, opened as
+[PR #3](https://github.com/devTechs001/e-folio/pull/3) and merged into `main`
+with merge commit `3b97ef479dd260c0a6a784a4a872a98a21a54e42` at
+`2026-11-03T13:27:34Z`. `origin/main` was 0 commits ahead and 12 behind, so
+there was no conflict. Before the merge, `npm run check` exited 0 and a masked
+secret scan over all 115 changed files found 0 findings. A later docs-only PR #4
+was opened to record that merge note; remote access became blocked for the
+merged branch before its status could be confirmed, so the correction is
+re-applied on this branch. No credential value was included in any PR body.
+
+Phases 14–18 (§3n–§3r) are local-only work on
+`arena/28000c5e-e-folio`; they have **not** been pushed, opened as a PR, or
+merged.

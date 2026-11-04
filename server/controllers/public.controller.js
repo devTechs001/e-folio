@@ -3,6 +3,11 @@ const Skill = require('../models/Skill.model');
 const Project = require('../models/Project.model');
 const User = require('../models/User.model');
 const asyncHandler = require('express-async-handler');
+const { emitProjectStats } = require('../utils/projectEvents');
+
+// Bounded, in-process like registry (no session middleware in this app).
+const likeRegistry = new Map();
+const LIKE_REGISTRY_LIMIT = 5000;
 
 // @desc    Get public skills
 // @route   GET /api/public/skills
@@ -148,6 +153,10 @@ exports.refreshProjects = asyncHandler(async (req, res) => {
 // @route   POST /api/public/projects/:id/view
 // @access  Public
 exports.incrementProjectView = asyncHandler(async (req, res) => {
+    // Saved/archive copies use slug IDs; never let a CastError become a 500.
+    if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+        return res.status(404).json({ success: false, message: 'Project not found' });
+    }
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -161,7 +170,15 @@ exports.incrementProjectView = asyncHandler(async (req, res) => {
     project.views = (project.views || 0) + 1;
     await project.save();
 
-    // Emit socket event for real-time update
+    // Canonical broadcast: anonymous public pages get the same count as the
+    // dashboard. The legacy root event is kept for existing listeners.
+    emitProjectStats({
+        projectId: project._id,
+        title: project.title,
+        likes: project.likes,
+        views: project.views,
+        action: 'view'
+    }, req.app.get('io'));
     if (req.app.get('io')) {
         req.app.get('io').emit('project_view', {
             projectId: project._id,
@@ -179,6 +196,10 @@ exports.incrementProjectView = asyncHandler(async (req, res) => {
 // @route   POST /api/public/projects/:id/like
 // @access  Public
 exports.toggleProjectLike = asyncHandler(async (req, res) => {
+    // Saved/archive copies use slug IDs; never let a CastError become a 500.
+    if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+        return res.status(404).json({ success: false, message: 'Project not found' });
+    }
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -188,35 +209,39 @@ exports.toggleProjectLike = asyncHandler(async (req, res) => {
         });
     }
 
-    // Get user IP or session ID for tracking unique likes
+    // No express-session middleware is installed, so `req.session` was always
+    // undefined and every request counted as a NEW like. Track the like state
+    // in a bounded in-process registry instead.
     const identifier = req.ip || req.headers['x-forwarded-for'] || 'anonymous';
-    const likeKey = `project_like_${project._id}_${identifier}`;
-
-    // Check if already liked (using simple in-memory tracking)
-    // In production, you'd want to use Redis or database
-    const hasLiked = req.session?.likes?.includes(likeKey);
+    const likeKey = `${project._id}:${identifier}`;
+    const hasLiked = likeRegistry.has(likeKey);
 
     if (hasLiked) {
-        // Unlike
         project.likes = Math.max((project.likes || 0) - 1, 0);
-        if (req.session?.likes) {
-            req.session.likes = req.session.likes.filter(k => k !== likeKey);
-        }
+        likeRegistry.delete(likeKey);
     } else {
-        // Like
         project.likes = (project.likes || 0) + 1;
-        if (!req.session) req.session = {};
-        if (!req.session.likes) req.session.likes = [];
-        req.session.likes.push(likeKey);
+        if (likeRegistry.size >= LIKE_REGISTRY_LIMIT) likeRegistry.clear();
+        likeRegistry.set(likeKey, true);
     }
 
     await project.save();
+
+    emitProjectStats({
+        projectId: project._id,
+        title: project.title,
+        likes: project.likes,
+        views: project.views,
+        action: hasLiked ? 'unlike' : 'like'
+    }, req.app.get('io'));
 
     // Emit socket event for real-time update
     if (req.app.get('io')) {
         req.app.get('io').emit('project_like', {
             projectId: project._id,
+            title: project.title,
             likes: project.likes,
+            views: project.views,
             action: hasLiked ? 'unlike' : 'like'
         });
     }

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
-import { useAuth } from '../contexts/AuthContext';
+import socketService from '../services/socket.service';
+import { subscribeProjectsChanged } from '../utils/projectSync';
 import { useSocket } from '../contexts/SocketContext';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
@@ -11,12 +12,11 @@ import ProjectFilters from './ProjectFilters';
 import NexStoreCard from '../components/NexStoreCard';
 import ProjectShowcase from '../components/ProjectShowcase';
 import ArchiveNote from '../components/ArchiveNote';
-import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
 
 const Projects = () => {
-    const { user } = useAuth();
     const { socket, connected } = useSocket();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,13 +30,74 @@ const Projects = () => {
     const [favorites, setFavorites] = useState([]);
     const [selectedTechs, setSelectedTechs] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
-    const [projectLikes, setProjectLikes] = useState({});
     const [projectsCollapsed, setProjectsCollapsed] = useState(false);
     const [techShowcaseCollapsed, setTechShowcaseCollapsed] = useState(true);
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const techScrollerRef = useRef(null);
+    const projectsGridRef = useRef(null);
+    const loadedOnceRef = useRef(false);
 
-    const loadProjects = useCallback(async () => {
+    // Page-level scroll affordances only — the project cards are untouched.
+    useEffect(() => {
+        const onScroll = () => {
+            const doc = document.documentElement;
+            const max = doc.scrollHeight - doc.clientHeight;
+            setScrollProgress(max > 0 ? Math.min(1, doc.scrollTop / max) : 0);
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
+        if (typeof IntersectionObserver === 'undefined') {
+            document.querySelectorAll('[data-reveal]').forEach(node => node.classList.add('is-visible'));
+            return undefined;
+        }
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08 });
+        document.querySelectorAll('[data-reveal]').forEach(node => observer.observe(node));
+        return () => observer.disconnect();
+    }, []);
+
+    const updateTechScrollState = useCallback(() => {
+        const strip = techScrollerRef.current;
+        if (!strip) return;
+        setCanScrollLeft(strip.scrollLeft > 4);
+        setCanScrollRight(strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        updateTechScrollState();
+        window.addEventListener('resize', updateTechScrollState);
+        return () => window.removeEventListener('resize', updateTechScrollState);
+    }, [updateTechScrollState, allTechnologies.length]);
+
+    const scrollTechStrip = useCallback(direction => {
+        const strip = techScrollerRef.current;
+        if (!strip) return;
+        strip.scrollBy({ left: direction * Math.max(240, strip.clientWidth * 0.8), behavior: 'smooth' });
+    }, []);
+
+    const toggleTech = useCallback(tech => {
+        setSelectedTechs(prev => prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]);
+    }, []);
+
+    // `force` is used by polling, cross-tab refresh and dashboard broadcasts:
+    // it bypasses the 10-minute cache so a count changed on the server is
+    // visible on the public page without a manual reload.
+    const loadProjects = useCallback(async (force = false) => {
         try {
-            const cached = cacheService.get('public_projects');
+            if (force) cacheService.delete('public_projects');
+            const cached = force ? null : cacheService.get('public_projects');
             if (cached) {
                 setProjects(cached);
                 setContentSource('live');
@@ -44,17 +105,27 @@ const Projects = () => {
                 return;
             }
 
-            setLoading(true);
+            if (!loadedOnceRef.current) setLoading(true);
             // Live API first; the saved local copy keeps the section complete
             // and consistent when the backend cannot supply it. No technical
             // detail is ever exposed to visitors.
             const response = await loadPublicSection('projects');
-            const items = Array.isArray(response.projects) ? response.projects : [];
+            const liveItems = Array.isArray(response.projects) ? response.projects : [];
+            // A live API may only publish a few records. Complete the section
+            // from the same local saved copy used for offline visits, so the
+            // public catalogue is never reduced to a partial live subset.
+            const saved = getSnapshotSection('projects');
+            const savedItems = Array.isArray(saved.projects) ? saved.projects : [];
+            const identity = project => String(project.title || '').trim().toLowerCase();
+            const seen = new Set(liveItems.map(identity));
+            const additions = savedItems.filter(project => identity(project) && !seen.has(identity(project)));
+            const items = [...liveItems, ...additions];
             setProjects(items);
-            setContentSource(response.source || '');
-            // Only cache genuine live data, so a saved copy never masks a
+            // Saved records are labelled as the archive, never as live data.
+            setContentSource(additions.length ? 'snapshot' : (response.source || ''));
+            // Only cache genuine live-only data, so a saved copy never masks a
             // backend that comes back online.
-            if (isLiveContent(response)) {
+            if (isLiveContent(response) && additions.length === 0) {
                 cacheService.set('public_projects', items, CACHE_TTL.TEN_MINUTES);
             }
         } catch (error) {
@@ -62,9 +133,46 @@ const Projects = () => {
             setProjects([]);
             setContentSource('');
         } finally {
+            loadedOnceRef.current = true;
             setLoading(false);
         }
     }, [setProjects, setLoading]);
+
+    // Single normalizer for every server broadcast (public namespace, root
+    // namespace and legacy names). Matching by id OR title means an archive
+    // copy with a slug id still picks up a dashboard edit to the real record.
+    const applyProjectStats = useCallback(data => {
+        if (!data || typeof data !== 'object') return;
+        const project = data.project && typeof data.project === 'object' ? data.project : null;
+        const id = data.projectId ?? project?.id ?? project?._id ?? data.id;
+        const idText = id === undefined || id === null ? '' : String(id);
+        const title = String(data.title ?? project?.title ?? data.name ?? '').trim().toLowerCase();
+        const likes = Number(data.likes ?? project?.likes);
+        const views = Number(data.views ?? project?.views);
+        const action = String(data.action || 'stats');
+
+        if (action === 'created' && project) {
+            setProjects(prev => prev.some(p => String(p.title || '').trim().toLowerCase() === title)
+                ? prev : [project, ...prev]);
+            return;
+        }
+        if (action === 'deleted' && idText) {
+            setProjects(prev => prev.filter(p => String(p.id ?? p._id ?? '') !== idText));
+            return;
+        }
+        if (!idText && !title) return;
+
+        setProjects(prev => prev.map(p => {
+            const matches = (idText && String(p.id ?? p._id ?? '') === idText)
+                || (title && String(p.title || '').trim().toLowerCase() === title);
+            if (!matches) return p;
+            const next = { ...p };
+            if (Number.isFinite(likes)) next.likes = likes;
+            if (Number.isFinite(views)) next.views = views;
+            if (project) Object.assign(next, project, { id: p.id ?? project.id ?? project._id });
+            return next;
+        }));
+    }, [setProjects]);
 
     const loadFavorites = () => {
         const saved = localStorage.getItem('favoriteProjects');
@@ -104,70 +212,41 @@ const Projects = () => {
 
     const incrementViews = useCallback(async (projectId) => {
         try {
-            await apiService.request(`/public/projects/${projectId}/view`, {
+            const response = await apiService.request(`/public/projects/${projectId}/view`, {
                 method: 'POST'
             });
-            setProjects(prev => prev.map(p => 
-                p.id === projectId ? { ...p, views: (p.views || 0) + 1 } : p
+            // Trust the persisted server value, not a local guess. The server
+            // also broadcasts it to every other open public page.
+            const views = Number(response?.views);
+            setProjects(prev => prev.map(p =>
+                String(p.id ?? p._id ?? '') === String(projectId) && Number.isFinite(views)
+                    ? { ...p, views }
+                    : p
             ));
-            
-            // Emit socket event for real-time update
-            if (socket && connected) {
-                socket.emit('project:view', { projectId, userId: user?.id });
-            }
         } catch (error) {
-            console.error('Error incrementing views:', error);
+            // Archive-only copies are not server records; keep diagnostics
+            // developer-side and never invent a count for public visitors.
+            recordDevIssue({ section: 'projects', endpoint: PUBLIC_ENDPOINTS.projects, error });
         }
-    }, [socket, connected, user?.id]);
+    }, [setProjects]);
 
     const incrementLikes = useCallback(async (projectId) => {
         try {
-            // Check if user already liked this project
-            const currentLikes = projectLikes[projectId] || 0;
-            const hasLiked = currentLikes > 0 && currentLikes % 2 === 1; // Odd means liked
-            
-            if (hasLiked) {
-                // Unlike the project
-                await apiService.unlikeProject(projectId);
-                setProjectLikes(prev => ({
-                    ...prev,
-                    [projectId]: Math.max(0, (prev[projectId] || 0) - 1)
-                }));
-                
-                // Emit socket event for real-time update
-                if (socket && connected) {
-                    socket.emit('project:unlike', { projectId, userId: user?.id });
-                }
-            } else {
-                // Like the project
-                await apiService.likeProject(projectId);
-                setProjectLikes(prev => ({
-                    ...prev,
-                    [projectId]: (prev[projectId] || 0) + 1
-                }));
-                
-                // Emit socket event for real-time update
-                if (socket && connected) {
-                    socket.emit('project:like', { projectId, userId: user?.id });
-                }
-            }
-            
-            // Update the project's likes count
-            setProjects(prev => prev.map(p => 
-                p.id === projectId ? { 
-                    ...p, 
-                    likes: hasLiked ? Math.max(0, (p.likes || 0) - 1) : (p.likes || 0) + 1 
-                } : p
+            // Both counters now use the same public API prefix. The server
+            // toggles like state per visitor and returns the persisted count.
+            const response = await apiService.request(`/public/projects/${projectId}/like`, {
+                method: 'POST'
+            });
+            const likes = Number(response?.likes);
+            setProjects(prev => prev.map(p =>
+                String(p.id ?? p._id ?? '') === String(projectId) && Number.isFinite(likes)
+                    ? { ...p, likes }
+                    : p
             ));
         } catch (error) {
-            console.error('Error toggling like:', error);
-            // Fallback to local state if API fails
-            setProjectLikes(prev => ({
-                ...prev,
-                [projectId]: (prev[projectId] || 0) + 1
-            }));
+            recordDevIssue({ section: 'projects', endpoint: PUBLIC_ENDPOINTS.projects, error });
         }
-    }, [projectLikes, socket, connected, user?.id]);
+    }, [setProjects]);
 
     const shareProject = useCallback(async (projectId, platform = 'native') => {
         try {
@@ -232,59 +311,49 @@ const Projects = () => {
         loadFavorites();
     }, [loadProjects]);
 
-    // Real-time socket listeners for project updates
+    // Anonymous visitors have no authenticated root socket (SocketContext only
+    // connects for signed-in users), so the read-only /public-projects
+    // namespace is the primary real-time channel for public counts.
+    useEffect(() => socketService.subscribePublicProjects(applyProjectStats), [applyProjectStats]);
+
+    // Root-namespace events are still handled for signed-in sessions. These
+    // are the names the server actually emits; the legacy `project:*` names are
+    // kept so older events do not silently disappear.
     useEffect(() => {
-        if (!connected || !socket) return;
+        if (!connected || !socket) return undefined;
+        const onEvent = data => applyProjectStats(data);
+        const events = [
+            'project_changed', 'project_updated', 'project_view', 'project_like',
+            'project:updated', 'project:liked', 'project:viewed', 'project:created'
+        ];
+        events.forEach(event => socket.on(event, onEvent));
+        return () => events.forEach(event => socket.off(event, onEvent));
+    }, [connected, socket, applyProjectStats]);
 
-        const handleProjectUpdate = (data) => {
-            console.log('Project updated in real-time:', data);
-            setProjects(prev => prev.map(p =>
-                p.id === data.projectId ? { ...p, ...data.updates } : p
-            ));
+    // Polling is the reliable fallback when sockets are unavailable, and
+    // cross-tab signals make a dashboard save visible immediately. Hidden tabs
+    // are skipped so background pages do not generate needless requests.
+    useEffect(() => {
+        const refresh = () => {
+            if (typeof document === 'undefined' || !document.hidden) loadProjects(true);
         };
-
-        const handleLikeUpdate = (data) => {
-            console.log('Like update in real-time:', data);
-            setProjects(prev => prev.map(p =>
-                p.id === data.projectId ? { ...p, likes: data.likes } : p
-            ));
-            setProjectLikes(prev => ({
-                ...prev,
-                [data.projectId]: data.userLikes
-            }));
-        };
-
-        const handleViewUpdate = (data) => {
-            console.log('View update in real-time:', data);
-            setProjects(prev => prev.map(p =>
-                p.id === data.projectId ? { ...p, views: data.views } : p
-            ));
-        };
-
-        const handleNewProject = (data) => {
-            console.log('New project added:', data);
-            setProjects(prev => [data.project, ...prev]);
-        };
-
-        socket.on('project:updated', handleProjectUpdate);
-        socket.on('project:liked', handleLikeUpdate);
-        socket.on('project:viewed', handleViewUpdate);
-        socket.on('project:created', handleNewProject);
-
+        const onVisible = () => { if (!document.hidden) refresh(); };
+        const interval = setInterval(refresh, 30000);
+        const unsubscribe = subscribeProjectsChanged(refresh);
+        document.addEventListener('visibilitychange', onVisible);
         return () => {
-            socket.off('project:updated', handleProjectUpdate);
-            socket.off('project:liked', handleLikeUpdate);
-            socket.off('project:viewed', handleViewUpdate);
-            socket.off('project:created', handleNewProject);
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', onVisible);
+            unsubscribe();
         };
-    }, [connected, socket]);
+    }, [loadProjects]);
 
     // Listen for settings changes from dashboard
     useEffect(() => {
-        const handleSettingsChange = (e) => {
+        const handleSettingsChange = () => {
             console.log('[Projects] Settings changed, refreshing data...');
             cacheService.delete('public_projects');
-            loadProjects();
+            loadProjects(true);
         };
         window.addEventListener('settingsChanged', handleSettingsChange);
         return () => window.removeEventListener('settingsChanged', handleSettingsChange);
@@ -363,6 +432,15 @@ const Projects = () => {
         totalLikes: projects.reduce((sum, p) => sum + (p.likes || 0), 0)
     }), [projects]);
 
+    // A zero total is not meaningful public information, so it is omitted
+    // instead of being displayed as "0" or "0.0k".
+    const summaryCards = useMemo(() => ([
+        { label: 'Total Projects', count: projectStats.total, display: projectStats.total },
+        { label: 'Featured', count: projectStats.featured, display: projectStats.featured },
+        { label: 'Total Views', count: projectStats.totalViews, display: `${(projectStats.totalViews / 1000).toFixed(1)}k` },
+        { label: 'Total Likes', count: projectStats.totalLikes, display: projectStats.totalLikes }
+    ].filter(card => card.count > 0)), [projectStats]);
+
     if (loading) {
         return (
             <section className="min-h-screen bg-bgColor flex items-center justify-center">
@@ -388,9 +466,14 @@ const Projects = () => {
 
     return (
         <section className="projects-section bg-bgColor py-20 px-4 md:px-8 lg:px-16" id="projects">
+            <div
+                className="projects-scroll-progress"
+                style={{ transform: `scaleX(${scrollProgress})` }}
+                aria-hidden="true"
+            />
             {/* Enhanced Header with Stats */}
-            <div className="max-w-7xl mx-auto mb-16">
-                <div className="text-center mb-12">
+            <div className="max-w-7xl mx-auto mb-16" data-reveal>
+                <div className="text-center mb-12 projects-header">
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
                         Latest <span className="text-mainColor gradient-text">Projects</span>
                     </h2>
@@ -409,30 +492,22 @@ const Projects = () => {
                         <ProjectShowcase />
                     </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{projectStats.total}</div>
-                            <div className="stat-label">Total Projects</div>
+                    {/* Stats Cards — zero-valued totals are never shown. */}
+                    {summaryCards.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
+                            {summaryCards.map(card => (
+                                <div className="stat-card" key={card.label}>
+                                    <div className="stat-number gradient-text">{card.display}</div>
+                                    <div className="stat-label">{card.label}</div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{projectStats.featured}</div>
-                            <div className="stat-label">Featured</div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{(projectStats.totalViews / 1000).toFixed(1)}k</div>
-                            <div className="stat-label">Total Views</div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{projectStats.totalLikes}</div>
-                            <div className="stat-label">Total Likes</div>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Search and Controls */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+                <div className="mb-8 projects-toolbar" data-reveal>
+                    <div className="projects-controls flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
                         {/* Search Bar */}
                         <div className="search-container w-full md:w-96">
                             <i className="fa-solid fa-search search-icon"></i>
@@ -539,6 +614,66 @@ const Projects = () => {
                             ))}
                         </div>
                     )}
+
+                    {/* Visible filter buttons for every technology actually used
+                        by the projects. Horizontal scroller keeps long lists tidy. */}
+                    {allTechnologies.length > 0 && (
+                        <div className="tech-scroller" data-reveal>
+                            <div className="tech-scroller__head">
+                                <span className="tech-scroller__label">
+                                    <i className="fa-solid fa-layer-group"></i> Filter by technology
+                                </span>
+                                <button
+                                    type="button"
+                                    className="tech-scroller__jump"
+                                    onClick={() => projectsGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                >
+                                    <i className="fa-solid fa-arrow-down"></i> Jump to projects
+                                </button>
+                            </div>
+                            <div className="tech-scroller__viewport">
+                                <button
+                                    type="button"
+                                    className="tech-scroller__arrow"
+                                    onClick={() => scrollTechStrip(-1)}
+                                    disabled={!canScrollLeft}
+                                    aria-label="Scroll technology filters left"
+                                >
+                                    <i className="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <div
+                                    className="tech-scroller__strip"
+                                    ref={techScrollerRef}
+                                    onScroll={updateTechScrollState}
+                                >
+                                    {allTechnologies.map(tech => {
+                                        const count = projects.filter(p => (p.technologies || []).includes(tech)).length;
+                                        return (
+                                            <button
+                                                key={tech}
+                                                type="button"
+                                                className={`tech-chip ${selectedTechs.includes(tech) ? 'active' : ''}`}
+                                                onClick={() => toggleTech(tech)}
+                                                aria-pressed={selectedTechs.includes(tech)}
+                                            >
+                                                <span>{tech}</span>
+                                                <span className="tech-chip__count">{count}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="tech-scroller__arrow"
+                                    onClick={() => scrollTechStrip(1)}
+                                    disabled={!canScrollRight}
+                                    aria-label="Scroll technology filters right"
+                                >
+                                    <i className="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Active Filters Display */}
@@ -582,7 +717,7 @@ const Projects = () => {
             </div>
 
             {/* Projects Grid */}
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto" ref={projectsGridRef}>
                 {/* Section Toggle */}
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-bold text-textColor">
@@ -640,7 +775,7 @@ const Projects = () => {
                                     }}
                                     onImageClick={(img) => setLightboxImage(img)}
                                     viewMode={viewMode}
-                                    likes={(projectLikes[project.id] || 0) + (project.likes || 0)}
+                                    likes={project.likes || 0}
                                     onIncrementLikes={() => incrementLikes(project.id)}
                                     onShare={shareProject}
                                 />
@@ -700,7 +835,7 @@ const Projects = () => {
             )}
 
             {/* Call to Action */}
-            <div className="cta-section max-w-4xl mx-auto mt-20">
+            <div className="cta-section max-w-4xl mx-auto mt-20" data-reveal>
                 <div className="cta-card">
                     <div className="cta-content">
                         <h3 className="text-3xl md:text-4xl font-bold text-textColor mb-4">

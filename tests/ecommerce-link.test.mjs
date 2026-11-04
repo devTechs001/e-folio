@@ -74,16 +74,25 @@ check('both Enterprise E-Commerce records had their legacy netlify link swapped'
     }
 });
 
-check('the old link and the placeholder are gone from every source file', () => {
+check('the old link is no longer used as an E-Commerce record, only as an owner-supplied link', () => {
+    // Phase 13 removed the retired deployment from every project record. The
+    // owner later supplied the same host as a SEPARATE project link to publish,
+    // so it is allowed only in the owner catalog and the confidential report.
+    // The placeholder demo link is never allowed anywhere.
+    const allowed = new Set(['src/data/projectLinks.json', 'CONFIDENTIAL_AUDIT_AND_FIX_REPORT.md']);
     const offenders = [];
     for (const rel of walk(root)) {
         const full = path.join(root, rel);
         if (fs.statSync(full).size > 2_000_000) continue;
         let text;
         try { text = fs.readFileSync(full, 'utf8'); } catch { continue; }
-        if (text.includes(OLD_URL) || text.includes(PLACEHOLDER)) offenders.push(rel);
+        if (text.includes(PLACEHOLDER)) offenders.push(`${rel} (placeholder)`);
+        if (text.includes(OLD_URL) && !allowed.has(rel)) offenders.push(`${rel} (retired record link)`);
     }
     assert.deepEqual(offenders, [], `stale links remain in: ${offenders.join(', ')}`);
+    const catalog = json('src/data/projectLinks.json');
+    assert.equal(catalog.projects.filter(p => p.url === OLD_URL).length, 1);
+    assert.ok(catalog.projects.find(p => p.url === OLD_URL).title.includes('OmniBiz'));
 });
 
 /* --------------------------------- safety ---------------------------------- */

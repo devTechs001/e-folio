@@ -1,6 +1,7 @@
 // controllers/projectController.js
 const Project = require('../models/Project.model');
 const asyncHandler = require('express-async-handler');
+const { emitProjectStats } = require('../utils/projectEvents');
 const { validationResult } = require('express-validator');
 
 // @desc    Get all projects for user
@@ -105,6 +106,7 @@ exports.createProject = asyncHandler(async (req, res) => {
             project: project.toObject()
         });
     }
+    emitProjectStats({ project, action: 'created' }, req.app.get('io'));
 
     res.status(201).json({ success: true, project });
 });
@@ -146,6 +148,7 @@ exports.updateProject = asyncHandler(async (req, res) => {
             project: project.toObject()
         });
     }
+    emitProjectStats({ project, action: 'updated' }, req.app.get('io'));
 
     res.json({ success: true, project });
 });
@@ -173,6 +176,7 @@ exports.deleteProject = asyncHandler(async (req, res) => {
             projectId
         });
     }
+    emitProjectStats({ projectId, action: 'deleted' }, req.app.get('io'));
 
     res.json({ success: true, message: 'Project deleted' });
 });
@@ -363,6 +367,7 @@ exports.likeProject = asyncHandler(async (req, res) => {
 
     project.likes = (project.likes || 0) + 1;
     await project.save();
+    emitProjectStats({ projectId: project._id, title: project.title, likes: project.likes, views: project.views, action: 'like' }, req.app.get('io'));
 
     res.json({ success: true, likes: project.likes });
 });
@@ -380,6 +385,7 @@ exports.unlikeProject = asyncHandler(async (req, res) => {
 
     project.likes = Math.max((project.likes || 1) - 1, 0);
     await project.save();
+    emitProjectStats({ projectId: project._id, title: project.title, likes: project.likes, views: project.views, action: 'unlike' }, req.app.get('io'));
 
     res.json({ success: true, likes: project.likes });
 });
@@ -397,6 +403,7 @@ exports.viewProject = asyncHandler(async (req, res) => {
 
     project.views = (project.views || 0) + 1;
     await project.save();
+    emitProjectStats({ projectId: project._id, title: project.title, likes: project.likes, views: project.views, action: 'view' }, req.app.get('io'));
 
     res.json({ success: true, views: project.views });
 });

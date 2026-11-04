@@ -209,6 +209,9 @@ const settingsHandler = require('./socket/settings.handler');
 settingsHandler(io);
 registerTrackingRealtime(io);
 registerNotificationsRealtime(io);
+// Unauthenticated, read-only namespace so public project counts stay in sync
+// even for visitors who are not logged in.
+require('./socket/public-projects.handler')(io);
 
 // Pass Socket.IO instance to collaboration controller
 const collaborationController = require('./controllers/collaboration.controller');

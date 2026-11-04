@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X, Send, ThumbsUp, Share2, CheckCircle, Heart } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from './NotificationSystem';
-import apiService from '../services/api.service';
+import { submitReview, flushReviewOutbox } from '../utils/reviewOutbox';
 
 const ReviewFloatingButton = () => {
     const { theme } = useTheme();
@@ -16,6 +16,14 @@ const ReviewFloatingButton = () => {
     const [submitted, setSubmitted] = useState(false);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(0);
+
+    // Retry reviews queued while the backend was unreachable.
+    useEffect(() => {
+        const retry = () => { void flushReviewOutbox(); };
+        retry();
+        window.addEventListener('online', retry);
+        return () => window.removeEventListener('online', retry);
+    }, []);
 
     // Load like status from localStorage
     useEffect(() => {
@@ -85,18 +93,25 @@ const ReviewFloatingButton = () => {
             return;
         }
 
+        // The server requires at least 10 characters; say so before sending
+        // instead of failing with an opaque 400.
+        if (formData.comment.trim().length < 10) {
+            error('📝 Please write at least 10 characters');
+            return;
+        }
+
         try {
             setSubmitting(true);
-            const response = await apiService.createReview({
-                name: formData.name,
-                email: formData.email,
+            const result = await submitReview({
+                name: formData.name.trim(),
+                email: formData.email.trim(),
                 rating,
-                comment: formData.comment
+                comment: formData.comment.trim()
             });
 
-            if (response.success) {
+            if (result.success) {
                 setSubmitted(true);
-                success('✅ Thank you for your review!');
+                success(result.message);
 
                 // Reset form after 3 seconds
                 setTimeout(() => {
@@ -106,7 +121,7 @@ const ReviewFloatingButton = () => {
                     setFormData({ name: '', email: '', comment: '' });
                 }, 3000);
             } else {
-                error('❌ Failed to submit review. Please try again.');
+                error(result.message);
             }
         } catch (err) {
             console.error('Review submission error:', err);
