@@ -1295,3 +1295,121 @@
   .tech-scroller__strip { scroll-behavior: auto; }
   .projects-scroll-progress { box-shadow: none; }
 }
+
+/* ==========================================================================
+   Phase 17 — owner-supplied project directory (page-level only).
+   No .project-card / .projects-grid override: the cards stay untouched.
+   ========================================================================== */
+
+.project-links-section {
+  padding: 1.4rem 1.5rem 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--border-radius-xl);
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.project-links-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+.project-links-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(238, 238, 238, 0.65);
+}
+.project-links-eyebrow i { color: var(--mainColor); }
+.project-links-head h3 { margin-top: 0.3rem; letter-spacing: -0.02em; }
+.project-links-head p { margin-top: 0.35rem; }
+.project-links-arrows { display: flex; gap: 0.5rem; }
+.project-links-arrow {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--textColor);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), opacity var(--transition-fast);
+}
+.project-links-arrow:hover:not(:disabled) { border-color: var(--mainColor); }
+.project-links-arrow:disabled { opacity: 0.28; cursor: default; }
+
+.project-links-strip {
+  display: flex;
+  gap: 0.9rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  padding: 0.2rem 0.1rem 0.7rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(14, 239, 239, 0.35) transparent;
+}
+.project-links-strip::-webkit-scrollbar { height: 5px; }
+.project-links-strip::-webkit-scrollbar-thumb {
+  background: rgba(14, 239, 239, 0.35);
+  border-radius: 999px;
+}
+.project-link-card {
+  flex: 0 0 15.5rem;
+  min-height: 9.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1.15rem 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--border-radius-lg);
+  background: linear-gradient(155deg, rgba(14, 239, 239, 0.075), rgba(255, 255, 255, 0.02));
+  text-decoration: none;
+  color: var(--textColor);
+  scroll-snap-align: start;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.project-link-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(14, 239, 239, 0.5);
+  box-shadow: 0 0 0 3px rgba(14, 239, 239, 0.08);
+}
+.project-link-card__title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.project-link-card__host {
+  font-size: 0.75rem;
+  color: rgba(238, 238, 238, 0.55);
+  overflow-wrap: anywhere;
+}
+.project-link-card__cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--mainColor);
+}
+.project-link-card__cta i { font-size: 0.7rem; }
+
+@media (max-width: 640px) {
+  .project-links-section { padding: 1.1rem; border-radius: var(--border-radius-lg); }
+  .project-link-card { flex-basis: 13.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .project-links-strip { scroll-behavior: auto; }
+  .project-link-card { transition: none; }
+}

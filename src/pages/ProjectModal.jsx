@@ -317,20 +317,24 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
 
                         {/* Stats Grid */}
                         <div className="modal-stats-grid">
-                            <div className="stat-item">
-                                <Eye size={18} className="text-cyan-400" />
-                                <div>
-                                    <div className="stat-value">{viewsCount}</div>
-                                    <div className="stat-label">Views</div>
+                            {Number(viewsCount) > 0 && (
+                                <div className="stat-item">
+                                    <Eye size={18} className="text-cyan-400" />
+                                    <div>
+                                        <div className="stat-value">{viewsCount}</div>
+                                        <div className="stat-label">Views</div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="stat-item">
-                                <Heart size={18} className={liked ? 'text-red-500 fill-red-500' : 'text-red-400'} />
-                                <div>
-                                    <div className="stat-value">{likesCount}</div>
-                                    <div className="stat-label">Likes</div>
+                            )}
+                            {Number(likesCount) > 0 && (
+                                <div className="stat-item">
+                                    <Heart size={18} className={liked ? 'text-red-500 fill-red-500' : 'text-red-400'} />
+                                    <div>
+                                        <div className="stat-value">{likesCount}</div>
+                                        <div className="stat-label">Likes</div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                             {project.duration && (
                                 <div className="stat-item">
                                     <Clock size={18} className="text-blue-400" />
@@ -602,7 +606,7 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
                                 }`}
                             >
                                 <Heart size={16} className={liked ? 'fill-current' : ''} />
-                                <span>Like ({likesCount})</span>
+                                <span>Like{Number(likesCount) > 0 ? ` (${likesCount})` : ''}</span>
                             </button>
                             
                             {/* Bookmark Button */}

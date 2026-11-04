@@ -1,0 +1,68 @@
+{
+  "description": "Owner-supplied project links shown in the public Projects section. Titles are the page titles read on 2026-11-04. No statistics, stacks, likes, views, achievements or live-status claims are included.",
+  "tag": "portfolio-project-links",
+  "source": "Owner-supplied URLs; page titles verified read-only on 2026-11-04. Existing project records and existing links are not modified by this file.",
+  "verifiedAt": "2026-11-04",
+  "projects": [
+    {
+      "slug": "netgate-smart-network-portal",
+      "title": "NetGate — Smart Network Portal",
+      "url": "https://net-gate.netlify.app/"
+    },
+    {
+      "slug": "omnibiz-business-management",
+      "title": "OmniBiz - Complete Business Management Platform",
+      "url": "https://bizsolutionz.netlify.app/"
+    },
+    {
+      "slug": "realestatehub-property",
+      "title": "RealEstateHub - Find Your Dream Property",
+      "url": "https://home-scape-platform.netlify.app/"
+    },
+    {
+      "slug": "securebank-enterprise-banking",
+      "title": "SecureBank - Enterprise Banking",
+      "url": "https://fintech-banking.netlify.app/"
+    },
+    {
+      "slug": "ai-media-studio",
+      "title": "AI Media Studio - Transform, Create, Inspire",
+      "url": "https://ai-image-editor-pro.netlify.app/"
+    },
+    {
+      "slug": "kazi-find",
+      "title": "Kazi Find",
+      "url": "https://kazi-find.netlify.app/"
+    },
+    {
+      "slug": "cinemaflix-movies",
+      "title": "CinemaFlix - Watch Unlimited Movies",
+      "url": "https://cinemaflx.netlify.app/"
+    },
+    {
+      "slug": "ai-schedule-manager",
+      "title": "AI Schedule Manager - Boost Your Productivity",
+      "url": "https://schedule-manager-ap.netlify.app/"
+    },
+    {
+      "slug": "gbchat-messaging",
+      "title": "GBChat - Ultimate Messaging",
+      "url": "https://gbchat.netlify.app/"
+    },
+    {
+      "slug": "virtual-tourist",
+      "title": "Virtual Tourist - Explore the World",
+      "url": "https://virtualtourist.netlify.app/"
+    },
+    {
+      "slug": "ai-video-player-enterprise",
+      "title": "AI Video Player Enterprise",
+      "url": "https://mediaplaier.netlify.app/"
+    },
+    {
+      "slug": "elimu-pro",
+      "title": "Elimu Pro - Empowering Kenyan Developers",
+      "url": "https://elimu-pro-beta.netlify.app/"
+    }
+  ]
+}

@@ -11,7 +11,8 @@ import ProjectFilters from './ProjectFilters';
 import NexStoreCard from '../components/NexStoreCard';
 import ProjectShowcase from '../components/ProjectShowcase';
 import ArchiveNote from '../components/ArchiveNote';
-import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { PROJECT_LINKS, projectLinkHost, projectLinkAnchorProps } from '../utils/projectLinks';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
 
@@ -38,6 +39,9 @@ const Projects = () => {
     const [canScrollRight, setCanScrollRight] = useState(false);
     const techScrollerRef = useRef(null);
     const projectsGridRef = useRef(null);
+    const projectLinksRef = useRef(null);
+    const [linksCanScrollLeft, setLinksCanScrollLeft] = useState(false);
+    const [linksCanScrollRight, setLinksCanScrollRight] = useState(false);
 
     // Page-level scroll affordances only — the project cards are untouched.
     useEffect(() => {
@@ -91,6 +95,25 @@ const Projects = () => {
         setSelectedTechs(prev => prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]);
     }, []);
 
+    const updateLinksScrollState = useCallback(() => {
+        const strip = projectLinksRef.current;
+        if (!strip) return;
+        setLinksCanScrollLeft(strip.scrollLeft > 4);
+        setLinksCanScrollRight(strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        updateLinksScrollState();
+        window.addEventListener('resize', updateLinksScrollState);
+        return () => window.removeEventListener('resize', updateLinksScrollState);
+    }, [updateLinksScrollState]);
+
+    const scrollProjectLinks = useCallback(direction => {
+        const strip = projectLinksRef.current;
+        if (!strip) return;
+        strip.scrollBy({ left: direction * Math.max(280, strip.clientWidth * 0.8), behavior: 'smooth' });
+    }, []);
+
     const loadProjects = useCallback(async () => {
         try {
             const cached = cacheService.get('public_projects');
@@ -106,12 +129,22 @@ const Projects = () => {
             // and consistent when the backend cannot supply it. No technical
             // detail is ever exposed to visitors.
             const response = await loadPublicSection('projects');
-            const items = Array.isArray(response.projects) ? response.projects : [];
+            const liveItems = Array.isArray(response.projects) ? response.projects : [];
+            // A live API may only publish a few records. Complete the section
+            // from the same local saved copy used for offline visits, so the
+            // public catalogue is never reduced to a partial live subset.
+            const saved = getSnapshotSection('projects');
+            const savedItems = Array.isArray(saved.projects) ? saved.projects : [];
+            const identity = project => String(project.title || '').trim().toLowerCase();
+            const seen = new Set(liveItems.map(identity));
+            const additions = savedItems.filter(project => identity(project) && !seen.has(identity(project)));
+            const items = [...liveItems, ...additions];
             setProjects(items);
-            setContentSource(response.source || '');
-            // Only cache genuine live data, so a saved copy never masks a
+            // Saved records are labelled as the archive, never as live data.
+            setContentSource(additions.length ? 'snapshot' : (response.source || ''));
+            // Only cache genuine live-only data, so a saved copy never masks a
             // backend that comes back online.
-            if (isLiveContent(response)) {
+            if (isLiveContent(response) && additions.length === 0) {
                 cacheService.set('public_projects', items, CACHE_TTL.TEN_MINUTES);
             }
         } catch (error) {
@@ -420,6 +453,15 @@ const Projects = () => {
         totalLikes: projects.reduce((sum, p) => sum + (p.likes || 0), 0)
     }), [projects]);
 
+    // A zero total is not meaningful public information, so it is omitted
+    // instead of being displayed as "0" or "0.0k".
+    const summaryCards = useMemo(() => ([
+        { label: 'Total Projects', count: projectStats.total, display: projectStats.total },
+        { label: 'Featured', count: projectStats.featured, display: projectStats.featured },
+        { label: 'Total Views', count: projectStats.totalViews, display: `${(projectStats.totalViews / 1000).toFixed(1)}k` },
+        { label: 'Total Likes', count: projectStats.totalLikes, display: projectStats.totalLikes }
+    ].filter(card => card.count > 0)), [projectStats]);
+
     if (loading) {
         return (
             <section className="min-h-screen bg-bgColor flex items-center justify-center">
@@ -471,25 +513,17 @@ const Projects = () => {
                         <ProjectShowcase />
                     </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{projectStats.total}</div>
-                            <div className="stat-label">Total Projects</div>
+                    {/* Stats Cards — zero-valued totals are never shown. */}
+                    {summaryCards.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
+                            {summaryCards.map(card => (
+                                <div className="stat-card" key={card.label}>
+                                    <div className="stat-number gradient-text">{card.display}</div>
+                                    <div className="stat-label">{card.label}</div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{projectStats.featured}</div>
-                            <div className="stat-label">Featured</div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{(projectStats.totalViews / 1000).toFixed(1)}k</div>
-                            <div className="stat-label">Total Views</div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-number gradient-text">{projectStats.totalLikes}</div>
-                            <div className="stat-label">Total Likes</div>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Search and Controls */}
@@ -702,6 +736,65 @@ const Projects = () => {
                     </div>
                 )}
             </div>
+
+            {/* Owner-supplied project links: verified titles only, no zero
+                values, invented stacks or metrics. Horizontal scroller. */}
+            {PROJECT_LINKS.length > 0 && (
+                <div className="project-links-section max-w-7xl mx-auto mb-16" data-reveal>
+                    <div className="project-links-head">
+                        <div>
+                            <span className="project-links-eyebrow">
+                                <i className="fa-solid fa-link"></i> Project directory
+                            </span>
+                            <h3 className="text-2xl md:text-3xl font-bold text-textColor">
+                                More <span className="gradient-text">projects</span>
+                            </h3>
+                            <p className="text-textColor/70 text-sm">
+                                Published work you can open and explore.
+                            </p>
+                        </div>
+                        <div className="project-links-arrows">
+                            <button
+                                type="button"
+                                className="project-links-arrow"
+                                onClick={() => scrollProjectLinks(-1)}
+                                disabled={!linksCanScrollLeft}
+                                aria-label="Scroll project links left"
+                            >
+                                <i className="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button
+                                type="button"
+                                className="project-links-arrow"
+                                onClick={() => scrollProjectLinks(1)}
+                                disabled={!linksCanScrollRight}
+                                aria-label="Scroll project links right"
+                            >
+                                <i className="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        className="project-links-strip"
+                        ref={projectLinksRef}
+                        onScroll={updateLinksScrollState}
+                    >
+                        {PROJECT_LINKS.map(link => (
+                            <a
+                                key={link.slug}
+                                className="project-link-card"
+                                {...projectLinkAnchorProps(link)}
+                            >
+                                <span className="project-link-card__title">{link.title}</span>
+                                <span className="project-link-card__host">{projectLinkHost(link.url)}</span>
+                                <span className="project-link-card__cta">
+                                    Open project <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                                </span>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Projects Grid */}
             <div className="max-w-7xl mx-auto" ref={projectsGridRef}>

@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -27,9 +27,10 @@ Resources page, live preview + lagging issues, CellarKeep client-portal link in
 Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
 subsequently merged into this repository's own `origin/main` via PR #3
 (merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
-Phases 14–16 (§3n–§3p: HomeScape property-marketplace link, owner-specified
-starting like counts, restored projects, filter buttons, page restyle and the
-tracking conflict fix) are **local only** on the active branch
+Phases 14–17 (§3n–§3q: HomeScape property-marketplace link, owner-specified
+starting like counts, restored projects, filter buttons, page restyle, the
+tracking conflict fix, twelve owner project links, public Lab copy and
+zero-value cleanup) are **local only** on the active branch
 `arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
 service has been used for them.
 
@@ -48,6 +49,8 @@ service has been used for them.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Owner project links (phase 17) | the front end published only 3 live projects and none of the owner-supplied deployments | 12 owner URLs verified read-only and published in a shared JSON catalogue with a horizontal scroller; partial live lists completed from local saved records |
+| Public Lab copy + zero values (phase 17) | the Lab told visitors where skills/hobbies are stored and printed bare `0` metrics, filter counts, skill levels and card counters | neutral public copy, owner-only technical badges, zero-valued items omitted everywhere (never fabricated into non-zero numbers) |
 | Projects page + filters (phase 16) | only 3 grid projects remained; technology filters were hidden behind a toggle; plain page shell | 8 original records restored from local history (10 projects total with the 2 featured cards), visible technology chip scroller with counts, scroll progress/reveal cues and a modern glass page shell; `ProjectCard` untouched |
 | Tracking conflict (phase 16) | `findOneAndUpdate` wrote `pagesViewed` through both `$setOnInsert` and `$inc` (plus `pageJourney` and `scrollDepth`), producing the pasted MongoServerError | conflicting paths removed from `$setOnInsert`; `$inc`/`$push`/`$max` now own them, `$max` always runs, 8 static regression checks |
 | Project likes (phase 15) | the three public project cards showed the old low seed counts; the offline snapshot hardcoded `likes: 0` | owner-specified 500 / 600 / 100 carried from the seed into the snapshot; card markup, all other project records and all links unchanged, values labelled as display numbers rather than measured engagement |
@@ -1139,6 +1142,64 @@ The pasted stack came from `trackPageView`'s `findOneAndUpdate`: `$setOnInsert` 
 - Snapshot: 8 project records, all with non-empty technologies, 4+ distinct categories; 8 + 2 showcase = **10**. NetGate URL counts unchanged (3/1/1/3).
 - Both live previews (5173 dev / 4173 production build) return 200 and serve the new page.
 
+## 3q. Phase 17 — owner-supplied project links, public Lab copy, zero values and the front-end catalogue
+
+Requests: *"in my lab there is unworthy info to the public, like where I store the skills and project"*, *"ensure there are no zero values"*, a list of **12 project URLs to add**, and *"the front still shows 3"*.
+
+### Read-only verification of the twelve links
+
+Each owner-supplied URL was fetched read-only on 2026-11-04 to capture its real page title. No code left the workspace. The catalogue stores **only a title and a link** — no stacks, likes, views, achievements, metrics or live-status claims were invented.
+
+| URL | Page title |
+| --- | --- |
+| `https://net-gate.netlify.app/` | NetGate — Smart Network Portal |
+| `https://bizsolutionz.netlify.app/` | OmniBiz - Complete Business Management Platform |
+| `https://home-scape-platform.netlify.app/` | RealEstateHub - Find Your Dream Property |
+| `https://fintech-banking.netlify.app/` | SecureBank - Enterprise Banking |
+| `https://ai-image-editor-pro.netlify.app/` | AI Media Studio - Transform, Create, Inspire |
+| `https://kazi-find.netlify.app/` | Kazi Find (title from the repository's own earlier project record) |
+| `https://cinemaflx.netlify.app/` | CinemaFlix - Watch Unlimited Movies |
+| `https://schedule-manager-ap.netlify.app/` | AI Schedule Manager - Boost Your Productivity |
+| `https://gbchat.netlify.app/` | GBChat - Ultimate Messaging |
+| `https://virtualtourist.netlify.app/` | Virtual Tourist - Explore the World |
+| `https://mediaplaier.netlify.app/` | AI Video Player Enterprise |
+| `https://elimu-pro-beta.netlify.app/` | Elimu Pro - Empowering Kenyan Developers |
+
+Notes: the Kazi Find link returned a Netlify 404 during verification; its title comes from this repository's earlier project record and the link is published as supplied, with no availability claim. CinemaFlix and AI Schedule Manager redirect to `/status.html` and `/login`; their page titles are still valid. The several marketing numbers shown on some of those pages were **not** used as portfolio metrics.
+
+### Why the front end showed only 3
+
+`loadPublicSection('projects')` returned the live API's records whenever they were non-empty, and the bundled saved copy was used **only** when the API failed or returned nothing. A live database publishing three records therefore hid the other saved projects. `src/pages/Projects.jsx` now completes any live list with the saved local records (union by normalised title, live values kept), labels a completed section as the archive rather than as live data, and caches only genuinely live-only responses. This is a source-level fix; no browser-level measurement was performed.
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `src/data/projectLinks.json`, `src/utils/projectLinks.js` | New shared catalogue of the 12 owner URLs and their verified titles; HTTPS-only filtering, safe external-link attributes, hostname derived from the URL itself. |
+| `src/pages/Projects.jsx` | New horizontal "Project directory" scroller with 12 link cards and arrow controls; live/saved merge so the grid is never reduced to a partial live subset; zero-valued summary cards omitted. |
+| `src/styles/Projects.css` | Page-level styles for the directory scroller. No `.project-card` / `.projects-grid` override. |
+| `src/pages/Lab.jsx` | Removed public-facing storage/dashboard wording ("managed in the dashboard", "stored in the Hobbies manager", "pulled from the same records"); technical connection/sample/sync badges are now owner-only; zero-valued metrics, filter counts and skill levels are never rendered. Owner-only management detail is retained. |
+| `src/pages/ProjectCard.jsx`, `src/pages/ProjectModal.jsx` | Zero-valued view/like counters are hidden rather than printed as `0`. This is the only card change and it is a data-honesty fix, **not** a visual restyle — the like controls stay fully functional and no other markup changed. |
+| `tests/project-links.test.mjs`, `tests/ecommerce-link.test.mjs`, `package.json`, `server/package.json` | New regression suite; the retired-deployment scan now allows the legacy URL **only** as the separate owner-supplied link (the E-Commerce Platform record still points at OmniBiz); both `test` scripts wired. |
+
+### No zero values
+
+Zero-valued public data is omitted, never fabricated into a non-zero number: Lab metrics/filter counts/skill levels, Projects summary totals, and card/modal view and like counters. The 12 new catalogue entries carry no numeric fields at all. The saved project records keep their existing values (the three owner-specified 500/600/100 display counts and the zero counters used by the offline snapshot); only their rendering changed.
+
+### Explicitly not changed
+
+- The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). The new `https://net-gate.netlify.app/` is a **separate, additional** link, not a replacement.
+- NEX Store, CellarKeep, `https://ominbiz-solution.netlify.app/` and `https://homescape-pro.netlify.app/` links; all seed/backup/testimonial/lab datasets; the eight saved project records and the two featured cards.
+- No push, PR, merge, external issue, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **24.75s**, PWA **216 precache entries (7021.72 KiB)**.
+- **200** Node-only regression checks in total (**12** new project-links / Lab / zero-value checks). `git diff --check` clean; masked secret scan clean.
+- Production JS contains all 12 owner URLs and the `project-links-strip` scroller; production CSS contains the scroller styles; no production dev-panel strings.
+- 12 owner URLs present exactly once, all HTTPS with no credentials; 8 saved grid records + 2 featured cards unchanged; NetGate counts unchanged.
+- Both live previews (5173 dev / 4173 production build) return 200.
+
 ---
 
 ## 4. Residual risk & prioritised backlog
@@ -1216,6 +1277,12 @@ The pasted stack came from `trackPageView`'s `findOneAndUpdate`: `$setOnInsert` 
     existing one), and run `npm run seed-projects` so the eight restored
     project records also exist as live documents. No database was available
     in this sandbox.
+22. Phase 17 follow-up: with a live backend, confirm the merged Projects
+    list renders all eight saved records plus the twelve owner links, and
+    seed the twelve links into MongoDB if they should also be editable
+    dashboard records. The Kazi Find link returned a Netlify 404 during
+    read-only verification; confirm the intended deployment URL. No
+    database or browser automation was available in this sandbox.
 
 ---
 
@@ -1241,6 +1308,6 @@ was opened to record that merge note; remote access became blocked for the
 merged branch before its status could be confirmed, so the correction is
 re-applied on this branch. No credential value was included in any PR body.
 
-Phases 14–16 (§3n–§3p) are local-only work on
+Phases 14–17 (§3n–§3q) are local-only work on
 `arena/28000c5e-e-folio`; they have **not** been pushed, opened as a PR, or
 merged.
