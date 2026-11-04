@@ -12,12 +12,24 @@ export const useAuth = () => {
     return context;
 };
 
+const normalizeRole = (value) => {
+    const role = String(value || '').trim().toLowerCase();
+    if (['owner', 'collaborator', 'user', 'visitor'].includes(role)) {
+        return role;
+    }
+    return 'visitor';
+};
+
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // User roles: 'owner', 'collaborator', 'visitor'
     const [userRole, setUserRole] = useState('visitor');
+
+    const effectiveRole = userRole && userRole !== 'visitor'
+        ? normalizeRole(userRole)
+        : (user ? 'user' : 'visitor');
 
     useEffect(() => {
         // Check for existing session and verify token
@@ -26,7 +38,7 @@ const AuthProvider = ({ children }) => {
             const savedUser = localStorage.getItem('efolio_user');
             const savedRole = localStorage.getItem('efolio_role');
             
-            if (token && savedUser && savedRole) {
+            if (token && savedUser) {
                 try {
                     // Verify token with backend
                     const response = await apiService.verifyToken();
@@ -40,16 +52,18 @@ const AuthProvider = ({ children }) => {
                                 username: verifiedUser.username,
                                 email: verifiedUser.email,
                                 avatar: verifiedUser.avatar || null,
-                                role: verifiedUser.role || savedRole,
+                                role: verifiedUser.role || savedRole || 'user',
                                 loginTime: new Date().toISOString()
                             };
+                            const nextRole = normalizeRole(data.role || savedRole || 'user');
                             setUser(data);
-                            setUserRole(data.role || savedRole);
+                            setUserRole(nextRole);
                             localStorage.setItem('efolio_user', JSON.stringify(data));
-                            localStorage.setItem('efolio_role', data.role || savedRole);
+                            localStorage.setItem('efolio_role', nextRole);
                         } else {
+                            const nextRole = normalizeRole(savedRole || 'user');
                             setUser(JSON.parse(savedUser));
-                            setUserRole(savedRole);
+                            setUserRole(nextRole);
                         }
                     } else {
                         // Token invalid, clear session
@@ -120,16 +134,17 @@ const AuthProvider = ({ children }) => {
                         loginTime: new Date().toISOString()
                     };
                     
+                    const nextRole = normalizeRole(response.user.role || (userData.email === 'devtechs842@gmail.com' ? 'owner' : 'user'));
                     setUser(userData);
-                    setUserRole(response.user.role);
+                    setUserRole(nextRole);
                     
                     // Store token and user data
                     localStorage.setItem('token', response.token);
                     localStorage.setItem('efolio_user', JSON.stringify(userData));
-                    localStorage.setItem('efolio_role', response.user.role);
+                    localStorage.setItem('efolio_role', nextRole);
                     
                     setLoading(false);
-                    return { success: true, user: userData, role: response.user.role };
+                    return { success: true, user: userData, role: nextRole };
                 }
 
                 setLoading(false);
@@ -224,15 +239,15 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    const isOwner = () => userRole === 'owner';
-    const isCollaborator = () => userRole === 'collaborator';
-    const isUser = () => userRole === 'user';
+    const isOwner = () => effectiveRole === 'owner';
+    const isCollaborator = () => effectiveRole === 'collaborator';
+    const isUser = () => effectiveRole === 'user';
     const isAuthenticated = () => user !== null;
-    const canEdit = () => userRole === 'owner' || userRole === 'collaborator' || userRole === 'user';
+    const canEdit = () => ['owner', 'collaborator', 'user'].includes(effectiveRole);
 
     const value = {
         user,
-        userRole,
+        userRole: effectiveRole,
         loading,
         login,
         logout,

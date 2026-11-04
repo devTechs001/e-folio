@@ -28,8 +28,8 @@ const seedProjects = [
         status: "completed",
         visibility: "public",
         order: 1,
-        views: 1250,
-        likes: 45
+        views: 1240,
+        likes: 52
     },
     {
         title: "Portfolio Website",
@@ -47,8 +47,8 @@ const seedProjects = [
         status: "completed",
         visibility: "public",
         order: 2,
-        views: 890,
-        likes: 32
+        views: 980,
+        likes: 36
     },
     {
         title: "Task Management App",
@@ -66,8 +66,8 @@ const seedProjects = [
         status: "completed",
         visibility: "public",
         order: 3,
-        views: 756,
-        likes: 28
+        views: 760,
+        likes: 29
     },
     {
         title: "Social Media Dashboard",
@@ -85,27 +85,8 @@ const seedProjects = [
         status: "completed",
         visibility: "public",
         order: 4,
-        views: 623,
-        likes: 19
-    },
-    {
-        title: "Weather App",
-        description: "Dynamic weather application with location-based forecasts and interactive maps.",
-        thumbnail: "https://images.unsplash.com/photo-1592210454359-9043f067919b?ixlib=rb-4.0.3",
-        links: {
-            github: "https://github.com/yourusername/weather-app",
-            live: "https://yourusername.github.io/weather-app",
-            demo: "https://yourusername.github.io/weather-app"
-        },
-        technologies: ["React", "OpenWeatherMap API", "Leaflet"],
-        category: "Web",
-        tags: ["weather", "api", "maps", "react"],
-        featured: false,
-        status: "completed",
-        visibility: "public",
-        order: 5,
-        views: 445,
-        likes: 15
+        views: 640,
+        likes: 24
     },
     {
         title: "Chat Application",
@@ -122,9 +103,9 @@ const seedProjects = [
         featured: true,
         status: "completed",
         visibility: "public",
-        order: 6,
-        views: 1102,
-        likes: 38
+        order: 5,
+        views: 1185,
+        likes: 41
     },
     {
         title: "AI Image Generator",
@@ -141,9 +122,9 @@ const seedProjects = [
         featured: true,
         status: "completed",
         visibility: "public",
-        order: 7,
-        views: 1587,
-        likes: 67
+        order: 6,
+        views: 1620,
+        likes: 68
     },
     {
         title: "Crypto Trading Bot",
@@ -160,47 +141,9 @@ const seedProjects = [
         featured: false,
         status: "completed",
         visibility: "public",
-        order: 8,
-        views: 934,
-        likes: 41
-    },
-    {
-        title: "Virtual Reality Game",
-        description: "Immersive VR game developed with Unity, featuring realistic physics and interactive environments.",
-        thumbnail: "https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?ixlib=rb-4.0.3",
-        links: {
-            github: "https://github.com/yourusername/vr-game",
-            live: "https://yourusername.github.io/vr-game",
-            demo: "https://yourusername.github.io/vr-game"
-        },
-        technologies: ["Unity", "C#", "Oculus SDK"],
-        category: "Other",
-        tags: ["vr", "unity", "game", "oculus"],
-        featured: false,
-        status: "completed",
-        visibility: "public",
-        order: 9,
-        views: 567,
-        likes: 22
-    },
-    {
-        title: "High-Performance Game Engine",
-        description: "Custom game engine built with C++ featuring advanced rendering, physics simulation, and multi-threading capabilities.",
-        thumbnail: "https://images.unsplash.com/photo-1627398242455-45a46ff9c8e4?ixlib=rb-4.0.3",
-        links: {
-            github: "https://github.com/yourusername/game-engine",
-            live: "https://yourusername.github.io/game-engine",
-            demo: "https://yourusername.github.io/game-engine"
-        },
-        technologies: ["C++", "OpenGL", "Vulkan", "DirectX", "CUDA"],
-        category: "Other",
-        tags: ["gamedev", "cpp", "opengl", "vulkan", "engine"],
-        featured: false,
-        status: "completed",
-        visibility: "public",
-        order: 10,
-        views: 423,
-        likes: 18
+        order: 7,
+        views: 930,
+        likes: 39
     },
     {
         title: "Enterprise Java System",
@@ -217,9 +160,9 @@ const seedProjects = [
         featured: true,
         status: "completed",
         visibility: "public",
-        order: 11,
-        views: 789,
-        likes: 34
+        order: 8,
+        views: 710,
+        likes: 31
     }
 ];
 

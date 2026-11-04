@@ -12,7 +12,7 @@ import apiService from './api.service';
 import { recordDevIssue } from '../utils/publicMessaging';
 
 export const PUBLIC_ENDPOINTS = Object.freeze({
-    projects: '/public/projects?status=all&limit=100',
+    projects: '/public/projects?status=all&limit=8',
     skills: '/public/skills',
     interests: '/public/interests',
     education: '/public/education',

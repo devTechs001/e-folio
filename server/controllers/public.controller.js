@@ -54,7 +54,7 @@ exports.getProjects = asyncHandler(async (req, res) => {
         search, 
         sortBy = 'order', 
         order = 'asc',
-        limit = 50 
+        limit = 8 
     } = req.query;
     
     // Build filter for public projects (show all visible, non-archived ones by default)

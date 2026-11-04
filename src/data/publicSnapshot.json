@@ -13,700 +13,319 @@
       "success": true,
       "projects": [
         {
-          "id": "snapshot-e-commerce-platform",
+          "id": "snapshot-ecommerce-platform",
           "title": "E-Commerce Platform",
           "description": "Full-stack e-commerce solution with secure payment integration, user authentication, and real-time inventory management.",
-          "fullDescription": "A comprehensive e-commerce platform built with modern web technologies. Features include real-time inventory tracking, secure payment processing through Stripe, user authentication with JWT, product recommendations using AI, advanced search with filters, shopping cart persistence, order tracking, and admin dashboard for managing products and orders.",
+          "fullDescription": "A full-stack e-commerce platform with secure checkout, authentication, real-time inventory, and admin operations.",
           "technologies": [
             "React",
             "Node.js",
             "MongoDB",
-            "Stripe",
-            "Express",
-            "Redux",
-            "JWT",
-            "Socket.io"
+            "Stripe"
           ],
           "category": "Web",
           "status": "completed",
           "featured": true,
           "tags": [
-            "Full-Stack",
-            "E-Commerce",
-            "Real-time",
-            "Payment Integration"
+            "ecommerce",
+            "react",
+            "nodejs",
+            "mongodb"
           ],
           "links": {
-            "github": "https://github.com/devTechs001/ecommerce-platform",
+            "github": "https://github.com/yourusername/ecommerce",
             "live": "https://ominbiz-solution.netlify.app/",
-            "demo": "https://ominbiz-solution.netlify.app/",
-            "netlify": "https://ominbiz-solution.netlify.app/"
+            "demo": "https://ominbiz-solution.netlify.app/"
           },
           "images": [
             {
-              "url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
-              "caption": "Main E-commerce View"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1563013544-824ae1b704d3",
-              "caption": "Product Detail Page"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1556740738-b6a82e8bfca5",
-              "caption": "Shopping Cart"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1563013544-824ae1b704d3",
-              "caption": "Checkout Process"
+              "url": "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3",
+              "caption": "Storefront"
             }
           ],
-          "thumbnail": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
-          "imageUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+          "thumbnail": "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3",
           "completionDate": "2025-11-15T00:00:00.000Z",
           "teamSize": 1,
-          "challenges": "Implementing real-time inventory updates, secure payment processing, and scalable architecture",
-          "achievements": [
-            "99.9% uptime",
-            "Sub-second load times",
-            "1000+ daily active users"
-          ],
-          "views": 1245,
-          "likes": 600,
+          "views": 1240,
+          "likes": 52,
           "order": 1
-        },
-        {
-          "id": "snapshot-gb-chat",
-          "title": "GB Chat",
-          "description": "Real-time chat application with group messaging, file sharing, and advanced communication features.",
-          "fullDescription": "A comprehensive real-time chat application built with modern web technologies. Features include group messaging, private chats, file sharing, emoji reactions, typing indicators, online status tracking, message search, and responsive design for all devices.",
-          "technologies": [
-            "React",
-            "Socket.io",
-            "Node.js",
-            "Express",
-            "MongoDB",
-            "JWT",
-            "Tailwind CSS",
-            "WebRTC"
-          ],
-          "category": "Web",
-          "status": "completed",
-          "featured": true,
-          "tags": [
-            "Real-time",
-            "Chat",
-            "Messaging",
-            "Socket.io",
-            "Communication"
-          ],
-          "links": {
-            "github": "https://github.com/devTechs001/GB-chat",
-            "live": "https://gbchat.netlify.app/",
-            "demo": "https://gbchat.netlify.app/",
-            "netlify": "https://gbchat.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
-              "caption": "Chat Interface"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2",
-              "caption": "Group Chat"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0",
-              "caption": "Mobile View"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
-              "caption": "File Sharing"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
-          "imageUrl": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
-          "completionDate": "2026-02-15T00:00:00.000Z",
-          "teamSize": 2,
-          "challenges": "Implementing real-time messaging, file uploads, and scalable socket connections",
-          "achievements": [
-            "1000+ active users",
-            "99.9% uptime",
-            "Sub-second message delivery"
-          ],
-          "views": 856,
-          "likes": 600,
-          "order": 2
-        },
-        {
-          "id": "snapshot-cinemaflix",
-          "title": "CinemaFlix",
-          "description": "Movie streaming platform with personalized recommendations, watchlists, and social features.",
-          "fullDescription": "A comprehensive movie streaming platform that provides users with a vast library of films and TV shows. Features include personalized recommendations based on viewing history, watchlist management, user ratings and reviews, social sharing, genre filtering, search functionality, and responsive design for optimal viewing on any device.",
-          "technologies": [
-            "React",
-            "Redux",
-            "TMDB API",
-            "Node.js",
-            "Express",
-            "MongoDB",
-            "JWT",
-            "CSS3",
-            "Video.js"
-          ],
-          "category": "Web",
-          "status": "completed",
-          "featured": true,
-          "tags": [
-            "Streaming",
-            "Movies",
-            "Entertainment",
-            "API Integration",
-            "Media"
-          ],
-          "links": {
-            "github": "https://github.com/devTechs001/moview-watch",
-            "live": "https://cinemaflx.netlify.app/",
-            "demo": "https://cinemaflx.netlify.app/",
-            "netlify": "https://cinemaflx.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
-              "caption": "Movie Library"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1489599745951-884f3749b052",
-              "caption": "Movie Details"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1518676590629-3d8889cced0c",
-              "caption": "Watch Interface"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1535016120720-40c6a9e0a2f5",
-              "caption": "User Dashboard"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
-          "imageUrl": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
-          "completionDate": "2024-03-01T00:00:00.000Z",
-          "teamSize": 3,
-          "challenges": "Integrating TMDB API, implementing video streaming, and building recommendation engine",
-          "achievements": [
-            "5000+ registered users",
-            "50,000+ movies streamed",
-            "4.8/5 user rating"
-          ],
-          "views": 1243,
-          "likes": 600,
-          "order": 3
         },
         {
           "id": "snapshot-portfolio-website",
           "title": "Portfolio Website",
           "description": "Modern portfolio website built with React, featuring smooth animations and responsive design.",
-          "fullDescription": "A stunning portfolio website showcasing projects and skills with beautiful animations, dark mode support, and optimal performance. Built with modern React practices and styled with Tailwind CSS for a sleek, professional appearance.",
+          "fullDescription": "A polished personal portfolio with motion, responsive layouts, and strong visual storytelling for work highlights.",
           "technologies": [
             "React",
             "Tailwind CSS",
-            "Framer Motion",
-            "TypeScript"
+            "Framer Motion"
           ],
           "category": "Web",
-          "status": "Live",
-          "featured": false,
+          "status": "completed",
+          "featured": true,
           "tags": [
-            "Portfolio",
-            "Animation",
-            "Responsive",
-            "TypeScript"
+            "portfolio",
+            "react",
+            "tailwind",
+            "animation"
           ],
           "links": {
-            "github": "https://github.com/devTechs001/portfolio-website",
-            "live": "https://home-scape-platform.netlify.app/"
+            "github": "https://github.com/yourusername/portfolio",
+            "live": "https://yourusername.github.io/portfolio",
+            "demo": "https://yourusername.github.io/portfolio"
           },
           "images": [
             {
-              "url": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
-              "caption": "Portfolio Home"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1522252234503-e356532cafd5",
-              "caption": "Projects Section"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-              "caption": "About Page"
+              "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3",
+              "caption": "Portfolio"
             }
           ],
-          "thumbnail": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
-          "imageUrl": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
-          "completionDate": "2023-12-20",
+          "thumbnail": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3",
+          "completionDate": "2025-01-12T00:00:00.000Z",
           "teamSize": 1,
-          "views": 600,
-          "likes": 600,
-          "order": 4
+          "views": 980,
+          "likes": 36,
+          "order": 2
         },
         {
           "id": "snapshot-task-management-app",
           "title": "Task Management App",
           "description": "React-based task management application with real-time updates and collaborative features.",
-          "fullDescription": "A powerful task management solution with real-time collaboration, drag-and-drop interface, team workspaces, and productivity analytics. Perfect for remote teams and project management.",
+          "fullDescription": "A productivity tracker with real-time updates, collaborative boards, and clear task workflows across teams.",
           "technologies": [
             "React",
             "Firebase",
-            "Redux",
-            "Material-UI",
-            "Chart.js"
+            "Redux"
           ],
-          "category": "Mobile",
-          "status": "Live",
-          "featured": false,
+          "category": "Web",
+          "status": "completed",
+          "featured": true,
           "tags": [
-            "Productivity",
-            "Real-time",
-            "Collaboration",
-            "PWA"
+            "task",
+            "management",
+            "react",
+            "firebase"
           ],
           "links": {
-            "github": "https://github.com/devTechs001/task-manager",
-            "live": "https://schedule-manager-ap.netlify.app/"
+            "github": "https://github.com/yourusername/taskmanager",
+            "live": "https://yourusername.github.io/taskmanager",
+            "demo": "https://yourusername.github.io/taskmanager"
           },
           "images": [
             {
-              "url": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
-              "caption": "Task Dashboard"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1586880244406-5564e8cb497d",
-              "caption": "Kanban Board"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173",
-              "caption": "Analytics View"
+              "url": "https://images.unsplash.com/photo-1540350394557-8d14678e7f91?ixlib=rb-4.0.3",
+              "caption": "Tasks"
             }
           ],
-          "thumbnail": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
-          "imageUrl": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
-          "completionDate": "2023-11-10",
+          "thumbnail": "https://images.unsplash.com/photo-1540350394557-8d14678e7f91?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1540350394557-8d14678e7f91?ixlib=rb-4.0.3",
+          "completionDate": "2025-02-22T00:00:00.000Z",
           "teamSize": 2,
-          "views": 600,
-          "likes": 600,
+          "views": 760,
+          "likes": 29,
+          "order": 3
+        },
+        {
+          "id": "snapshot-social-media-dashboard",
+          "title": "Social Media Dashboard",
+          "description": "Comprehensive dashboard for social media analytics with real-time data visualization.",
+          "fullDescription": "A social analytics dashboard with engagement charts, audience insight panels, and campaign reporting.",
+          "technologies": [
+            "React",
+            "D3.js",
+            "Chart.js"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": false,
+          "tags": [
+            "dashboard",
+            "analytics",
+            "d3",
+            "charts"
+          ],
+          "links": {
+            "github": "https://github.com/yourusername/dashboard",
+            "live": "https://yourusername.github.io/dashboard",
+            "demo": "https://yourusername.github.io/dashboard"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
+              "caption": "Dashboard"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
+          "completionDate": "2025-03-18T00:00:00.000Z",
+          "teamSize": 2,
+          "views": 640,
+          "likes": 24,
+          "order": 4
+        },
+        {
+          "id": "snapshot-chat-application",
+          "title": "Chat Application",
+          "description": "Real-time chat application with WebSocket integration and file sharing capabilities.",
+          "fullDescription": "A reactive chat product with real-time rooms, online status, messaging, and shared media uploads.",
+          "technologies": [
+            "React",
+            "Socket.io",
+            "Express",
+            "MongoDB"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": true,
+          "tags": [
+            "chat",
+            "websocket",
+            "realtime",
+            "socket.io"
+          ],
+          "links": {
+            "github": "https://github.com/yourusername/chat-app",
+            "live": "https://yourusername.github.io/chat-app",
+            "demo": "https://yourusername.github.io/chat-app"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1611746872915-64382b5c76da?ixlib=rb-4.0.3",
+              "caption": "Chat"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1611746872915-64382b5c76da?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1611746872915-64382b5c76da?ixlib=rb-4.0.3",
+          "completionDate": "2025-04-08T00:00:00.000Z",
+          "teamSize": 2,
+          "views": 1185,
+          "likes": 41,
           "order": 5
         },
         {
           "id": "snapshot-ai-image-generator",
           "title": "AI Image Generator",
           "description": "Advanced AI-powered image generation platform using stable diffusion models and neural networks.",
-          "fullDescription": "Cutting-edge AI image generation platform utilizing stable diffusion technology. Features include text-to-image generation, image editing with AI, style transfer, upscaling, and custom model training capabilities.",
+          "fullDescription": "A prompt-based AI image generator focused on creative workflows and quick iteration cycles.",
           "technologies": [
             "React",
             "TensorFlow.js",
             "Python",
-            "FastAPI",
-            "WebGL",
-            "Docker"
+            "FastAPI"
           ],
           "category": "AI/ML",
-          "status": "Beta",
+          "status": "completed",
           "featured": true,
           "tags": [
-            "AI",
-            "Machine Learning",
-            "Image Processing",
-            "Deep Learning"
+            "ai",
+            "tensorflow",
+            "python",
+            "image-generation"
           ],
           "links": {
-            "github": "https://github.com/devTechs001/ai-image-generator",
-            "live": "https://ai-image-editor-pro.netlify.app/"
+            "github": "https://github.com/yourusername/ai-image-generator",
+            "live": "https://yourusername.github.io/ai-image-generator",
+            "demo": "https://yourusername.github.io/ai-image-generator"
           },
           "images": [
             {
-              "url": "https://picsum.photos/800/600?random=4",
-              "caption": "AI Generated Art"
-            },
-            {
-              "url": "https://picsum.photos/800/600?random=41",
-              "caption": "Style Transfer Interface"
-            },
-            {
-              "url": "https://picsum.photos/800/600?random=42",
-              "caption": "Gallery View"
+              "url": "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3",
+              "caption": "AI Generation"
             }
           ],
-          "thumbnail": "https://picsum.photos/800/600?random=4",
-          "imageUrl": "https://picsum.photos/800/600?random=4",
-          "completionDate": "2024-02-01",
+          "thumbnail": "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3",
+          "completionDate": "2025-05-11T00:00:00.000Z",
           "teamSize": 3,
-          "views": 600,
-          "likes": 600,
+          "views": 1620,
+          "likes": 68,
           "order": 6
         },
         {
-          "id": "snapshot-social-media-dashboard",
-          "title": "Social Media Dashboard",
-          "description": "Comprehensive dashboard for social media analytics with real-time data visualization.",
-          "fullDescription": "All-in-one social media analytics dashboard providing insights from multiple platforms. Features real-time metrics, engagement tracking, sentiment analysis, competitor analysis, and automated reporting.",
+          "id": "snapshot-crypto-trading-bot",
+          "title": "Crypto Trading Bot",
+          "description": "Automated cryptocurrency trading bot with technical analysis and risk management features.",
+          "fullDescription": "A Python trading bot focused on market signals, decision support, and risk-aware automation.",
           "technologies": [
-            "React",
-            "D3.js",
-            "Chart.js",
             "Python",
-            "Flask",
-            "PostgreSQL",
-            "Redis"
+            "TensorFlow",
+            "Pandas",
+            "Binance API"
           ],
-          "category": "Web",
-          "status": "Live",
-          "featured": true,
+          "category": "AI/ML",
+          "status": "completed",
+          "featured": false,
           "tags": [
-            "Analytics",
-            "Data Visualization",
-            "Dashboard",
-            "API Integration"
+            "crypto",
+            "trading",
+            "bot",
+            "python"
           ],
           "links": {
-            "github": "https://github.com/devTechs001/analytics-dashboard",
-            "live": "https://net-gate.netlify.app/"
+            "github": "https://github.com/yourusername/crypto-bot",
+            "live": "https://yourusername.github.io/crypto-bot",
+            "demo": "https://yourusername.github.io/crypto-bot"
           },
           "images": [
             {
-              "url": "https://picsum.photos/800/600?random=5",
-              "caption": "Analytics Dashboard"
-            },
-            {
-              "url": "https://picsum.photos/800/600?random=51",
-              "caption": "Engagement Metrics"
-            },
-            {
-              "url": "https://picsum.photos/800/600?random=52",
-              "caption": "Report Generation"
+              "url": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3",
+              "caption": "Trading Bot"
             }
           ],
-          "thumbnail": "https://picsum.photos/800/600?random=5",
-          "imageUrl": "https://picsum.photos/800/600?random=5",
-          "completionDate": "2023-10-25",
-          "teamSize": 2,
-          "views": 600,
-          "likes": 600,
+          "thumbnail": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3",
+          "completionDate": "2025-06-05T00:00:00.000Z",
+          "teamSize": 1,
+          "views": 930,
+          "likes": 39,
           "order": 7
         },
         {
-          "id": "snapshot-blockchain-wallet",
-          "title": "Blockchain Wallet",
-          "description": "Secure cryptocurrency wallet with multi-chain support and DeFi integration.",
-          "fullDescription": "Next-generation cryptocurrency wallet supporting multiple blockchains. Features include secure key management, token swaps, NFT gallery, staking, DeFi protocol integration, and portfolio tracking.",
+          "id": "snapshot-enterprise-java-system",
+          "title": "Enterprise Java System",
+          "description": "Large-scale enterprise application built with Java Spring Boot, microservices architecture, and cloud deployment.",
+          "fullDescription": "A Java enterprise system for distributed services, analytics, and scalable business operations.",
           "technologies": [
-            "React",
-            "Web3.js",
-            "Ethers.js",
-            "Solidity",
-            "IPFS",
-            "TypeScript"
+            "Java",
+            "Spring Boot",
+            "Microservices",
+            "Docker",
+            "Kubernetes",
+            "PostgreSQL"
           ],
-          "category": "Blockchain",
-          "status": "Live",
+          "category": "Web",
+          "status": "completed",
           "featured": true,
           "tags": [
-            "Web3",
-            "Cryptocurrency",
-            "DeFi",
-            "NFT",
-            "Security"
+            "java",
+            "spring",
+            "enterprise",
+            "microservices",
+            "docker"
           ],
           "links": {
-            "github": "https://github.com/devTechs001/blockchain-wallet",
-            "live": "https://fintech-banking.netlify.app/"
+            "github": "https://github.com/yourusername/enterprise-java",
+            "live": "https://demo-enterprise-java.com",
+            "demo": "https://demo-enterprise-java.com"
           },
           "images": [
             {
-              "url": "https://picsum.photos/800/600?random=6",
-              "caption": "Wallet Dashboard"
-            },
-            {
-              "url": "https://picsum.photos/800/600?random=61",
-              "caption": "Token Swap Interface"
-            },
-            {
-              "url": "https://picsum.photos/800/600?random=62",
-              "caption": "NFT Gallery"
+              "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
+              "caption": "Enterprise"
             }
           ],
-          "thumbnail": "https://picsum.photos/800/600?random=6",
-          "imageUrl": "https://picsum.photos/800/600?random=6",
-          "completionDate": "2024-03-05",
+          "thumbnail": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
+          "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3",
+          "completionDate": "2025-07-10T00:00:00.000Z",
           "teamSize": 4,
-          "views": 600,
-          "likes": 600,
+          "views": 710,
+          "likes": 31,
           "order": 8
-        },
-        {
-          "id": "snapshot-kazi-find",
-          "title": "Kazi Find",
-          "description": "Job discovery and hiring platform for finding local opportunities and talent quickly.",
-          "fullDescription": "Kazi Find connects people with relevant jobs and freelance opportunities through a clean, mobile-friendly marketplace experience. It is designed to make local talent discovery, role matching, and hiring decisions faster and more transparent.",
-          "technologies": [
-            "React",
-            "JavaScript",
-            "Tailwind CSS",
-            "Netlify"
-          ],
-          "category": "Web",
-          "status": "completed",
-          "featured": true,
-          "tags": [
-            "Jobs",
-            "Marketplace",
-            "Hiring",
-            "Career"
-          ],
-          "links": {
-            "live": "https://kazi-find.netlify.app/",
-            "demo": "https://kazi-find.netlify.app/",
-            "netlify": "https://kazi-find.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-              "caption": "Kazi Find Landing Page"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1552664730-d307ca884978",
-              "caption": "Job Listings"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-          "imageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-          "completionDate": "2025-01-14",
-          "teamSize": 1,
-          "duration": "2 weeks",
-          "views": 980,
-          "likes": 600,
-          "order": 9
-        },
-        {
-          "id": "snapshot-homescape-platform",
-          "title": "HomeScape Platform",
-          "description": "Modern real-estate and property discovery platform for browsing homes, apartments, and spaces.",
-          "fullDescription": "HomeScape Platform helps users explore property listings, compare options, and discover living spaces with an elegant and responsive experience. It focuses on clear presentation, searchability, and a polished real-estate browsing flow.",
-          "technologies": [
-            "React",
-            "JavaScript",
-            "CSS",
-            "Netlify"
-          ],
-          "category": "Web",
-          "status": "completed",
-          "featured": true,
-          "tags": [
-            "Real Estate",
-            "Properties",
-            "Dashboard",
-            "Listings"
-          ],
-          "links": {
-            "live": "https://home-scape-platform.netlify.app/",
-            "demo": "https://home-scape-platform.netlify.app/",
-            "netlify": "https://home-scape-platform.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1494526585095-c41746248156",
-              "caption": "Property Showcase"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
-              "caption": "Home Listing"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1494526585095-c41746248156",
-          "imageUrl": "https://images.unsplash.com/photo-1494526585095-c41746248156",
-          "completionDate": "2025-02-02",
-          "teamSize": 1,
-          "duration": "3 weeks",
-          "views": 920,
-          "likes": 600,
-          "order": 10
-        },
-        {
-          "id": "snapshot-net-gate",
-          "title": "Net Gate",
-          "description": "Secure networking and access management platform for safer, smarter digital connectivity.",
-          "fullDescription": "Net Gate showcases a secure, modern interface for network operations, access management, and digital infrastructure monitoring. The project emphasizes clarity, usability, and a professional user experience for networking workflows.",
-          "technologies": [
-            "React",
-            "JavaScript",
-            "UI Design",
-            "Netlify"
-          ],
-          "category": "Web",
-          "status": "completed",
-          "featured": false,
-          "tags": [
-            "Networking",
-            "Security",
-            "Infrastructure",
-            "Dashboard"
-          ],
-          "links": {
-            "live": "https://net-gate.netlify.app/",
-            "demo": "https://net-gate.netlify.app/",
-            "netlify": "https://net-gate.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-              "caption": "Network Dashboard"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1558494949cc5c5f3f4d6d9337e9044f3",
-              "caption": "Security Overview"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-          "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-          "completionDate": "2025-02-20",
-          "teamSize": 1,
-          "duration": "2 weeks",
-          "views": 870,
-          "likes": 600,
-          "order": 11
-        },
-        {
-          "id": "snapshot-schedule-manager",
-          "title": "Schedule Manager",
-          "description": "Planning and scheduling application for managing tasks, appointments, and daily activity flow.",
-          "fullDescription": "Schedule Manager is a productivity-focused planner that helps users organize tasks, track appointments, and manage their time efficiently. The experience is built around clear scheduling, quick updates, and a user-friendly workflow.",
-          "technologies": [
-            "React",
-            "JavaScript",
-            "Calendar UI",
-            "Netlify"
-          ],
-          "category": "Productivity",
-          "status": "completed",
-          "featured": true,
-          "tags": [
-            "Scheduling",
-            "Planner",
-            "Productivity",
-            "Calendar"
-          ],
-          "links": {
-            "live": "https://schedule-manager-ap.netlify.app/",
-            "demo": "https://schedule-manager-ap.netlify.app/",
-            "netlify": "https://schedule-manager-ap.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40",
-              "caption": "Planner Dashboard"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1552664730-d307ca884978",
-              "caption": "Calendar View"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40",
-          "imageUrl": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40",
-          "completionDate": "2025-03-06",
-          "teamSize": 1,
-          "duration": "2 weeks",
-          "views": 910,
-          "likes": 600,
-          "order": 12
-        },
-        {
-          "id": "snapshot-ai-image-editor-pro",
-          "title": "AI Image Editor Pro",
-          "description": "AI-powered image editing platform with fast enhancements, crop tools, and creative transformations.",
-          "fullDescription": "AI Image Editor Pro gives users a polished editor for adjusting and enhancing images with automated, creative tools. It is built to feel fast, flexible, and modern for both casual and professional editing workflows.",
-          "technologies": [
-            "React",
-            "JavaScript",
-            "AI Tools",
-            "Canvas",
-            "Netlify"
-          ],
-          "category": "AI",
-          "status": "completed",
-          "featured": true,
-          "tags": [
-            "AI",
-            "Image Editing",
-            "Design",
-            "Creative Tools"
-          ],
-          "links": {
-            "live": "https://ai-image-editor-pro.netlify.app/",
-            "demo": "https://ai-image-editor-pro.netlify.app/",
-            "netlify": "https://ai-image-editor-pro.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-              "caption": "AI Editor"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1526379095098-d400fd0bf935",
-              "caption": "Creative Tools"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-          "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-          "completionDate": "2025-03-18",
-          "teamSize": 1,
-          "duration": "3 weeks",
-          "views": 1040,
-          "likes": 600,
-          "order": 13
-        },
-        {
-          "id": "snapshot-elimu-pro-beta",
-          "title": "Elimu Pro Beta",
-          "description": "Learning platform for education, course browsing, and digital student engagement.",
-          "fullDescription": "Elimu Pro Beta is a modern education experience built to help learners discover resources, track progress, and engage with a streamlined digital learning system. It focuses on clean course presentation and a motivating student experience.",
-          "technologies": [
-            "React",
-            "JavaScript",
-            "Education UI",
-            "Netlify"
-          ],
-          "category": "Education",
-          "status": "completed",
-          "featured": false,
-          "tags": [
-            "Education",
-            "Learning",
-            "Courses",
-            "Student Portal"
-          ],
-          "links": {
-            "live": "https://elimu-pro-beta.netlify.app/",
-            "demo": "https://elimu-pro-beta.netlify.app/",
-            "netlify": "https://elimu-pro-beta.netlify.app/"
-          },
-          "images": [
-            {
-              "url": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
-              "caption": "Learning Dashboard"
-            },
-            {
-              "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644",
-              "caption": "Course Catalog"
-            }
-          ],
-          "thumbnail": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
-          "imageUrl": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
-          "completionDate": "2025-04-12",
-          "teamSize": 1,
-          "duration": "2 weeks",
-          "views": 880,
-          "likes": 600,
-          "order": 14
         }
       ],
-      "count": 14
+      "count": 8
     },
     "skills": {
       "success": true,
@@ -1503,7 +1122,7 @@
         {
           "id": "snapshot-lab-1",
           "title": "Network Recon Suite",
-          "description": "passive and active reconnaissance toolkit — port scanning, OSINT gathering, DNS enumeration and service fingerprinting. Preview: https://net-gate-portal.netlify.app/ (NetGate captive portal).",
+          "description": "passive and active reconnaissance toolkit \u2014 port scanning, OSINT gathering, DNS enumeration and service fingerprinting. Preview: https://net-gate-portal.netlify.app/ (NetGate captive portal).",
           "status": "beta",
           "category": "Other",
           "technologies": [
@@ -1530,7 +1149,7 @@
         {
           "id": "snapshot-lab-2",
           "title": "Wi-Fi Security Playground",
-          "description": "hands-on wireless security practicals — WPA2/WPA3 capture, PMKID handshake analysis and deauth detection in a sandboxed hardware lab.",
+          "description": "hands-on wireless security practicals \u2014 WPA2/WPA3 capture, PMKID handshake analysis and deauth detection in a sandboxed hardware lab.",
           "status": "development",
           "category": "IoT",
           "technologies": [
@@ -1556,7 +1175,7 @@
         {
           "id": "snapshot-lab-3",
           "title": "Web Pentest Lab (OWASP)",
-          "description": "ethical web application practicals — SQLi, XSS, SSRF and IDOR walkthroughs against a deliberately vulnerable local target.",
+          "description": "ethical web application practicals \u2014 SQLi, XSS, SSRF and IDOR walkthroughs against a deliberately vulnerable local target.",
           "status": "experimental",
           "category": "Web",
           "technologies": [
