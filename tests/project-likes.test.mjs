@@ -16,7 +16,11 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const json = rel => JSON.parse(read(rel));
 
 const VALUES = [500, 600, 100];
-const TITLES = ['E-Commerce Platform', 'GB Chat', 'CinemaFlix'];
+const TITLES = [
+    'E-Commerce Platform', 'GB Chat', 'CinemaFlix',
+    'Portfolio Website', 'Task Management App', 'AI Image Generator',
+    'Social Media Dashboard', 'Blockchain Wallet'
+];
 const NETGATE = 'https://net-gate-portal.netlify.app/';
 
 let passed = 0;
@@ -31,19 +35,20 @@ const snapshotProjects = () => json('src/data/publicSnapshot.json').sections.pro
 
 /* --------------------------------- the values ------------------------------- */
 
-check('the three supplied like values are on the three published project records, in order', () => {
-    assert.deepEqual(seedLikes(), VALUES);
+check('the three supplied like values lead the eight published project records', () => {
     const seed = read('scripts/seed-projects.js');
-    for (const title of TITLES) assert.ok(seed.includes(`title: "${title}"`));
-    assert.equal((seed.match(/likes:\s*\d+,/g) || []).length, 3);
+    assert.deepEqual(seedLikes().slice(0, 3), VALUES);
+    assert.deepEqual(seedLikes().slice(3), [0, 0, 0, 0, 0]);
+    for (const title of TITLES) assert.ok(seed.includes(`title: "${title}"`), `${title} must be present`);
+    assert.equal((seed.match(/likes:\s*\d+,/g) || []).length, 8);
 });
 
 check('the offline snapshot carries the same values for the same projects', () => {
     const projects = snapshotProjects();
-    assert.equal(projects.length, 3);
+    assert.equal(projects.length, 8);
     assert.deepEqual(projects.map(p => p.title), TITLES);
-    assert.deepEqual(projects.map(p => p.likes), VALUES);
-    assert.deepEqual(projects.map(p => p.views), [0, 0, 0], 'views were not requested and stay zero');
+    assert.deepEqual(projects.map(p => p.likes), [500, 600, 100, 0, 0, 0, 0, 0]);
+    assert.deepEqual(projects.map(p => p.views), [0, 0, 0, 0, 0, 0, 0, 0], 'views were not requested and stay zero');
 });
 
 check('the snapshot generator reads likes from the seed instead of hardcoding zero', () => {
@@ -89,7 +94,7 @@ check('the project card interface itself is unchanged and stays data-driven', ()
     assert.doesNotMatch(page, /likes:\s*(?:500|600|100)/);
 });
 
-check('the eight other project records and every other seed file are left alone', () => {
+check('other project datasets and every other seed file are left alone', () => {
     const data = read('server/seed-data.js');
     assert.deepEqual(
         [...data.matchAll(/likes:\s*(\d+)/g)].map(m => Number(m[1])).slice(0, 11),

@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -27,10 +27,11 @@ Resources page, live preview + lagging issues, CellarKeep client-portal link in
 Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
 subsequently merged into this repository's own `origin/main` via PR #3
 (merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
-Phases 14–15 (§3n–§3o, HomeScape property-marketplace link in Projects and
-owner-specified starting like counts) are **local only** on the new active
-branch `arena/28000c5e-e-folio` — no push, PR, merge, external issue, or
-external service has been used for them.
+Phases 14–16 (§3n–§3p: HomeScape property-marketplace link, owner-specified
+starting like counts, restored projects, filter buttons, page restyle and the
+tracking conflict fix) are **local only** on the active branch
+`arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
+service has been used for them.
 
 ---
 
@@ -47,6 +48,8 @@ external service has been used for them.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Projects page + filters (phase 16) | only 3 grid projects remained; technology filters were hidden behind a toggle; plain page shell | 8 original records restored from local history (10 projects total with the 2 featured cards), visible technology chip scroller with counts, scroll progress/reveal cues and a modern glass page shell; `ProjectCard` untouched |
+| Tracking conflict (phase 16) | `findOneAndUpdate` wrote `pagesViewed` through both `$setOnInsert` and `$inc` (plus `pageJourney` and `scrollDepth`), producing the pasted MongoServerError | conflicting paths removed from `$setOnInsert`; `$inc`/`$push`/`$max` now own them, `$max` always runs, 8 static regression checks |
 | Project likes (phase 15) | the three public project cards showed the old low seed counts; the offline snapshot hardcoded `likes: 0` | owner-specified 500 / 600 / 100 carried from the seed into the snapshot; card markup, all other project records and all links unchanged, values labelled as display numbers rather than measured engagement |
 | HomeScape link → Projects (phase 14) | no entry for the property marketplace; the card button text was hardcoded for one project | `https://homescape-pro.netlify.app/` appended as a second record in the shared showcase JSON, data-driven button label and conditional notes, 13 new regression checks; NetGate/NEX Store/CellarKeep/OmniBiz links untouched |
 | E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
@@ -1100,6 +1103,42 @@ No component, stylesheet, route, controller or model was changed. `src/component
 - Built JS contains the three values via the regenerated snapshot; both live previews (5173 dev / 4173 production build) return 200.
 - NetGate URL counts unchanged (3/1/1/3); the eight testimonial/backup records and every other seed file retain their original values.
 
+## 3p. Phase 16 — restore the eight original projects, add filter buttons, restyle the page, fix the tracking conflict
+
+Requests: *"add the filters button for different projects as they were not zero technologies"*, *"add all the projects that were there (have to be 10 in total, they exist, earlier there were 8 projects, before you started editing projects system), review"*, a pasted `MongoServerError: Updating the path 'pagesViewed' would create a conflict at 'pagesViewed'` stack, and *"restyle the projects page (modern look and feel (with scrollers) (the cards are fine (dont touch) only the page"*.
+
+### Review of the projects system
+
+The local clone was unshallowed with a **read-only fetch of this repository's own history** (no code left the workspace). The pre-phase-4 `getFallbackProjects()` array in `src/pages/Projects.jsx` at commit `3520894` held exactly **eight** records: E-Commerce Platform, Portfolio Website, Task Management App, AI Image Generator, Social Media Dashboard, Blockchain Wallet, GB Chat and Moview Watch. Phase 4 removed those hard-coded fallbacks; the current build kept three of them (E-Commerce Platform with the published OmniBiz link, GB Chat, and CinemaFlix = Moview Watch renamed), plus two featured showcase cards added later (CellarKeep, HomeScape).
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `scripts/seed-projects.js` | Appended the **five missing originals** (Portfolio Website, Task Management App, AI Image Generator, Social Media Dashboard, Blockchain Wallet), recovered verbatim from local Git history. Fabricated view counts and invented achievement badges were dropped; likes and views start at zero. The three existing records keep their published links and the owner-specified 500/600/100 likes. |
+| `src/data/publicSnapshot.json` | Regenerated with `npm run snapshot:build`: **8 grid project cards**. Together with the 2 featured showcase cards, the Projects page now shows **10 projects in total**. Every restored record has a non-empty `technologies` array, so the filter buttons have real data. Original image URLs (including the historical placeholder images) were kept verbatim from history; nothing was invented. |
+| `src/pages/Projects.jsx` | Added **visible filter buttons**: a horizontal technology-chip scroller with left/right arrows, per-tech project counts and `aria-pressed` state, derived from `allTechnologies` (which comes from the projects' own technologies). Also a scroll-progress bar, guarded scroll-reveal sections, a jump-to-projects control and passive-listener/resize/observer cleanup. Existing category pills and the advanced filter panel are retained. |
+| `src/styles/Projects.css` | Appended a modern page shell: layered gradient/grid background, glass control panel, refined header/stat/category/CTA styling, chip-scroller styling, reveal transitions and `prefers-reduced-motion` support. **No `.project-card` or `.projects-grid` selector was overridden.** |
+| `server/controllers/tracking.controller.js` | Fixed the MongoDB conflict described below. |
+| `tests/tracking-conflict.test.mjs`, `tests/projects-page-filters.test.mjs`, `tests/project-likes.test.mjs`, `package.json`, `server/package.json` | 8 new tracking checks, 13 new page/filter checks, the likes suite updated for 8 records, and both `test` scripts wired. |
+
+### The MongoDB error
+
+The pasted stack came from `trackPageView`'s `findOneAndUpdate`: `$setOnInsert` set `pagesViewed: 0`, `pageJourney: []` and `scrollDepth: 0`, while `$inc`, `$push` and `$max` wrote those same paths. MongoDB rejects one update that writes a path through two different operators. Those three fields were removed from `$setOnInsert`; `$inc`, `$push` and `$max` create them on an inserted document, which preserves the previous zero/empty defaults. `$max` now always runs with `Number(scrollDepth) \|\| 0` so an inserted session still gets `scrollDepth: 0`. `{ upsert: true, new: true }` is unchanged, and the other visitor-ping upsert was checked for the same pattern. No live MongoDB was available, so runtime verification is backlog item 21.
+
+### Explicitly not changed
+
+- The **NetGate link** and all its files, the NEX Store / CellarKeep / OmniBiz / HomeScape links, every other project/seed dataset, and the testimonial and lab backups.
+- `src/components/ProjectCard.jsx` and `src/styles/ProjectCard.css` — the cards are exactly as they were, as requested. Only the page was restyled.
+- No push, PR, merge, external issue, external write or offensive testing. No fabricated metrics: the five restored records have zero likes/views and no achievement badges.
+
+### Verification
+
+- `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, build **28.23s**, PWA **216 precache entries (7015.73 KiB)**.
+- **188** Node-only regression checks in total (**8** tracking-conflict and **13** page/filter checks). `git diff --check` clean; masked secret scan clean.
+- Snapshot: 8 project records, all with non-empty technologies, 4+ distinct categories; 8 + 2 showcase = **10**. NetGate URL counts unchanged (3/1/1/3).
+- Both live previews (5173 dev / 4173 production build) return 200 and serve the new page.
+
 ---
 
 ## 4. Residual risk & prioritised backlog
@@ -1172,6 +1211,11 @@ No component, stylesheet, route, controller or model was changed. `src/component
     MongoDB so live project documents also carry the owner-specified starting
     like counts. No database was available in this sandbox, and these values
     are display numbers, not measured engagement.
+21. Phase 16 follow-up: runtime-verify the tracking fix against a real
+    MongoDB (`POST /api/tracking/pageview` on a fresh session and on an
+    existing one), and run `npm run seed-projects` so the eight restored
+    project records also exist as live documents. No database was available
+    in this sandbox.
 
 ---
 
@@ -1197,6 +1241,6 @@ was opened to record that merge note; remote access became blocked for the
 merged branch before its status could be confirmed, so the correction is
 re-applied on this branch. No credential value was included in any PR body.
 
-Phases 14–15 (§3n–§3o) are local-only work on
+Phases 14–16 (§3n–§3p) are local-only work on
 `arena/28000c5e-e-folio`; they have **not** been pushed, opened as a PR, or
 merged.

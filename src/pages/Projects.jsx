@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,6 +33,63 @@ const Projects = () => {
     const [projectLikes, setProjectLikes] = useState({});
     const [projectsCollapsed, setProjectsCollapsed] = useState(false);
     const [techShowcaseCollapsed, setTechShowcaseCollapsed] = useState(true);
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const techScrollerRef = useRef(null);
+    const projectsGridRef = useRef(null);
+
+    // Page-level scroll affordances only — the project cards are untouched.
+    useEffect(() => {
+        const onScroll = () => {
+            const doc = document.documentElement;
+            const max = doc.scrollHeight - doc.clientHeight;
+            setScrollProgress(max > 0 ? Math.min(1, doc.scrollTop / max) : 0);
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
+        if (typeof IntersectionObserver === 'undefined') {
+            document.querySelectorAll('[data-reveal]').forEach(node => node.classList.add('is-visible'));
+            return undefined;
+        }
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08 });
+        document.querySelectorAll('[data-reveal]').forEach(node => observer.observe(node));
+        return () => observer.disconnect();
+    }, []);
+
+    const updateTechScrollState = useCallback(() => {
+        const strip = techScrollerRef.current;
+        if (!strip) return;
+        setCanScrollLeft(strip.scrollLeft > 4);
+        setCanScrollRight(strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        updateTechScrollState();
+        window.addEventListener('resize', updateTechScrollState);
+        return () => window.removeEventListener('resize', updateTechScrollState);
+    }, [updateTechScrollState, allTechnologies.length]);
+
+    const scrollTechStrip = useCallback(direction => {
+        const strip = techScrollerRef.current;
+        if (!strip) return;
+        strip.scrollBy({ left: direction * Math.max(240, strip.clientWidth * 0.8), behavior: 'smooth' });
+    }, []);
+
+    const toggleTech = useCallback(tech => {
+        setSelectedTechs(prev => prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]);
+    }, []);
 
     const loadProjects = useCallback(async () => {
         try {
@@ -388,9 +445,14 @@ const Projects = () => {
 
     return (
         <section className="projects-section bg-bgColor py-20 px-4 md:px-8 lg:px-16" id="projects">
+            <div
+                className="projects-scroll-progress"
+                style={{ transform: `scaleX(${scrollProgress})` }}
+                aria-hidden="true"
+            />
             {/* Enhanced Header with Stats */}
-            <div className="max-w-7xl mx-auto mb-16">
-                <div className="text-center mb-12">
+            <div className="max-w-7xl mx-auto mb-16" data-reveal>
+                <div className="text-center mb-12 projects-header">
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
                         Latest <span className="text-mainColor gradient-text">Projects</span>
                     </h2>
@@ -431,8 +493,8 @@ const Projects = () => {
                 </div>
 
                 {/* Search and Controls */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+                <div className="mb-8 projects-toolbar" data-reveal>
+                    <div className="projects-controls flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
                         {/* Search Bar */}
                         <div className="search-container w-full md:w-96">
                             <i className="fa-solid fa-search search-icon"></i>
@@ -539,6 +601,66 @@ const Projects = () => {
                             ))}
                         </div>
                     )}
+
+                    {/* Visible filter buttons for every technology actually used
+                        by the projects. Horizontal scroller keeps long lists tidy. */}
+                    {allTechnologies.length > 0 && (
+                        <div className="tech-scroller" data-reveal>
+                            <div className="tech-scroller__head">
+                                <span className="tech-scroller__label">
+                                    <i className="fa-solid fa-layer-group"></i> Filter by technology
+                                </span>
+                                <button
+                                    type="button"
+                                    className="tech-scroller__jump"
+                                    onClick={() => projectsGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                >
+                                    <i className="fa-solid fa-arrow-down"></i> Jump to projects
+                                </button>
+                            </div>
+                            <div className="tech-scroller__viewport">
+                                <button
+                                    type="button"
+                                    className="tech-scroller__arrow"
+                                    onClick={() => scrollTechStrip(-1)}
+                                    disabled={!canScrollLeft}
+                                    aria-label="Scroll technology filters left"
+                                >
+                                    <i className="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <div
+                                    className="tech-scroller__strip"
+                                    ref={techScrollerRef}
+                                    onScroll={updateTechScrollState}
+                                >
+                                    {allTechnologies.map(tech => {
+                                        const count = projects.filter(p => (p.technologies || []).includes(tech)).length;
+                                        return (
+                                            <button
+                                                key={tech}
+                                                type="button"
+                                                className={`tech-chip ${selectedTechs.includes(tech) ? 'active' : ''}`}
+                                                onClick={() => toggleTech(tech)}
+                                                aria-pressed={selectedTechs.includes(tech)}
+                                            >
+                                                <span>{tech}</span>
+                                                <span className="tech-chip__count">{count}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="tech-scroller__arrow"
+                                    onClick={() => scrollTechStrip(1)}
+                                    disabled={!canScrollRight}
+                                    aria-label="Scroll technology filters right"
+                                >
+                                    <i className="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Active Filters Display */}
@@ -582,7 +704,7 @@ const Projects = () => {
             </div>
 
             {/* Projects Grid */}
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto" ref={projectsGridRef}>
                 {/* Section Toggle */}
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-bold text-textColor">
@@ -700,7 +822,7 @@ const Projects = () => {
             )}
 
             {/* Call to Action */}
-            <div className="cta-section max-w-4xl mx-auto mt-20">
+            <div className="cta-section max-w-4xl mx-auto mt-20" data-reveal>
                 <div className="cta-card">
                     <div className="cta-content">
                         <h3 className="text-3xl md:text-4xl font-bold text-textColor mb-4">
