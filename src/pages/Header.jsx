@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/Header.css';
+import '../styles/HeaderDrawer.css';
 
 const NAV_SECTIONS = [
     { id: 'about', label: 'About', icon: 'fas fa-user' },
@@ -324,7 +325,27 @@ const Header = () => {
                             exit="closed"
                         >
                             <div className="mobile-nav-content">
-                                {/* Mobile Theme Toggle */}
+                                {/* Phase 26 — drawer header */}
+                                <div className="mobile-nav-header">
+                                    <div className="mobile-nav-brand">
+                                        <span className="mobile-nav-brand__mark"><i className="fas fa-code" /></span>
+                                        <span className="mobile-nav-brand__text">
+                                            <strong>E-Folio</strong>
+                                            <small>Explore the portfolio</small>
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="mobile-nav-close"
+                                        onClick={closeMenu}
+                                        aria-label="Close menu"
+                                    >
+                                        <i className="fas fa-times" />
+                                    </button>
+                                </div>
+
+                                {/* Mobile Theme + Fullscreen toggles */}
+                                <div className="drawer-toggles">
                                 <div className="mobile-theme-toggle">
                                     <button
                                         onClick={toggleTheme}
@@ -344,6 +365,7 @@ const Header = () => {
                                         <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
                                         <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}</span>
                                     </button>
+                                </div>
                                 </div>
 
                                 {/* Navigation Links */}

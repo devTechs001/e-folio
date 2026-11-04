@@ -1240,12 +1240,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.42rem 0.8rem;
+  padding: 0.55rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.045);
   color: var(--textColor);
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   white-space: nowrap;
   scroll-snap-align: start;
   cursor: pointer;
@@ -1265,9 +1265,9 @@
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.1);
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   text-align: center;
-  color: rgba(238, 238, 238, 0.8);
+  color: rgba(238, 238, 238, 0.88);
 }
 .tech-chip.active .tech-chip__count {
   background: rgba(14, 239, 239, 0.25);

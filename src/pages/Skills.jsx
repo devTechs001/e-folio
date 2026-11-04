@@ -225,6 +225,13 @@ const Skills = () => {
                     Showing {visibleGroups.length} group{visibleGroups.length === 1 ? '' : 's'} · {visibleItemCount} skill{visibleItemCount === 1 ? '' : 's'}
                 </p>
 
+                <p className="sk-scroll-hint"><i className="fa-solid fa-arrows-up-down" /> Scroll to explore every group</p>
+                <div
+                    className="sk-cardview"
+                    role="region"
+                    aria-label="CV skill groups"
+                    tabIndex={0}
+                >
                 <div className="sk-grid">
                     {visibleGroups.map(group => (
                         <article className="sk-card" key={group.name}>
@@ -261,6 +268,7 @@ const Skills = () => {
                             </ul>
                         </article>
                     ))}
+                </div>
                 </div>
                 {visibleGroups.length === 0 && (
                     <p className="sk-empty">{publicEmptyCopy('emptySkills')}</p>

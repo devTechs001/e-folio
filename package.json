@@ -30,7 +30,7 @@
     "audit:security": "node server/scripts/security-audit.js",
     "test:load": "node server/tests/load/smoke-load.js",
     "check": "npm run lint && npm test && npm run build",
-    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs && node tests/public-fallback.test.mjs && node tests/ecommerce-link.test.mjs && node tests/homescape-link.test.mjs && node tests/project-likes.test.mjs && node tests/tracking-conflict.test.mjs && node tests/projects-page-filters.test.mjs && node tests/project-links.test.mjs && node tests/project-sync.test.mjs && node tests/review-submission.test.mjs && node tests/hook-dependency-order.test.mjs && node tests/projects-features.test.mjs && node tests/projects-remodel.test.mjs && node tests/lab-review.test.mjs && node tests/testimonial-thumbnail.test.mjs && node tests/skills-cv-groups.test.mjs",
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs && node tests/public-fallback.test.mjs && node tests/ecommerce-link.test.mjs && node tests/homescape-link.test.mjs && node tests/project-likes.test.mjs && node tests/tracking-conflict.test.mjs && node tests/projects-page-filters.test.mjs && node tests/project-links.test.mjs && node tests/project-sync.test.mjs && node tests/review-submission.test.mjs && node tests/hook-dependency-order.test.mjs && node tests/projects-features.test.mjs && node tests/projects-remodel.test.mjs && node tests/lab-review.test.mjs && node tests/testimonial-thumbnail.test.mjs && node tests/skills-cv-groups.test.mjs && node tests/ui-polish.test.mjs",
     "test:dashboards": "node tests/dashboard-api.test.mjs",
     "test:collaboration": "node tests/collaboration-review.test.mjs",
     "seed:lab": "node server/scripts/seedLabSamples.js",
@@ -66,7 +66,8 @@
     "test:projects-remodel": "node tests/projects-remodel.test.mjs",
     "test:lab-review": "node tests/lab-review.test.mjs",
     "test:testimonial-thumbnail": "node tests/testimonial-thumbnail.test.mjs",
-    "test:skills-cv-groups": "node tests/skills-cv-groups.test.mjs"
+    "test:skills-cv-groups": "node tests/skills-cv-groups.test.mjs",
+    "test:ui-polish": "node tests/ui-polish.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

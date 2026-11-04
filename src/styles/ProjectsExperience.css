@@ -345,10 +345,10 @@
   border-radius: 999px;
   background: var(--px-surface);
   color: var(--px-text);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
 }
 
-.px-chip span { color: var(--px-muted); font-size: 0.68rem; }
+.px-chip span { color: var(--px-muted); font-size: 0.78rem; }
 
 .px-chip.active {
   border-color: color-mix(in srgb, var(--px-accent) 60%, transparent);

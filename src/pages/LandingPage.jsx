@@ -83,7 +83,7 @@ const LandingPage = () => {
 
             {/* Hero Collaboration Banner */}
             {showBanner && (
-                <section className="collaboration-hero" data-aos="fade-down">
+                <section className="collaboration-hero lp-hero" data-aos="fade-down">
                     {/* Background Effects */}
                     <div className="hero-blob hero-blob-1"></div>
                     <div className="hero-blob hero-blob-2"></div>
@@ -147,52 +147,36 @@ const LandingPage = () => {
                                 ))}
                             </div>
 
-                            {/* Portfolio Builder CTA */}
-                            <div className="flex flex-wrap items-center justify-center gap-4 mb-6" data-aos="zoom-in" data-aos-delay="150">
-                                <Link
-                                    to="/register"
-                                    className="hero-cta-btn group"
-                                >
-                                    <div className="btn-glow"></div>
-                                    <i className="fas fa-magic text-2xl group-hover:animate-bounce"></i>
-                                    <span className="font-black text-lg tracking-wide">
-                                        Create Your Portfolio
+                            {/* Phase 26 — the three primary actions in one modern row */}
+                            <div className="lp-actions" data-aos="fade-up" data-aos-delay="150">
+                                <Link to="/register" className="lp-action lp-action--primary">
+                                    <span className="lp-action__icon"><i className="fas fa-magic" /></span>
+                                    <span className="lp-action__body">
+                                        <span className="lp-action__title">Create Your Portfolio</span>
+                                        <span className="lp-action__note">Start your own space</span>
                                     </span>
-                                    <i className="fas fa-sparkles sparkle-1"></i>
-                                    <i className="fas fa-sparkles sparkle-2"></i>
-                                    <i className="fas fa-arrow-right arrow-icon"></i>
-                                    <div className="btn-shine"></div>
+                                    <i className="fas fa-arrow-right lp-action__arrow" />
                                 </Link>
-                                <Link
-                                    to="/register"
-                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 backdrop-blur-sm border-2 border-white/10 text-white font-bold text-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 group"
-                                >
-                                    <i className="fas fa-file-alt text-2xl text-cyan-400"></i>
-                                    <span>Build Your CV</span>
-                                    <i className="fas fa-arrow-right text-sm opacity-0 group-hover:opacity-100 -ml-4 group-hover:ml-0 transition-all"></i>
+                                <Link to="/collaborate" className="lp-action lp-action--accent">
+                                    <span className="lp-action__icon"><i className="fas fa-handshake" /></span>
+                                    <span className="lp-action__body">
+                                        <span className="lp-action__title">Collaborate with Me</span>
+                                        <span className="lp-action__note">Start a conversation</span>
+                                    </span>
+                                    <i className="fas fa-arrow-right lp-action__arrow" />
+                                </Link>
+                                <Link to="/cv" className="lp-action lp-action--ghost">
+                                    <span className="lp-action__icon"><i className="fas fa-file-alt" /></span>
+                                    <span className="lp-action__body">
+                                        <span className="lp-action__title">Build Your CV</span>
+                                        <span className="lp-action__note">Preview and download</span>
+                                    </span>
+                                    <i className="fas fa-arrow-right lp-action__arrow" />
                                 </Link>
                             </div>
 
-                            {/* CTA Button */}
-                            <Link
-                                to="/collaborate"
-                                className="hero-cta-btn group"
-                                data-aos="zoom-in"
-                                data-aos-delay="200"
-                            >
-                                <div className="btn-glow"></div>
-                                <i className="fas fa-rocket text-2xl group-hover:animate-bounce"></i>
-                                <span className="font-black text-lg tracking-wide">
-                                    Collaborate with Me
-                                </span>
-                                <i className="fas fa-sparkles sparkle-1"></i>
-                                <i className="fas fa-sparkles sparkle-2"></i>
-                                <i className="fas fa-arrow-right arrow-icon"></i>
-                                <div className="btn-shine"></div>
-                            </Link>
-
                             {/* Trust Indicators */}
-                            <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm text-textColor/60" data-aos="fade-up" data-aos-delay="300">
+                            <div className="lp-trust flex flex-wrap items-center justify-center gap-6 mt-8 text-sm text-textColor/60" data-aos="fade-up" data-aos-delay="300">
                                 <div className="flex items-center gap-2">
                                     <i className="fas fa-check-circle text-green-400"></i>
                                     <span>100+ Projects</span>

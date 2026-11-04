@@ -981,3 +981,102 @@
     page-break-inside: avoid;
   }
 }
+/* ============================================================
+   Phase 26 — modern first-page hero actions
+   Scoped to `.lp-*`; existing hero and card styles stay intact.
+   ============================================================ */
+
+.lp-hero h1 { letter-spacing: -0.025em; }
+
+.lp-hero .feature-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(14, 239, 239, 0.16);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.9);
+}
+.lp-hero .feature-card h3 { font-size: 1.05rem; line-height: 1.35; }
+.lp-hero .feature-card p { font-size: 0.9rem; line-height: 1.5; }
+
+.lp-hero .lp-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  max-width: 64rem;
+  margin: 0 auto 1.75rem;
+}
+
+.lp-hero .lp-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 96px;
+  padding: 1.1rem 1.25rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  color: var(--textColor, #fff);
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+.lp-hero .lp-action::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--mainColor, #00efff), #8b5cf6, transparent);
+  opacity: 0.9;
+}
+.lp-hero .lp-action:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent);
+  box-shadow: 0 22px 48px -28px rgba(0, 239, 255, 0.65);
+}
+
+.lp-hero .lp-action--primary {
+  border-color: transparent;
+  background: linear-gradient(125deg, var(--mainColor, #00efff), #7c3aed);
+  color: #06121c;
+  box-shadow: 0 18px 44px -24px rgba(0, 239, 255, 0.8);
+}
+.lp-hero .lp-action--primary::before { background: rgba(255, 255, 255, 0.45); }
+.lp-hero .lp-action--accent {
+  border-color: color-mix(in srgb, var(--mainColor, #00efff) 42%, transparent);
+  background: color-mix(in srgb, var(--mainColor, #00efff) 12%, rgba(255, 255, 255, 0.04));
+}
+.lp-hero .lp-action--ghost { background: rgba(255, 255, 255, 0.035); }
+
+.lp-hero .lp-action__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 1.25rem;
+}
+.lp-hero .lp-action--primary .lp-action__icon { background: rgba(6, 18, 28, 0.16); border-color: rgba(6, 18, 28, 0.15); }
+.lp-hero .lp-action--accent .lp-action__icon { color: var(--mainColor, #00efff); }
+
+.lp-hero .lp-action__body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; text-align: left; }
+.lp-hero .lp-action__title { font-size: 1.08rem; font-weight: 800; line-height: 1.25; letter-spacing: -0.01em; }
+.lp-hero .lp-action__note { font-size: 0.86rem; opacity: 0.78; line-height: 1.35; }
+.lp-hero .lp-action__arrow { margin-left: auto; font-size: 1rem; opacity: 0.7; transition: transform 220ms ease, opacity 220ms ease; }
+.lp-hero .lp-action:hover .lp-action__arrow { transform: translateX(5px); opacity: 1; }
+
+.lp-hero .lp-trust { font-size: 0.95rem; }
+
+.lp-hero .lp-action:focus-visible { outline: 2px solid var(--mainColor, #00efff); outline-offset: 4px; }
+
+@media (max-width: 900px) {
+  .lp-hero .lp-actions { grid-template-columns: 1fr; max-width: 30rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-hero .lp-action { transition: none; }
+  .lp-hero .lp-action:hover, .lp-hero .lp-action:hover .lp-action__arrow { transform: none; }
+}

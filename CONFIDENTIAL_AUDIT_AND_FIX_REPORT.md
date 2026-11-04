@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review → testimonial thumbnail → CV-grouped modern Skills page |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review → testimonial thumbnail → CV-grouped modern Skills page → technology typography / card scrollers → first-page hero + drawer |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -40,8 +40,10 @@ Projects feature restoration, the page remodel, and the Lab subsystem review)
 were local until the owner's explicit **"push change"** instruction in phase 25
 (§3y), which reversed the earlier **"not yet"** for a push only. They were
 pushed to the active branch `arena/b1b14834-e-folio`, creating that remote
-branch. **No PR or merge has been used for phases 22–25**; the "not yet"
-restraint still applies to PRs and merges.
+branch. Phase 25 and phase 26 (§3y–§3z) were pushed to the same branch
+after the owner's explicit **"push changes now"** instructions. **No PR or
+merge has been used for phases 22–26**; the "not yet" restraint still applies
+to PRs and merges.
 
 ---
 
@@ -58,6 +60,7 @@ restraint still applies to PRs and merges.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| UI polish: fonts, card viewpoint, hero + drawer (phase 26) | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
 | Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
 | Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
@@ -1696,6 +1699,104 @@ Algorithms, Dev Tools & Practices, Office & Productivity), and Soft Skills
 
 ---
 
+## 3z. Phase 26 — readable technologies, a scrollable card viewpoint, a restyled first page and drawer
+
+Requested as *"though font is too small,,for tech ologies,maintain a certain
+viewpoint with scrollers for thecards,,restyle the first page with the withree
+bttonn(crate portfolio,,collaborate,build cv,,the drawer as well needs
+restyling,,push changes noe,,they make sense"*.
+
+### Technology typography
+
+The newly added CV skill cards and the existing technology chips used 0.68–0.88
+rem type, which was too small to read comfortably. Sizes were raised without
+changing any data or card interface:
+
+| Element | Before | After |
+| --- | --- | --- |
+| Skills CV item label | 0.88rem | **1.05rem** |
+| Skills group chip | 0.79rem | **0.92rem** |
+| Skills group heading | 1.02rem | **1.15rem** |
+| Skills score chip | 0.72rem | **0.85rem** |
+| Projects technology chip | 0.78rem | **0.95rem** |
+| Projects chip count | 0.68rem | **0.8rem** |
+| Projects experience chip | 0.75rem | **0.9rem** |
+
+Eyebrows, tabs, stat captions, result counts and the landing-page feature-card
+text were enlarged in the same pass. No `.projects-grid`, `.project-card` or
+showcase-card selector was touched.
+
+### A certain viewpoint, with scrollers for the cards
+
+- The Skills card area now lives in `.sk-cardview`: a single consistent
+  viewport (`max-height: clamp(420px, 68vh, 760px)`) with its own styled
+  vertical scroller, `overscroll-behavior: contain`, a keyboard-focusable
+  `role="region"` and an `aria-label`.
+- Every card has a consistent height (`clamp(320px, 46vh, 440px)`) and its
+  `.sk-items` list scrolls internally, so a 12-item group and a 3-item group
+  occupy the same viewpoint instead of stretching the page.
+- The group chip bar becomes a horizontal scroller on narrow screens, and a
+  short "Scroll to explore every group" hint makes the behaviour discoverable.
+  Scrollbars are themed, and reduced-motion preferences are respected.
+
+### First page: one modern three-button row
+
+`src/pages/LandingPage.jsx` previously had **two** CTA blocks (a large glowing
+"Create Your Portfolio" button plus a plain "Build Your CV" link) and a
+**third detached glowing "Collaborate with Me"** button below them. They are
+now one coherent `.lp-actions` row of three equal cards, in the requested
+order:
+
+1. **Create Your Portfolio** → `/register` (gradient primary).
+2. **Collaborate with Me** → `/collaborate` (cyan-accented).
+3. **Build Your CV** → `/cv` (glass ghost) — now points at the real interactive
+   CV builder instead of `/register`.
+
+Each action has an icon, a title, a short neutral caption and an arrow that
+slides on hover. `src/styles/LandingPage.css` gained a scoped `.lp-*` block
+(glass surfaces, gradient accents, responsive one-column stacking,
+`focus-visible` and reduced-motion rules). The hero feature cards and trust
+line also got larger, more legible type. The banner close control, scroll
+progress, theme switcher, chatbot, review button and every section import are
+unchanged; no new metric or claim was introduced.
+
+### Drawer
+
+`src/pages/Header.jsx` now renders a drawer header (brand mark, short label
+and an accessible close button) and groups the theme/fullscreen switches into
+one compact `.drawer-toggles` row. All nav links, the dashboard/collaborate
+links, active states and close behaviour are preserved. The new
+`src/styles/HeaderDrawer.css` (loaded after `Header.css`) supplies a glass
+gradient surface, rounded corners, themed scrollbars, larger link text,
+roomier tap targets, `focus-visible` rings and reduced-motion overrides. The
+pre-existing `ThisButtonDoesThings` label was deliberately left untouched: it
+is behaviour, not styling.
+
+### Push
+
+The explicit **"push changes noe"** instruction authorised another push. The
+phase 26 changes were committed and pushed to the active branch
+`arena/b1b14834-e-folio` only. **No PR, no merge, no push to `main`, no
+external issue/document/comment and no secret value in any external payload.**
+PR #4 remains open and untouched.
+
+### Verification (static only)
+
+- `npm test` exit 0: **288** Node-only regression checks (**10** new in
+  `tests/ui-polish.test.mjs`). `npm run check` exit 0: lint **0 errors / 670
+  warnings**, endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build **26.72s**, PWA
+  **218 precache entries (7074.58 KiB)**. The built JS and CSS contain the new
+  `lp-action--primary`, `mobile-nav-header` and `sk-cardview` markers; the Vite
+  dev preview served `/`, `/skills`, the new drawer CSS and the updated page
+  CSS with 200. `git diff --check` clean; masked secret scan clean.
+- **Not verified:** a browser render of the three-button row, the drawer or
+  the scrollable card viewpoint, and no mobile device/touch test. No runtime
+  API/DB, SMTP/LLM/Cloudinary call, external write, offensive test, PR or
+  merge in this phase. Runtime confirmation is backlog 31.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1828,6 +1929,11 @@ Algorithms, Dev Tools & Practices, Office & Productivity), and Soft Skills
     live backend, confirm a Testimonial document carrying `thumbnail` is
     returned by `/api/public/testimonials`. No headless browser or live
     database was available in this sandbox.
+31. Phase 26 follow-up: in a browser (and on a real mobile viewport), confirm
+    the three hero buttons are legible and route correctly, the drawer opens
+    with its header/close button and scrolls, and the Skills card viewport
+    keeps a consistent height while each card scrolls independently. No
+    headless browser or touch device was available in this sandbox.
 
 ---
 
@@ -1872,5 +1978,7 @@ a single retry succeeded. PR #4 remains open and untouched. Phases 22–24
 (§3v–§3x) were pushed to `arena/b1b14834-e-folio` after the explicit
 **"push change"** instruction in phase 25 (§3y), which reversed the earlier
 **"not yet"** for a push only; the remote branch was created at `1874a26`.
-The phase 25 changes were committed and pushed to the same branch. **No PR or
-merge** has been used for phases 22–25.
+The phase 25 changes were committed and pushed to the same branch. After the
+explicit **"push changes noe"** instruction, the phase 26 UI-polish changes
+(§3z) were committed and pushed to that branch as well. **No PR or merge** has
+been used for phases 22–26.

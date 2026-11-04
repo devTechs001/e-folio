@@ -31,9 +31,9 @@
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--mainColor, #00efff);
     margin-bottom: 0.85rem;
@@ -56,7 +56,7 @@
 .sk-lede {
     margin: 0;
     max-width: 62ch;
-    font-size: 0.98rem;
+    font-size: 1.06rem;
     line-height: 1.65;
     opacity: 0.78;
     color: var(--textColor, #e8f1ff);
@@ -89,10 +89,10 @@
     font-variant-numeric: tabular-nums;
 }
 .sk-stat span {
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    opacity: 0.7;
+    opacity: 0.78;
     color: var(--textColor, #e8f1ff);
 }
 
@@ -122,7 +122,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.04);
     color: var(--textColor, #e8f1ff);
-    font-size: 0.88rem;
+    font-size: 0.98rem;
     font-weight: 600;
 }
 .sk-tab:hover { border-color: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent); transform: translateY(-2px); }
@@ -141,7 +141,7 @@
     padding: 0 0.35rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.14);
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     font-variant-numeric: tabular-nums;
 }
 .sk-tab.is-active .sk-tab-count { background: rgba(6, 18, 28, 0.2); }
@@ -156,10 +156,10 @@
     border: 1px dashed rgba(255, 255, 255, 0.14);
     background: transparent;
     color: var(--textColor, #e8f1ff);
-    font-size: 0.79rem;
-    opacity: 0.82;
+    font-size: 0.92rem;
+    opacity: 0.88;
 }
-.sk-chip i { color: var(--mainColor, #00efff); font-size: 0.8rem; }
+.sk-chip i { color: var(--mainColor, #00efff); font-size: 0.9rem; }
 .sk-chip:hover { opacity: 1; border-style: solid; transform: translateY(-1px); }
 .sk-chip.is-active {
     opacity: 1;
@@ -170,23 +170,59 @@
 
 .sk-result {
     margin: 0 0 1.1rem;
-    font-size: 0.8rem;
+    font-size: 0.92rem;
     letter-spacing: 0.02em;
-    opacity: 0.65;
+    opacity: 0.78;
     color: var(--textColor, #e8f1ff);
 }
 
 /* ------------------------------------------------------------------ cards */
 
+/* Phase 26: one consistent viewpoint for the card area, with its own
+   scroller, so the section keeps a predictable height on every screen. */
+.sk-cardview {
+    max-height: clamp(420px, 68vh, 760px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.25rem 0.65rem 0.6rem 0.25rem;
+    border-radius: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent) transparent;
+}
+.sk-cardview::-webkit-scrollbar { width: 10px; }
+.sk-cardview::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.04); border-radius: 999px; }
+.sk-cardview::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--mainColor, #00efff), #7c3aed);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+.sk-cardview:focus-visible { outline: 2px solid var(--mainColor, #00efff); outline-offset: 3px; }
+
+.sk-scroll-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    opacity: 0.6;
+    color: var(--textColor, #e8f1ff);
+}
+.sk-scroll-hint i { color: var(--mainColor, #00efff); }
+
 .sk-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 1.1rem;
-    align-items: start;
+    align-items: stretch;
 }
 
 .sk-card {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: clamp(320px, 46vh, 440px);
     overflow: hidden;
     padding: 1.35rem 1.35rem 1.15rem;
     border-radius: 20px;
@@ -226,8 +262,8 @@
 .sk-card-heading { min-width: 0; flex: 1 1 auto; }
 .sk-card-eyebrow {
     display: block;
-    font-size: 0.66rem;
-    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     opacity: 0.6;
     color: var(--textColor, #e8f1ff);
@@ -235,7 +271,7 @@
 }
 .sk-card-heading h4 {
     margin: 0;
-    font-size: 1.02rem;
+    font-size: 1.15rem;
     font-weight: 700;
     line-height: 1.3;
     color: var(--textColor, #e8f1ff);
@@ -249,13 +285,28 @@
     height: 1.9rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
-    font-size: 0.78rem;
+    font-size: 0.88rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--textColor, #e8f1ff);
 }
 
-.sk-items { list-style: none; margin: 0; padding: 0; }
+.sk-items {
+    list-style: none;
+    margin: 0;
+    padding: 0 0.45rem 0 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent) transparent;
+}
+.sk-items::-webkit-scrollbar { width: 7px; }
+.sk-items::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.04); border-radius: 999px; }
+.sk-items::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent);
+    border-radius: 999px;
+}
 .sk-item {
     padding: 0.7rem 0;
     border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -263,14 +314,14 @@
 .sk-item:first-child { border-top: 0; padding-top: 0; }
 .sk-item-label {
     display: block;
-    font-size: 0.88rem;
-    line-height: 1.55;
+    font-size: 1.05rem;
+    line-height: 1.6;
     color: var(--textColor, #e8f1ff);
-    opacity: 0.92;
+    opacity: 0.96;
 }
 
 .sk-scores { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; margin-top: 0.55rem; }
-.sk-score { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; }
+.sk-score { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; }
 .sk-score-name { color: var(--mainColor, #00efff); font-weight: 700; }
 .sk-score-track {
     display: inline-block;
@@ -310,9 +361,14 @@
     .sk-hero { flex-direction: column; align-items: stretch; }
     .sk-stats { flex: 1 1 auto; }
     .sk-grid { grid-template-columns: 1fr; }
+    .sk-chipbar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.5rem; scrollbar-width: thin; }
+    .sk-chip { flex: 0 0 auto; }
+    .sk-card { height: 360px; }
+    .sk-cardview { max-height: 64vh; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .sk-tab, .sk-chip, .sk-detail-toggle, .sk-card { transition: none; }
+    .sk-scroll-hint i { animation: none; }
     .sk-tab:hover, .sk-chip:hover, .sk-card:hover { transform: none; }
 }
