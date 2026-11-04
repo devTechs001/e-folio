@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -27,10 +27,10 @@ Resources page, live preview + lagging issues, CellarKeep client-portal link in
 Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
 subsequently merged into this repository's own `origin/main` via PR #3
 (merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
-Phases 14–17 (§3n–§3q: HomeScape property-marketplace link, owner-specified
+Phases 14–18 (§3n–§3r: HomeScape property-marketplace link, owner-specified
 starting like counts, restored projects, filter buttons, page restyle, the
-tracking conflict fix, twelve owner project links, public Lab copy and
-zero-value cleanup) are **local only** on the active branch
+tracking conflict fix, twelve owner project links, public Lab copy,
+zero-value cleanup and the working-link replacement) are **local only** on the active branch
 `arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
 service has been used for them.
 
@@ -49,6 +49,7 @@ service has been used for them.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Working-link replacement (phase 18) | five restored project cards still pointed at retired GitHub Pages / wallet URLs | those five links swapped for owner-supplied working deployments; the separate directory was removed; all working links and the protected NetGate link untouched |
 | Owner project links (phase 17) | the front end published only 3 live projects and none of the owner-supplied deployments | 12 owner URLs verified read-only and published in a shared JSON catalogue with a horizontal scroller; partial live lists completed from local saved records |
 | Public Lab copy + zero values (phase 17) | the Lab told visitors where skills/hobbies are stored and printed bare `0` metrics, filter counts, skill levels and card counters | neutral public copy, owner-only technical badges, zero-valued items omitted everywhere (never fabricated into non-zero numbers) |
 | Projects page + filters (phase 16) | only 3 grid projects remained; technology filters were hidden behind a toggle; plain page shell | 8 original records restored from local history (10 projects total with the 2 featured cards), visible technology chip scroller with counts, scroll progress/reveal cues and a modern glass page shell; `ProjectCard` untouched |
@@ -1144,6 +1145,11 @@ The pasted stack came from `trackPageView`'s `findOneAndUpdate`: `$setOnInsert` 
 
 ## 3q. Phase 17 — owner-supplied project links, public Lab copy, zero values and the front-end catalogue
 
+> **Revision (§3r):** the separate "Project directory" scroller described
+> below was removed at the owner's request. The twelve URLs are now a
+> documented local inventory; five of them replace the dead project links in §3r.
+
+
 Requests: *"in my lab there is unworthy info to the public, like where I store the skills and project"*, *"ensure there are no zero values"*, a list of **12 project URLs to add**, and *"the front still shows 3"*.
 
 ### Read-only verification of the twelve links
@@ -1199,6 +1205,37 @@ Zero-valued public data is omitted, never fabricated into a non-zero number: Lab
 - Production JS contains all 12 owner URLs and the `project-links-strip` scroller; production CSS contains the scroller styles; no production dev-panel strings.
 - 12 owner URLs present exactly once, all HTTPS with no credentials; 8 saved grid records + 2 featured cards unchanged; NetGate counts unchanged.
 - Both live previews (5173 dev / 4173 production build) return 200.
+
+## 3r. Phase 18 — replace the dead project links with the owner's working URLs
+
+The owner rejected the separate "Project directory" added in §3q: *"no just replace the link with the new working ones, commit"*. A narrow scope question was answered: **keep every already-working link and replace only the five dead GitHub Pages / wallet links**. The directory section, its CSS and the now-unused loader module were removed.
+
+### Link mapping
+
+Only `scripts/seed-projects.js` and the regenerated `src/data/publicSnapshot.json` changed. The mapping uses the closest published deployment from the owner's list, based on the page titles verified read-only in §3q. Project titles, descriptions, technologies and all other fields are unchanged; the owner can re-map any pair.
+
+| Project card | Retired link | New working link | Page title |
+| --- | --- | --- | --- |
+| Portfolio Website | `https://devtechs001.github.io/portfolio` | `https://home-scape-platform.netlify.app/` | RealEstateHub - Find Your Dream Property |
+| Task Management App | `https://devtechs001.github.io/task-manager` | `https://schedule-manager-ap.netlify.app/` | AI Schedule Manager - Boost Your Productivity |
+| AI Image Generator | `https://devtechs001.github.io/ai-image-generator` | `https://ai-image-editor-pro.netlify.app/` | AI Media Studio - Transform, Create, Inspire |
+| Social Media Dashboard | `https://devtechs001.github.io/analytics-dashboard` | `https://net-gate.netlify.app/` | NetGate — Smart Network Portal |
+| Blockchain Wallet | `https://wallet.devtechs001.com` | `https://fintech-banking.netlify.app/` | SecureBank - Enterprise Banking |
+
+### Deliberately left alone
+
+- E-Commerce Platform → `https://ominbiz-solution.netlify.app/`, GB Chat → `https://gbchat.netlify.app/`, CinemaFlix → `https://cinemaflx.netlify.app/` (all still working).
+- CellarKeep → `https://liqourstor.netlify.app/client` and HomeScape → `https://homescape-pro.netlify.app/` (featured showcase cards).
+- The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). `https://net-gate.netlify.app/` is a different, owner-supplied deployment used as one project link, not a replacement.
+- All other seed/backups/testimonial/lab datasets, the eight saved project records, the two featured cards, and the §3q fixes (complete front-end catalogue, Lab copy cleanup, no zero values).
+
+The remaining owner URLs stay in `src/data/projectLinks.json` as the documented local inventory; they are no longer rendered as a public directory.
+
+### Verification
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 672 warnings**, endpoint parity `--strict` **0 live gaps**, static security audit `--strict` **0 findings**, **198** Node-only regression checks, build **23.41s**, PWA **216 precache entries (7015.49 KiB)**.
+- `git diff --check` clean; masked secret scan clean; both live previews return 200.
+- No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing. Local commit only.
 
 ---
 
@@ -1283,6 +1320,9 @@ Zero-valued public data is omitted, never fabricated into a non-zero number: Lab
     dashboard records. The Kazi Find link returned a Netlify 404 during
     read-only verification; confirm the intended deployment URL. No
     database or browser automation was available in this sandbox.
+23. Phase 18 follow-up: confirm the five re-mapped links on the live site and
+    run `npm run seed-projects` against a configured MongoDB so live project
+    documents also carry the working URLs. No database was available here.
 
 ---
 
@@ -1308,6 +1348,6 @@ was opened to record that merge note; remote access became blocked for the
 merged branch before its status could be confirmed, so the correction is
 re-applied on this branch. No credential value was included in any PR body.
 
-Phases 14–17 (§3n–§3q) are local-only work on
+Phases 14–18 (§3n–§3r) are local-only work on
 `arena/28000c5e-e-folio`; they have **not** been pushed, opened as a PR, or
 merged.

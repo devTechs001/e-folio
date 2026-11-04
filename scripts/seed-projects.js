@@ -101,6 +101,10 @@ const projects = [
         priority: "high",
         visibility: "public"
     },
+    // Phase 18: the five legacy GitHub Pages / wallet links below were retired
+    // in favour of the owner-supplied working deployments. Existing working
+    // links (OmniBiz, GBChat, CinemaFlix) and the protected NetGate link were
+    // deliberately left alone.
     // Recovered verbatim from the pre-phase-4 getFallbackProjects() array in
     // the local Git history (commit 3520894). These five records are the
     // remaining original projects; the other three (E-Commerce Platform,
@@ -121,7 +125,7 @@ const projects = [
         likes: 0,
         links: {
             github: "https://github.com/devTechs001/portfolio-website",
-            live: "https://devtechs001.github.io/portfolio"
+            live: "https://home-scape-platform.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d", caption: "Portfolio Home" },
@@ -146,7 +150,7 @@ const projects = [
         likes: 0,
         links: {
             github: "https://github.com/devTechs001/task-manager",
-            live: "https://devtechs001.github.io/task-manager"
+            live: "https://schedule-manager-ap.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71", caption: "Task Dashboard" },
@@ -171,7 +175,7 @@ const projects = [
         likes: 0,
         links: {
             github: "https://github.com/devTechs001/ai-image-generator",
-            live: "https://devtechs001.github.io/ai-image-generator"
+            live: "https://ai-image-editor-pro.netlify.app/"
         },
         images: [
             { url: "https://picsum.photos/800/600?random=4", caption: "AI Generated Art" },
@@ -196,7 +200,7 @@ const projects = [
         likes: 0,
         links: {
             github: "https://github.com/devTechs001/analytics-dashboard",
-            live: "https://devtechs001.github.io/analytics-dashboard"
+            live: "https://net-gate.netlify.app/"
         },
         images: [
             { url: "https://picsum.photos/800/600?random=5", caption: "Analytics Dashboard" },
@@ -221,7 +225,7 @@ const projects = [
         likes: 0,
         links: {
             github: "https://github.com/devTechs001/blockchain-wallet",
-            live: "https://wallet.devtechs001.com"
+            live: "https://fintech-banking.netlify.app/"
         },
         images: [
             { url: "https://picsum.photos/800/600?random=6", caption: "Wallet Dashboard" },

@@ -205,7 +205,7 @@
           ],
           "links": {
             "github": "https://github.com/devTechs001/portfolio-website",
-            "live": "https://devtechs001.github.io/portfolio"
+            "live": "https://home-scape-platform.netlify.app/"
           },
           "images": [
             {
@@ -252,7 +252,7 @@
           ],
           "links": {
             "github": "https://github.com/devTechs001/task-manager",
-            "live": "https://devtechs001.github.io/task-manager"
+            "live": "https://schedule-manager-ap.netlify.app/"
           },
           "images": [
             {
@@ -300,7 +300,7 @@
           ],
           "links": {
             "github": "https://github.com/devTechs001/ai-image-generator",
-            "live": "https://devtechs001.github.io/ai-image-generator"
+            "live": "https://ai-image-editor-pro.netlify.app/"
           },
           "images": [
             {
@@ -349,7 +349,7 @@
           ],
           "links": {
             "github": "https://github.com/devTechs001/analytics-dashboard",
-            "live": "https://devtechs001.github.io/analytics-dashboard"
+            "live": "https://net-gate.netlify.app/"
           },
           "images": [
             {
@@ -398,7 +398,7 @@
           ],
           "links": {
             "github": "https://github.com/devTechs001/blockchain-wallet",
-            "live": "https://wallet.devtechs001.com"
+            "live": "https://fintech-banking.netlify.app/"
           },
           "images": [
             {

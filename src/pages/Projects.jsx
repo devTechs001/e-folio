@@ -12,7 +12,6 @@ import NexStoreCard from '../components/NexStoreCard';
 import ProjectShowcase from '../components/ProjectShowcase';
 import ArchiveNote from '../components/ArchiveNote';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
-import { PROJECT_LINKS, projectLinkHost, projectLinkAnchorProps } from '../utils/projectLinks';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
 
@@ -39,9 +38,6 @@ const Projects = () => {
     const [canScrollRight, setCanScrollRight] = useState(false);
     const techScrollerRef = useRef(null);
     const projectsGridRef = useRef(null);
-    const projectLinksRef = useRef(null);
-    const [linksCanScrollLeft, setLinksCanScrollLeft] = useState(false);
-    const [linksCanScrollRight, setLinksCanScrollRight] = useState(false);
 
     // Page-level scroll affordances only — the project cards are untouched.
     useEffect(() => {
@@ -93,25 +89,6 @@ const Projects = () => {
 
     const toggleTech = useCallback(tech => {
         setSelectedTechs(prev => prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]);
-    }, []);
-
-    const updateLinksScrollState = useCallback(() => {
-        const strip = projectLinksRef.current;
-        if (!strip) return;
-        setLinksCanScrollLeft(strip.scrollLeft > 4);
-        setLinksCanScrollRight(strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
-    }, []);
-
-    useEffect(() => {
-        updateLinksScrollState();
-        window.addEventListener('resize', updateLinksScrollState);
-        return () => window.removeEventListener('resize', updateLinksScrollState);
-    }, [updateLinksScrollState]);
-
-    const scrollProjectLinks = useCallback(direction => {
-        const strip = projectLinksRef.current;
-        if (!strip) return;
-        strip.scrollBy({ left: direction * Math.max(280, strip.clientWidth * 0.8), behavior: 'smooth' });
     }, []);
 
     const loadProjects = useCallback(async () => {
@@ -736,65 +713,6 @@ const Projects = () => {
                     </div>
                 )}
             </div>
-
-            {/* Owner-supplied project links: verified titles only, no zero
-                values, invented stacks or metrics. Horizontal scroller. */}
-            {PROJECT_LINKS.length > 0 && (
-                <div className="project-links-section max-w-7xl mx-auto mb-16" data-reveal>
-                    <div className="project-links-head">
-                        <div>
-                            <span className="project-links-eyebrow">
-                                <i className="fa-solid fa-link"></i> Project directory
-                            </span>
-                            <h3 className="text-2xl md:text-3xl font-bold text-textColor">
-                                More <span className="gradient-text">projects</span>
-                            </h3>
-                            <p className="text-textColor/70 text-sm">
-                                Published work you can open and explore.
-                            </p>
-                        </div>
-                        <div className="project-links-arrows">
-                            <button
-                                type="button"
-                                className="project-links-arrow"
-                                onClick={() => scrollProjectLinks(-1)}
-                                disabled={!linksCanScrollLeft}
-                                aria-label="Scroll project links left"
-                            >
-                                <i className="fa-solid fa-chevron-left"></i>
-                            </button>
-                            <button
-                                type="button"
-                                className="project-links-arrow"
-                                onClick={() => scrollProjectLinks(1)}
-                                disabled={!linksCanScrollRight}
-                                aria-label="Scroll project links right"
-                            >
-                                <i className="fa-solid fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div
-                        className="project-links-strip"
-                        ref={projectLinksRef}
-                        onScroll={updateLinksScrollState}
-                    >
-                        {PROJECT_LINKS.map(link => (
-                            <a
-                                key={link.slug}
-                                className="project-link-card"
-                                {...projectLinkAnchorProps(link)}
-                            >
-                                <span className="project-link-card__title">{link.title}</span>
-                                <span className="project-link-card__host">{projectLinkHost(link.url)}</span>
-                                <span className="project-link-card__cta">
-                                    Open project <i className="fa-solid fa-arrow-up-right-from-square"></i>
-                                </span>
-                            </a>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Projects Grid */}
             <div className="max-w-7xl mx-auto" ref={projectsGridRef}>

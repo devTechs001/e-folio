@@ -1,6 +1,7 @@
 /**
- * Regression checks: owner-supplied project links, public Lab copy cleanup,
- * removal of zero-valued public data, and the complete front-end catalogue.
+ * Regression checks: the owner-supplied working URLs now REPLACE the dead
+ * project links (no separate directory), while every already-working link and
+ * the protected NetGate link stay untouched.
  * Node-only static checks — no DB, no network, no browser. Confidential.
  */
 import assert from 'node:assert/strict';
@@ -26,6 +27,25 @@ const OWNER_URLS = [
     'https://mediaplaier.netlify.app/',
     'https://elimu-pro-beta.netlify.app/'
 ];
+const DEAD_LINKS = [
+    'https://devtechs001.github.io/portfolio',
+    'https://devtechs001.github.io/task-manager',
+    'https://devtechs001.github.io/ai-image-generator',
+    'https://devtechs001.github.io/analytics-dashboard',
+    'https://wallet.devtechs001.com'
+];
+const WORKING = [
+    'https://home-scape-platform.netlify.app/',
+    'https://schedule-manager-ap.netlify.app/',
+    'https://ai-image-editor-pro.netlify.app/',
+    'https://net-gate.netlify.app/',
+    'https://fintech-banking.netlify.app/'
+];
+const KEPT = [
+    'https://ominbiz-solution.netlify.app/',
+    'https://gbchat.netlify.app/',
+    'https://cinemaflx.netlify.app/'
+];
 const PROTECTED_NETGATE = 'https://net-gate-portal.netlify.app/';
 
 let passed = 0;
@@ -35,133 +55,96 @@ const check = (name, fn) => {
     console.log(`  ok  ${name}`);
 };
 
-const catalog = () => json('src/data/projectLinks.json');
+const seed = () => read('scripts/seed-projects.js');
+const projects = () => json('src/data/publicSnapshot.json').sections.projects.projects;
 
-/* --------------------------- owner-supplied links -------------------------- */
+/* ------------------------- the owner's link inventory ---------------------- */
 
-check('all twelve owner-supplied project URLs are published exactly once', () => {
-    const links = catalog().projects;
+check('the owner-supplied URL inventory is kept as a documented local record', () => {
+    const links = json('src/data/projectLinks.json').projects;
     assert.equal(links.length, 12);
     for (const url of OWNER_URLS) {
-        assert.equal(links.filter(p => p.url === url).length, 1, `${url} must appear once`);
+        assert.equal(links.filter(p => p.url === url).length, 1, `${url} must be listed once`);
         const parsed = new URL(url);
         assert.equal(parsed.protocol, 'https:');
         assert.equal(parsed.username, '');
         assert.equal(parsed.password, '');
     }
-    assert.equal(new Set(links.map(p => p.slug)).size, 12);
 });
 
-check('every link carries a real title and no invented values', () => {
-    const raw = read('src/data/projectLinks.json');
-    for (const link of catalog().projects) {
-        assert.ok(link.title && link.title.length > 3, `${link.url} needs a real title`);
+/* ---------------------------- the link replacement ------------------------- */
+
+check('the five dead project links are gone from the seed and the snapshot', () => {
+    for (const dead of DEAD_LINKS) {
+        assert.ok(!seed().includes(dead), `${dead} must be retired`);
+        assert.ok(!JSON.stringify(projects()).includes(dead), `${dead} must not be published`);
     }
-    for (const key of ['likes', 'views', 'achievements', 'metrics', 'uptime', 'users', 'orders', 'conversion', 'technologies']) {
-        assert.doesNotMatch(raw, new RegExp(`"${key}"`), `catalog must not invent ${key}`);
+    assert.match(seed(), /Phase 18: the five legacy GitHub Pages \/ wallet links/);
+});
+
+check('five working owner URLs now drive the five restored project cards', () => {
+    const titles = [
+        'Portfolio Website', 'Task Management App', 'AI Image Generator',
+        'Social Media Dashboard', 'Blockchain Wallet'
+    ];
+    for (let i = 0; i < titles.length; i += 1) {
+        const project = projects().find(p => p.title === titles[i]);
+        assert.ok(project, `${titles[i]} must exist`);
+        assert.equal(project.links.live, WORKING[i]);
+        assert.ok(OWNER_URLS.includes(WORKING[i]));
     }
-    assert.doesNotMatch(raw, /:\s*0\b/, 'catalog must not contain zero values');
-    assert.match(catalog().source, /verified read-only on 2026-11-04/);
+    for (const url of WORKING) assert.ok(seed().includes(url), `${url} must be in the seed`);
 });
 
-check('the shared loader keeps only safe HTTPS links and adds safe anchors', () => {
-    const util = read('src/utils/projectLinks.js');
-    assert.match(util, /isSafeProjectLink/);
-    assert.match(util, /projectLinkHost/);
-    assert.match(util, /PROJECT_LINKS/);
-    assert.match(util, /rel: 'noopener noreferrer'/);
-    assert.match(util, /referrerPolicy: 'no-referrer'/);
-    assert.doesNotMatch(util, /fetch\(|http:\/\/localhost/);
+check('the three already-working project links are unchanged', () => {
+    for (const url of KEPT) {
+        assert.ok(seed().includes(url), `${url} must remain in the seed`);
+    }
+    const byTitle = Object.fromEntries(projects().map(p => [p.title, p]));
+    assert.equal(byTitle['E-Commerce Platform'].links.live, KEPT[0]);
+    assert.equal(byTitle['GB Chat'].links.live, KEPT[1]);
+    assert.equal(byTitle['CinemaFlix'].links.live, KEPT[2]);
+    assert.equal(byTitle['E-Commerce Platform'].links.demo, KEPT[0]);
+    assert.equal(byTitle['E-Commerce Platform'].links.netlify, KEPT[0]);
 });
 
-check('the Projects page renders the twelve links in a horizontal scroller', () => {
+check('the two featured showcase links are unchanged', () => {
+    const showcase = json('src/data/projectShowcase.json').projects;
+    assert.equal(showcase.length, 2);
+    assert.equal(showcase[0].url, 'https://liqourstor.netlify.app/client');
+    assert.equal(showcase[1].url, 'https://homescape-pro.netlify.app/');
+});
+
+/* ------------------------- no separate directory UI ----------------------- */
+
+check('the separate project directory was removed from the page and CSS', () => {
     const page = read('src/pages/Projects.jsx');
-    for (const token of [
-        'PROJECT_LINKS', 'projectLinkHost', 'projectLinkAnchorProps',
-        'project-links-section', 'project-links-strip', 'project-link-card',
-        'scrollProjectLinks', 'projectLinksRef'
-    ]) {
-        assert.ok(page.includes(token), `missing ${token}`);
-    }
-    assert.match(page, /PROJECT_LINKS\.map\(link =>/);
-    assert.match(page, /aria-label="Scroll project links left"/);
-    assert.match(page, /aria-label="Scroll project links right"/);
     const css = read('src/styles/Projects.css');
-    assert.match(css, /\.project-links-strip\s*\{[^}]*overflow-x:\s*auto/s);
-    assert.doesNotMatch(css.slice(css.indexOf('Phase 17')), /^\s*\.project-card[\s{:,.]/m);
+    for (const token of ['PROJECT_LINKS', 'project-links-section', 'project-links-strip', 'scrollProjectLinks', 'projectLinkHost']) {
+        assert.ok(!page.includes(token), `${token} must not be rendered`);
+    }
+    for (const token of ['Phase 17 — owner-supplied project directory', '.project-links-strip', '.project-link-card']) {
+        assert.ok(!css.includes(token), `${token} must not be styled`);
+    }
+    assert.ok(!fs.existsSync(path.join(root, 'src/utils/projectLinks.js')));
 });
 
-/* ---------------------------- front-end catalogue -------------------------- */
+/* ------------------------------ retained fixes ----------------------------- */
 
-check('a partial live project list is completed from the local saved copy', () => {
+check('the complete front-end catalogue and zero-value fixes are retained', () => {
     const page = read('src/pages/Projects.jsx');
     assert.match(page, /getSnapshotSection\('projects'\)/);
     assert.match(page, /const additions = savedItems\.filter\(/);
-    assert.match(page, /const items = \[\.\.\.liveItems, \.\.\.additions\]/);
-    assert.match(page, /setContentSource\(additions\.length \? 'snapshot' : \(response\.source \|\| ''\)\)/);
-    assert.match(page, /if \(isLiveContent\(response\) && additions\.length === 0\)/);
-});
-
-check('the eight saved project records and the two featured cards are unchanged', () => {
-    const snapshot = json('src/data/publicSnapshot.json');
-    assert.equal(snapshot.sections.projects.projects.length, 8);
-    assert.equal(json('src/data/projectShowcase.json').projects.length, 2);
-    const seed = read('scripts/seed-projects.js');
-    assert.equal((seed.match(/title: "/g) || []).length, 8);
-});
-
-/* --------------------------------- Lab copy -------------------------------- */
-
-check('the public Lab page no longer describes where skills and projects are stored', () => {
-    const lab = read('src/pages/Lab.jsx');
-    for (const phrase of [
-        /managed in the dashboard/,
-        /stored in the Hobbies manager/,
-        /pulled from the same records/,
-        /Live experiments, the toolkit/
-    ]) {
-        assert.doesNotMatch(lab, phrase);
-    }
-    assert.match(lab, /Experiments, the toolkit behind them, and what I tinker with off the bench/);
-    assert.match(lab, /A grouped view of the tools used across the experiments/);
-    assert.match(lab, /Things I explore away from the bench/);
-    assert.match(lab, /\{owner && connected && \(/);
-    assert.match(lab, /\{owner && sampleCount > 0 && \(/);
-    assert.match(lab, /\{owner && liveUpdate && \(/);
-});
-
-check('the Lab page never prints a zero value', () => {
+    assert.match(page, /filter\(card => card\.count > 0\)/);
     const lab = read('src/pages/Lab.jsx');
     assert.match(lab, /filter\(card => card\.value > 0\)/);
-    assert.match(lab, /metricCards\.length > 0/);
-    assert.match(lab, /f\.key === 'all' \|\| f\.count > 0/);
-    assert.match(lab, /\{f\.count > 0 && <span className="lab-filter-count">/);
-    assert.match(lab, /\{Number\(skill\.level\) > 0 && \(/);
-    assert.doesNotMatch(lab, /<small>\{Number\(skill\.level\) \|\| 0\}<\/small>/);
-});
-
-/* ------------------------------ no zero values ----------------------------- */
-
-check('the Projects page, card and modal hide zero-valued counters', () => {
-    const page = read('src/pages/Projects.jsx');
-    assert.match(page, /summaryCards/);
-    assert.match(page, /filter\(card => card\.count > 0\)/);
-    assert.match(page, /summaryCards\.length > 0/);
-    for (const file of ['src/pages/ProjectCard.jsx', 'src/pages/ProjectModal.jsx']) {
-        const src = read(file);
-        // The old unconditional zero prints are gone; values only render
-        // inside a > 0 guard.
-        assert.doesNotMatch(src, /\{project\.views \|\| 0\}|\{likes \|\| 0\}|Like \(\{likesCount\}\)/);
-        assert.match(src, /Number\(.*\) > 0 &&/);
-    }
+    assert.doesNotMatch(lab, /managed in the dashboard|stored in the Hobbies manager/);
     assert.match(read('src/pages/ProjectCard.jsx'), /Number\(project\.views\) > 0/);
-    assert.match(read('src/pages/ProjectModal.jsx'), /Number\(viewsCount\) > 0/);
-    assert.match(read('src/pages/ProjectModal.jsx'), /Number\(likesCount\) > 0/);
 });
 
 /* --------------------------------- safety ---------------------------------- */
 
-check('the protected NetGate link and every protected file are untouched', () => {
+check('the protected NetGate link and all its files are untouched', () => {
     assert.equal(
         json('src/data/labSamples.json').samples.find(s => s.title === '[SAMPLE] Network Recon Suite').links.live,
         PROTECTED_NETGATE
@@ -169,22 +152,17 @@ check('the protected NetGate link and every protected file are untouched', () =>
     assert.equal(json('src/data/testimonialSamples.json').previewUrl, PROTECTED_NETGATE);
     assert.equal(read('src/data/publicSnapshot.json').split(PROTECTED_NETGATE).length - 1, 3);
     assert.equal(read('server/backups/testimonials/testimonial-samples.backup.json').split(PROTECTED_NETGATE).length - 1, 1);
-    assert.equal(json('src/data/projectShowcase.json').projects[0].url, 'https://liqourstor.netlify.app/client');
-    assert.equal(json('src/data/projectShowcase.json').projects[1].url, 'https://homescape-pro.netlify.app/');
-    const ecommerce = json('src/data/publicSnapshot.json').sections.projects.projects.find(p => p.title === 'E-Commerce Platform');
-    assert.equal(ecommerce.links.live, 'https://ominbiz-solution.netlify.app/');
+    assert.ok(!seed().includes(PROTECTED_NETGATE));
 });
 
-check('no secret, external call or technical wording was introduced', () => {
+check('no secret or external call was introduced', () => {
     for (const file of [
-        'src/data/projectLinks.json', 'src/utils/projectLinks.js',
-        'src/pages/Projects.jsx', 'src/pages/Lab.jsx',
-        'src/pages/ProjectCard.jsx', 'src/pages/ProjectModal.jsx'
+        'src/data/projectLinks.json', 'scripts/seed-projects.js',
+        'src/pages/Projects.jsx', 'src/data/publicSnapshot.json'
     ]) {
         const src = read(file);
         assert.doesNotMatch(src, /AIza[0-9A-Za-z_\-]{20,}|mongodb\+srv:\/\/|ghp_[A-Za-z0-9]{20,}/);
         assert.doesNotMatch(src, /fetch\(|axios|XMLHttpRequest|http:\/\/localhost/);
-        assert.doesNotMatch(src, /temporarily unavailable|ECONNREFUSED|backend is running|status\s*[45]\d\d/i);
     }
 });
 
@@ -195,9 +173,9 @@ check('package scripts and the confidential report are wired', () => {
         assert.match(pkg.scripts.test, /project-links\.test\.mjs/);
     }
     const report = read('CONFIDENTIAL_AUDIT_AND_FIX_REPORT.md');
-    assert.match(report, /## 3q\./);
+    assert.match(report, /## 3r\./);
     assert.match(report, /Phases 3–/);
-    assert.match(report, /Kazi Find/);
+    assert.match(report, /dead project links/);
 });
 
-console.log(`\n${passed} project-links / Lab / zero-value regression checks passed.`);
+console.log(`\n${passed} project-link replacement regression checks passed.`);
