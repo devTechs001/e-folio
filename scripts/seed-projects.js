@@ -7,9 +7,12 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
-// The `likes` values are owner-specified display/seed values for the project
-// cards: starting presentation numbers, NOT measured engagement.
-// The API/DB remains the source of truth for real like counts.
+// Phase 19: `likes` and `views` are owner-specified display/seed values for
+// the project cards. The owner asked for every counter to read at least 600,
+// so values below that floor were raised to exactly 600 and existing values
+// above it were kept. These are starting presentation numbers and are
+// NOT measured engagement. No analytics figure was invented or republished;
+// the live API/DB remains the source of truth for real counts once connected.
 const projects = [
     {
         title: "E-Commerce Platform",
@@ -21,7 +24,7 @@ const projects = [
         featured: true,
         tags: ["Full-Stack", "E-Commerce", "Real-time", "Payment Integration"],
         views: 1245,
-        likes: 500,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/ecommerce-platform",
             live: "https://ominbiz-solution.netlify.app/",
@@ -81,7 +84,7 @@ const projects = [
         featured: true,
         tags: ["Streaming", "Movies", "Entertainment", "API Integration", "Media"],
         views: 1243,
-        likes: 100,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/moview-watch",
             live: "https://cinemaflx.netlify.app/",
@@ -109,9 +112,9 @@ const projects = [
     // the local Git history (commit 3520894). These five records are the
     // remaining original projects; the other three (E-Commerce Platform,
     // GB Chat, Moview Watch/CinemaFlix) are kept above with their current
-    // published links and owner-specified like counts. Fabricated view
-    // counts and invented achievement badges were dropped; likes and views
-    // start at zero for these restored records.
+    // published links and the owner-specified minimum display counters set in
+    // phase 19. Invented achievement badges were dropped; likes and views use
+    // only the owner-supplied floor of 600, never fabricated analytics.
     {
         title: "Portfolio Website",
         description: "Modern portfolio website built with React, featuring smooth animations and responsive design.",
@@ -121,8 +124,8 @@ const projects = [
         status: "Live",
         featured: false,
         tags: ["Portfolio", "Animation", "Responsive", "TypeScript"],
-        views: 0,
-        likes: 0,
+        views: 600,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/portfolio-website",
             live: "https://home-scape-platform.netlify.app/"
@@ -146,8 +149,8 @@ const projects = [
         status: "Live",
         featured: false,
         tags: ["Productivity", "Real-time", "Collaboration", "PWA"],
-        views: 0,
-        likes: 0,
+        views: 600,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/task-manager",
             live: "https://schedule-manager-ap.netlify.app/"
@@ -171,8 +174,8 @@ const projects = [
         status: "Beta",
         featured: true,
         tags: ["AI", "Machine Learning", "Image Processing", "Deep Learning"],
-        views: 0,
-        likes: 0,
+        views: 600,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/ai-image-generator",
             live: "https://ai-image-editor-pro.netlify.app/"
@@ -196,8 +199,8 @@ const projects = [
         status: "Live",
         featured: true,
         tags: ["Analytics", "Data Visualization", "Dashboard", "API Integration"],
-        views: 0,
-        likes: 0,
+        views: 600,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/analytics-dashboard",
             live: "https://net-gate.netlify.app/"
@@ -221,8 +224,8 @@ const projects = [
         status: "Live",
         featured: true,
         tags: ["Web3", "Cryptocurrency", "DeFi", "NFT", "Security"],
-        views: 0,
-        likes: 0,
+        views: 600,
+        likes: 600,
         links: {
             github: "https://github.com/devTechs001/blockchain-wallet",
             live: "https://fintech-banking.netlify.app/"

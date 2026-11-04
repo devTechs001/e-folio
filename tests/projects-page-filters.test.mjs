@@ -64,15 +64,17 @@ check('there are several distinct categories for the project filter buttons', ()
     for (const c of ['Web', 'Mobile', 'AI/ML', 'Blockchain']) assert.ok(categories.has(c));
 });
 
-check('restored records carry no fabricated counters or achievement badges', () => {
+check('restored records use only the owner-specified minimum counters, no badges', () => {
     const src = seed();
     const block = src.slice(src.indexOf('    // Recovered verbatim'));
     // The original image URLs (including the historical placeholder images)
     // are preserved verbatim from local Git history; only invented counters
-    // and achievement badges were dropped.
+    // and achievement badges were dropped. Phase 19 replaced the zeros with
+    // the owner-supplied floor of 600 so no public card shows a zero count.
     assert.doesNotMatch(block, /achievements|Math\.random/);
-    assert.equal((block.match(/views: 0,/g) || []).length, 5);
-    assert.equal((block.match(/likes: 0,/g) || []).length, 5);
+    assert.equal((block.match(/views: 600,/g) || []).length, 5);
+    assert.equal((block.match(/likes: 600,/g) || []).length, 5);
+    assert.doesNotMatch(block, /(?:views|likes):\s*0,/);
 });
 
 /* ------------------------------- filter buttons ---------------------------- */

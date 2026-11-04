@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
-import { useAuth } from '../contexts/AuthContext';
+import socketService from '../services/socket.service';
+import { subscribeProjectsChanged } from '../utils/projectSync';
 import { useSocket } from '../contexts/SocketContext';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
@@ -16,7 +17,6 @@ import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
 
 const Projects = () => {
-    const { user } = useAuth();
     const { socket, connected } = useSocket();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,7 +30,6 @@ const Projects = () => {
     const [favorites, setFavorites] = useState([]);
     const [selectedTechs, setSelectedTechs] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
-    const [projectLikes, setProjectLikes] = useState({});
     const [projectsCollapsed, setProjectsCollapsed] = useState(false);
     const [techShowcaseCollapsed, setTechShowcaseCollapsed] = useState(true);
     const [scrollProgress, setScrollProgress] = useState(0);
@@ -38,6 +37,7 @@ const Projects = () => {
     const [canScrollRight, setCanScrollRight] = useState(false);
     const techScrollerRef = useRef(null);
     const projectsGridRef = useRef(null);
+    const loadedOnceRef = useRef(false);
 
     // Page-level scroll affordances only — the project cards are untouched.
     useEffect(() => {
@@ -91,9 +91,13 @@ const Projects = () => {
         setSelectedTechs(prev => prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]);
     }, []);
 
-    const loadProjects = useCallback(async () => {
+    // `force` is used by polling, cross-tab refresh and dashboard broadcasts:
+    // it bypasses the 10-minute cache so a count changed on the server is
+    // visible on the public page without a manual reload.
+    const loadProjects = useCallback(async (force = false) => {
         try {
-            const cached = cacheService.get('public_projects');
+            if (force) cacheService.delete('public_projects');
+            const cached = force ? null : cacheService.get('public_projects');
             if (cached) {
                 setProjects(cached);
                 setContentSource('live');
@@ -101,7 +105,7 @@ const Projects = () => {
                 return;
             }
 
-            setLoading(true);
+            if (!loadedOnceRef.current) setLoading(true);
             // Live API first; the saved local copy keeps the section complete
             // and consistent when the backend cannot supply it. No technical
             // detail is ever exposed to visitors.
@@ -129,9 +133,46 @@ const Projects = () => {
             setProjects([]);
             setContentSource('');
         } finally {
+            loadedOnceRef.current = true;
             setLoading(false);
         }
     }, [setProjects, setLoading]);
+
+    // Single normalizer for every server broadcast (public namespace, root
+    // namespace and legacy names). Matching by id OR title means an archive
+    // copy with a slug id still picks up a dashboard edit to the real record.
+    const applyProjectStats = useCallback(data => {
+        if (!data || typeof data !== 'object') return;
+        const project = data.project && typeof data.project === 'object' ? data.project : null;
+        const id = data.projectId ?? project?.id ?? project?._id ?? data.id;
+        const idText = id === undefined || id === null ? '' : String(id);
+        const title = String(data.title ?? project?.title ?? data.name ?? '').trim().toLowerCase();
+        const likes = Number(data.likes ?? project?.likes);
+        const views = Number(data.views ?? project?.views);
+        const action = String(data.action || 'stats');
+
+        if (action === 'created' && project) {
+            setProjects(prev => prev.some(p => String(p.title || '').trim().toLowerCase() === title)
+                ? prev : [project, ...prev]);
+            return;
+        }
+        if (action === 'deleted' && idText) {
+            setProjects(prev => prev.filter(p => String(p.id ?? p._id ?? '') !== idText));
+            return;
+        }
+        if (!idText && !title) return;
+
+        setProjects(prev => prev.map(p => {
+            const matches = (idText && String(p.id ?? p._id ?? '') === idText)
+                || (title && String(p.title || '').trim().toLowerCase() === title);
+            if (!matches) return p;
+            const next = { ...p };
+            if (Number.isFinite(likes)) next.likes = likes;
+            if (Number.isFinite(views)) next.views = views;
+            if (project) Object.assign(next, project, { id: p.id ?? project.id ?? project._id });
+            return next;
+        }));
+    }, [setProjects]);
 
     const loadFavorites = () => {
         const saved = localStorage.getItem('favoriteProjects');
@@ -171,70 +212,41 @@ const Projects = () => {
 
     const incrementViews = useCallback(async (projectId) => {
         try {
-            await apiService.request(`/public/projects/${projectId}/view`, {
+            const response = await apiService.request(`/public/projects/${projectId}/view`, {
                 method: 'POST'
             });
-            setProjects(prev => prev.map(p => 
-                p.id === projectId ? { ...p, views: (p.views || 0) + 1 } : p
+            // Trust the persisted server value, not a local guess. The server
+            // also broadcasts it to every other open public page.
+            const views = Number(response?.views);
+            setProjects(prev => prev.map(p =>
+                String(p.id ?? p._id ?? '') === String(projectId) && Number.isFinite(views)
+                    ? { ...p, views }
+                    : p
             ));
-            
-            // Emit socket event for real-time update
-            if (socket && connected) {
-                socket.emit('project:view', { projectId, userId: user?.id });
-            }
         } catch (error) {
-            console.error('Error incrementing views:', error);
+            // Archive-only copies are not server records; keep diagnostics
+            // developer-side and never invent a count for public visitors.
+            recordDevIssue({ section: 'projects', endpoint: PUBLIC_ENDPOINTS.projects, error });
         }
-    }, [socket, connected, user?.id]);
+    }, [setProjects]);
 
     const incrementLikes = useCallback(async (projectId) => {
         try {
-            // Check if user already liked this project
-            const currentLikes = projectLikes[projectId] || 0;
-            const hasLiked = currentLikes > 0 && currentLikes % 2 === 1; // Odd means liked
-            
-            if (hasLiked) {
-                // Unlike the project
-                await apiService.unlikeProject(projectId);
-                setProjectLikes(prev => ({
-                    ...prev,
-                    [projectId]: Math.max(0, (prev[projectId] || 0) - 1)
-                }));
-                
-                // Emit socket event for real-time update
-                if (socket && connected) {
-                    socket.emit('project:unlike', { projectId, userId: user?.id });
-                }
-            } else {
-                // Like the project
-                await apiService.likeProject(projectId);
-                setProjectLikes(prev => ({
-                    ...prev,
-                    [projectId]: (prev[projectId] || 0) + 1
-                }));
-                
-                // Emit socket event for real-time update
-                if (socket && connected) {
-                    socket.emit('project:like', { projectId, userId: user?.id });
-                }
-            }
-            
-            // Update the project's likes count
-            setProjects(prev => prev.map(p => 
-                p.id === projectId ? { 
-                    ...p, 
-                    likes: hasLiked ? Math.max(0, (p.likes || 0) - 1) : (p.likes || 0) + 1 
-                } : p
+            // Both counters now use the same public API prefix. The server
+            // toggles like state per visitor and returns the persisted count.
+            const response = await apiService.request(`/public/projects/${projectId}/like`, {
+                method: 'POST'
+            });
+            const likes = Number(response?.likes);
+            setProjects(prev => prev.map(p =>
+                String(p.id ?? p._id ?? '') === String(projectId) && Number.isFinite(likes)
+                    ? { ...p, likes }
+                    : p
             ));
         } catch (error) {
-            console.error('Error toggling like:', error);
-            // Fallback to local state if API fails
-            setProjectLikes(prev => ({
-                ...prev,
-                [projectId]: (prev[projectId] || 0) + 1
-            }));
+            recordDevIssue({ section: 'projects', endpoint: PUBLIC_ENDPOINTS.projects, error });
         }
-    }, [projectLikes, socket, connected, user?.id]);
+    }, [setProjects]);
 
     const shareProject = useCallback(async (projectId, platform = 'native') => {
         try {
@@ -299,59 +311,49 @@ const Projects = () => {
         loadFavorites();
     }, [loadProjects]);
 
-    // Real-time socket listeners for project updates
+    // Anonymous visitors have no authenticated root socket (SocketContext only
+    // connects for signed-in users), so the read-only /public-projects
+    // namespace is the primary real-time channel for public counts.
+    useEffect(() => socketService.subscribePublicProjects(applyProjectStats), [applyProjectStats]);
+
+    // Root-namespace events are still handled for signed-in sessions. These
+    // are the names the server actually emits; the legacy `project:*` names are
+    // kept so older events do not silently disappear.
     useEffect(() => {
-        if (!connected || !socket) return;
+        if (!connected || !socket) return undefined;
+        const onEvent = data => applyProjectStats(data);
+        const events = [
+            'project_changed', 'project_updated', 'project_view', 'project_like',
+            'project:updated', 'project:liked', 'project:viewed', 'project:created'
+        ];
+        events.forEach(event => socket.on(event, onEvent));
+        return () => events.forEach(event => socket.off(event, onEvent));
+    }, [connected, socket, applyProjectStats]);
 
-        const handleProjectUpdate = (data) => {
-            console.log('Project updated in real-time:', data);
-            setProjects(prev => prev.map(p =>
-                p.id === data.projectId ? { ...p, ...data.updates } : p
-            ));
+    // Polling is the reliable fallback when sockets are unavailable, and
+    // cross-tab signals make a dashboard save visible immediately. Hidden tabs
+    // are skipped so background pages do not generate needless requests.
+    useEffect(() => {
+        const refresh = () => {
+            if (typeof document === 'undefined' || !document.hidden) loadProjects(true);
         };
-
-        const handleLikeUpdate = (data) => {
-            console.log('Like update in real-time:', data);
-            setProjects(prev => prev.map(p =>
-                p.id === data.projectId ? { ...p, likes: data.likes } : p
-            ));
-            setProjectLikes(prev => ({
-                ...prev,
-                [data.projectId]: data.userLikes
-            }));
-        };
-
-        const handleViewUpdate = (data) => {
-            console.log('View update in real-time:', data);
-            setProjects(prev => prev.map(p =>
-                p.id === data.projectId ? { ...p, views: data.views } : p
-            ));
-        };
-
-        const handleNewProject = (data) => {
-            console.log('New project added:', data);
-            setProjects(prev => [data.project, ...prev]);
-        };
-
-        socket.on('project:updated', handleProjectUpdate);
-        socket.on('project:liked', handleLikeUpdate);
-        socket.on('project:viewed', handleViewUpdate);
-        socket.on('project:created', handleNewProject);
-
+        const onVisible = () => { if (!document.hidden) refresh(); };
+        const interval = setInterval(refresh, 30000);
+        const unsubscribe = subscribeProjectsChanged(refresh);
+        document.addEventListener('visibilitychange', onVisible);
         return () => {
-            socket.off('project:updated', handleProjectUpdate);
-            socket.off('project:liked', handleLikeUpdate);
-            socket.off('project:viewed', handleViewUpdate);
-            socket.off('project:created', handleNewProject);
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', onVisible);
+            unsubscribe();
         };
-    }, [connected, socket]);
+    }, [loadProjects]);
 
     // Listen for settings changes from dashboard
     useEffect(() => {
-        const handleSettingsChange = (e) => {
+        const handleSettingsChange = () => {
             console.log('[Projects] Settings changed, refreshing data...');
             cacheService.delete('public_projects');
-            loadProjects();
+            loadProjects(true);
         };
         window.addEventListener('settingsChanged', handleSettingsChange);
         return () => window.removeEventListener('settingsChanged', handleSettingsChange);
@@ -773,7 +775,7 @@ const Projects = () => {
                                     }}
                                     onImageClick={(img) => setLightboxImage(img)}
                                     viewMode={viewMode}
-                                    likes={(projectLikes[project.id] || 0) + (project.likes || 0)}
+                                    likes={project.likes || 0}
                                     onIncrementLikes={() => incrementLikes(project.id)}
                                     onShare={shareProject}
                                 />

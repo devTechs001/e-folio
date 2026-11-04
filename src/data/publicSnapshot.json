@@ -64,8 +64,8 @@
           "imageUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
           "completionDate": "2025-11-15T00:00:00.000Z",
           "teamSize": 1,
-          "views": 0,
-          "likes": 500,
+          "views": 1245,
+          "likes": 600,
           "order": 1
         },
         {
@@ -121,7 +121,7 @@
           "imageUrl": "https://images.unsplash.com/photo-1611601179222-ecb0bbcd7bc3",
           "completionDate": "2026-02-15T00:00:00.000Z",
           "teamSize": 2,
-          "views": 0,
+          "views": 856,
           "likes": 600,
           "order": 2
         },
@@ -179,8 +179,8 @@
           "imageUrl": "https://images.unsplash.com/photo-1536440136628-849c177e76a1",
           "completionDate": "2024-03-01T00:00:00.000Z",
           "teamSize": 3,
-          "views": 0,
-          "likes": 100,
+          "views": 1243,
+          "likes": 600,
           "order": 3
         },
         {
@@ -225,8 +225,8 @@
           "imageUrl": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d",
           "completionDate": "2023-12-20",
           "teamSize": 1,
-          "views": 0,
-          "likes": 0,
+          "views": 600,
+          "likes": 600,
           "order": 4
         },
         {
@@ -272,8 +272,8 @@
           "imageUrl": "https://images.unsplash.com/photo-1611224923853-80b023f02d71",
           "completionDate": "2023-11-10",
           "teamSize": 2,
-          "views": 0,
-          "likes": 0,
+          "views": 600,
+          "likes": 600,
           "order": 5
         },
         {
@@ -320,8 +320,8 @@
           "imageUrl": "https://picsum.photos/800/600?random=4",
           "completionDate": "2024-02-01",
           "teamSize": 3,
-          "views": 0,
-          "likes": 0,
+          "views": 600,
+          "likes": 600,
           "order": 6
         },
         {
@@ -369,8 +369,8 @@
           "imageUrl": "https://picsum.photos/800/600?random=5",
           "completionDate": "2023-10-25",
           "teamSize": 2,
-          "views": 0,
-          "likes": 0,
+          "views": 600,
+          "likes": 600,
           "order": 7
         },
         {
@@ -418,8 +418,8 @@
           "imageUrl": "https://picsum.photos/800/600?random=6",
           "completionDate": "2024-03-05",
           "teamSize": 4,
-          "views": 0,
-          "likes": 0,
+          "views": 600,
+          "likes": 600,
           "order": 8
         }
       ],

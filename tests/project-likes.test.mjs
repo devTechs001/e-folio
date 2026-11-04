@@ -1,7 +1,9 @@
 /**
- * Regression checks: owner-specified starting like counts on the three public
- * project cards. Node-only static checks — no DB, no network, no browser, no
- * external service. Confidential: local checkout only.
+ * Regression checks: owner-specified minimum display counters (phase 19).
+ * Every published project must show likes AND views of 600 or above, and the
+ * offline saved copy must carry the SAME numbers as the live seed.
+ * Node-only static checks — no DB, no network, no browser, no external service.
+ * Confidential: local checkout only.
  *
  * These are display/seed values explicitly requested by the owner. They are
  * NOT measured engagement and must never be described as real user activity.
@@ -15,12 +17,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const json = rel => JSON.parse(read(rel));
 
-const VALUES = [500, 600, 100];
+const OWNER_MINIMUM = 600;
 const TITLES = [
     'E-Commerce Platform', 'GB Chat', 'CinemaFlix',
     'Portfolio Website', 'Task Management App', 'AI Image Generator',
     'Social Media Dashboard', 'Blockchain Wallet'
 ];
+const PRESERVED_VIEWS = [1245, 856, 1243];
 const NETGATE = 'https://net-gate-portal.netlify.app/';
 
 let passed = 0;
@@ -30,33 +33,41 @@ const check = (name, fn) => {
     console.log(`  ok  ${name}`);
 };
 
-const seedLikes = () => [...read('scripts/seed-projects.js').matchAll(/likes:\s*(\d+),/g)].map(m => Number(m[1]));
+const seedNumbers = field => [...read('scripts/seed-projects.js').matchAll(new RegExp(`${field}:\\s*(\\d+),`, 'g'))].map(m => Number(m[1]));
 const snapshotProjects = () => json('src/data/publicSnapshot.json').sections.projects.projects;
 
 /* --------------------------------- the values ------------------------------- */
 
-check('the three supplied like values lead the eight published project records', () => {
+check('all eight published seed records have likes and views of at least 600', () => {
     const seed = read('scripts/seed-projects.js');
-    assert.deepEqual(seedLikes().slice(0, 3), VALUES);
-    assert.deepEqual(seedLikes().slice(3), [0, 0, 0, 0, 0]);
+    const likes = seedNumbers('likes');
+    const views = seedNumbers('views');
+    assert.equal(likes.length, 8);
+    assert.equal(views.length, 8);
+    for (const n of [...likes, ...views]) assert.ok(n >= OWNER_MINIMUM, `${n} is below the owner minimum`);
     for (const title of TITLES) assert.ok(seed.includes(`title: "${title}"`), `${title} must be present`);
-    assert.equal((seed.match(/likes:\s*\d+,/g) || []).length, 8);
+    assert.doesNotMatch(seed, /(?:views|likes):\s*0,/);
 });
 
-check('the offline snapshot carries the same values for the same projects', () => {
+check('the offline snapshot carries the same counters for the same projects', () => {
     const projects = snapshotProjects();
     assert.equal(projects.length, 8);
     assert.deepEqual(projects.map(p => p.title), TITLES);
-    assert.deepEqual(projects.map(p => p.likes), [500, 600, 100, 0, 0, 0, 0, 0]);
-    assert.deepEqual(projects.map(p => p.views), [0, 0, 0, 0, 0, 0, 0, 0], 'views were not requested and stay zero');
+    assert.deepEqual(projects.map(p => p.likes), seedNumbers('likes'));
+    assert.deepEqual(projects.map(p => p.views), seedNumbers('views'));
+    for (const project of projects) {
+        assert.ok(project.likes >= OWNER_MINIMUM);
+        assert.ok(project.views >= OWNER_MINIMUM);
+    }
 });
 
-check('the snapshot generator reads likes from the seed instead of hardcoding zero', () => {
+check('the snapshot generator reads BOTH counters from the seed instead of hardcoding zero', () => {
     const src = read('scripts/build-public-snapshot.mjs');
     assert.match(src, /likes: Number\(project\.likes\) \|\| 0/);
-    assert.match(src, /views: 0,/);
+    assert.match(src, /views: Number\(project\.views\) \|\| 0/);
     assert.match(src, /read\('scripts\/seed-projects\.js'\)/);
-    assert.doesNotMatch(src, /likes: 0,\n\s*order:/);
+    const projectBlock = src.slice(src.indexOf('const projects = seedProjects.map'), src.indexOf('// 2. Skills'));
+    assert.doesNotMatch(projectBlock, /(?:views|likes):\s*0,/);
 });
 
 check('the values are labelled as owner-specified display numbers, not real engagement', () => {
@@ -69,29 +80,32 @@ check('the values are labelled as owner-specified display numbers, not real enga
 
 /* -------------------------------- preserving -------------------------------- */
 
-check('only the likes field changed on the three project records', () => {
+check('existing counters above the floor and all published links are preserved', () => {
     const seed = read('scripts/seed-projects.js');
-    for (const [title, views] of [['E-Commerce Platform', 1245], ['GB Chat', 856], ['CinemaFlix', 1243]]) {
-        const block = seed.slice(seed.indexOf(`title: "${title}"`), seed.indexOf('links:', seed.indexOf(`title: "${title}"`)));
-        assert.ok(block.includes(`views: ${views},`), `${title} views must be untouched`);
-        assert.ok(block.includes(`likes: ${VALUES[TITLES.indexOf(title)]},`));
-        assert.ok(block.includes(`title: "${title}"`));
-    }
-    assert.ok(seed.includes('https://ominbiz-solution.netlify.app/'));
-    assert.ok(seed.includes('https://gbchat.netlify.app/'));
-    assert.ok(seed.includes('https://cinemaflx.netlify.app/'));
+    const views = seedNumbers('views');
+    assert.deepEqual(views.slice(0, 3), PRESERVED_VIEWS);
+    for (const url of [
+        'https://ominbiz-solution.netlify.app/',
+        'https://gbchat.netlify.app/',
+        'https://cinemaflx.netlify.app/',
+        'https://home-scape-platform.netlify.app/',
+        'https://schedule-manager-ap.netlify.app/',
+        'https://ai-image-editor-pro.netlify.app/',
+        'https://net-gate.netlify.app/',
+        'https://fintech-banking.netlify.app/'
+    ]) assert.ok(seed.includes(url), `${url} must be preserved`);
 });
 
-check('the project card interface itself is unchanged and stays data-driven', () => {
+check('the project card interface itself stays data-driven', () => {
     const card = read('src/components/ProjectCard.jsx');
     assert.match(card, /likes = 0,/);
     assert.match(card, /\{likes\} likes/);
-    assert.doesNotMatch(card, /likes:\s*(?:500|600|100)/);
+    assert.doesNotMatch(card, /likes:\s*600/);
     const css = read('src/styles/ProjectCard.css');
-    assert.doesNotMatch(css, /\b(?:500|600|100)\s*likes/i);
+    assert.doesNotMatch(css, /\b600\s*likes/i);
     const page = read('src/pages/Projects.jsx');
-    assert.match(page, /p\.likes \|\| 0/);
-    assert.doesNotMatch(page, /likes:\s*(?:500|600|100)/);
+    assert.match(page, /likes=\{project\.likes \|\| 0\}/);
+    assert.doesNotMatch(page, /likes:\s*600/);
 });
 
 check('other project datasets and every other seed file are left alone', () => {
@@ -148,8 +162,9 @@ check('package scripts and the confidential report are wired', () => {
     }
     const report = read('CONFIDENTIAL_AUDIT_AND_FIX_REPORT.md');
     assert.match(report, /## 3o\./);
+    assert.match(report, /## 3s\./);
     assert.match(report, /Phases 3–/);
-    for (const value of VALUES) assert.ok(report.includes(String(value)), `report must document ${value}`);
+    assert.ok(report.includes(String(OWNER_MINIMUM)));
 });
 
 console.log(`\n${passed} project-likes regression checks passed.`);

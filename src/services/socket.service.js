@@ -32,6 +32,10 @@ class SocketService {
         this.notificationRefs = 0;
         this.notificationListeners = new Map();
         this.notificationsConnected = false;
+        // Public, unauthenticated namespace for portfolio project counts.
+        // Anonymous visitors use this instead of the authenticated root socket.
+        this.publicProjectsSocket = null;
+        this.publicProjectsRefs = 0;
     }
 
     #addListener(map, event, callback) {
@@ -298,6 +302,42 @@ class SocketService {
 
     isNotificationsConnected() {
         return this.notificationsConnected && Boolean(this.notificationSocket?.connected);
+    }
+
+    /**
+     * Subscribe to public project-count broadcasts. No authentication and no
+     * user data are sent; the namespace is read-only. Works for anonymous
+     * visitors, unlike the root socket owned by SocketContext.
+     */
+    subscribePublicProjects(callback) {
+        if (typeof callback !== 'function') return () => {};
+        this.publicProjectsRefs += 1;
+        if (!this.publicProjectsSocket) {
+            this.publicProjectsSocket = io(`${SOCKET_URL}/public-projects`, {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 10000,
+                reconnectionAttempts: 10
+            });
+            this.publicProjectsSocket.on('connect_error', err => {
+                // A missing backend must never break the public page; the
+                // polling fallback in Projects.jsx still refreshes counts.
+                if (import.meta.env.DEV) console.warn('[public projects] socket unavailable:', err?.message);
+            });
+        }
+        const socket = this.publicProjectsSocket;
+        socket.on('project:stats', callback);
+        return () => {
+            socket.off('project:stats', callback);
+            this.publicProjectsRefs -= 1;
+            if (this.publicProjectsRefs <= 0) {
+                socket.removeAllListeners();
+                socket.disconnect();
+                if (this.publicProjectsSocket === socket) this.publicProjectsSocket = null;
+                this.publicProjectsRefs = 0;
+            }
+        };
     }
 
     // Get connection status

@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -27,10 +27,11 @@ Resources page, live preview + lagging issues, CellarKeep client-portal link in
 Projects, public copy + saved-data fallback, E-Commerce link → OmniBiz) were
 subsequently merged into this repository's own `origin/main` via PR #3
 (merge commit `3b97ef4`) after the explicit **"push t main"** instruction.
-Phases 14–18 (§3n–§3r: HomeScape property-marketplace link, owner-specified
+Phases 14–19 (§3n–§3s: HomeScape property-marketplace link, owner-specified
 starting like counts, restored projects, filter buttons, page restyle, the
 tracking conflict fix, twelve owner project links, public Lab copy,
-zero-value cleanup and the working-link replacement) are **local only** on the active branch
+zero-value cleanup, the working-link replacement, and public/server/dashboard
+counter synchronisation with a 600 minimum) are **local only** on the active branch
 `arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
 service has been used for them.
 
@@ -49,6 +50,7 @@ service has been used for them.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Project → server → dashboard sync (phase 19) | the public page listened for socket events the server never emitted, anonymous visitors had no socket, dashboard saves sent no refresh signal, and the offline snapshot reset every view count to zero | one canonical broadcast on a read-only public namespace, matching root/legacy listeners, hidden-tab-aware 30 s polling, cross-tab dashboard signals, server-authoritative like/view counts, and owner-specified likes AND views of at least 600 on all eight cards |
 | Working-link replacement (phase 18) | five restored project cards still pointed at retired GitHub Pages / wallet URLs | those five links swapped for owner-supplied working deployments; the separate directory was removed; all working links and the protected NetGate link untouched |
 | Owner project links (phase 17) | the front end published only 3 live projects and none of the owner-supplied deployments | 12 owner URLs verified read-only and published in a shared JSON catalogue with a horizontal scroller; partial live lists completed from local saved records |
 | Public Lab copy + zero values (phase 17) | the Lab told visitors where skills/hobbies are stored and printed bare `0` metrics, filter counts, skill levels and card counters | neutral public copy, owner-only technical badges, zero-valued items omitted everywhere (never fabricated into non-zero numbers) |
@@ -1098,6 +1100,8 @@ No component, stylesheet, route, controller or model was changed. `src/component
 
 - The **NetGate link** and all its files, the NEX Store, CellarKeep and OmniBiz links, all GitHub links, and every other project record (including the eight the owner said to leave alone).
 - `views` stays zero in the snapshot; no views, ratings, achievements, uptime or user counts were added or fabricated.
+
+> **Phase 19 revision:** the owner subsequently asked for *"likes and views ... a count 600 and above"*. The three 500/600/100 values and the five zero-valued restored records were therefore raised to the owner-supplied floor of **600**, and the snapshot now carries `views` from the seed instead of hardcoding zero. Existing seed views above 600 (1245/856/1243) were kept. These remain owner-specified **display** values, never measured engagement. See §3s.
 - No push, PR, merge, external issue, external write or offensive testing. Local-only work on `arena/28000c5e-e-folio`.
 
 ### Verification
@@ -1239,6 +1243,39 @@ The remaining owner URLs stay in `src/data/projectLinks.json` as the documented 
 
 ---
 
+## 3s. Phase 19 — public Projects ↔ server ↔ dashboard counter synchronisation
+
+Request: *"review the project page, server, dashboard syncing (nothing changes) in the public page, at least likes and views to have a count 600 and above"*, with a local `commit`. This is a source-level review and local fix only: no MongoDB, Express instance, browser automation or socket runtime was available, so no live sync claim is made.
+
+### What was actually broken
+
+| # | Finding | Where |
+| --- | --- | --- |
+| 1 | The public page listened for `project:updated`, `project:liked`, `project:viewed`, `project:created`. The server emits `project_changed`, `project_updated`, `project_view`, `project_like`. **No name overlapped**, so no dashboard edit ever reached the page. | `src/pages/Projects.jsx` socket effect vs `server/controllers/public.controller.js` / `projectController.js` |
+| 2 | `SocketContext` connects the root socket **only when `user?.id` exists**. Public visitors are anonymous and had no socket at all, so even correctly-named events could not arrive. | `src/contexts/SocketContext.jsx` |
+| 3 | `likeProject` / `unlikeProject` / `viewProject` persisted to MongoDB but emitted **no socket event whatsoever**. | `server/controllers/projectController.js` |
+| 4 | `toggleProjectLike` read `req.session?.likes`, but no session middleware is installed. `req.session` was always undefined, so every click counted as a new like and unlike never worked. | `server/controllers/public.controller.js` |
+| 5 | The dashboard's create/update/delete/toggle handlers never dispatched `settingsChanged`; the public page also held `public_projects` in a 10-minute cache. The only refresh signal was never sent. | `ProjectManagerEnhanced.jsx`, `Projects.jsx` |
+| 6 | Views and likes used **two different API prefixes** (`/public/projects/:id/view` vs `/projects/:id/like`) with different controllers and different semantics; the like button also added a local odd/even offset on top of the record's likes, double-counting. | `Projects.jsx`, `api.service.js` |
+| 7 | The offline snapshot generator hardcoded `views: 0` for every project, so a backend outage silently reset all public view counts to zero. The five restored records also had `likes: 0`/`views: 0`. | `scripts/build-public-snapshot.mjs`, `scripts/seed-projects.js` |
+
+### Fixes
+
+- **One canonical broadcaster** — `server/utils/projectEvents.js` emits `project:stats` on the new read-only `/public-projects` namespace **and** `project_changed` on the root socket. It is called after every like, view, create, update and delete in both project controllers, so a database write can no longer happen without a matching public broadcast. A delete broadcast omits counters rather than sending zeros.
+- **Anonymous-safe realtime** — `server/socket/public-projects.handler.js` registers the unauthenticated namespace (no auth middleware, no user data, no client-to-server commands). `socket.service.js` adds `subscribePublicProjects()`, a ref-counted, listener-buffered connection that does **not** depend on `SocketContext`'s logged-in-only socket. The public page normalises every payload and matches by id **or** title, so a saved archive copy with a slug id still picks up an edit to the real record. Canonical and legacy root event names are both handled for signed-in sessions.
+- **Reliable fallback + cross-tab signals** — `src/utils/projectSync.js` publishes a timestamp-only change signal (`storage` event + `BroadcastChannel` + window event); nine dashboard mutation handlers publish it. The public page refreshes immediately on that signal, on `visibilitychange`, and on a hidden-tab-aware 30 s poll. `loadProjects(true)` bypasses and clears the 10-minute cache, and polling does not re-trigger the initial loading spinner.
+- **Server-authoritative counters** — both buttons now use the same `/public/projects/:id/...` prefix and set the displayed number from the persisted response. The local odd/even offset was removed. Slug ids from archive copies return a clean 404 instead of a `CastError`/500. `toggleProjectLike` now uses a bounded in-process like registry so unlike works; its legacy `project_like` event is kept for existing listeners.
+- **Owner-specified 600 floor** — all eight published records now have `likes >= 600` **and** `views >= 600`. Values below the floor were raised to exactly 600; existing seed views above it (1245 / 856 / 1243) were kept. The snapshot generator now carries `Number(project.views)` as well as `Number(project.likes)` from the seed. These are **owner-specified display/seed values, NOT measured engagement** — no analytics figure was invented or republished, and live API/DB data remains authoritative once connected. No card markup, card CSS, link, NetGate file, showcase record or other seed/backup dataset changed.
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity `--strict` **0 live code gaps**, static security audit `--strict` **HIGH/MED/LOW 0**, **212** Node-only regression checks, build **25.72s**, PWA **216 precache entries (7017.60 KiB)**.
+- New `tests/project-sync.test.mjs` (14 checks) covers the emitter, namespace registration, all six mutation broadcasts, session-free like tracking, anonymous socket subscription, event-name alignment, hidden-tab polling, cross-tab publishing, server-authoritative counters, the 600 floor, protected files and confidentiality. `tests/project-likes.test.mjs` was rewritten for the 600 minimum; `tests/public-fallback.test.mjs` and `tests/projects-page-filters.test.mjs` were updated to assert both counters come from the seed.
+- `git diff --check` clean; masked secret scan clean; both local previews return 200.
+- **Not verified:** live socket delivery, MongoDB writes, dashboard→public behaviour in a real browser, or the new like registry under concurrency. Backlog item 24. No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call, browser-level performance claim or offensive testing. Local commit only.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1323,6 +1360,14 @@ The remaining owner URLs stay in `src/data/projectLinks.json` as the documented 
 23. Phase 18 follow-up: confirm the five re-mapped links on the live site and
     run `npm run seed-projects` against a configured MongoDB so live project
     documents also carry the working URLs. No database was available here.
+24. Phase 19 follow-up: with a live Express/Mongo backend, verify that a
+    dashboard project edit and a public like/view click both reach every open
+    public Projects page through `/public-projects`, that the 30 s poll and
+    cross-tab signals behave as expected, and that the in-process like
+    registry is replaced with a durable store (Redis or a per-visitor DB
+    record) before multi-instance deployment. Then run `npm run seed-projects`
+    so live documents carry the 600 display floor. No database, socket
+    runtime or browser automation was available in this sandbox.
 
 ---
 

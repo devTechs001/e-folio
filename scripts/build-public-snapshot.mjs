@@ -69,9 +69,11 @@ const projects = seedProjects.map((project, index) => ({
     imageUrl: project.images?.[0]?.url || '',
     completionDate: project.completionDate || null,
     teamSize: project.teamSize ?? 1,
-    views: 0,
     // Owner-specified display values from the published seed file (see the
-    // comment in scripts/seed-projects.js). Not measured engagement.
+    // comment in scripts/seed-projects.js). Not measured engagement. The
+    // saved copy must carry the SAME counters as the live seed, otherwise a
+    // backend outage silently reset every public view/like count to zero.
+    views: Number(project.views) || 0,
     likes: Number(project.likes) || 0,
     order: index + 1
 }));
