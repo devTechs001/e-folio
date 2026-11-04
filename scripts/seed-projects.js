@@ -239,6 +239,169 @@ const projects = [
         teamSize: 4,
         priority: "standard",
         visibility: "public"
+    },
+    // Phase 22: the six owner projects below were removed together with the
+    // old hard-coded fallback array (commit 5365771) and were not among the
+    // eight records restored in phase 16. They are appended verbatim from the
+    // repository's own published history (commit 3e46cc0) with their original
+    // working owner-supplied URLs. `views` keep the historical values (all
+    // already >= 600); `likes` are raised to the owner's 600 display floor, as
+    // in phase 19. No badge lists, marketing metrics or live-status claims were added.
+    {
+        title: "Kazi Find",
+        description: "Job discovery and hiring platform for finding local opportunities and talent quickly.",
+        fullDescription: "Kazi Find connects people with relevant jobs and freelance opportunities through a clean, mobile-friendly marketplace experience. It is designed to make local talent discovery, role matching, and hiring decisions faster and more transparent.",
+        technologies: ["React", "JavaScript", "Tailwind CSS", "Netlify"],
+        category: "Web",
+        status: "completed",
+        featured: true,
+        tags: ["Jobs", "Marketplace", "Hiring", "Career"],
+        views: 980,
+        likes: 600,
+        links: {
+            live: "https://kazi-find.netlify.app/",
+            demo: "https://kazi-find.netlify.app/",
+            netlify: "https://kazi-find.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f", caption: "Kazi Find Landing Page" },
+            { url: "https://images.unsplash.com/photo-1552664730-d307ca884978", caption: "Job Listings" }
+        ],
+        completionDate: "2025-01-14",
+        duration: "2 weeks",
+        teamSize: 1,
+        priority: "high",
+        visibility: "public"
+    },
+    {
+        title: "HomeScape Platform",
+        description: "Modern real-estate and property discovery platform for browsing homes, apartments, and spaces.",
+        fullDescription: "HomeScape Platform helps users explore property listings, compare options, and discover living spaces with an elegant and responsive experience. It focuses on clear presentation, searchability, and a polished real-estate browsing flow.",
+        technologies: ["React", "JavaScript", "CSS", "Netlify"],
+        category: "Web",
+        status: "completed",
+        featured: true,
+        tags: ["Real Estate", "Properties", "Dashboard", "Listings"],
+        views: 920,
+        likes: 600,
+        links: {
+            live: "https://home-scape-platform.netlify.app/",
+            demo: "https://home-scape-platform.netlify.app/",
+            netlify: "https://home-scape-platform.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1494526585095-c41746248156", caption: "Property Showcase" },
+            { url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85", caption: "Home Listing" }
+        ],
+        completionDate: "2025-02-02",
+        duration: "3 weeks",
+        teamSize: 1,
+        priority: "high",
+        visibility: "public"
+    },
+    {
+        title: "Net Gate",
+        description: "Secure networking and access management platform for safer, smarter digital connectivity.",
+        fullDescription: "Net Gate showcases a secure, modern interface for network operations, access management, and digital infrastructure monitoring. The project emphasizes clarity, usability, and a professional user experience for networking workflows.",
+        technologies: ["React", "JavaScript", "UI Design", "Netlify"],
+        category: "Web",
+        status: "completed",
+        featured: false,
+        tags: ["Networking", "Security", "Infrastructure", "Dashboard"],
+        views: 870,
+        likes: 600,
+        links: {
+            live: "https://net-gate.netlify.app/",
+            demo: "https://net-gate.netlify.app/",
+            netlify: "https://net-gate.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3", caption: "Network Dashboard" },
+            { url: "https://images.unsplash.com/photo-1558494949cc5c5f3f4d6d9337e9044f3", caption: "Security Overview" }
+        ],
+        completionDate: "2025-02-20",
+        duration: "2 weeks",
+        teamSize: 1,
+        priority: "standard",
+        visibility: "public"
+    },
+    {
+        title: "Schedule Manager",
+        description: "Planning and scheduling application for managing tasks, appointments, and daily activity flow.",
+        fullDescription: "Schedule Manager is a productivity-focused planner that helps users organize tasks, track appointments, and manage their time efficiently. The experience is built around clear scheduling, quick updates, and a user-friendly workflow.",
+        technologies: ["React", "JavaScript", "Calendar UI", "Netlify"],
+        category: "Productivity",
+        status: "completed",
+        featured: true,
+        tags: ["Scheduling", "Planner", "Productivity", "Calendar"],
+        views: 910,
+        likes: 600,
+        links: {
+            live: "https://schedule-manager-ap.netlify.app/",
+            demo: "https://schedule-manager-ap.netlify.app/",
+            netlify: "https://schedule-manager-ap.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40", caption: "Planner Dashboard" },
+            { url: "https://images.unsplash.com/photo-1552664730-d307ca884978", caption: "Calendar View" }
+        ],
+        completionDate: "2025-03-06",
+        duration: "2 weeks",
+        teamSize: 1,
+        priority: "high",
+        visibility: "public"
+    },
+    {
+        title: "AI Image Editor Pro",
+        description: "AI-powered image editing platform with fast enhancements, crop tools, and creative transformations.",
+        fullDescription: "AI Image Editor Pro gives users a polished editor for adjusting and enhancing images with automated, creative tools. It is built to feel fast, flexible, and modern for both casual and professional editing workflows.",
+        technologies: ["React", "JavaScript", "AI Tools", "Canvas", "Netlify"],
+        category: "AI",
+        status: "completed",
+        featured: true,
+        tags: ["AI", "Image Editing", "Design", "Creative Tools"],
+        views: 1040,
+        likes: 600,
+        links: {
+            live: "https://ai-image-editor-pro.netlify.app/",
+            demo: "https://ai-image-editor-pro.netlify.app/",
+            netlify: "https://ai-image-editor-pro.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3", caption: "AI Editor" },
+            { url: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935", caption: "Creative Tools" }
+        ],
+        completionDate: "2025-03-18",
+        duration: "3 weeks",
+        teamSize: 1,
+        priority: "high",
+        visibility: "public"
+    },
+    {
+        title: "Elimu Pro Beta",
+        description: "Learning platform for education, course browsing, and digital student engagement.",
+        fullDescription: "Elimu Pro Beta is a modern education experience built to help learners discover resources, track progress, and engage with a streamlined digital learning system. It focuses on clean course presentation and a motivating student experience.",
+        technologies: ["React", "JavaScript", "Education UI", "Netlify"],
+        category: "Education",
+        status: "completed",
+        featured: false,
+        tags: ["Education", "Learning", "Courses", "Student Portal"],
+        views: 880,
+        likes: 600,
+        links: {
+            live: "https://elimu-pro-beta.netlify.app/",
+            demo: "https://elimu-pro-beta.netlify.app/",
+            netlify: "https://elimu-pro-beta.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b", caption: "Learning Dashboard" },
+            { url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644", caption: "Course Catalog" }
+        ],
+        completionDate: "2025-04-12",
+        duration: "2 weeks",
+        teamSize: 1,
+        priority: "standard",
+        visibility: "public"
     }
 ];
 

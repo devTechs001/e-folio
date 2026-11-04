@@ -123,7 +123,8 @@ check('the fix is a one-line dependency change with no interface or data edits',
         'loadPublicSection', 'getSnapshotSection'
     ]) assert.ok(src.includes(token), `${token} must remain wired`);
     const projects = json('src/data/publicSnapshot.json').sections.projects.projects;
-    assert.equal(projects.length, 8);
+    const seedCount = (read('scripts/seed-projects.js').match(/title: "/g) || []).length;
+    assert.equal(projects.length, seedCount);
     for (const project of projects) {
         assert.ok(project.views >= 600 && project.likes >= 600, `${project.title} counters`);
     }

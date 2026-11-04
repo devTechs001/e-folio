@@ -9,8 +9,8 @@
 |---|---|
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
-| Branch | `arena/e91ed034-e-folio` (from `main` `928c02b`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix |
+| Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -34,8 +34,10 @@ zero-value cleanup, the working-link replacement, public/server/dashboard
 counter synchronisation with a 600 minimum, and the review-submission repair)
 were merged into `origin/main` via **PR #5** (merge commit `928c02b`) after the
 explicit **"push to min, merge"** instruction. Phase 21 (§3u: the Projects
-render-crash fix) is **local only** on the active branch
-`arena/e91ed034-e-folio` — no push, PR or merge has been used for it.
+render-crash fix) was merged via **PR #6** (merge commit `8feaa76`) after the
+explicit **"push, merge"** instruction. Phase 22 (§3v: full Projects feature
+restoration) is **local only** on the active branch
+`arena/b1b14834-e-folio` — no push, PR or merge has been used for it.
 
 ---
 
@@ -52,6 +54,7 @@ render-crash fix) is **local only** on the active branch
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Projects page features (phase 22) | six of the fourteen original project cards were still missing after the fallback array was stripped, and the offline copy dropped `duration`, `challenges` and `achievements` so those card/modal sections were always empty | all six owner projects appended verbatim from local Git history with their working URLs and the 600 display floor; the saved copy now carries the detail fields; 14 grid + 2 showcase = 16 cards, all filters/views/sorts/sync controls retained |
 | Projects render crash (phase 21) | the public Projects page threw `ReferenceError: Cannot access 'allTechnologies' before initialization` on every render, blanking the landing page | the early scroller effect now depends on the already-initialised `projects.length`; a repo-wide hook-dependency-order regression test prevents any hook variable being read before its declaration |
 | Review submission + sync (phase 20) | post-save email/logging failures turned an already-saved review into a 500, step-3 ratings sent nested objects, `new_review` went to a room no socket joined, and there was no offline path | normalised input, success returned before isolated side effects, numeric star payloads, canonical id/status broadcasts on the public namespace, cross-tab signals and polling, and an honest device-only outbox that never claims a queued review was submitted |
 | Project → server → dashboard sync (phase 19) | the public page listened for socket events the server never emitted, anonymous visitors had no socket, dashboard saves sent no refresh signal, and the offline snapshot reset every view count to zero | one canonical broadcast on a read-only public namespace, matching root/legacy listeners, hidden-tab-aware 30 s polling, cross-tab dashboard signals, server-authoritative like/view counts, and owner-specified likes AND views of at least 600 on all eight cards |
@@ -1344,6 +1347,88 @@ The technology-scroller effect installed a `resize` listener with the dependency
 
 ---
 
+## 3v. Phase 22 — restore all Projects page features
+
+The owner reported that the public Projects page was "damaged" and that most
+features were gone. A read-only comparison against the repository's own history
+identified two concrete losses; **no UI control had actually been deleted**.
+
+### What was actually lost
+
+1. Commit `5365771` removed 394 lines from `src/pages/Projects.jsx`: the whole
+   `getFallbackProjects()` array of **14 project records**. Phase 16 restored
+   eight of them from local history, leaving six of the owner's own projects
+   unpublished: **Kazi Find, HomeScape Platform, Net Gate, Schedule Manager,
+   AI Image Editor Pro, Elimu Pro Beta**. Their original records survive in
+   commit `3e46cc0`. The eight current cards, the two featured showcase cards,
+   the technology chip scroller, search, sort, grid/list/masonry toggles,
+   advanced filters, category pills, stats cards, Tech Stack Showcase, CTA,
+   project modal, image lightbox, like/view/share/favourite handlers and the
+   project ↔ server ↔ dashboard sync were all still present.
+2. `scripts/build-public-snapshot.mjs` mapped only 18 of the seed fields into
+   the offline copy. It dropped `duration`, `challenges` and `achievements`,
+   which `src/pages/ProjectCard.jsx` and `src/pages/ProjectModal.jsx` render,
+   so those sections were empty whenever the API was unavailable.
+
+### Fix
+
+- `scripts/seed-projects.js`: appended the six missing records verbatim from
+  their published history (descriptions, full descriptions, technologies,
+  tags, categories, images, dates, durations, team sizes, featured flags and
+  original **working** owner-supplied URLs). Historical `views` (980 / 920 /
+  870 / 910 / 1040 / 880) were preserved because they already exceed the
+  owner's 600 floor; `likes` were raised to exactly 600, matching phase 19's
+  rule. No badge lists, marketing metrics or live-status claims were added.
+  The eight existing records, their links and their counters are untouched.
+- `scripts/build-public-snapshot.mjs`: now carries `duration`, `challenges`
+  and `achievements` from the seed when present, verbatim — no invented value.
+  Regenerated `src/data/publicSnapshot.json` (14 grid records; 16 projects in
+  total with the two featured cards).
+- `tests/projects-features.test.mjs` (new): 12 checks covering the full
+  catalogue, each restored record's links/counters/details, additive-only
+  preservation of the original eight and the protected NetGate link, the
+  verbatim-from-seed guarantee for every achievement/challenge/duration/link,
+  every UI feature marker, absence of a three-project cap, unchanged card
+  imports/CSS, and secret-free wiring. Wired into both `test` scripts as
+  `test:projects-features`.
+- Four existing regression tests that hard-coded eight grid records were
+  updated to the restored fourteen-record catalogue; all other checks pass
+  unchanged.
+
+### Deliberately not changed
+
+- The separate project-links **directory** remains removed, per the owner's
+  phase-18 `dead_only` decision. The working links themselves are all present
+  on the project cards.
+- Card markup, `ProjectCard.css`, showcase data, the protected
+  `https://net-gate-portal.netlify.app/` link, the 600 minimum counter rule
+  and the no-zero-values rule are untouched.
+- Four of the restored apps share a live URL with an older card because phase
+  18 grafted those working URLs onto older titles (for example
+  "Portfolio Website" → `home-scape-platform.netlify.app`). Both sets of cards
+  are kept so no historical record is discarded; consolidation is a separate
+  decision (backlog 27).
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**,
+  endpoint parity `--strict` **0 live code gaps**, static security audit
+  `--strict` **HIGH/MED/LOW 0**, **242** Node-only regression checks (10 new),
+  build **27.62s**, PWA **217 precache entries (7029.33 KiB)**. The built
+  JavaScript contains all six restored titles and their working URLs, plus
+  the `duration` / `challenges` / `achievements` markers.
+- `npm run snapshot:build` reports 14 project records; every published
+  counter is ≥600 and the NetGate link counts are unchanged (3 / 1 / 1 / 3).
+  The Vite dev preview serves `/` with 200 and the regenerated snapshot.
+- `git diff --check` clean; masked secret scan clean (0 findings across the
+  11 changed files).
+- **Not verified:** a real browser render or a live MongoDB seed run (no
+  headless browser, database or backend in this sandbox). No push, PR, merge,
+  external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive
+  testing for this phase.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1449,6 +1534,13 @@ The technology-scroller effect installed a `resize` listener with the dependency
     boundary around the lazy route tree) so a future component exception
     degrades one section instead of blanking the whole application. No
     headless browser was available in this sandbox.
+27. Phase 22 follow-up: with a browser, confirm all 16 project cards and the
+    duration / challenges / achievements sections of the detail modal render;
+    with a live backend, run the seed and confirm the six restored records are
+    created. Decide whether to consolidate the four restored cards that share
+    a live URL with an older card, and whether the separate project-links
+    directory should return (currently removed by the owner's phase-18
+    decision). No browser or database was available in this sandbox.
 
 ---
 
@@ -1483,5 +1575,12 @@ there was no conflict; a masked secret scan over the diff found 0 findings and
 `npm test` passed before the push. The branch had to be pushed with
 `-c http.version=HTTP/1.1` after two GitHub-side HTTP/2 `Internal Server Error`
 responses. PR #4 (the old-branch docs note) remains open and was left untouched.
-Phase 21 (§3u) is a local commit on `arena/e91ed034-e-folio` and has **not**
-been pushed or merged.
+After the explicit **"push, merge"** instruction, phase 21 (§3u) was pushed
+from `arena/e91ed034-e-folio`, opened as
+[PR #6](https://github.com/devTechs001/e-folio/pull/6) and merged into `main`
+with merge commit `8feaa760472b6f6facecf4750fcb99c676af1c71` at
+`2026-11-04T10:11:09Z`. The first merge call returned a transient GitHub
+GraphQL error; the PR was confirmed still `OPEN` with `main` unchanged before
+a single retry succeeded. PR #4 remains open and untouched. Phase 22 (§3v) is
+a local commit on `arena/b1b14834-e-folio` and has **not** been pushed or
+merged.

@@ -69,6 +69,14 @@ const projects = seedProjects.map((project, index) => ({
     imageUrl: project.images?.[0]?.url || '',
     completionDate: project.completionDate || null,
     teamSize: project.teamSize ?? 1,
+    // Phase 22: the project card and detail modal render duration, challenges
+    // and achievements, but the saved copy used to drop them, so those
+    // sections were always empty whenever the API was unavailable. Carry the
+    // repository's OWN published seed values verbatim (no invented values).
+    ...(project.duration ? { duration: project.duration } : {}),
+    ...(project.challenges ? { challenges: project.challenges } : {}),
+    ...(Array.isArray(project.achievements) && project.achievements.length
+        ? { achievements: [...project.achievements] } : {}),
     // Owner-specified display values from the published seed file (see the
     // comment in scripts/seed-projects.js). Not measured engagement. The
     // saved copy must carry the SAME counters as the live seed, otherwise a
