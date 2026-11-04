@@ -79,7 +79,12 @@ const Projects = () => {
         updateTechScrollState();
         window.addEventListener('resize', updateTechScrollState);
         return () => window.removeEventListener('resize', updateTechScrollState);
-    }, [updateTechScrollState, allTechnologies.length]);
+        // `projects.length` is already initialised above. Referencing
+        // `allTechnologies` here (it is a useMemo declared further down) put
+        // the identifier in the temporal dead zone and crashed the whole page
+        // during render. A stable count keeps the scroller state fresh without
+        // re-running on every 30s poll that returns the same project list.
+    }, [updateTechScrollState, projects.length]);
 
     const scrollTechStrip = useCallback(direction => {
         const strip = techScrollerRef.current;
