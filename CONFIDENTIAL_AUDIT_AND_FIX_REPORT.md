@@ -9,8 +9,8 @@
 |---|---|
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
-| Branch | `arena/28000c5e-e-folio` (from `main` `3b97ef4`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair |
+| Branch | `arena/e91ed034-e-folio` (from `main` `928c02b`) |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -32,9 +32,10 @@ starting like counts, restored projects, filter buttons, page restyle, the
 tracking conflict fix, twelve owner project links, public Lab copy,
 zero-value cleanup, the working-link replacement, public/server/dashboard
 counter synchronisation with a 600 minimum, and the review-submission repair)
-are **local only** on the active branch
-`arena/28000c5e-e-folio` — no push, PR, merge, external issue, or external
-service has been used for them.
+were merged into `origin/main` via **PR #5** (merge commit `928c02b`) after the
+explicit **"push to min, merge"** instruction. Phase 21 (§3u: the Projects
+render-crash fix) is **local only** on the active branch
+`arena/e91ed034-e-folio` — no push, PR or merge has been used for it.
 
 ---
 
@@ -51,6 +52,7 @@ service has been used for them.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Projects render crash (phase 21) | the public Projects page threw `ReferenceError: Cannot access 'allTechnologies' before initialization` on every render, blanking the landing page | the early scroller effect now depends on the already-initialised `projects.length`; a repo-wide hook-dependency-order regression test prevents any hook variable being read before its declaration |
 | Review submission + sync (phase 20) | post-save email/logging failures turned an already-saved review into a 500, step-3 ratings sent nested objects, `new_review` went to a room no socket joined, and there was no offline path | normalised input, success returned before isolated side effects, numeric star payloads, canonical id/status broadcasts on the public namespace, cross-tab signals and polling, and an honest device-only outbox that never claims a queued review was submitted |
 | Project → server → dashboard sync (phase 19) | the public page listened for socket events the server never emitted, anonymous visitors had no socket, dashboard saves sent no refresh signal, and the offline snapshot reset every view count to zero | one canonical broadcast on a read-only public namespace, matching root/legacy listeners, hidden-tab-aware 30 s polling, cross-tab dashboard signals, server-authoritative like/view counts, and owner-specified likes AND views of at least 600 on all eight cards |
 | Working-link replacement (phase 18) | five restored project cards still pointed at retired GitHub Pages / wallet URLs | those five links swapped for owner-supplied working deployments; the separate directory was removed; all working links and the protected NetGate link untouched |
@@ -1313,6 +1315,35 @@ Request: *"review system fails (fails to submit reviews) same to projects"* — 
 
 ---
 
+## 3u. Phase 21 — fix the public Projects render crash
+
+Reported at runtime in the dev preview:
+
+```
+Projects.jsx:82  Uncaught ReferenceError: Cannot access 'allTechnologies' before initialization
+    at Projects (Projects.jsx:82:32)
+    at renderWithHooks (react-dom.development.js:15486:18)
+```
+
+### Root cause
+
+The technology-scroller effect installed a `resize` listener with the dependency array `[updateTechScrollState, allTechnologies.length]`. `allTechnologies` is a `useMemo` declared **later** in the same component (line 418 in the merged build, line 82 for the effect). Evaluating that dependency array during render hits JavaScript's **temporal dead zone**, so React aborts the whole component tree before anything is painted. This was introduced with the phase-16 filter strip and is a runtime-only defect: JSX transpilation, ESLint and `vite build` all passed, because none of them evaluate the dependency expression.
+
+### Fix
+
+- `src/pages/Projects.jsx`: the effect now uses `[updateTechScrollState, projects.length]`. `projects` is `useState` initialised near the top of the component, and a numeric length stays stable across the 30 s polls that return the same project list, so the listener is not re-attached on every refresh. The scroller's `onScroll={updateTechScrollState}` and the initial call inside the effect still keep `canScrollLeft` / `canScrollRight` accurate. No markup, card interface, data, link or styling changed.
+- `tests/hook-dependency-order.test.mjs` (new): scans **every** `src/**/*.jsx` file for hook variables (`useState` / `useCallback` / `useMemo` / `useRef` / etc.) used in a dependency array above their declaration. It includes a synthetic self-test proving the detector actually catches a TDZ dependency, an explicit Projects-specific assertion, and guards that the phase-19/20 wiring and the 600 display floor remain intact. Wired into both `test` scripts as `test:hook-order`.
+- A one-off repo-wide scan with the same detector found **no other** use-before-declaration dependencies.
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity `--strict` **0 live code gaps**, static security audit `--strict` **HIGH/MED/LOW 0**, **232** Node-only regression checks (6 new), build **21.34s**, PWA **217 precache entries (7021.74 KiB)**. The Vite dev preview serves `/` with 200 and its transformed `Projects.jsx` contains `[updateTechScrollState, projects.length]` with no `allTechnologies` dependency.
+- The new detector self-test, the repo-wide scan and the Projects-specific assertion all pass; a manual scan of the previous file confirmed the detector would have flagged line 82.
+- `git diff --check` clean; masked secret scan clean.
+- **Not verified:** a real browser render (no headless browser in this sandbox). The fix removes the exact TDZ expression that produced the stack trace; runtime confirmation requires reloading the preview. Backlog item 26. No push, PR, merge, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing for this phase.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1413,6 +1444,11 @@ Request: *"review system fails (fails to submit reviews) same to projects"* — 
     and decide whether review attachments should be added to the model (they
     are currently UI-only). No database or browser automation was available
     in this sandbox.
+26. Phase 21 follow-up: reload the dev preview to confirm the landing page
+    now renders, then add a lightweight browser smoke test (or an error
+    boundary around the lazy route tree) so a future component exception
+    degrades one section instead of blanking the whole application. No
+    headless browser was available in this sandbox.
 
 ---
 
@@ -1438,6 +1474,14 @@ was opened to record that merge note; remote access became blocked for the
 merged branch before its status could be confirmed, so the correction is
 re-applied on this branch. No credential value was included in any PR body.
 
-Phases 14–18 (§3n–§3r) are local-only work on
-`arena/28000c5e-e-folio`; they have **not** been pushed, opened as a PR, or
-merged.
+After the explicit **"push to min, merge"** instruction, phases 14–20 (seven
+local commits, 39 changed files) were pushed from `arena/28000c5e-e-folio`,
+opened as [PR #5](https://github.com/devTechs001/e-folio/pull/5) and merged into
+`main` with merge commit `928c02b9f8ad3e69c20d68b10ff3d1db26fdcc76` at
+`2026-11-04T09:58:13Z`. `origin/main` was 0 commits ahead and 7 behind, so
+there was no conflict; a masked secret scan over the diff found 0 findings and
+`npm test` passed before the push. The branch had to be pushed with
+`-c http.version=HTTP/1.1` after two GitHub-side HTTP/2 `Internal Server Error`
+responses. PR #4 (the old-branch docs note) remains open and was left untouched.
+Phase 21 (§3u) is a local commit on `arena/e91ed034-e-folio` and has **not**
+been pushed or merged.
