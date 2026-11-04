@@ -44,7 +44,7 @@ branch. Phases 25–27 (§3y–§3aa) were pushed to the same branch after the
 owner's explicit **"push changes now"** / **"push all"** instructions. The
 owner then said **"comit t mian"**, which reversed the earlier **"not yet"**
 restraint for PRs/merges: phases 22–27 were merged into `main` from the active
-branch via PR **PR_NUMBER**. PR #4 (an older, unrelated branch) was left open
+branch via PR #7. PR #4 (an older, unrelated branch) was left open
 and untouched.
 
 ---
@@ -1856,7 +1856,7 @@ keyboard-focusable region.
 The explicit **"push all"** and **"comit t mian"** instructions reversed the
 remaining **"not yet"** restraint. All phase-27 changes were committed and
 pushed to `arena/b1b14834-e-folio`, then merged into `main` from that branch
-via **PR PR_NUMBER** using `gh pr merge <number> --merge`. The PR body
+via PR #7 using `gh pr merge <number> --merge`. The PR body
 contained no code, credential or configuration value. `main` was not pushed
 to directly, history was not rewritten, and PR #4 (old branch) was left open.
 
@@ -2070,6 +2070,6 @@ explicit **"push changes noe"** instruction, the phase 26 UI-polish changes
 (§3z) were committed and pushed to that branch as well. After the explicit
 **"push all,,comit t mian"** instruction, the phase 27 changes (§3aa) were
 pushed and **phases 22–27 were merged into `main` from the active branch via
-PR PR_NUMBER** with `gh pr merge <number> --merge`. That instruction reversed
+PR #7** with `gh pr merge <number> --merge`. That instruction reversed
 the earlier **"not yet"** restraint for PRs/merges. `main` was never pushed
 to directly and PR #4 remains open and untouched.
