@@ -1,0 +1,59 @@
+Verbatim skill-section extract from public/CV2.pdf (owner's CV).
+Only the Core Competencies, Technical Skills and Soft Skills sections are
+reproduced here; all personal contact details are omitted.
+Whitespace is kept as extracted so the Skills page data can be audited.
+
+----- CORE COMPETENCIES -----
+CORE COMPETENCIES
+▪ Data Integrity Management & Database Administration
+▪ Advanced Organizational Systems & Workflow Optimization
+▪ Cross-Platform Technology Adaptation (Linux, Windows)
+▪ Full-Stack Development Fundamentals
+▪ Data Structures & Algorithms
+▪ Database Design & SQL (MySQL, PostgreSQL, SQLite)
+▪ SDLC & Agile / Scrum Methodologies
+▪ Version Control & Collaboration (Git, GitHub)
+▪ Technical Documentation & Communication
+▪ Client-Centered Service Delivery
+▪ Continuous Learning & Technology Adaptation
+▪ Analytical Thinking & Creative Problem Solving
+
+
+----- TECHNICAL SKILLS -----
+TECHNICAL SKILLS
+● Operating Systems
+Ubuntu / Debian (CLI, Bash, systemd, SSH, apt)
+Windows 10/11 Admin (PowerShell, Task Scheduler, Group Policy, RDP)
+VirtualBox VMware Dual-boot NTFS / ext4
+● Frontend Development
+HTML5 (Semantic, ARIA, SEO) CSS3 (Flexbox, Grid, Animations)
+JavaScript ES6+ React (Hooks, Router, Context) Tailwind CSS
+Bootstrap 5
+● Backend & Languages
+Node.js / Express (REST, JWT)
+Python (OOP, Django/FastAPI basics) Java (OOP, JDBC)
+C++ (STL, Memory Mgmt) Dart / Flutter
+● Databases & SQL
+SQL (Joins, Subqueries, Indexes, Transactions)
+Normalization (1NF–3NF) MySQL PostgreSQL SQLite
+DBeaver
+● Data Structures & Algorithms
+Arrays, Lists, Stacks, Queues Trees & Graphs (BST, BFS/DFS)
+Sorting & Searching DP / Greedy / Backtracking
+100+ LeetCode & HackerRank
+● Dev Tools & Practices
+Git & GitHub (PRs, CI/CD Actions) VS Code Bash & PowerShell
+npm · pip · apt Postman Docker basics
+Agile / Scrum (Jira, Trello) Markdown docs · Swagger basics
+● Office & Productivity
+Word (Mail Merge, Macros)
+Excel (Pivot Tables, Power Query, XLOOKUP, VBA) PowerPoint
+Access Publisher LibreOffice Suite Google Workspace
+39 WPM Touch Typing
+
+
+----- SOFT SKILLS -----
+● Soft Skills
+Technical Communication Problem Solving Adaptability
+Time Management Teamwork Attention to Detail Client Focus
+Initiative & Ownership Critical Thinking Resilience

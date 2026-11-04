@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review → testimonial thumbnail → CV-grouped modern Skills page |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -37,9 +37,11 @@ explicit **"push to min, merge"** instruction. Phase 21 (§3u: the Projects
 render-crash fix) was merged via **PR #6** (merge commit `8feaa76`) after the
 explicit **"push, merge"** instruction. Phases 22–24 (§3v–§3x: the full
 Projects feature restoration, the page remodel, and the Lab subsystem review)
-are **local only** on the active branch `arena/b1b14834-e-folio` — no push,
-PR or merge has been used for them. The owner explicitly said **"not yet"**
-to a further push.
+were local until the owner's explicit **"push change"** instruction in phase 25
+(§3y), which reversed the earlier **"not yet"** for a push only. They were
+pushed to the active branch `arena/b1b14834-e-folio`, creating that remote
+branch. **No PR or merge has been used for phases 22–25**; the "not yet"
+restraint still applies to PRs and merges.
 
 ---
 
@@ -56,6 +58,7 @@ to a further push.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
 | Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
 | Projects page features (phase 22) | six of the fourteen original project cards were still missing after the fallback array was stripped, and the offline copy dropped `duration`, `challenges` and `achievements` so those card/modal sections were always empty | all six owner projects appended verbatim from local Git history with their working URLs and the 600 display floor; the saved copy now carries the detail fields; 14 grid + 2 showcase = 16 cards, all filters/views/sorts/sync controls retained |
@@ -1604,6 +1607,95 @@ endpoint was exercised.
 
 ---
 
+## 3y. Phase 25 — push, a new testimonial thumbnail, and a CV-grouped modern Skills page
+
+Requested as *"push change,,add a new photo of the first testimonial (it a
+thumbnail,,improve the skills page(modern ,,styles,,add some other skills
+group,,grouping wellper the cv"*.
+
+### Push
+
+The explicit **"push change"** reversed the earlier **"not yet"** for a
+**push only**. The three pending local commits — `86523a0` (phase 22),
+`e3814c1` (phase 23) and `1874a26` (phase 24) — were pushed to the active
+branch `arena/b1b14834-e-folio`, which did not yet exist on the remote. The
+push created `refs/heads/arena/b1b14834-e-folio` at
+`1874a26d861d810bea700ee7809fa638eb893b65` and set the local upstream. The
+phase 25 changes were committed and pushed to the same branch under the same
+explicit instruction. **No PR, no merge, no direct push to `main`, no external
+issue/document/comment, and no secret value in any external payload.** PR #4
+remains open and untouched; the "not yet" restraint still applies to PRs and
+merges.
+
+### New testimonial thumbnail
+
+- A new 320×320 local JPEG was generated and saved at
+  `public/assets/images/testimonials/sarah-johnson-thumbnail.jpg` (~13 KB).
+  It is a neutral professional headshot used as a small square portrait for
+  the **first** testimonial (Sarah Johnson) — a thumbnail, not a full-size
+  photo. No remote image dependency was added.
+- `src/data/testimonialThumbnails.json` (new) maps that name to the local
+  asset. The mapping is **additive**: `src/data/testimonialSamples.json`,
+  both `server/backups/testimonials/*` JSON files,
+  `server/scripts/seedTestimonialSamples.js` and
+  `TestimonialSamplesPanel.jsx` were **not modified**. All eight canonical
+  mock records, their order and their original avatar URLs remain verbatim.
+- `src/pages/Testimonials.jsx` resolves `item.thumbnail || mapping[name] ||
+  item.avatar` in all four views (grid, list, carousel, modal), with lazy
+  loading on the three list views. `server/models/Testimonial.model.js` gained
+  an optional `thumbnail` field and `public-testimonials.controller.js` now
+  selects it, so a real DB record can carry a thumbnail too. Owner-preview
+  gating and all public copy are unchanged.
+
+### Modern Skills page, grouped per the CV
+
+The previous page showed only two flat lists (technical bars and professional
+radial charts), both hidden behind a "Show Technologies" toggle, so an
+unexpanded page looked empty and nothing was grouped by discipline.
+
+The owner's CV (`public/CV2.pdf`) was read locally and its skill sections were
+transcribed verbatim into `src/data/cvSkills.js`; the exact extract is kept in
+`src/data/cvSkills.source.txt` for audit, with all contact details deliberately
+omitted. That yields **9 groups / 44 entries**: Core Competencies (1 group, 12
+items), Technical Skills (the CV's seven groups — Operating Systems, Frontend
+Development, Backend & Languages, Databases & SQL, Data Structures &
+Algorithms, Dev Tools & Practices, Office & Productivity), and Soft Skills
+(1 group, 10 items). These are the "other skill groups" that were missing.
+
+- `src/pages/Skills.jsx` now renders a modern hero with three derived stats,
+  section tabs, per-group filter chips, an `aria-live` result count and a
+  responsive card grid. `src/styles/SkillsModern.css` (new, scoped to `.sk-*`)
+  adds glass surfaces, gradient accents, hover/focus states, responsive
+  breakpoints and `prefers-reduced-motion` support.
+- A score is shown **only** when a real published skill record matches a CV
+  line (word-boundary match, e.g. HTML5, CSS3, React, Node.js, Python, Git,
+  Docker). The CV states no percentages, so no level is invented for CV-only
+  items.
+- All existing behaviour is preserved: live-first `/public/skills` loading,
+  the saved-copy fallback, `ArchiveNote`, `settingsChanged` refresh, the
+  "Show Technologies" toggle (now with `aria-expanded` / `aria-controls`),
+  both technical and professional scorecards, and the friendly empty state.
+- No protected project card, showcase, seed or NetGate file was touched. The
+  14 grid + 2 showcase records and the 600 counter floor are unchanged.
+
+### Verification (static only)
+
+- `npm test` exit 0: **278** Node-only regression checks (**7** new in
+  `tests/testimonial-thumbnail.test.mjs` and **10** new in
+  `tests/skills-cv-groups.test.mjs`). The latter verifies every group name and
+  every listed skill against the verbatim CV extract.
+- `npm run check` exit 0: lint **0 errors**, endpoint parity `--strict` **0
+  live gaps**, static security audit `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**,
+  production build and PWA precache regenerated. The Vite dev preview served
+  the Skills page, the page CSS and the thumbnail asset with 200.
+  `git diff --check` clean; masked secret scan clean.
+- **Not verified:** a browser render of the new Skills cards or the thumbnail,
+  a live Mongo record carrying `thumbnail`, or an owner write. No runtime
+  DB/API, SMTP/LLM/Cloudinary call, external write, offensive test, PR or
+  merge in this phase. Runtime confirmation is backlog 30.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1730,6 +1822,12 @@ endpoint was exercised.
     writes should carry server-side idempotency or rate limiting beyond the
     existing owner JWT. No live database, socket or browser was available
     in this sandbox.
+30. Phase 25 follow-up: in a browser, confirm the new testimonial thumbnail
+    appears in grid, list, carousel and modal views; exercise the Skills
+    section tabs, group chips, score bars and responsive layout; and with a
+    live backend, confirm a Testimonial document carrying `thumbnail` is
+    returned by `/api/public/testimonials`. No headless browser or live
+    database was available in this sandbox.
 
 ---
 
@@ -1771,5 +1869,8 @@ with merge commit `8feaa760472b6f6facecf4750fcb99c676af1c71` at
 `2026-11-04T10:11:09Z`. The first merge call returned a transient GitHub
 GraphQL error; the PR was confirmed still `OPEN` with `main` unchanged before
 a single retry succeeded. PR #4 remains open and untouched. Phases 22–24
-(§3v–§3x) are local commits on `arena/b1b14834-e-folio` and have **not** been
-pushed or merged; the owner said **"not yet"** to a further push.
+(§3v–§3x) were pushed to `arena/b1b14834-e-folio` after the explicit
+**"push change"** instruction in phase 25 (§3y), which reversed the earlier
+**"not yet"** for a push only; the remote branch was created at `1874a26`.
+The phase 25 changes were committed and pushed to the same branch. **No PR or
+merge** has been used for phases 22–25.

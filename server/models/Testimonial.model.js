@@ -25,6 +25,10 @@ const testimonialSchema = new mongoose.Schema({
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.name)}&background=6366f1&color=fff&size=200`;
         }
     },
+    thumbnail: {
+        type: String,
+        trim: true
+    },
     email: {
         type: String,
         trim: true,
