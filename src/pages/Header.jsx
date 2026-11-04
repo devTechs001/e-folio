@@ -27,7 +27,10 @@ const NAV_SECTIONS = [
 const NavIcon = ({ icon: Icon, size = 18, className }) =>
     Icon ? <Icon size={size} className={className} strokeWidth={2} aria-hidden="true" /> : null;
 
-const getIsMobile = () => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+// Phase 28: the button and drawer are shown by Header.css / HeaderDrawer.css
+// at max-width: 1024px. Using 768px here made the button visible on
+// 769–1024px viewports while the drawer stayed gated off, so it never opened.
+const getIsMobile = () => (typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
 
 const Header = () => {
     const { isDarkMode, toggleTheme } = useTheme();
@@ -136,8 +139,9 @@ const Header = () => {
 
         const handleClickOutside = (event) => {
             // Close when clicking outside the mobile nav or the toggle button
-            const clickedInsideNav = event.target.closest('.mobile-nav');
-            const clickedOnToggle = event.target.closest('.menu-toggle-btn');
+            const target = event.target instanceof Element ? event.target : null;
+            const clickedInsideNav = target?.closest('.mobile-nav');
+            const clickedOnToggle = target?.closest('.menu-toggle-btn');
             if (!clickedInsideNav && !clickedOnToggle) {
                 setIsMenuOpen(false);
             }

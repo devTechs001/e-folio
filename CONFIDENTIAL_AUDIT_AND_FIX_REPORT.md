@@ -45,7 +45,11 @@ owner's explicit **"push changes now"** / **"push all"** instructions. The
 owner then said **"comit t mian"**, which reversed the earlier **"not yet"**
 restraint for PRs/merges: phases 22–27 were merged into `main` from the active
 branch via PR #7. PR #4 (an older, unrelated branch) was left open
-and untouched.
+and untouched. Phase 28 (§3ab) began on the new active branch
+`arena/c0cbab09-e-folio`, created from the merged `main`. Its CV work-history
+and mobile-drawer changes were committed and pushed there after the explicit
+**"push everything"** instruction. **No PR or merge** was requested or made
+for phase 28; PR #4 remains open and untouched.
 
 ---
 
@@ -62,8 +66,9 @@ and untouched.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
-| UI polish: fonts, card viewpoint, hero + drawer (phase 26) |
-| Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
+| UI polish: fonts, card viewpoint, hero + drawer (phase 26) | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
+| Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers |
+| CV work history + mobile drawer fix (phase 28) | the CV had no entry for the owner's current contract role; the mobile menu button appeared at 769–1024px (and, after phase 27, on desktop) but the drawer was gated at 768px, so clicking it did nothing | one new Experience entry using only owner-supplied facts, with the existing CV markup/CSS untouched; the JS breakpoint aligned to the 1024px CSS breakpoint, the modern button restyle scoped to mobile, and click-outside hardened for SVG targets |
 | Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
 | Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
@@ -1880,6 +1885,97 @@ to directly, history was not rewritten, and PR #4 (old branch) was left open.
 
 ---
 
+## 3ab. Phase 28 — current contract role on the CV, and the mobile drawer fix
+
+Requested as *"update my cv work history,,,curently working on a contraact
+as an it assistant manager t genco livestoc role:data entry,analysis,databse
+managemnt,security,data integrity,technical support and other it realted
+stuff,,push everything,,but illl need to preview the cv first(maintain its look
+and style,,juat add this new ,the mobile buutton fails to open the drawer"*.
+
+### CV work history — additive only
+
+`src/components/CVComponent.jsx` renders the Experience section from
+`DEFAULT_CV.experience` when the dashboard/public API is unavailable (the
+offline preview). One entry was added at the top of that array:
+
+| Field | Value |
+| --- | --- |
+| Title | `IT Assistant Manager (Contract)` |
+| Company | `Genco Livestock` (assumed spelling of *"genco livestoc"*) |
+| Period | `Present` — **no start year supplied, so none was invented** |
+| Location | empty — none supplied |
+| Description | data entry and analysis, database management, security, data integrity, technical support, and other IT-related duties |
+| Technologies | empty — no technology list was supplied |
+
+**Nothing else changed.** `CVComponent.css` was not touched, no CSS import was
+added, the existing `exp-item` / `exp-desc` / `exp-tech` / `tech-pill` markup
+is intact, and the two prior roles are preserved verbatim. The new entry has
+the same field shape as the old ones, so `normalize()` — which uses
+`fallback.experience[0]` as a template for API-backed entries — still
+produces identical fields for saved CV data. No metrics, achievements,
+technologies, dates or marketing claims were fabricated.
+
+Two deliberate limits: `public/CV2.pdf` is a separate static download linked
+from the Footer, Sitemap and About page, and was **not** regenerated; and when
+a live dashboard/public CV record exists, that saved record takes precedence
+over the fallback, so the owner may need to add the same role through the
+existing CV editor. Neither was verified against a live backend in this
+sandbox.
+
+### Mobile button fails to open the drawer — fixed
+
+Read-only diagnosis found a breakpoint mismatch, made worse by phase 27:
+
+- `Header.jsx` computed `isMobile` as `window.innerWidth <= 768`, while
+  `Header.css` shows both the button and the drawer at `max-width: 1024px`.
+  On 769–1024px viewports the button was visible but
+  `isMenuOpen && isMobile` was false, so no drawer or overlay ever rendered.
+- Phase 27's `HeaderModern.css` set `.menu-toggle-btn` to
+  `display: inline-flex` **unconditionally**, overriding `Header.css`'s
+  default `display: none` and Tailwind's `lg:hidden`. That exposed the button
+  on desktop too, where the drawer is correctly disabled — clicking it
+  appeared to do nothing.
+
+Fixes: `getIsMobile()` now uses the same 1024px breakpoint as the CSS; the
+modern button restyle is wrapped in `@media (max-width: 1024px)`; and the
+click-outside handler now guards `event.target instanceof Element` before
+calling `closest()`, so a click on a lucide SVG icon cannot throw. All routes,
+toggles, overlay, close behaviour, real icons and the `NAV_SECTIONS` data are
+unchanged.
+
+### Preview and push
+
+The Vite dev server was restarted on this branch (`node_modules` had to be
+reinstalled because the fresh checkout had none; the lockfile pinned a
+registry host that is not reachable here, so the install used the allowed
+npmjs registry with host replacement and **did not modify the lockfile**).
+`/cv` and the e2b preview host both return 200, so the owner can inspect the
+CV before and after the change at `/cv` in the live preview.
+
+Everything was committed and pushed to `arena/c0cbab09-e-folio` after the
+explicit **"push everything"** instruction. No PR, merge, direct `main`
+push, history rewrite, external issue/comment, DB write or offensive test was
+made in this phase.
+
+### Verification (static only)
+
+- `npm test` exit 0: **304** Node-only regression checks (**9** new in
+  `tests/cv-drawer.test.mjs`). `npm run check` exit 0: lint **0 errors**,
+  endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build and PWA
+  precache regenerated. Preview `/`, `/cv`, the header/CV modules and all
+  touched stylesheets return 200; `git diff --check` clean; masked secret scan
+  clean.
+- Protected project cards, showcase, seed/sample/backup files and NetGate
+  links were not touched; 14 grid + 2 showcase records and the 600 counter
+  floor are unchanged.
+- **Not verified:** a browser render of the CV with the new entry, the drawer
+  opening at 769–1024px or on a real touch device, and no live API/DB,
+  SMTP/LLM/Cloudinary call. Runtime confirmation is backlog 33.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2021,6 +2117,13 @@ to directly, history was not rewritten, and PR #4 (old branch) was left open.
     icon renders as an SVG, the desktop nav pills/active state look right, and
     the compact Skills cards still scroll both inside each card and as a
     group. No headless browser or touch device was available in this sandbox.
+33. Phase 28 follow-up: visually confirm the new Experience card on `/cv`
+    keeps the existing typography/spacing, and click the menu button at a
+    769–1024px viewport (and on a real phone) to confirm the drawer opens,
+    closes and traps body scroll. Also decide whether the same role should be
+    added to the dashboard-saved CV and to `public/CV2.pdf`. No headless
+    browser, touch device, live backend or PDF-generation tool was available
+    in this sandbox.
 
 ---
 
@@ -2072,4 +2175,8 @@ explicit **"push changes noe"** instruction, the phase 26 UI-polish changes
 pushed and **phases 22–27 were merged into `main` from the active branch via
 PR #7** with `gh pr merge <number> --merge`. That instruction reversed
 the earlier **"not yet"** restraint for PRs/merges. `main` was never pushed
-to directly and PR #4 remains open and untouched.
+to directly and PR #4 remains open and untouched. Phase 28 (§3ab) was
+committed and pushed to the new active branch `arena/c0cbab09-e-folio` after
+the explicit **"push everything"** instruction; **no PR or merge** was
+requested for it. `main` was not pushed to directly in this phase and PR #4
+remains open and untouched.

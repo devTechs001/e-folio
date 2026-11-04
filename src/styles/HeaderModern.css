@@ -92,16 +92,21 @@
 }
 .dashboard-btn { box-shadow: 0 12px 30px -18px rgba(139, 92, 246, 0.9); }
 
-.menu-toggle-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 13px;
-    border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 30%, transparent);
-    background: color-mix(in srgb, var(--mainColor, #00efff) 10%, rgba(255, 255, 255, 0.04));
-    color: var(--mainColor, #00efff);
+/* Phase 28: scoped to the same breakpoint as Header.css. An unconditional
+   `display` override here leaked the button onto desktop, where the drawer is
+   correctly disabled — clicking it appeared to do nothing. */
+@media (max-width: 1024px) {
+    .menu-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 30%, transparent);
+        background: color-mix(in srgb, var(--mainColor, #00efff) 10%, rgba(255, 255, 255, 0.04));
+        color: var(--mainColor, #00efff);
+    }
 }
 .menu-toggle-btn svg { width: 24px; height: 24px; }
 
