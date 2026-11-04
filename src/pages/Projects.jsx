@@ -11,6 +11,7 @@ import ImageLightbox from './ImageLightbox';
 import ProjectFilters from './ProjectFilters';
 import NexStoreCard from '../components/NexStoreCard';
 import ProjectShowcase from '../components/ProjectShowcase';
+import ProjectsExperience from '../components/ProjectsExperience';
 import ArchiveNote from '../components/ArchiveNote';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
@@ -35,9 +36,13 @@ const Projects = () => {
     const [scrollProgress, setScrollProgress] = useState(0);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+    const [copiedView, setCopiedView] = useState(false);
     const techScrollerRef = useRef(null);
     const projectsGridRef = useRef(null);
     const loadedOnceRef = useRef(false);
+    const searchInputRef = useRef(null);
 
     // Page-level scroll affordances only — the project cards are untouched.
     useEffect(() => {
@@ -65,7 +70,17 @@ const Projects = () => {
             });
         }, { threshold: 0.08 });
         document.querySelectorAll('[data-reveal]').forEach(node => observer.observe(node));
-        return () => observer.disconnect();
+        // A hidden tab / throttled preview iframe can delay the observer
+        // callback indefinitely. Never leave a section (especially the top
+        // headings) invisible because of an animation gate.
+        const revealFallback = window.setTimeout(() => {
+            document.querySelectorAll('[data-reveal]:not(.is-visible)')
+                .forEach(node => node.classList.add('is-visible'));
+        }, 1200);
+        return () => {
+            window.clearTimeout(revealFallback);
+            observer.disconnect();
+        };
     }, []);
 
     const updateTechScrollState = useCallback(() => {
@@ -94,6 +109,10 @@ const Projects = () => {
 
     const toggleTech = useCallback(tech => {
         setSelectedTechs(prev => prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]);
+    }, []);
+
+    const toggleTag = useCallback(tag => {
+        setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
     }, []);
 
     // `force` is used by polling, cross-tab refresh and dashboard broadcasts:
@@ -393,6 +412,18 @@ const Projects = () => {
             );
         }
 
+        // Tag filter (phase 23)
+        if (selectedTags.length > 0) {
+            result = result.filter(p =>
+                selectedTags.every(tag => (p.tags || []).includes(tag))
+            );
+        }
+
+        // Device-only favourites filter (phase 23)
+        if (showFavoritesOnly) {
+            result = result.filter(p => favorites.includes(p.id));
+        }
+
         // Sorting
         result.sort((a, b) => {
             switch (sortBy) {
@@ -406,13 +437,17 @@ const Projects = () => {
                     return (b.views || 0) - (a.views || 0);
                 case 'alphabetical':
                     return a.title.localeCompare(b.title);
+                case 'oldest':
+                    return new Date(a.completionDate || 0) - new Date(b.completionDate || 0);
+                case 'stack':
+                    return (b.technologies || []).length - (a.technologies || []).length;
                 default:
                     return 0;
             }
         });
 
         return result;
-    }, [projects, filter, searchQuery, sortBy, selectedTechs]);
+    }, [projects, filter, searchQuery, sortBy, selectedTechs, selectedTags, showFavoritesOnly, favorites]);
 
     const categories = useMemo(() => {
         const allCategories = projects.map(p => p.category).filter(Boolean);
@@ -446,6 +481,81 @@ const Projects = () => {
         { label: 'Total Likes', count: projectStats.totalLikes, display: projectStats.totalLikes }
     ].filter(card => card.count > 0)), [projectStats]);
 
+    // Phase 23: shareable filtered views, keyboard shortcuts and quick tools.
+    // These hooks read only values declared above, so no dependency array is
+    // evaluated in the temporal dead zone.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('q');
+        const category = params.get('category');
+        const sort = params.get('sort');
+        const view = params.get('view');
+        if (q) setSearchQuery(q);
+        if (category && categories.includes(category)) setFilter(category);
+        if (params.getAll('tech').length) setSelectedTechs(params.getAll('tech').filter(t => allTechnologies.includes(t)));
+        if (params.getAll('tag').length) setSelectedTags(params.getAll('tag').filter(t => allTags.includes(t)));
+        if (['featured', 'newest', 'popular', 'views', 'alphabetical', 'oldest', 'stack'].includes(sort)) setSortBy(sort);
+        if (['grid', 'list', 'masonry'].includes(view)) setViewMode(view);
+        if (params.get('favorites') === '1') setShowFavoritesOnly(true);
+    }, [categories, allTechnologies, allTags]);
+
+    useEffect(() => {
+        const onKeyDown = event => {
+            const node = event.target;
+            const typing = node?.tagName === 'INPUT' || node?.tagName === 'TEXTAREA' || node?.isContentEditable;
+            if (event.key === '/' && !typing) {
+                event.preventDefault();
+                searchInputRef.current?.focus();
+            }
+            if (event.key === 'Escape') {
+                setSelectedProject(null);
+                setLightboxImage(null);
+                if (document.activeElement === searchInputRef.current) setSearchQuery('');
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, []);
+
+    const copyViewLink = useCallback(() => {
+        const params = new URLSearchParams();
+        if (searchQuery) params.set('q', searchQuery);
+        if (filter !== 'all') params.set('category', filter);
+        selectedTechs.forEach(tech => params.append('tech', tech));
+        selectedTags.forEach(tag => params.append('tag', tag));
+        if (sortBy !== 'featured') params.set('sort', sortBy);
+        if (viewMode !== 'grid') params.set('view', viewMode);
+        if (showFavoritesOnly) params.set('favorites', '1');
+        const query = params.toString();
+        const base = `${window.location.origin}${window.location.pathname}#projects`;
+        const link = query ? `${base}?${query}` : base;
+        if (!navigator.clipboard?.writeText) return;
+        navigator.clipboard.writeText(link).then(() => {
+            setCopiedView(true);
+            window.setTimeout(() => setCopiedView(false), 2000);
+        }).catch(() => setCopiedView(false));
+    }, [searchQuery, filter, selectedTechs, selectedTags, sortBy, viewMode, showFavoritesOnly]);
+
+    const surpriseMe = useCallback(() => {
+        const pool = filteredAndSortedProjects.length ? filteredAndSortedProjects : projects;
+        if (!pool.length) return;
+        setSelectedProject(pool[Math.floor(Math.random() * pool.length)]);
+    }, [filteredAndSortedProjects, projects]);
+
+    const resetAllFilters = useCallback(() => {
+        setSearchQuery('');
+        setFilter('all');
+        setSelectedTechs([]);
+        setSelectedTags([]);
+        setShowFavoritesOnly(false);
+        setSortBy('featured');
+        setViewMode('grid');
+    }, []);
+
+    const backToTop = useCallback(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
     if (loading) {
         return (
             <section className="min-h-screen bg-bgColor flex items-center justify-center">
@@ -476,8 +586,10 @@ const Projects = () => {
                 style={{ transform: `scaleX(${scrollProgress})` }}
                 aria-hidden="true"
             />
-            {/* Enhanced Header with Stats */}
-            <div className="max-w-7xl mx-auto mb-16" data-reveal>
+            {/* Enhanced Header with Stats — phase 23 remodel.
+                The top section is deliberately NOT gated by data-reveal:
+                headings must render immediately, never wait on an observer. */}
+            <div className="portfolio-hero max-w-7xl mx-auto mb-16">
                 <div className="text-center mb-12 projects-header">
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
                         Latest <span className="text-mainColor gradient-text">Projects</span>
@@ -510,6 +622,30 @@ const Projects = () => {
                     )}
                 </div>
 
+                {/* Vast page-level feature layer: headings, metrics, spotlight,
+                    category browser, technology/tag indexes, compare, timeline,
+                    quick tools and keyboard shortcuts. Cards stay untouched. */}
+                <ProjectsExperience
+                    projects={projects}
+                    filtered={filteredAndSortedProjects}
+                    categories={categories}
+                    filter={filter}
+                    onCategoryChange={setFilter}
+                    selectedTechs={selectedTechs}
+                    onTechToggle={toggleTech}
+                    selectedTags={selectedTags}
+                    onTagToggle={toggleTag}
+                    favorites={favorites}
+                    showFavoritesOnly={showFavoritesOnly}
+                    onToggleFavoritesOnly={() => setShowFavoritesOnly(prev => !prev)}
+                    onOpenProject={setSelectedProject}
+                    onCopyView={copyViewLink}
+                    copiedView={copiedView}
+                    onSurpriseMe={surpriseMe}
+                    onResetFilters={resetAllFilters}
+                    onBackToTop={backToTop}
+                />
+
                 {/* Search and Controls */}
                 <div className="mb-8 projects-toolbar" data-reveal>
                     <div className="projects-controls flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
@@ -517,6 +653,7 @@ const Projects = () => {
                         <div className="search-container w-full md:w-96">
                             <i className="fa-solid fa-search search-icon"></i>
                             <input
+                                ref={searchInputRef}
                                 type="text"
                                 placeholder="Search projects, technologies, tags..."
                                 value={searchQuery}
@@ -571,6 +708,8 @@ const Projects = () => {
                                 <option value="popular">Most Popular</option>
                                 <option value="views">Most Viewed</option>
                                 <option value="alphabetical">A-Z</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="stack">Largest Stack</option>
                             </select>
 
                             {/* Advanced Filters Toggle */}

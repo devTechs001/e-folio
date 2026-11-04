@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -37,7 +37,8 @@ explicit **"push to min, merge"** instruction. Phase 21 (§3u: the Projects
 render-crash fix) was merged via **PR #6** (merge commit `8feaa76`) after the
 explicit **"push, merge"** instruction. Phase 22 (§3v: full Projects feature
 restoration) is **local only** on the active branch
-`arena/b1b14834-e-folio` — no push, PR or merge has been used for it.
+`arena/b1b14834-e-folio` — no push, PR or merge has been used for phases
+22–23 (§3v–§3w: the full feature restoration and the page remodel).
 
 ---
 
@@ -54,6 +55,7 @@ restoration) is **local only** on the active branch
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
 | Projects page features (phase 22) | six of the fourteen original project cards were still missing after the fallback array was stripped, and the offline copy dropped `duration`, `challenges` and `achievements` so those card/modal sections were always empty | all six owner projects appended verbatim from local Git history with their working URLs and the 600 display floor; the saved copy now carries the detail fields; 14 grid + 2 showcase = 16 cards, all filters/views/sorts/sync controls retained |
 | Projects render crash (phase 21) | the public Projects page threw `ReferenceError: Cannot access 'allTechnologies' before initialization` on every render, blanking the landing page | the early scroller effect now depends on the already-initialised `projects.length`; a repo-wide hook-dependency-order regression test prevents any hook variable being read before its declaration |
 | Review submission + sync (phase 20) | post-save email/logging failures turned an already-saved review into a 500, step-3 ratings sent nested objects, `new_review` went to a room no socket joined, and there was no offline path | normalised input, success returned before isolated side effects, numeric star payloads, canonical id/status broadcasts on the public namespace, cross-tab signals and polling, and an honest device-only outbox that never claims a queued review was submitted |
@@ -1429,6 +1431,77 @@ identified two concrete losses; **no UI control had actually been deleted**.
 
 ---
 
+## 3w. Phase 23 — remodel the Projects page with a vast feature set
+
+The owner rejected another narrow question and asked to "remodel the projects
+page with more features ... remake with vast features", after noting that the
+top-section headings were "not yet" right. A read-only check confirmed the
+heading markup existed in every historical version, but the whole top section
+was wrapped in `data-reveal`, whose CSS sets `opacity: 0` until an
+`IntersectionObserver` fires. In a throttled preview iframe or hidden tab that
+callback can be delayed indefinitely, so the headings (and the toolbar, tech
+scroller and CTA) never appear.
+
+### Fix — visible headings and a fail-safe
+
+- `src/pages/Projects.jsx`: the top section is now a `portfolio-hero` wrapper
+  with **no** reveal gate, so `Latest Projects`, the subtitle, the featured
+  cards and the four stat labels render immediately. A 1.2 s `revealFallback`
+  adds `is-visible` to any remaining `[data-reveal]` node, so no other section
+  can stay invisible. The reveal animation itself is retained for sections
+  below the fold and still respects `prefers-reduced-motion`.
+- New `src/components/ProjectsExperience.jsx` + `src/styles/ProjectsExperience.css`:
+  a page-level experience layer (the project cards are NOT touched).
+
+### New features (all values derived from the 14 published records)
+
+| Feature | Behaviour |
+| --- | --- |
+| Top-section headings | "Portfolio at a glance", "Featured work", "Explore the catalogue", "Tools & shortcuts", "Compare projects", "Project timeline", "Technology index", "Popular tags" — semantic `<h3>`/`<h4>` with `aria-labelledby` |
+| Derived metrics | projects, featured, categories, technologies, tags, years active, average stack size; zero values omitted |
+| Featured spotlight | first featured record with its real image, description, technologies and live link, plus "View details" |
+| Tabs | Spotlight / Recently completed / Browse by category |
+| Category browser | counts derived from records; click sets or clears the category filter |
+| Technology + tag indexes | frequency-ranked chips with counts, expandable, toggling real filters |
+| Filter upgrades | tag filtering, device-only favourites filter, "Oldest First" and "Largest Stack" sorts |
+| Compare | pick up to 3 projects; table compares published category, status, technologies, tags, views, likes, team size, duration and completion date |
+| Timeline | projects grouped by completion year with counts and open-detail buttons |
+| Quick tools | favourites toggle, surprise-me, copy-this-view, timeline/compare toggles, reset filters, back to top |
+| Shareable views | URL parameters (`q`, `category`, `tech`, `tag`, `sort`, `view`, `favorites`) are read on load and copied with `navigator.clipboard`; no success is claimed if the write fails |
+| Keyboard | `/` focuses search, `Escape` closes a project or clears the search; live result count uses `aria-live` |
+
+### Deliberately unchanged
+
+- `src/pages/ProjectCard.jsx`, `src/components/ProjectCard.jsx`,
+  `src/styles/ProjectCard.css` and every `.projects-grid` card selector.
+- All 14 grid records, 2 showcase cards, working links, the protected NetGate
+  link, the 600 display floor, no-zero rule, socket/cross-tab/poll sync,
+  review submission and the TDZ fix.
+- No invented URL, metric, achievement or live-status claim: the new component
+  contains no hard-coded `http` link and no numeric counter literal.
+- The separate project-links directory stays removed (phase-18 decision).
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**,
+  endpoint parity `--strict` **0 live code gaps**, static security audit
+  `--strict` **HIGH/MED/LOW 0**, **251** Node-only regression checks (9 new),
+  build **26.64s**, PWA **217 precache entries (7050.10 KiB)**. The built
+  JavaScript contains every new heading and the reveal fallback selector;
+  the Vite dev preview serves `/`, the new component and its stylesheet with
+  200. `tests/projects-remodel.test.mjs` guards the headings, the reveal
+  fallback, every new and every pre-existing feature, the derived-data
+  guarantee and the untouched card interface.
+- `git diff --check` clean; masked secret scan clean (0 findings across the
+  7 changed files); NetGate link counts unchanged (3 / 1 / 1 / 3).
+- **Not verified:** a real browser render (no headless browser in this
+  sandbox). Runtime confirmation of the new tabs, compare table, timeline,
+  clipboard and keyboard behaviour is backlog 28. No push, PR, merge,
+  external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or
+  offensive testing for this phase.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1541,6 +1614,12 @@ identified two concrete losses; **no UI control had actually been deleted**.
     a live URL with an older card, and whether the separate project-links
     directory should return (currently removed by the owner's phase-18
     decision). No browser or database was available in this sandbox.
+28. Phase 23 follow-up: in a browser, confirm the new top-section headings
+    are visible immediately, then exercise the spotlight tabs, category and
+    tag chips, the compare table, the timeline, favourites-only, the copied
+    view URL on a fresh load, and the `/` and `Escape` shortcuts. Confirm
+    the card grid, modal and lightbox still behave. No headless browser was
+    available in this sandbox.
 
 ---
 
