@@ -10,7 +10,7 @@
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
 | Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -35,10 +35,11 @@ counter synchronisation with a 600 minimum, and the review-submission repair)
 were merged into `origin/main` via **PR #5** (merge commit `928c02b`) after the
 explicit **"push to min, merge"** instruction. Phase 21 (§3u: the Projects
 render-crash fix) was merged via **PR #6** (merge commit `8feaa76`) after the
-explicit **"push, merge"** instruction. Phase 22 (§3v: full Projects feature
-restoration) is **local only** on the active branch
-`arena/b1b14834-e-folio` — no push, PR or merge has been used for phases
-22–23 (§3v–§3w: the full feature restoration and the page remodel).
+explicit **"push, merge"** instruction. Phases 22–24 (§3v–§3x: the full
+Projects feature restoration, the page remodel, and the Lab subsystem review)
+are **local only** on the active branch `arena/b1b14834-e-folio` — no push,
+PR or merge has been used for them. The owner explicitly said **"not yet"**
+to a further push.
 
 ---
 
@@ -55,6 +56,7 @@ restoration) is **local only** on the active branch
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
 | Projects page features (phase 22) | six of the fourteen original project cards were still missing after the fallback array was stripped, and the offline copy dropped `duration`, `challenges` and `achievements` so those card/modal sections were always empty | all six owner projects appended verbatim from local Git history with their working URLs and the 600 display floor; the saved copy now carries the detail fields; 14 grid + 2 showcase = 16 cards, all filters/views/sorts/sync controls retained |
 | Projects render crash (phase 21) | the public Projects page threw `ReferenceError: Cannot access 'allTechnologies' before initialization` on every render, blanking the landing page | the early scroller effect now depends on the already-initialised `projects.length`; a repo-wide hook-dependency-order regression test prevents any hook variable being read before its declaration |
@@ -1502,6 +1504,106 @@ scroller and CTA) never appear.
 
 ---
 
+## 3x. Phase 24 — review and repair the Lab subsystem
+
+Requested as "review the labs". Read-only review covered `src/pages/Lab.jsx`,
+`src/components/dashboard/LabManager.jsx`, `src/services/publicContent.js`,
+`src/services/socket.service.js`, `src/data/publicSnapshot.json` (the
+`labProjects` section), `src/data/labSamples.json`,
+`server/scripts/seedLabSamples.js`, `server/routes/public.routes.js`,
+`server/controllers/public.controller.js`, both skills/interests routers and
+controllers, the `/public-projects` socket namespace, `src/styles/Lab.css` and
+`tests/lab-page.test.mjs`. No database, browser, external service or live
+endpoint was exercised.
+
+### Findings
+
+| # | Finding | Impact |
+| --- | --- | --- |
+| 1 | `GET /api/public/projects?status=all&limit=100` returns all 14 portfolio records with `status: completed`. `Lab.jsx` keeps only `live / beta / development / experimental`, so **every card disappears whenever the backend is up**. When the backend is down, `loadPublicSection(..., { fallbackSection: 'labProjects' })` supplies four saved experiments — the page silently flips between empty and populated. | Public Lab looks broken/empty with a healthy API; different content online vs offline. |
+| 2 | `Lab.jsx` subscribed to `skills_changed` and `interests_changed`. **Neither event is emitted anywhere in the server**; the skills and interests controllers contain no `emit()` at all. | Dashboard skill/hobby edits never reached the public Lab. |
+| 3 | Those listeners used `useSocket()`, whose root socket exists only for signed-in users. No public-namespace subscription, no polling, no `visibilitychange` guard, no cross-tab notice on the Lab page. | Anonymous visitors never saw live updates. |
+| 4 | `lab-sample-badge` ("Sample · deletable") and the "Samples" metric rendered for samples regardless of ownership; the owner footer mentions database records. | Sample/storage wording shown to public visitors (phase-17 rule). |
+| 5 | `LabManager` claimed "edits here appear there immediately" while dispatching only a same-tab `settingsChanged` event. | Misleading; edits in another tab/device never refreshed. |
+| 6 | `public.controller.getProjects` selected `createdAt` but not `updatedAt`, although `Lab.jsx` renders `formatDistanceToNow(project.updatedAt)`. | "Updated …" metadata was always absent for live data. |
+
+### Fixes
+
+- **`src/pages/Lab.jsx`**: the loader now merges live lab-status projects with
+  `getSnapshotSection('labProjects')` — the same real local saved copy used for
+  offline visits — deduplicated by title. Both sources are repository records;
+  nothing is invented. `dataStatus` / `contentSource` are marked as a saved-copy
+  view whenever saved records were added, and only a fully live section is
+  cached, so a recovered backend is never masked.
+- **`server/utils/labEvents.js`** (new): `emitLabChanged(section)` broadcasts
+  `lab:changed` with **only** a section name and timestamp on the read-only
+  `/public-projects` namespace AND the root namespace. No skill values,
+  interest text, owner details or credentials are included.
+- **`server/middleware/labSync.middleware.js`** (new): a success-only router
+  middleware (`res.statusCode < 400 && body?.success !== false`) publishes the
+  signal after owner writes. Mounted once on `skills.routes.js` and
+  `interests.routes.js`, so every current and future mutation is covered
+  without duplicating broadcast code. A socket failure is caught and can never
+  turn a successful write into a 500.
+- **`src/services/socket.service.js`**: new ref-counted `subscribePublicLab`
+  subscription alongside the existing public project/review subscribers.
+- **`src/pages/Lab.jsx`**: replaced the dead event names with the canonical
+  `lab:changed`, `settings:updated` and existing project broadcasts; added
+  `subscribePublicProjects`, `subscribePublicLab`, `subscribeProjectsChanged`,
+  `settingsChanged`, a hidden-tab-aware 30 s poll and a `visibilitychange`
+  refresh. Owner-only sample badge and Samples metric; sample deletion now
+  publishes a cross-tab notice.
+- **`src/components/dashboard/LabManager.jsx`**: add / delete / delete-all
+  publish cross-tab notices; the closing note now describes live signals,
+  cross-tab notices and the 30 s refresh instead of claiming instant delivery.
+- **`server/controllers/public.controller.js`**: `updatedAt` added to the
+  public project projection so the Lab's relative-time metadata can render.
+
+### Deliberately unchanged
+
+- The phase-12/17 visitor-facing copy itself (`ArchiveNote`'s "A selection
+  from the portfolio archive", the "From the portfolio archive" state badge,
+  and the "Real data · Skills / Hobbies" eyebrows). These are regression-
+  guarded, visitor-friendly labels for a saved-copy view, not developer,
+  database, HTTP or storage diagnostics. A live backend that needs saved
+  experiment records is now labelled **`partial`**, never `archive`, so no
+  fake source status is shown. The genuine sample/storage wording (the badge,
+  the Samples metric and the owner footer) is owner-only.
+- `src/data/labSamples.json`, `src/data/testimonialSamples.json`,
+  `server/scripts/seedLabSamples.js`, `TestimonialSamplesPanel.jsx`, report §3e
+  and the protected `https://net-gate-portal.netlify.app/` link (counts remain
+  3 / 1 / 1 / 3).
+- The 14 grid projects, 2 showcase cards, the 600 counter floor, card
+  interface/CSS, phase-19/20/21/22/23 work, and the separate project-links
+  directory (still removed per phase 18).
+- No fabricated experiment, metric, achievement or live-status claim, and no
+  zero value shown to the public.
+
+### Verification (static only)
+
+- `npm test` exit 0: **261** Node-only regression checks (**10** new in
+  `tests/lab-review.test.mjs`). That suite guards the merge, the saved-copy
+  source, the anonymous-safe subscriptions, the signal payload, success-only
+  middleware, dashboard notices, owner-only wording and the protected files.
+- `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity
+  `--strict` **0 live code gaps**, static security audit `--strict`
+  **HIGH 0 / MEDIUM 0 / LOW 0**, production build **27.53s**, PWA **218
+  precache entries (7051.40 KiB)**. The built client bundles contain the new
+  `lab:changed` signal as well as the phase-23 markers; the Vite dev preview
+  serves `/`, `Lab.jsx`, `LabManager.jsx` and `socket.service.js` with 200.
+- `git diff --check` clean; masked secret scan over the **12** changed files
+  found **0** findings. Protected NetGate link counts remain **3 / 1 / 1 / 3**
+  in the canonical order used by earlier sections (`labSamples.json`,
+  `testimonialSamples.json`, `testimonials` backup JSON, `publicSnapshot.json`);
+  the shorthand **3 / 1 / 3 / 1** seen in earlier scan output was simply those
+  same four files listed in a different order, not a data change.
+- **Not verified:** a live Express/Mongo run, a real socket delivery, a browser
+  render, or an actual owner write to skills/interests. Runtime confirmation is
+  backlog 29. No push, PR, merge, external write, DB write, runtime
+  Mongo/LLM/SMTP/Cloudinary call or offensive testing for this phase.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1620,6 +1722,14 @@ scroller and CTA) never appear.
     view URL on a fresh load, and the `/` and `Escape` shortcuts. Confirm
     the card grid, modal and lightbox still behave. No headless browser was
     available in this sandbox.
+29. Phase 24 follow-up: with a live backend, seed the Lab samples, edit a
+    skill and an interest, and confirm the `lab:changed` signal refreshes an
+    anonymous public Lab page; confirm a working backend never leaves the Lab
+    grid empty, that `updatedAt` metadata appears, and that owner-only sample
+    wording stays hidden from visitors. Also decide whether skills/interests
+    writes should carry server-side idempotency or rate limiting beyond the
+    existing owner JWT. No live database, socket or browser was available
+    in this sandbox.
 
 ---
 
@@ -1660,6 +1770,6 @@ from `arena/e91ed034-e-folio`, opened as
 with merge commit `8feaa760472b6f6facecf4750fcb99c676af1c71` at
 `2026-11-04T10:11:09Z`. The first merge call returned a transient GitHub
 GraphQL error; the PR was confirmed still `OPEN` with `main` unchanged before
-a single retry succeeded. PR #4 remains open and untouched. Phase 22 (§3v) is
-a local commit on `arena/b1b14834-e-folio` and has **not** been pushed or
-merged.
+a single retry succeeded. PR #4 remains open and untouched. Phases 22–24
+(§3v–§3x) are local commits on `arena/b1b14834-e-folio` and have **not** been
+pushed or merged; the owner said **"not yet"** to a further push.

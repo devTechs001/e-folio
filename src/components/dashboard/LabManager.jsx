@@ -9,6 +9,7 @@ import { useNotifications } from '../NotificationSystem';
 import ApiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
 import labSampleData from '../../data/labSamples.json';
+import { publishProjectsChanged } from '../../utils/projectSync';
 
 const LAB_SAMPLE_TAG = labSampleData.tag;
 const LAB_STATUSES = ['live', 'beta', 'development', 'experimental'];
@@ -86,6 +87,7 @@ const LabManager = () => {
             }
             notifySuccess(`Added ${created} sample experiment(s)${skipped ? `, ${skipped} already present` : ''}.`);
             window.dispatchEvent(new CustomEvent('settingsChanged'));
+            publishProjectsChanged();
             await load();
         } catch (error) {
             notifyError(error?.message || 'Could not add the sample experiments.');
@@ -106,6 +108,7 @@ const LabManager = () => {
             setProjects(prev => prev.filter(p => (p.id || p._id) !== id));
             notifySuccess('Sample experiment deleted.');
             window.dispatchEvent(new CustomEvent('settingsChanged'));
+            publishProjectsChanged();
         } catch (error) {
             notifyError(error?.message || 'Could not delete the sample experiment.');
         } finally {
@@ -128,6 +131,7 @@ const LabManager = () => {
             }
             notifySuccess(`Deleted ${removed} sample experiment(s).`);
             window.dispatchEvent(new CustomEvent('settingsChanged'));
+            publishProjectsChanged();
             await load();
         } catch (error) {
             notifyError(error?.message || 'Could not delete all samples.');
@@ -311,7 +315,7 @@ const LabManager = () => {
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-emerald-300">
-                    <CheckCircle2 size={14} /> The public Lab page reads these same endpoints, so edits here appear there immediately.
+                    <CheckCircle2 size={14} /> The public Lab page reads these same endpoints; edits reach it through live signals, cross-tab notices and its 30-second refresh.
                 </div>
             </div>
         </DashboardLayout>

@@ -87,7 +87,7 @@ exports.getProjects = asyncHandler(async (req, res) => {
     
     const projects = await Project.find(filter)
         .sort(sortOptions)
-        .select('title description thumbnail technologies category links tags featured views likes status visibility createdAt images fullDescription completionDate teamSize challenges achievements metrics pinned')
+        .select('title description thumbnail technologies category links tags featured views likes status visibility createdAt updatedAt images fullDescription completionDate teamSize challenges achievements metrics pinned')
         .limit(parseInt(limit))
         .lean();
 

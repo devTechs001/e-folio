@@ -8,6 +8,7 @@ const {
     deleteInterest
 } = require('../controllers/interests.controller');
 const { auth, isOwner } = require('../middleware/auth.middleware');
+const { labSync } = require('../middleware/labSync.middleware');
 
 // Validation rules
 const interestsValidation = [
@@ -20,6 +21,8 @@ const interestsValidation = [
 // All routes require authentication and owner access
 router.use(auth);
 router.use(isOwner);
+// Phase 24: tell public Lab pages to refresh after a successful write.
+router.use(labSync('interests'));
 
 router.route('/')
     .get(getInterests)
