@@ -12,7 +12,9 @@ import { useSocket } from '../contexts/SocketContext';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import api from '../services/api.service';
 import ArchiveNote from '../components/ArchiveNote';
-import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import socketService from '../services/socket.service';
+import { subscribeProjectsChanged, publishProjectsChanged } from '../utils/projectSync';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import ProjectModal from './ProjectModal';
 import '../styles/Lab.css';
@@ -55,7 +57,7 @@ const Lab = () => {
   const [hobbies, setHobbies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [contentSource, setContentSource] = useState('');
-  const [dataStatus, setDataStatus] = useState('loading'); // live | archive | loading
+  const [dataStatus, setDataStatus] = useState('loading'); // live | partial | archive | loading
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [liveUpdate, setLiveUpdate] = useState(false);
@@ -87,9 +89,22 @@ const Lab = () => {
       ]);
       if (token !== loadTokenRef.current) return;
 
-      const realProjects = Array.isArray(projectsResponse.projects)
+      const liveLabProjects = Array.isArray(projectsResponse.projects)
         ? projectsResponse.projects.filter(p => LAB_STATUSES.includes(String(p.status || '').toLowerCase()))
         : [];
+      // Phase 24: a working backend often publishes only `completed`
+      // portfolio projects, which the Lab's experiment statuses exclude.
+      // Complete the section from the SAME local saved copy used for offline
+      // visits, so the Lab never flips between empty (API up) and four
+      // experiments (API down). Both sources are real local records.
+      const savedLab = getSnapshotSection('labProjects');
+      const savedLabProjects = (Array.isArray(savedLab.projects) ? savedLab.projects : [])
+        .filter(p => LAB_STATUSES.includes(String(p.status || '').toLowerCase()));
+      const identity = project => String(project.title || '').trim().toLowerCase();
+      const seen = new Set(liveLabProjects.map(identity));
+      const savedAdditions = savedLabProjects.filter(p => identity(p) && !seen.has(identity(p)));
+      const realProjects = [...liveLabProjects, ...savedAdditions];
+      const usedSavedCopy = savedAdditions.length > 0;
       const realSkills = Array.isArray(skillsResponse.skills) ? skillsResponse.skills : [];
       const realHobbies = Array.isArray(hobbiesResponse.interests)
         ? hobbiesResponse.interests
@@ -100,11 +115,14 @@ const Lab = () => {
       setHobbies(realHobbies);
 
       const allLive = [projectsResponse, skillsResponse, hobbiesResponse].every(isLiveContent);
-      setDataStatus(allLive ? 'live' : 'archive');
-      setContentSource(allLive ? 'live' : 'snapshot');
-      // Only cache genuine live data, so a saved copy never masks a backend
-      // that comes back online.
-      if (allLive) {
+      const fullyLive = allLive && !usedSavedCopy;
+      // `partial` = live endpoints answered, but saved experiment records
+      // completed the grid. Never label a healthy backend as an archive.
+      setDataStatus(fullyLive ? 'live' : allLive ? 'partial' : 'archive');
+      setContentSource(fullyLive ? 'live' : 'snapshot');
+      // Only cache a fully live section, so a saved copy never masks a
+      // backend that comes back online.
+      if (fullyLive) {
         cacheService.set(CACHE_KEY, {
           projects: realProjects, skills: realSkills, hobbies: realHobbies
         }, CACHE_TTL.TEN_MINUTES);
@@ -122,6 +140,11 @@ const Lab = () => {
     }
   }, []);
 
+  const refresh = useCallback(() => {
+    cacheService.delete(CACHE_KEY);
+    load(true);
+  }, [load]);
+
   useEffect(() => {
     load();
     return () => { loadTokenRef.current++; };
@@ -131,14 +154,39 @@ const Lab = () => {
     if (!connected) return;
     const handleChanged = () => {
       setLiveUpdate(true);
-      cacheService.delete(CACHE_KEY);
-      load(true);
+      refresh();
       setTimeout(() => setLiveUpdate(false), 2000);
     };
-    const events = ['project_changed', 'project_updated', 'skills_changed', 'interests_changed'];
+    // `skills_changed` / `interests_changed` were never emitted by the
+    // server; the canonical Lab signal is `lab:changed` (plus the existing
+    // project broadcasts and the settings namespace event).
+    const events = ['project_changed', 'project_updated', 'lab:changed', 'settings:updated'];
     events.forEach(event => on(event, handleChanged));
     return () => events.forEach(event => off(event, handleChanged));
-  }, [connected, on, off, load]);
+  }, [connected, on, off, refresh]);
+
+  // Phase 24: the root socket only exists for signed-in users. These
+  // anonymous-safe signals, cross-tab notices and a hidden-tab-aware poll
+  // keep every public Lab page in sync with dashboard edits.
+  useEffect(() => socketService.subscribePublicProjects(refresh), [refresh]);
+  useEffect(() => socketService.subscribePublicLab(refresh), [refresh]);
+  useEffect(() => subscribeProjectsChanged(refresh), [refresh]);
+  useEffect(() => {
+    window.addEventListener('settingsChanged', refresh);
+    return () => window.removeEventListener('settingsChanged', refresh);
+  }, [refresh]);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+    const poll = window.setInterval(() => {
+      if (!document.hidden) refresh();
+    }, 30000);
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [refresh]);
 
   const metrics = useMemo(() => projects.reduce((acc, p) => {
     const s = String(p.status || '').toLowerCase();
@@ -155,8 +203,8 @@ const Lab = () => {
     { key: 'live', icon: Rocket, value: metrics.live || 0, label: 'Live' },
     { key: 'beta', icon: Wrench, value: metrics.beta || 0, label: 'Beta' },
     { key: 'development', icon: Globe, value: metrics.development || 0, label: 'In Development' },
-    { key: 'samples', icon: Trash2, value: sampleCount, label: 'Samples' }
-  ].filter(card => card.value > 0)), [projects.length, metrics, sampleCount]);
+    { key: 'samples', icon: Trash2, value: owner ? sampleCount : 0, label: 'Samples' }
+  ].filter(card => card.value > 0)), [projects.length, metrics, sampleCount, owner]);
 
   const skillGroups = useMemo(() => skills.reduce((acc, skill) => {
     const key = skill.category || skill.type || 'Other';
@@ -193,6 +241,7 @@ const Lab = () => {
       cacheService.delete(CACHE_KEY);
       cacheService.delete('public_projects');
       window.dispatchEvent(new CustomEvent('settingsChanged'));
+      publishProjectsChanged();
       if (selectedProject && (selectedProject.id || selectedProject._id) === id) setSelectedProject(null);
     } catch (error) {
       window.alert(error?.message || 'Could not delete the sample. Open the Lab dashboard and try again.');
@@ -356,7 +405,7 @@ const Lab = () => {
                     <span className={`lab-status lab-status-${statusClass}`}>
                       <StatusIcon size={12} /> {statusLabel}
                     </span>
-                    {sample && <span className="lab-sample-badge">Sample · deletable</span>}
+                    {owner && sample && <span className="lab-sample-badge">Sample · deletable</span>}
                   </div>
                   <div className="lab-body">
                     <h3 className="lab-title group-hover:text-cyan-400 transition flex items-center justify-between">

@@ -143,7 +143,8 @@ check('dashboard mutations publish a refresh signal', () => {
 check('every published counter is at least 600 in the seed and the saved copy', () => {
     const seed = read('scripts/seed-projects.js');
     const snapshot = json('src/data/publicSnapshot.json').sections.projects.projects;
-    assert.equal(snapshot.length, 8);
+    const seedCount = (read('scripts/seed-projects.js').match(/title: "/g) || []).length;
+    assert.equal(snapshot.length, seedCount);
     for (const project of snapshot) {
         assert.ok(project.likes >= 600, `${project.title} likes`);
         assert.ok(project.views >= 600, `${project.title} views`);

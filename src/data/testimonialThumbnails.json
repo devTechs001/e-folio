@@ -1,0 +1,6 @@
+{
+  "description": "Additive local thumbnail overrides for testimonial portraits. Canonical testimonial records in testimonialSamples.json and the backup files stay untouched; the public page resolves these by name. Values are workspace-relative public asset URLs.",
+  "byName": {
+    "Sarah Johnson": "/assets/images/testimonials/sarah-johnson-thumbnail.jpg"
+  }
+}

@@ -17,6 +17,7 @@ const {
     deleteSkillGroup
 } = require('../controllers/skills.controller');
 const { auth: protect } = require('../middleware/auth.middleware');
+const { labSync } = require('../middleware/labSync.middleware');
 
 // Validation rules
 const skillValidation = [
@@ -27,6 +28,8 @@ const skillValidation = [
 
 // All routes require authentication
 router.use(protect);
+// Phase 24: tell public Lab pages to refresh after a successful write.
+router.use(labSync('skills'));
 
 // Group routes (must be before /:id to prevent 'groups' being matched as an ID)
 router.route('/groups')

@@ -3,12 +3,17 @@ import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import { useAuth } from '../contexts/AuthContext';
 import sampleDataset from '../data/testimonialSamples.json';
+import thumbnailOverrides from '../data/testimonialThumbnails.json';
 import ArchiveNote from '../components/ArchiveNote';
 import { loadPublicSection, getSnapshotSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Testimonials.css';
 
 const SAMPLE_TAG = sampleDataset.tag;
+// A local thumbnail takes precedence when one exists for this testimonial;
+// every other record keeps its existing portrait untouched.
+const thumbnailFor = (item) =>
+  item?.thumbnail || thumbnailOverrides.byName[item?.name] || item?.avatar;
 const PREVIEW_KEY = 'testimonial_preview';
 // Versioned so an older browser cache can never reintroduce pre-phase-3
 // invented testimonial records.
@@ -683,9 +688,11 @@ const Testimonials = () => {
                     {/* Card Header */}
                     <div className="card-header">
                       <img
-                        src={testimonial.avatar}
+                        src={thumbnailFor(testimonial)}
                         alt={testimonial.name}
                         className="card-avatar"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <div className="card-badges">
                         {isSampleTestimonial(testimonial) && (
@@ -784,9 +791,11 @@ const Testimonials = () => {
                     onClick={() => openModal(testimonial)}
                   >
                     <img
-                      src={testimonial.avatar}
+                      src={thumbnailFor(testimonial)}
                       alt={testimonial.name}
                       className="list-avatar"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="list-content">
                       <div className="list-header">
@@ -867,9 +876,11 @@ const Testimonials = () => {
                         </blockquote>
                         <div className="carousel-client">
                           <img
-                            src={testimonial.avatar}
+                            src={thumbnailFor(testimonial)}
                             alt={testimonial.name}
                             className="carousel-avatar"
+                            loading="lazy"
+                            decoding="async"
                           />
                           <div>
                             <h4 className="carousel-name">{testimonial.name}</h4>
@@ -974,7 +985,7 @@ const Testimonials = () => {
 
             <div className="modal-header">
               <img
-                src={selectedTestimonial.avatar}
+                src={thumbnailFor(selectedTestimonial)}
                 alt={selectedTestimonial.name}
                 className="modal-avatar"
               />

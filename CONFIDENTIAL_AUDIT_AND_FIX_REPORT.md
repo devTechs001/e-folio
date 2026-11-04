@@ -9,8 +9,8 @@
 |---|---|
 | Date | 2026-11-03 (Africa/Nairobi) |
 | Repository | `devTechs001/e-folio` (local checkout only) |
-| Branch | `arena/e91ed034-e-folio` (from `main` `928c02b`) |
-| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix |
+| Branch | `arena/b1b14834-e-folio` (from `main` `8feaa76`) |
+| Scope | endpoint review → lagging issues → dashboards → real-time data → incomplete UI → security audit → stress tests → dashboards→real APIs → collaboration & review systems → Lab ↔ dashboard → owner-controlled mock testimonials → chat/chatbot/email review + profile & settings real APIs → About data + CV/portfolio/accounts + projects/dashboard/security review → enhanced workspaces + real-time notifications + NEX Store link → Security Audit dashboard + Resources page → live preview + lagging issues → CellarKeep link in Projects → public copy + saved-data fallback → e-commerce link → OmniBiz → HomeScape link in Projects → owner-specified project likes → restore 8 projects / filter buttons / modern page / tracking fix → 12 owner project links / Lab copy / zero values / front-end catalogue → dead project links replaced with working URLs → projects ↔ server ↔ dashboard counter sync + 600 minimum → review submission / sync repair → Projects render-crash fix → full Projects feature restoration → Projects page remodel → Lab subsystem review → testimonial thumbnail → CV-grouped modern Skills page → technology typography / card scrollers → first-page hero + drawer → real header icons / compact cards |
 | Method | offline static analysis, local build/lint, local mock-target load tests |
 | Not performed | offensive/exploitation activity, live/external probing, unauthorised pushes, external trackers, history rewrite |
 
@@ -34,8 +34,18 @@ zero-value cleanup, the working-link replacement, public/server/dashboard
 counter synchronisation with a 600 minimum, and the review-submission repair)
 were merged into `origin/main` via **PR #5** (merge commit `928c02b`) after the
 explicit **"push to min, merge"** instruction. Phase 21 (§3u: the Projects
-render-crash fix) is **local only** on the active branch
-`arena/e91ed034-e-folio` — no push, PR or merge has been used for it.
+render-crash fix) was merged via **PR #6** (merge commit `8feaa76`) after the
+explicit **"push, merge"** instruction. Phases 22–24 (§3v–§3x: the full
+Projects feature restoration, the page remodel, and the Lab subsystem review)
+were local until the owner's explicit **"push change"** instruction in phase 25
+(§3y), which reversed the earlier **"not yet"** for a push only. They were
+pushed to the active branch `arena/b1b14834-e-folio`, creating that remote
+branch. Phases 25–27 (§3y–§3aa) were pushed to the same branch after the
+owner's explicit **"push changes now"** / **"push all"** instructions. The
+owner then said **"comit t mian"**, which reversed the earlier **"not yet"**
+restraint for PRs/merges: phases 22–27 were merged into `main` from the active
+branch via PR #7. PR #4 (an older, unrelated branch) was left open
+and untouched.
 
 ---
 
@@ -52,6 +62,12 @@ render-crash fix) is **local only** on the active branch
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
+| UI polish: fonts, card viewpoint, hero + drawer (phase 26) |
+| Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
+| Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
+| Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
+| Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
+| Projects page features (phase 22) | six of the fourteen original project cards were still missing after the fallback array was stripped, and the offline copy dropped `duration`, `challenges` and `achievements` so those card/modal sections were always empty | all six owner projects appended verbatim from local Git history with their working URLs and the 600 display floor; the saved copy now carries the detail fields; 14 grid + 2 showcase = 16 cards, all filters/views/sorts/sync controls retained |
 | Projects render crash (phase 21) | the public Projects page threw `ReferenceError: Cannot access 'allTechnologies' before initialization` on every render, blanking the landing page | the early scroller effect now depends on the already-initialised `projects.length`; a repo-wide hook-dependency-order regression test prevents any hook variable being read before its declaration |
 | Review submission + sync (phase 20) | post-save email/logging failures turned an already-saved review into a 500, step-3 ratings sent nested objects, `new_review` went to a room no socket joined, and there was no offline path | normalised input, success returned before isolated side effects, numeric star payloads, canonical id/status broadcasts on the public namespace, cross-tab signals and polling, and an honest device-only outbox that never claims a queued review was submitted |
 | Project → server → dashboard sync (phase 19) | the public page listened for socket events the server never emitted, anonymous visitors had no socket, dashboard saves sent no refresh signal, and the offline snapshot reset every view count to zero | one canonical broadcast on a read-only public namespace, matching root/legacy listeners, hidden-tab-aware 30 s polling, cross-tab dashboard signals, server-authoritative like/view counts, and owner-specified likes AND views of at least 600 on all eight cards |
@@ -1344,6 +1360,526 @@ The technology-scroller effect installed a `resize` listener with the dependency
 
 ---
 
+## 3v. Phase 22 — restore all Projects page features
+
+The owner reported that the public Projects page was "damaged" and that most
+features were gone. A read-only comparison against the repository's own history
+identified two concrete losses; **no UI control had actually been deleted**.
+
+### What was actually lost
+
+1. Commit `5365771` removed 394 lines from `src/pages/Projects.jsx`: the whole
+   `getFallbackProjects()` array of **14 project records**. Phase 16 restored
+   eight of them from local history, leaving six of the owner's own projects
+   unpublished: **Kazi Find, HomeScape Platform, Net Gate, Schedule Manager,
+   AI Image Editor Pro, Elimu Pro Beta**. Their original records survive in
+   commit `3e46cc0`. The eight current cards, the two featured showcase cards,
+   the technology chip scroller, search, sort, grid/list/masonry toggles,
+   advanced filters, category pills, stats cards, Tech Stack Showcase, CTA,
+   project modal, image lightbox, like/view/share/favourite handlers and the
+   project ↔ server ↔ dashboard sync were all still present.
+2. `scripts/build-public-snapshot.mjs` mapped only 18 of the seed fields into
+   the offline copy. It dropped `duration`, `challenges` and `achievements`,
+   which `src/pages/ProjectCard.jsx` and `src/pages/ProjectModal.jsx` render,
+   so those sections were empty whenever the API was unavailable.
+
+### Fix
+
+- `scripts/seed-projects.js`: appended the six missing records verbatim from
+  their published history (descriptions, full descriptions, technologies,
+  tags, categories, images, dates, durations, team sizes, featured flags and
+  original **working** owner-supplied URLs). Historical `views` (980 / 920 /
+  870 / 910 / 1040 / 880) were preserved because they already exceed the
+  owner's 600 floor; `likes` were raised to exactly 600, matching phase 19's
+  rule. No badge lists, marketing metrics or live-status claims were added.
+  The eight existing records, their links and their counters are untouched.
+- `scripts/build-public-snapshot.mjs`: now carries `duration`, `challenges`
+  and `achievements` from the seed when present, verbatim — no invented value.
+  Regenerated `src/data/publicSnapshot.json` (14 grid records; 16 projects in
+  total with the two featured cards).
+- `tests/projects-features.test.mjs` (new): 12 checks covering the full
+  catalogue, each restored record's links/counters/details, additive-only
+  preservation of the original eight and the protected NetGate link, the
+  verbatim-from-seed guarantee for every achievement/challenge/duration/link,
+  every UI feature marker, absence of a three-project cap, unchanged card
+  imports/CSS, and secret-free wiring. Wired into both `test` scripts as
+  `test:projects-features`.
+- Four existing regression tests that hard-coded eight grid records were
+  updated to the restored fourteen-record catalogue; all other checks pass
+  unchanged.
+
+### Deliberately not changed
+
+- The separate project-links **directory** remains removed, per the owner's
+  phase-18 `dead_only` decision. The working links themselves are all present
+  on the project cards.
+- Card markup, `ProjectCard.css`, showcase data, the protected
+  `https://net-gate-portal.netlify.app/` link, the 600 minimum counter rule
+  and the no-zero-values rule are untouched.
+- Four of the restored apps share a live URL with an older card because phase
+  18 grafted those working URLs onto older titles (for example
+  "Portfolio Website" → `home-scape-platform.netlify.app`). Both sets of cards
+  are kept so no historical record is discarded; consolidation is a separate
+  decision (backlog 27).
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**,
+  endpoint parity `--strict` **0 live code gaps**, static security audit
+  `--strict` **HIGH/MED/LOW 0**, **242** Node-only regression checks (10 new),
+  build **27.62s**, PWA **217 precache entries (7029.33 KiB)**. The built
+  JavaScript contains all six restored titles and their working URLs, plus
+  the `duration` / `challenges` / `achievements` markers.
+- `npm run snapshot:build` reports 14 project records; every published
+  counter is ≥600 and the NetGate link counts are unchanged (3 / 1 / 1 / 3).
+  The Vite dev preview serves `/` with 200 and the regenerated snapshot.
+- `git diff --check` clean; masked secret scan clean (0 findings across the
+  11 changed files).
+- **Not verified:** a real browser render or a live MongoDB seed run (no
+  headless browser, database or backend in this sandbox). No push, PR, merge,
+  external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive
+  testing for this phase.
+
+---
+
+## 3w. Phase 23 — remodel the Projects page with a vast feature set
+
+The owner rejected another narrow question and asked to "remodel the projects
+page with more features ... remake with vast features", after noting that the
+top-section headings were "not yet" right. A read-only check confirmed the
+heading markup existed in every historical version, but the whole top section
+was wrapped in `data-reveal`, whose CSS sets `opacity: 0` until an
+`IntersectionObserver` fires. In a throttled preview iframe or hidden tab that
+callback can be delayed indefinitely, so the headings (and the toolbar, tech
+scroller and CTA) never appear.
+
+### Fix — visible headings and a fail-safe
+
+- `src/pages/Projects.jsx`: the top section is now a `portfolio-hero` wrapper
+  with **no** reveal gate, so `Latest Projects`, the subtitle, the featured
+  cards and the four stat labels render immediately. A 1.2 s `revealFallback`
+  adds `is-visible` to any remaining `[data-reveal]` node, so no other section
+  can stay invisible. The reveal animation itself is retained for sections
+  below the fold and still respects `prefers-reduced-motion`.
+- New `src/components/ProjectsExperience.jsx` + `src/styles/ProjectsExperience.css`:
+  a page-level experience layer (the project cards are NOT touched).
+
+### New features (all values derived from the 14 published records)
+
+| Feature | Behaviour |
+| --- | --- |
+| Top-section headings | "Portfolio at a glance", "Featured work", "Explore the catalogue", "Tools & shortcuts", "Compare projects", "Project timeline", "Technology index", "Popular tags" — semantic `<h3>`/`<h4>` with `aria-labelledby` |
+| Derived metrics | projects, featured, categories, technologies, tags, years active, average stack size; zero values omitted |
+| Featured spotlight | first featured record with its real image, description, technologies and live link, plus "View details" |
+| Tabs | Spotlight / Recently completed / Browse by category |
+| Category browser | counts derived from records; click sets or clears the category filter |
+| Technology + tag indexes | frequency-ranked chips with counts, expandable, toggling real filters |
+| Filter upgrades | tag filtering, device-only favourites filter, "Oldest First" and "Largest Stack" sorts |
+| Compare | pick up to 3 projects; table compares published category, status, technologies, tags, views, likes, team size, duration and completion date |
+| Timeline | projects grouped by completion year with counts and open-detail buttons |
+| Quick tools | favourites toggle, surprise-me, copy-this-view, timeline/compare toggles, reset filters, back to top |
+| Shareable views | URL parameters (`q`, `category`, `tech`, `tag`, `sort`, `view`, `favorites`) are read on load and copied with `navigator.clipboard`; no success is claimed if the write fails |
+| Keyboard | `/` focuses search, `Escape` closes a project or clears the search; live result count uses `aria-live` |
+
+### Deliberately unchanged
+
+- `src/pages/ProjectCard.jsx`, `src/components/ProjectCard.jsx`,
+  `src/styles/ProjectCard.css` and every `.projects-grid` card selector.
+- All 14 grid records, 2 showcase cards, working links, the protected NetGate
+  link, the 600 display floor, no-zero rule, socket/cross-tab/poll sync,
+  review submission and the TDZ fix.
+- No invented URL, metric, achievement or live-status claim: the new component
+  contains no hard-coded `http` link and no numeric counter literal.
+- The separate project-links directory stays removed (phase-18 decision).
+
+### Verification (static only)
+
+- `npm test` / `npm run check` exit 0: lint **0 errors / 671 warnings**,
+  endpoint parity `--strict` **0 live code gaps**, static security audit
+  `--strict` **HIGH/MED/LOW 0**, **251** Node-only regression checks (9 new),
+  build **26.64s**, PWA **217 precache entries (7050.10 KiB)**. The built
+  JavaScript contains every new heading and the reveal fallback selector;
+  the Vite dev preview serves `/`, the new component and its stylesheet with
+  200. `tests/projects-remodel.test.mjs` guards the headings, the reveal
+  fallback, every new and every pre-existing feature, the derived-data
+  guarantee and the untouched card interface.
+- `git diff --check` clean; masked secret scan clean (0 findings across the
+  7 changed files); NetGate link counts unchanged (3 / 1 / 1 / 3).
+- **Not verified:** a real browser render (no headless browser in this
+  sandbox). Runtime confirmation of the new tabs, compare table, timeline,
+  clipboard and keyboard behaviour is backlog 28. No push, PR, merge,
+  external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or
+  offensive testing for this phase.
+
+---
+
+## 3x. Phase 24 — review and repair the Lab subsystem
+
+Requested as "review the labs". Read-only review covered `src/pages/Lab.jsx`,
+`src/components/dashboard/LabManager.jsx`, `src/services/publicContent.js`,
+`src/services/socket.service.js`, `src/data/publicSnapshot.json` (the
+`labProjects` section), `src/data/labSamples.json`,
+`server/scripts/seedLabSamples.js`, `server/routes/public.routes.js`,
+`server/controllers/public.controller.js`, both skills/interests routers and
+controllers, the `/public-projects` socket namespace, `src/styles/Lab.css` and
+`tests/lab-page.test.mjs`. No database, browser, external service or live
+endpoint was exercised.
+
+### Findings
+
+| # | Finding | Impact |
+| --- | --- | --- |
+| 1 | `GET /api/public/projects?status=all&limit=100` returns all 14 portfolio records with `status: completed`. `Lab.jsx` keeps only `live / beta / development / experimental`, so **every card disappears whenever the backend is up**. When the backend is down, `loadPublicSection(..., { fallbackSection: 'labProjects' })` supplies four saved experiments — the page silently flips between empty and populated. | Public Lab looks broken/empty with a healthy API; different content online vs offline. |
+| 2 | `Lab.jsx` subscribed to `skills_changed` and `interests_changed`. **Neither event is emitted anywhere in the server**; the skills and interests controllers contain no `emit()` at all. | Dashboard skill/hobby edits never reached the public Lab. |
+| 3 | Those listeners used `useSocket()`, whose root socket exists only for signed-in users. No public-namespace subscription, no polling, no `visibilitychange` guard, no cross-tab notice on the Lab page. | Anonymous visitors never saw live updates. |
+| 4 | `lab-sample-badge` ("Sample · deletable") and the "Samples" metric rendered for samples regardless of ownership; the owner footer mentions database records. | Sample/storage wording shown to public visitors (phase-17 rule). |
+| 5 | `LabManager` claimed "edits here appear there immediately" while dispatching only a same-tab `settingsChanged` event. | Misleading; edits in another tab/device never refreshed. |
+| 6 | `public.controller.getProjects` selected `createdAt` but not `updatedAt`, although `Lab.jsx` renders `formatDistanceToNow(project.updatedAt)`. | "Updated …" metadata was always absent for live data. |
+
+### Fixes
+
+- **`src/pages/Lab.jsx`**: the loader now merges live lab-status projects with
+  `getSnapshotSection('labProjects')` — the same real local saved copy used for
+  offline visits — deduplicated by title. Both sources are repository records;
+  nothing is invented. `dataStatus` / `contentSource` are marked as a saved-copy
+  view whenever saved records were added, and only a fully live section is
+  cached, so a recovered backend is never masked.
+- **`server/utils/labEvents.js`** (new): `emitLabChanged(section)` broadcasts
+  `lab:changed` with **only** a section name and timestamp on the read-only
+  `/public-projects` namespace AND the root namespace. No skill values,
+  interest text, owner details or credentials are included.
+- **`server/middleware/labSync.middleware.js`** (new): a success-only router
+  middleware (`res.statusCode < 400 && body?.success !== false`) publishes the
+  signal after owner writes. Mounted once on `skills.routes.js` and
+  `interests.routes.js`, so every current and future mutation is covered
+  without duplicating broadcast code. A socket failure is caught and can never
+  turn a successful write into a 500.
+- **`src/services/socket.service.js`**: new ref-counted `subscribePublicLab`
+  subscription alongside the existing public project/review subscribers.
+- **`src/pages/Lab.jsx`**: replaced the dead event names with the canonical
+  `lab:changed`, `settings:updated` and existing project broadcasts; added
+  `subscribePublicProjects`, `subscribePublicLab`, `subscribeProjectsChanged`,
+  `settingsChanged`, a hidden-tab-aware 30 s poll and a `visibilitychange`
+  refresh. Owner-only sample badge and Samples metric; sample deletion now
+  publishes a cross-tab notice.
+- **`src/components/dashboard/LabManager.jsx`**: add / delete / delete-all
+  publish cross-tab notices; the closing note now describes live signals,
+  cross-tab notices and the 30 s refresh instead of claiming instant delivery.
+- **`server/controllers/public.controller.js`**: `updatedAt` added to the
+  public project projection so the Lab's relative-time metadata can render.
+
+### Deliberately unchanged
+
+- The phase-12/17 visitor-facing copy itself (`ArchiveNote`'s "A selection
+  from the portfolio archive", the "From the portfolio archive" state badge,
+  and the "Real data · Skills / Hobbies" eyebrows). These are regression-
+  guarded, visitor-friendly labels for a saved-copy view, not developer,
+  database, HTTP or storage diagnostics. A live backend that needs saved
+  experiment records is now labelled **`partial`**, never `archive`, so no
+  fake source status is shown. The genuine sample/storage wording (the badge,
+  the Samples metric and the owner footer) is owner-only.
+- `src/data/labSamples.json`, `src/data/testimonialSamples.json`,
+  `server/scripts/seedLabSamples.js`, `TestimonialSamplesPanel.jsx`, report §3e
+  and the protected `https://net-gate-portal.netlify.app/` link (counts remain
+  3 / 1 / 1 / 3).
+- The 14 grid projects, 2 showcase cards, the 600 counter floor, card
+  interface/CSS, phase-19/20/21/22/23 work, and the separate project-links
+  directory (still removed per phase 18).
+- No fabricated experiment, metric, achievement or live-status claim, and no
+  zero value shown to the public.
+
+### Verification (static only)
+
+- `npm test` exit 0: **261** Node-only regression checks (**10** new in
+  `tests/lab-review.test.mjs`). That suite guards the merge, the saved-copy
+  source, the anonymous-safe subscriptions, the signal payload, success-only
+  middleware, dashboard notices, owner-only wording and the protected files.
+- `npm run check` exit 0: lint **0 errors / 671 warnings**, endpoint parity
+  `--strict` **0 live code gaps**, static security audit `--strict`
+  **HIGH 0 / MEDIUM 0 / LOW 0**, production build **27.53s**, PWA **218
+  precache entries (7051.40 KiB)**. The built client bundles contain the new
+  `lab:changed` signal as well as the phase-23 markers; the Vite dev preview
+  serves `/`, `Lab.jsx`, `LabManager.jsx` and `socket.service.js` with 200.
+- `git diff --check` clean; masked secret scan over the **12** changed files
+  found **0** findings. Protected NetGate link counts remain **3 / 1 / 1 / 3**
+  in the canonical order used by earlier sections (`labSamples.json`,
+  `testimonialSamples.json`, `testimonials` backup JSON, `publicSnapshot.json`);
+  the shorthand **3 / 1 / 3 / 1** seen in earlier scan output was simply those
+  same four files listed in a different order, not a data change.
+- **Not verified:** a live Express/Mongo run, a real socket delivery, a browser
+  render, or an actual owner write to skills/interests. Runtime confirmation is
+  backlog 29. No push, PR, merge, external write, DB write, runtime
+  Mongo/LLM/SMTP/Cloudinary call or offensive testing for this phase.
+
+---
+
+## 3y. Phase 25 — push, a new testimonial thumbnail, and a CV-grouped modern Skills page
+
+Requested as *"push change,,add a new photo of the first testimonial (it a
+thumbnail,,improve the skills page(modern ,,styles,,add some other skills
+group,,grouping wellper the cv"*.
+
+### Push
+
+The explicit **"push change"** reversed the earlier **"not yet"** for a
+**push only**. The three pending local commits — `86523a0` (phase 22),
+`e3814c1` (phase 23) and `1874a26` (phase 24) — were pushed to the active
+branch `arena/b1b14834-e-folio`, which did not yet exist on the remote. The
+push created `refs/heads/arena/b1b14834-e-folio` at
+`1874a26d861d810bea700ee7809fa638eb893b65` and set the local upstream. The
+phase 25 changes were committed and pushed to the same branch under the same
+explicit instruction. **No PR, no merge, no direct push to `main`, no external
+issue/document/comment, and no secret value in any external payload.** PR #4
+remains open and untouched; the "not yet" restraint still applies to PRs and
+merges.
+
+### New testimonial thumbnail
+
+- A new 320×320 local JPEG was generated and saved at
+  `public/assets/images/testimonials/sarah-johnson-thumbnail.jpg` (~13 KB).
+  It is a neutral professional headshot used as a small square portrait for
+  the **first** testimonial (Sarah Johnson) — a thumbnail, not a full-size
+  photo. No remote image dependency was added.
+- `src/data/testimonialThumbnails.json` (new) maps that name to the local
+  asset. The mapping is **additive**: `src/data/testimonialSamples.json`,
+  both `server/backups/testimonials/*` JSON files,
+  `server/scripts/seedTestimonialSamples.js` and
+  `TestimonialSamplesPanel.jsx` were **not modified**. All eight canonical
+  mock records, their order and their original avatar URLs remain verbatim.
+- `src/pages/Testimonials.jsx` resolves `item.thumbnail || mapping[name] ||
+  item.avatar` in all four views (grid, list, carousel, modal), with lazy
+  loading on the three list views. `server/models/Testimonial.model.js` gained
+  an optional `thumbnail` field and `public-testimonials.controller.js` now
+  selects it, so a real DB record can carry a thumbnail too. Owner-preview
+  gating and all public copy are unchanged.
+
+### Modern Skills page, grouped per the CV
+
+The previous page showed only two flat lists (technical bars and professional
+radial charts), both hidden behind a "Show Technologies" toggle, so an
+unexpanded page looked empty and nothing was grouped by discipline.
+
+The owner's CV (`public/CV2.pdf`) was read locally and its skill sections were
+transcribed verbatim into `src/data/cvSkills.js`; the exact extract is kept in
+`src/data/cvSkills.source.txt` for audit, with all contact details deliberately
+omitted. That yields **9 groups / 44 entries**: Core Competencies (1 group, 12
+items), Technical Skills (the CV's seven groups — Operating Systems, Frontend
+Development, Backend & Languages, Databases & SQL, Data Structures &
+Algorithms, Dev Tools & Practices, Office & Productivity), and Soft Skills
+(1 group, 10 items). These are the "other skill groups" that were missing.
+
+- `src/pages/Skills.jsx` now renders a modern hero with three derived stats,
+  section tabs, per-group filter chips, an `aria-live` result count and a
+  responsive card grid. `src/styles/SkillsModern.css` (new, scoped to `.sk-*`)
+  adds glass surfaces, gradient accents, hover/focus states, responsive
+  breakpoints and `prefers-reduced-motion` support.
+- A score is shown **only** when a real published skill record matches a CV
+  line (word-boundary match, e.g. HTML5, CSS3, React, Node.js, Python, Git,
+  Docker). The CV states no percentages, so no level is invented for CV-only
+  items.
+- All existing behaviour is preserved: live-first `/public/skills` loading,
+  the saved-copy fallback, `ArchiveNote`, `settingsChanged` refresh, the
+  "Show Technologies" toggle (now with `aria-expanded` / `aria-controls`),
+  both technical and professional scorecards, and the friendly empty state.
+- No protected project card, showcase, seed or NetGate file was touched. The
+  14 grid + 2 showcase records and the 600 counter floor are unchanged.
+
+### Verification (static only)
+
+- `npm test` exit 0: **278** Node-only regression checks (**7** new in
+  `tests/testimonial-thumbnail.test.mjs` and **10** new in
+  `tests/skills-cv-groups.test.mjs`). The latter verifies every group name and
+  every listed skill against the verbatim CV extract.
+- `npm run check` exit 0: lint **0 errors**, endpoint parity `--strict` **0
+  live gaps**, static security audit `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**,
+  production build and PWA precache regenerated. The Vite dev preview served
+  the Skills page, the page CSS and the thumbnail asset with 200.
+  `git diff --check` clean; masked secret scan clean.
+- **Not verified:** a browser render of the new Skills cards or the thumbnail,
+  a live Mongo record carrying `thumbnail`, or an owner write. No runtime
+  DB/API, SMTP/LLM/Cloudinary call, external write, offensive test, PR or
+  merge in this phase. Runtime confirmation is backlog 30.
+
+---
+
+## 3z. Phase 26 — readable technologies, a scrollable card viewpoint, a restyled first page and drawer
+
+Requested as *"though font is too small,,for tech ologies,maintain a certain
+viewpoint with scrollers for thecards,,restyle the first page with the withree
+bttonn(crate portfolio,,collaborate,build cv,,the drawer as well needs
+restyling,,push changes noe,,they make sense"*.
+
+### Technology typography
+
+The newly added CV skill cards and the existing technology chips used 0.68–0.88
+rem type, which was too small to read comfortably. Sizes were raised without
+changing any data or card interface:
+
+| Element | Before | After |
+| --- | --- | --- |
+| Skills CV item label | 0.88rem | **1.05rem** |
+| Skills group chip | 0.79rem | **0.92rem** |
+| Skills group heading | 1.02rem | **1.15rem** |
+| Skills score chip | 0.72rem | **0.85rem** |
+| Projects technology chip | 0.78rem | **0.95rem** |
+| Projects chip count | 0.68rem | **0.8rem** |
+| Projects experience chip | 0.75rem | **0.9rem** |
+
+Eyebrows, tabs, stat captions, result counts and the landing-page feature-card
+text were enlarged in the same pass. No `.projects-grid`, `.project-card` or
+showcase-card selector was touched.
+
+### A certain viewpoint, with scrollers for the cards
+
+- The Skills card area now lives in `.sk-cardview`: a single consistent
+  viewport (`max-height: clamp(420px, 68vh, 760px)`) with its own styled
+  vertical scroller, `overscroll-behavior: contain`, a keyboard-focusable
+  `role="region"` and an `aria-label`.
+- Every card has a consistent height (`clamp(320px, 46vh, 440px)`) and its
+  `.sk-items` list scrolls internally, so a 12-item group and a 3-item group
+  occupy the same viewpoint instead of stretching the page.
+- The group chip bar becomes a horizontal scroller on narrow screens, and a
+  short "Scroll to explore every group" hint makes the behaviour discoverable.
+  Scrollbars are themed, and reduced-motion preferences are respected.
+
+### First page: one modern three-button row
+
+`src/pages/LandingPage.jsx` previously had **two** CTA blocks (a large glowing
+"Create Your Portfolio" button plus a plain "Build Your CV" link) and a
+**third detached glowing "Collaborate with Me"** button below them. They are
+now one coherent `.lp-actions` row of three equal cards, in the requested
+order:
+
+1. **Create Your Portfolio** → `/register` (gradient primary).
+2. **Collaborate with Me** → `/collaborate` (cyan-accented).
+3. **Build Your CV** → `/cv` (glass ghost) — now points at the real interactive
+   CV builder instead of `/register`.
+
+Each action has an icon, a title, a short neutral caption and an arrow that
+slides on hover. `src/styles/LandingPage.css` gained a scoped `.lp-*` block
+(glass surfaces, gradient accents, responsive one-column stacking,
+`focus-visible` and reduced-motion rules). The hero feature cards and trust
+line also got larger, more legible type. The banner close control, scroll
+progress, theme switcher, chatbot, review button and every section import are
+unchanged; no new metric or claim was introduced.
+
+### Drawer
+
+`src/pages/Header.jsx` now renders a drawer header (brand mark, short label
+and an accessible close button) and groups the theme/fullscreen switches into
+one compact `.drawer-toggles` row. All nav links, the dashboard/collaborate
+links, active states and close behaviour are preserved. The new
+`src/styles/HeaderDrawer.css` (loaded after `Header.css`) supplies a glass
+gradient surface, rounded corners, themed scrollbars, larger link text,
+roomier tap targets, `focus-visible` rings and reduced-motion overrides. The
+pre-existing `ThisButtonDoesThings` label was deliberately left untouched: it
+is behaviour, not styling.
+
+### Push
+
+The explicit **"push changes noe"** instruction authorised another push. The
+phase 26 changes were committed and pushed to the active branch
+`arena/b1b14834-e-folio` only. **No PR, no merge, no push to `main`, no
+external issue/document/comment and no secret value in any external payload.**
+PR #4 remains open and untouched.
+
+### Verification (static only)
+
+- `npm test` exit 0: **288** Node-only regression checks (**10** new in
+  `tests/ui-polish.test.mjs`). `npm run check` exit 0: lint **0 errors / 670
+  warnings**, endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build **26.72s**, PWA
+  **218 precache entries (7074.58 KiB)**. The built JS and CSS contain the new
+  `lp-action--primary`, `mobile-nav-header` and `sk-cardview` markers; the Vite
+  dev preview served `/`, `/skills`, the new drawer CSS and the updated page
+  CSS with 200. `git diff --check` clean; masked secret scan clean.
+- **Not verified:** a browser render of the three-button row, the drawer or
+  the scrollable card viewpoint, and no mobile device/touch test. No runtime
+  API/DB, SMTP/LLM/Cloudinary call, external write, offensive test, PR or
+  merge in this phase. Runtime confirmation is backlog 31.
+
+---
+
+## 3aa. Phase 27 — real header icons, a modern desktop header, compact scrollable technology cards, and the merge to main
+
+Requested as *"the header as well,,restyle it well wiht real icons,,the
+technologies oin skills(restyle the cards to atleast small(scrollable) ,,push
+all,,comit t mian"*.
+
+### Real icons in the header
+
+A read-only check of the installed `@fortawesome/fontawesome-free` stylesheet
+confirmed that several classes used by the header do not exist in that free
+set — most notably `fa-sparkles`. Those glyphs therefore never rendered. The
+header (desktop **and** drawer) now uses real `lucide-react` SVG components:
+
+- `NAV_SECTIONS` carries an `Icon` component per section (`User`, `Settings2`,
+  `GraduationCap`, `Heart`, `FolderGit2`, `MessageSquare`, `Mail`), rendered
+  through a small `NavIcon` helper in both nav bars.
+- Logo `Code2`; dashboard `LayoutDashboard`; collaborate `Handshake` and
+  `Sparkles`; theme `Sun`/`Moon`; fullscreen `Maximize2`/`Minimize2`; menu
+  `Menu`/`X`; drawer actions `ArrowRight`, `X`. The old CSS hamburger bars were
+  replaced with a real menu/close icon, and the active-section dot is now a
+  CSS dot instead of a font glyph.
+- **No `fas fa-*` class remains in `src/pages/Header.jsx`.** All links,
+  routes, section scrolling, theme/fullscreen toggles, active states, overlay
+  and close behaviour are unchanged. The pre-existing
+  `ThisButtonDoesThings` label was again left alone: it is behaviour, not an
+  icon.
+
+`src/styles/HeaderModern.css` (loaded last) restyles the desktop header: a
+glass gradient surface on scroll, modern nav pills with a real icon hover,
+rounded gradient buttons, explicit SVG sizing for every icon, a styled mobile
+menu button, `focus-visible` rings and reduced-motion overrides.
+
+### Small, scrollable technology cards
+
+The phase-26 card viewport was still tall. The technology/Skills cards are now
+compact while keeping every scroller:
+
+| Property | Phase 26 | Phase 27 |
+| --- | --- | --- |
+| Card height | `clamp(320px, 46vh, 440px)` | **`clamp(220px, 30vh, 300px)`** |
+| Mobile card height | `360px` | **`240px`** |
+| Card viewport | `clamp(420px, 68vh, 760px)` | **`clamp(360px, 56vh, 560px)`** |
+| Mobile viewport | `64vh` | **`52vh`** |
+
+Card padding, header spacing, icon box and item row padding were tightened to
+match, and the horizontal chip scroller remains. The **fonts were not reduced**
+— item labels stay at 1.05rem — because the owner specifically asked for
+larger technology type in phase 26. Each card's `.sk-items` list still scrolls
+independently, and the outer `.sk-cardview` keeps its own themed scroller and
+keyboard-focusable region.
+
+### Push and merge to main
+
+The explicit **"push all"** and **"comit t mian"** instructions reversed the
+remaining **"not yet"** restraint. All phase-27 changes were committed and
+pushed to `arena/b1b14834-e-folio`, then merged into `main` from that branch
+via PR #7 using `gh pr merge <number> --merge`. The PR body
+contained no code, credential or configuration value. `main` was not pushed
+to directly, history was not rewritten, and PR #4 (old branch) was left open.
+
+### Verification (static only)
+
+- `npm test` exit 0: **295** Node-only regression checks (**7** new in
+  `tests/header-icons.test.mjs`, plus the phase-26 suite updated for the new
+  compact sizes). `npm run check` exit 0: lint **0 errors**, endpoint parity
+  `--strict` **0 live gaps**, static security audit `--strict` **HIGH 0 /
+  MEDIUM 0 / LOW 0**, production build and PWA precache regenerated. The Vite
+  dev preview served `/`, `/skills`, `Header.jsx` and all three header/page
+  stylesheets with 200. `git diff --check` clean; masked secret scan clean.
+- Protected project card, showcase, seed, sample, backup and NetGate files
+  were not touched; 14 grid + 2 showcase records and the 600 counter floor are
+  unchanged.
+- **Not verified:** a browser render of the new header icons, desktop header,
+  drawer or compact scrollable cards, and no mobile/touch test. No runtime
+  API/DB, SMTP/LLM/Cloudinary call, external write beyond the authorised
+  push/PR/merge, or offensive test in this phase. Runtime confirmation is
+  backlog 32.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -1449,6 +1985,42 @@ The technology-scroller effect installed a `resize` listener with the dependency
     boundary around the lazy route tree) so a future component exception
     degrades one section instead of blanking the whole application. No
     headless browser was available in this sandbox.
+27. Phase 22 follow-up: with a browser, confirm all 16 project cards and the
+    duration / challenges / achievements sections of the detail modal render;
+    with a live backend, run the seed and confirm the six restored records are
+    created. Decide whether to consolidate the four restored cards that share
+    a live URL with an older card, and whether the separate project-links
+    directory should return (currently removed by the owner's phase-18
+    decision). No browser or database was available in this sandbox.
+28. Phase 23 follow-up: in a browser, confirm the new top-section headings
+    are visible immediately, then exercise the spotlight tabs, category and
+    tag chips, the compare table, the timeline, favourites-only, the copied
+    view URL on a fresh load, and the `/` and `Escape` shortcuts. Confirm
+    the card grid, modal and lightbox still behave. No headless browser was
+    available in this sandbox.
+29. Phase 24 follow-up: with a live backend, seed the Lab samples, edit a
+    skill and an interest, and confirm the `lab:changed` signal refreshes an
+    anonymous public Lab page; confirm a working backend never leaves the Lab
+    grid empty, that `updatedAt` metadata appears, and that owner-only sample
+    wording stays hidden from visitors. Also decide whether skills/interests
+    writes should carry server-side idempotency or rate limiting beyond the
+    existing owner JWT. No live database, socket or browser was available
+    in this sandbox.
+30. Phase 25 follow-up: in a browser, confirm the new testimonial thumbnail
+    appears in grid, list, carousel and modal views; exercise the Skills
+    section tabs, group chips, score bars and responsive layout; and with a
+    live backend, confirm a Testimonial document carrying `thumbnail` is
+    returned by `/api/public/testimonials`. No headless browser or live
+    database was available in this sandbox.
+31. Phase 26 follow-up: in a browser (and on a real mobile viewport), confirm
+    the three hero buttons are legible and route correctly, the drawer opens
+    with its header/close button and scrolls, and the Skills card viewport
+    keeps a consistent height while each card scrolls independently. No
+    headless browser or touch device was available in this sandbox.
+32. Phase 27 follow-up: in a browser, visually confirm every header and drawer
+    icon renders as an SVG, the desktop nav pills/active state look right, and
+    the compact Skills cards still scroll both inside each card and as a
+    group. No headless browser or touch device was available in this sandbox.
 
 ---
 
@@ -1483,5 +2055,21 @@ there was no conflict; a masked secret scan over the diff found 0 findings and
 `npm test` passed before the push. The branch had to be pushed with
 `-c http.version=HTTP/1.1` after two GitHub-side HTTP/2 `Internal Server Error`
 responses. PR #4 (the old-branch docs note) remains open and was left untouched.
-Phase 21 (§3u) is a local commit on `arena/e91ed034-e-folio` and has **not**
-been pushed or merged.
+After the explicit **"push, merge"** instruction, phase 21 (§3u) was pushed
+from `arena/e91ed034-e-folio`, opened as
+[PR #6](https://github.com/devTechs001/e-folio/pull/6) and merged into `main`
+with merge commit `8feaa760472b6f6facecf4750fcb99c676af1c71` at
+`2026-11-04T10:11:09Z`. The first merge call returned a transient GitHub
+GraphQL error; the PR was confirmed still `OPEN` with `main` unchanged before
+a single retry succeeded. PR #4 remains open and untouched. Phases 22–24
+(§3v–§3x) were pushed to `arena/b1b14834-e-folio` after the explicit
+**"push change"** instruction in phase 25 (§3y), which reversed the earlier
+**"not yet"** for a push only; the remote branch was created at `1874a26`.
+The phase 25 changes were committed and pushed to the same branch. After the
+explicit **"push changes noe"** instruction, the phase 26 UI-polish changes
+(§3z) were committed and pushed to that branch as well. After the explicit
+**"push all,,comit t mian"** instruction, the phase 27 changes (§3aa) were
+pushed and **phases 22–27 were merged into `main` from the active branch via
+PR #7** with `gh pr merge <number> --merge`. That instruction reversed
+the earlier **"not yet"** restraint for PRs/merges. `main` was never pushed
+to directly and PR #4 remains open and untouched.

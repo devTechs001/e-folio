@@ -21,7 +21,9 @@ const OWNER_MINIMUM = 600;
 const TITLES = [
     'E-Commerce Platform', 'GB Chat', 'CinemaFlix',
     'Portfolio Website', 'Task Management App', 'AI Image Generator',
-    'Social Media Dashboard', 'Blockchain Wallet'
+    'Social Media Dashboard', 'Blockchain Wallet',
+    'Kazi Find', 'HomeScape Platform', 'Net Gate',
+    'Schedule Manager', 'AI Image Editor Pro', 'Elimu Pro Beta'
 ];
 const PRESERVED_VIEWS = [1245, 856, 1243];
 const NETGATE = 'https://net-gate-portal.netlify.app/';
@@ -38,12 +40,12 @@ const snapshotProjects = () => json('src/data/publicSnapshot.json').sections.pro
 
 /* --------------------------------- the values ------------------------------- */
 
-check('all eight published seed records have likes and views of at least 600', () => {
+check('every published seed record has likes and views of at least 600', () => {
     const seed = read('scripts/seed-projects.js');
     const likes = seedNumbers('likes');
     const views = seedNumbers('views');
-    assert.equal(likes.length, 8);
-    assert.equal(views.length, 8);
+    assert.equal(likes.length, TITLES.length);
+    assert.equal(views.length, TITLES.length);
     for (const n of [...likes, ...views]) assert.ok(n >= OWNER_MINIMUM, `${n} is below the owner minimum`);
     for (const title of TITLES) assert.ok(seed.includes(`title: "${title}"`), `${title} must be present`);
     assert.doesNotMatch(seed, /(?:views|likes):\s*0,/);
@@ -51,7 +53,7 @@ check('all eight published seed records have likes and views of at least 600', (
 
 check('the offline snapshot carries the same counters for the same projects', () => {
     const projects = snapshotProjects();
-    assert.equal(projects.length, 8);
+    assert.equal(projects.length, TITLES.length);
     assert.deepEqual(projects.map(p => p.title), TITLES);
     assert.deepEqual(projects.map(p => p.likes), seedNumbers('likes'));
     assert.deepEqual(projects.map(p => p.views), seedNumbers('views'));

@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import ArchiveNote from '../components/ArchiveNote';
 import { loadPublicSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Skills.css';
+import '../styles/SkillsModern.css';
+import { CV_SKILL_SECTIONS, CV_GROUP_NAMES, CV_ITEM_COUNT } from '../data/cvSkills';
 
 const Skills = () => {
     const [technicalSkills, setTechnicalSkills] = useState([]);
@@ -11,6 +13,8 @@ const Skills = () => {
     const [loading, setLoading] = useState(true);
     const [contentSource, setContentSource] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(true);
+    const [activeSection, setActiveSection] = useState('all');
+    const [activeGroup, setActiveGroup] = useState('all');
 
     const loadSkills = useCallback(async () => {
         try {
@@ -50,7 +54,7 @@ const Skills = () => {
     }, [loadSkills]);
 
     useEffect(() => {
-        const handleSettingsChange = (e) => {
+        const handleSettingsChange = () => {
             console.log('[Skills] Settings changed, refreshing data...');
             cacheService.delete('public_skills');
             loadSkills();
@@ -59,6 +63,54 @@ const Skills = () => {
         return () => window.removeEventListener('settingsChanged', handleSettingsChange);
     }, [loadSkills]);
 
+
+    // Phase 25 — CV-aligned grouping. Scores are attached only when a real
+    // published skill record matches a CV line; the CV itself states no
+    // percentages, so no score is ever invented here.
+    const publishedSkills = useMemo(
+        () => [...technicalSkills, ...professionalSkills].filter(skill => Number.isFinite(Number(skill.level))),
+        [technicalSkills, professionalSkills]
+    );
+
+    const scoresFor = useCallback(item => {
+        const text = String(item).toLowerCase();
+        return publishedSkills.filter(skill => {
+            const name = String(skill.name || '').trim().toLowerCase();
+            if (!name) return false;
+            const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i').test(text);
+        });
+    }, [publishedSkills]);
+
+    const sectionTabs = useMemo(() => [
+        { id: 'all', label: 'All groups', count: CV_GROUP_NAMES.length },
+        ...CV_SKILL_SECTIONS.map(section => ({
+            id: section.id, label: section.label, count: section.groups.length
+        }))
+    ], []);
+
+    const allGroups = useMemo(() => CV_SKILL_SECTIONS.flatMap(section =>
+        section.groups.map(group => ({
+            ...group,
+            sectionId: section.id,
+            sectionLabel: section.label,
+            eyebrow: section.eyebrow
+        }))
+    ), []);
+
+    const availableGroups = useMemo(
+        () => allGroups.filter(group => activeSection === 'all' || group.sectionId === activeSection),
+        [allGroups, activeSection]
+    );
+
+    const visibleGroups = useMemo(() => availableGroups.filter(group =>
+        activeGroup === 'all' || group.name === activeGroup
+    ), [availableGroups, activeGroup]);
+
+    const visibleItemCount = useMemo(
+        () => visibleGroups.reduce((total, group) => total + group.items.length, 0),
+        [visibleGroups]
+    );
 
     if (loading) {
         return (
@@ -117,11 +169,119 @@ const Skills = () => {
                 </div>
             </div>
             
+            {/* Phase 25 — modern, CV-aligned skill map */}
+            <div className="sk-shell">
+                <div className="sk-hero">
+                    <div className="sk-hero-copy">
+                        <span className="sk-eyebrow"><i className="fa-solid fa-layer-group" /> CV-aligned skill map</span>
+                        <h3 className="sk-title">Skills at a glance</h3>
+                        <p className="sk-lede">
+                            Grouped the way they appear on the CV, with a score shown only where a
+                            matching skill record provides one.
+                        </p>
+                    </div>
+                    <div className="sk-stats">
+                        <div className="sk-stat"><strong>{CV_GROUP_NAMES.length}</strong><span>CV groups</span></div>
+                        <div className="sk-stat"><strong>{CV_ITEM_COUNT}</strong><span>Skills listed</span></div>
+                        <div className="sk-stat"><strong>{publishedSkills.length}</strong><span>Scored skills</span></div>
+                    </div>
+                </div>
+
+                <div className="sk-toolbar" role="group" aria-label="Filter skill sections">
+                    {sectionTabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            className={`sk-tab ${activeSection === tab.id ? 'is-active' : ''}`}
+                            aria-pressed={activeSection === tab.id}
+                            onClick={() => { setActiveSection(tab.id); setActiveGroup('all'); }}
+                        >
+                            {tab.label}<span className="sk-tab-count">{tab.count}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="sk-chipbar" role="group" aria-label="Filter by CV group">
+                    <button
+                        type="button"
+                        className={`sk-chip ${activeGroup === 'all' ? 'is-active' : ''}`}
+                        aria-pressed={activeGroup === 'all'}
+                        onClick={() => setActiveGroup('all')}
+                    >Every group</button>
+                    {availableGroups.map(group => (
+                        <button
+                            key={group.name}
+                            type="button"
+                            className={`sk-chip ${activeGroup === group.name ? 'is-active' : ''}`}
+                            aria-pressed={activeGroup === group.name}
+                            onClick={() => setActiveGroup(group.name)}
+                        >
+                            <i className={group.icon} /> {group.name}
+                        </button>
+                    ))}
+                </div>
+
+                <p className="sk-result" aria-live="polite">
+                    Showing {visibleGroups.length} group{visibleGroups.length === 1 ? '' : 's'} · {visibleItemCount} skill{visibleItemCount === 1 ? '' : 's'}
+                </p>
+
+                <p className="sk-scroll-hint"><i className="fa-solid fa-arrows-up-down" /> Scroll to explore every group</p>
+                <div
+                    className="sk-cardview"
+                    role="region"
+                    aria-label="CV skill groups"
+                    tabIndex={0}
+                >
+                <div className="sk-grid">
+                    {visibleGroups.map(group => (
+                        <article className="sk-card" key={group.name}>
+                            <header className="sk-card-head">
+                                <span className="sk-card-icon"><i className={group.icon} /></span>
+                                <div className="sk-card-heading">
+                                    <span className="sk-card-eyebrow">{group.eyebrow} · {group.sectionLabel}</span>
+                                    <h4>{group.name}</h4>
+                                </div>
+                                <span className="sk-card-count">{group.items.length}</span>
+                            </header>
+                            <ul className="sk-items">
+                                {group.items.map(item => {
+                                    const scores = scoresFor(item);
+                                    return (
+                                        <li className="sk-item" key={item}>
+                                            <span className="sk-item-label">{item}</span>
+                                            {scores.length > 0 && (
+                                                <span className="sk-scores">
+                                                    {scores.map(skill => (
+                                                        <span className="sk-score" key={skill.name}>
+                                                            <span className="sk-score-name">{skill.name}</span>
+                                                            <span className="sk-score-track">
+                                                                <span className="sk-score-fill" style={{ width: `${skill.level}%` }} />
+                                                            </span>
+                                                            <span className="sk-score-value">{skill.level}%</span>
+                                                        </span>
+                                                    ))}
+                                                </span>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </article>
+                    ))}
+                </div>
+                </div>
+                {visibleGroups.length === 0 && (
+                    <p className="sk-empty">{publicEmptyCopy('emptySkills')}</p>
+                )}
+            </div>
+
             {/* Toggle Button */}
             <div className="text-center mb-8">
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--mainColor)]/10 hover:bg-[var(--mainColor)]/20 text-[var(--mainColor)] rounded-full transition-all duration-300 font-medium"
+                    className="sk-detail-toggle inline-flex items-center gap-2 px-6 py-3 bg-[var(--mainColor)]/10 hover:bg-[var(--mainColor)]/20 text-[var(--mainColor)] rounded-full transition-all duration-300 font-medium"
+                    aria-expanded={!isCollapsed}
+                    aria-controls="sk-scorecards"
                 >
                     <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'} transition-transform duration-300`}></i>
                     {isCollapsed ? 'Show Technologies' : 'Hide Technologies'}
@@ -129,7 +289,7 @@ const Skills = () => {
             </div>
 
             {/* Skills Container */}
-            <div className={`relative z-10 max-w-[1600px] mx-auto transition-all duration-500 overflow-hidden ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100'}`}>
+            <div id="sk-scorecards" className={`relative z-10 max-w-[1600px] mx-auto transition-all duration-500 overflow-hidden ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100'}`}>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8 lg:gap-12">
                     
                     {/* Technical Skills Section */}

@@ -16,7 +16,7 @@ exports.getPublicTestimonials = asyncHandler(async (req, res) => {
     }
 
     const testimonials = await Testimonial.find(filter)
-        .select('name position company avatar rating content featured date email website linkedin')
+        .select('name position company avatar thumbnail rating content featured date email website linkedin')
         .sort({ featured: -1, order: 1, date: -1 })
         .limit(parseInt(limit))
         .skip((parseInt(page) - 1) * parseInt(limit))

@@ -1,18 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Code2, User, Settings2, GraduationCap, Heart, FolderGit2, MessageSquare, Mail,
+    LayoutDashboard, Handshake, Sparkles, Sun, Moon, Maximize2, Minimize2,
+    ArrowRight, Menu, X
+} from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/Header.css';
+import '../styles/HeaderDrawer.css';
+import '../styles/HeaderModern.css';
 
+// Phase 27: real SVG icon components, not font-glyph class names. Several of
+// the old `fa-*` classes (notably fa-sparkles) are absent from the installed
+// FontAwesome free set, so those icons never rendered in the header.
 const NAV_SECTIONS = [
-    { id: 'about', label: 'About', icon: 'fas fa-user' },
-    { id: 'skills', label: 'Skills', icon: 'fas fa-cogs' },
-    { id: 'education', label: 'Education', icon: 'fas fa-graduation-cap' },
-    { id: 'interests', label: 'Interests', icon: 'fas fa-heart' },
-    { id: 'projects', label: 'Projects', icon: 'fas fa-project-diagram' },
-    { id: 'testimonials', label: 'Testimonials', icon: 'fas fa-comments' },
-    { id: 'contact', label: 'Contact', icon: 'fas fa-envelope' }
+    { id: 'about', label: 'About', Icon: User },
+    { id: 'skills', label: 'Skills', Icon: Settings2 },
+    { id: 'education', label: 'Education', Icon: GraduationCap },
+    { id: 'interests', label: 'Interests', Icon: Heart },
+    { id: 'projects', label: 'Projects', Icon: FolderGit2 },
+    { id: 'testimonials', label: 'Testimonials', Icon: MessageSquare },
+    { id: 'contact', label: 'Contact', Icon: Mail }
 ];
+
+const NavIcon = ({ icon: Icon, size = 18, className }) =>
+    Icon ? <Icon size={size} className={className} strokeWidth={2} aria-hidden="true" /> : null;
 
 const getIsMobile = () => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
 
@@ -124,7 +137,7 @@ const Header = () => {
         const handleClickOutside = (event) => {
             // Close when clicking outside the mobile nav or the toggle button
             const clickedInsideNav = event.target.closest('.mobile-nav');
-            const clickedOnToggle = event.target.closest('.menu-toggle-btn') || event.target.closest('.hamburger');
+            const clickedOnToggle = event.target.closest('.menu-toggle-btn');
             if (!clickedInsideNav && !clickedOnToggle) {
                 setIsMenuOpen(false);
             }
@@ -223,7 +236,7 @@ const Header = () => {
                             onClick={(e) => handleSectionClick(e, 'about')}
                         >
                             <div className="logo-icon-wrapper">
-                                <i className="fas fa-code logo-icon"></i>
+                                <Code2 className="logo-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
                                 <div className="logo-icon-glow"></div>
                             </div>
                             <span className="logo-text">
@@ -241,7 +254,7 @@ const Header = () => {
                                     onClick={(event) => handleSectionClick(event, section.id)}
                                     aria-current={activeSection === section.id ? 'true' : undefined}
                                 >
-                                    <i className={section.icon}></i>
+                                    <NavIcon icon={section.Icon} size={18} className="nav-link-icon" />
                                     <span>{section.label}</span>
                                     <div className="nav-link-indicator"></div>
                                 </a>
@@ -255,7 +268,7 @@ const Header = () => {
                                 aria-label="ThisButtonDoesThings"
                                 title="ThisButtonDoesThings"
                             >
-                                <i className="fas fa-grip-horizontal"></i>
+                                <LayoutDashboard size={18} strokeWidth={2} aria-hidden="true" />
                                 <span className="dashboard-tooltip">ThisButtonDoesThings</span>
                                 <div className="btn-shine-effect"></div>
                             </Link>
@@ -266,9 +279,9 @@ const Header = () => {
                                 className={`collaborate-btn ${isCollaborateRoute ? 'active' : ''}`}
                                 aria-current={isCollaborateRoute ? 'page' : undefined}
                             >
-                                <i className="fas fa-handshake"></i>
+                                <Handshake size={17} strokeWidth={2} aria-hidden="true" />
                                 <span className="font-bold">Collaborate</span>
-                                <i className="fas fa-sparkles sparkle-icon"></i>
+                                <Sparkles className="sparkle-icon" size={14} aria-hidden="true" />
                                 <div className="collaborate-pulse"></div>
                                 <div className="btn-shine-effect"></div>
                             </Link>
@@ -279,7 +292,7 @@ const Header = () => {
                                 className="theme-toggle-btn"
                                 aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
                             >
-                                <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
+                                {isDarkMode ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
                                 <div className="theme-toggle-glow"></div>
                             </button>
 
@@ -290,7 +303,7 @@ const Header = () => {
                                 aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                                 title={isFullscreen ? 'Exit fullscreen (ESC)' : 'Enter fullscreen'}
                             >
-                                <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
+                                {isFullscreen ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
                                 <div className="fullscreen-toggle-glow"></div>
                             </button>
                         </nav>
@@ -303,11 +316,9 @@ const Header = () => {
                             aria-label="Toggle menu"
                             aria-expanded={isMenuOpen}
                         >
-                            <div className={`hamburger ${isMenuOpen ? 'active' : ''}`}>
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
+                            {isMenuOpen
+                                ? <X size={24} strokeWidth={2.2} aria-hidden="true" />
+                                : <Menu size={24} strokeWidth={2.2} aria-hidden="true" />}
                         </button>
                     </div>
                 </div>
@@ -324,13 +335,33 @@ const Header = () => {
                             exit="closed"
                         >
                             <div className="mobile-nav-content">
-                                {/* Mobile Theme Toggle */}
+                                {/* Phase 26 — drawer header */}
+                                <div className="mobile-nav-header">
+                                    <div className="mobile-nav-brand">
+                                        <span className="mobile-nav-brand__mark"><Code2 size={20} strokeWidth={2.2} aria-hidden="true" /></span>
+                                        <span className="mobile-nav-brand__text">
+                                            <strong>E-Folio</strong>
+                                            <small>Explore the portfolio</small>
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="mobile-nav-close"
+                                        onClick={closeMenu}
+                                        aria-label="Close menu"
+                                    >
+                                        <X size={18} strokeWidth={2.2} aria-hidden="true" />
+                                    </button>
+                                </div>
+
+                                {/* Mobile Theme + Fullscreen toggles */}
+                                <div className="drawer-toggles">
                                 <div className="mobile-theme-toggle">
                                     <button
                                         onClick={toggleTheme}
                                         className="mobile-theme-btn"
                                     >
-                                        <i className={`fas fa-${isDarkMode ? 'sun' : 'moon'}`}></i>
+                                        {isDarkMode ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
                                         <span>{isDarkMode ? 'Light' : 'Dark'} Mode</span>
                                     </button>
                                 </div>
@@ -341,9 +372,10 @@ const Header = () => {
                                         onClick={toggleFullscreen}
                                         className="mobile-fullscreen-btn"
                                     >
-                                        <i className={`fas fa-${isFullscreen ? 'compress' : 'expand'}`}></i>
+                                        {isFullscreen ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
                                         <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}</span>
                                     </button>
+                                </div>
                                 </div>
 
                                 {/* Navigation Links */}
@@ -361,12 +393,12 @@ const Header = () => {
                                             exit="closed"
                                         >
                                             <div className="mobile-link-icon">
-                                                <i className={section.icon}></i>
+                                                <NavIcon icon={section.Icon} size={18} className="nav-link-icon" />
                                             </div>
                                             <span className="mobile-link-text">{section.label}</span>
                                             {activeSection === section.id && (
                                                 <div className="mobile-link-active-indicator">
-                                                    <i className="fas fa-circle"></i>
+                                                    <span className="mobile-link-active-dot"></span>
                                                 </div>
                                             )}
                                         </motion.a>
@@ -382,9 +414,9 @@ const Header = () => {
                                         aria-label="ThisButtonDoesThings"
                                         title="ThisButtonDoesThings"
                                     >
-                                        <i className="fas fa-grip-horizontal"></i>
+                                        <LayoutDashboard size={18} strokeWidth={2} aria-hidden="true" />
                                         <span>ThisButtonDoesThings</span>
-                                        <i className="fas fa-arrow-right"></i>
+                                        <ArrowRight size={16} aria-hidden="true" />
                                     </Link>
 
                                     <Link
@@ -392,9 +424,9 @@ const Header = () => {
                                         className={`mobile-collaborate-btn ${isCollaborateRoute ? 'active' : ''}`}
                                         onClick={closeMenu}
                                     >
-                                        <i className="fas fa-handshake"></i>
+                                        <Handshake size={18} aria-hidden="true" />
                                         <span>Let's Collaborate</span>
-                                        <i className="fas fa-sparkles"></i>
+                                        <Sparkles size={16} aria-hidden="true" />
                                     </Link>
                                 </div>
 

@@ -353,6 +353,18 @@ class SocketService {
         };
     }
 
+    /** Public Lab content-change signals (section name and timestamp only). */
+    subscribePublicLab(callback) {
+        if (typeof callback !== 'function') return () => {};
+        this.publicProjectsRefs += 1;
+        const socket = this.#ensurePublicSocket();
+        socket.on('lab:changed', callback);
+        return () => {
+            socket.off('lab:changed', callback);
+            this.#releasePublicSocket();
+        };
+    }
+
     /** Public review submission/moderation signals (ids and status only). */
     subscribePublicReviews(callback) {
         if (typeof callback !== 'function') return () => {};

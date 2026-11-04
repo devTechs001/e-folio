@@ -1,0 +1,143 @@
+/* ==========================================================================
+   Phase 27 — modern desktop header with REAL SVG icons (lucide-react).
+   Loaded last, after Header.css and HeaderDrawer.css. Presentation only:
+   links, routes, toggles and close behaviour are unchanged.
+   ========================================================================== */
+
+.header-wrapper { border-bottom: 1px solid transparent; }
+
+.header-scrolled {
+    background: linear-gradient(100deg, rgba(8, 14, 26, 0.93), rgba(12, 20, 36, 0.87));
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom-color: color-mix(in srgb, var(--mainColor, #00efff) 22%, transparent);
+    box-shadow: 0 18px 44px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ------------------------------------------------------------------- logo */
+
+.logo-link { gap: 0.7rem; }
+.logo-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(140deg, color-mix(in srgb, var(--mainColor, #00efff) 20%, transparent), rgba(124, 58, 237, 0.12));
+    border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent);
+}
+.logo-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px; /* harmless for the SVG; keeps the old rule meaningful */
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--mainColor, #00efff) 65%, transparent));
+}
+.logo-text { font-size: 1.35rem; letter-spacing: 0.06em; }
+
+/* ---------------------------------------------------------- desktop nav */
+
+.nav-link-desktop {
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+.nav-link-desktop > * { position: relative; z-index: 1; }
+.nav-link-desktop::before { background: color-mix(in srgb, var(--mainColor, #00efff) 8%, transparent); }
+.nav-link-desktop:hover,
+.nav-link-desktop.active {
+    border-color: color-mix(in srgb, var(--mainColor, #00efff) 35%, transparent);
+    background: color-mix(in srgb, var(--mainColor, #00efff) 10%, rgba(255, 255, 255, 0.03));
+    box-shadow: 0 10px 26px -20px var(--mainColor, #00efff);
+}
+.nav-link-desktop svg {
+    flex: 0 0 auto;
+    width: 17px;
+    height: 17px;
+    color: var(--mainColor, #00efff);
+    transition: transform 240ms ease;
+}
+.nav-link-desktop:hover svg { transform: scale(1.18) rotate(-6deg); }
+.nav-link-indicator { height: 2px; border-radius: 999px; }
+
+/* --------------------------------------------------------------- buttons */
+
+.dashboard-btn,
+.collaborate-btn,
+.theme-toggle-btn,
+.fullscreen-toggle-btn {
+    border-radius: 14px;
+}
+.dashboard-btn svg,
+.collaborate-btn svg,
+.theme-toggle-btn svg,
+.fullscreen-toggle-btn svg {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+.dashboard-btn svg { width: 19px; height: 19px; }
+.collaborate-btn svg { width: 17px; height: 17px; }
+.collaborate-btn .sparkle-icon { width: 14px; height: 14px; }
+.theme-toggle-btn svg,
+.fullscreen-toggle-btn svg { width: 19px; height: 19px; }
+
+.collaborate-btn {
+    border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent);
+    box-shadow: 0 12px 30px -18px var(--mainColor, #00efff);
+}
+.dashboard-btn { box-shadow: 0 12px 30px -18px rgba(139, 92, 246, 0.9); }
+
+.menu-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 30%, transparent);
+    background: color-mix(in srgb, var(--mainColor, #00efff) 10%, rgba(255, 255, 255, 0.04));
+    color: var(--mainColor, #00efff);
+}
+.menu-toggle-btn svg { width: 24px; height: 24px; }
+
+/* -------------------------------------------------- drawer SVG icon sizing */
+
+.mobile-nav-brand__mark svg { width: 20px; height: 20px; }
+.mobile-nav-close svg { width: 18px; height: 18px; }
+.drawer-toggles svg { width: 17px; height: 17px; flex: 0 0 auto; }
+.mobile-link-icon svg { width: 19px; height: 19px; color: var(--mainColor, #00efff); }
+.mobile-dashboard-btn svg,
+.mobile-collaborate-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+
+.mobile-link-active-indicator { display: inline-flex; align-items: center; justify-content: center; }
+.mobile-link-active-dot {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--mainColor, #00efff);
+    box-shadow: 0 0 10px var(--mainColor, #00efff);
+}
+
+/* ------------------------------------------------------------ a11y / motion */
+
+.header-wrapper a:focus-visible,
+.header-wrapper button:focus-visible,
+.mobile-nav a:focus-visible,
+.mobile-nav button:focus-visible {
+    outline: 2px solid var(--mainColor, #00efff);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-link-desktop svg,
+    .logo-icon-wrapper,
+    .collaborate-btn .sparkle-icon { transition: none; animation: none; }
+    .nav-link-desktop:hover svg,
+    .logo-link:hover .logo-icon-wrapper { transform: none; }
+}

@@ -1,0 +1,219 @@
+/* ==========================================================================
+   Phase 26 — modern mobile navigation drawer.
+   Loaded after Header.css: these are presentation overrides only. The drawer's
+   links, theme/fullscreen toggles and close behaviour are unchanged.
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .mobile-nav {
+        background:
+            radial-gradient(ellipse at 100% 0%, rgba(0, 239, 255, 0.13), transparent 55%),
+            linear-gradient(165deg, rgba(12, 20, 34, 0.97), rgba(8, 12, 22, 0.985));
+        border-left: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 32%, transparent);
+        border-top-left-radius: 26px;
+        border-bottom-left-radius: 26px;
+        box-shadow: -24px 0 70px -30px rgba(0, 239, 255, 0.4), -12px 0 50px rgba(0, 0, 0, 0.65);
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent) transparent;
+    }
+}
+
+.mobile-nav::-webkit-scrollbar { width: 9px; }
+.mobile-nav::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); }
+.mobile-nav::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--mainColor, #00efff), #7c3aed);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.mobile-nav-content {
+    padding: 1.4rem 1.25rem 1.75rem;
+    gap: 0;
+}
+
+/* ------------------------------------------------------------ drawer head */
+
+.mobile-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.mobile-nav-brand { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
+.mobile-nav-brand__mark {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--mainColor, #00efff), #7c3aed);
+    color: #06121c;
+    font-size: 1.15rem;
+    box-shadow: 0 10px 26px -14px var(--mainColor, #00efff);
+}
+.mobile-nav-brand__text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.mobile-nav-brand__text strong {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--textColor, #fff);
+}
+.mobile-nav-brand__text small {
+    font-size: 0.8rem;
+    opacity: 0.65;
+    color: var(--textColor, #fff);
+}
+
+.mobile-nav-close {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--textColor, #fff);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.mobile-nav-close:hover {
+    transform: rotate(90deg);
+    border-color: color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent);
+    background: color-mix(in srgb, var(--mainColor, #00efff) 14%, transparent);
+}
+
+/* ------------------------------------------------------------- toggles row */
+
+.drawer-toggles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 1.4rem;
+}
+
+.mobile-theme-toggle,
+.mobile-fullscreen-toggle {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.mobile-theme-btn,
+.mobile-fullscreen-btn {
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    width: 100%;
+    min-height: 58px;
+    padding: 0.7rem 0.55rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--textColor, #fff);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.mobile-theme-btn i,
+.mobile-fullscreen-btn i { font-size: 1.05rem; color: var(--mainColor, #00efff); }
+.mobile-theme-btn:hover,
+.mobile-fullscreen-btn:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent);
+    background: color-mix(in srgb, var(--mainColor, #00efff) 10%, rgba(255, 255, 255, 0.05));
+}
+
+/* ------------------------------------------------------------------- links */
+
+.mobile-nav-links { gap: 0.6rem; margin-bottom: 1.4rem; }
+
+.mobile-nav-link {
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+}
+.mobile-nav-link::before {
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--mainColor, #00efff), #7c3aed);
+}
+.mobile-nav-link:hover {
+    transform: translateX(4px);
+    border-color: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent);
+    box-shadow: 0 14px 30px -22px rgba(0, 239, 255, 0.6);
+}
+.mobile-nav-link.active {
+    border-color: color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent);
+    background: color-mix(in srgb, var(--mainColor, #00efff) 14%, rgba(255, 255, 255, 0.04));
+    color: var(--mainColor, #00efff);
+}
+
+.mobile-link-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--mainColor, #00efff) 13%, transparent);
+    border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 24%, transparent);
+    font-size: 1.1rem;
+}
+
+/* ---------------------------------------------------------- special links */
+
+.mobile-special-links {
+    gap: 0.7rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+.mobile-dashboard-btn,
+.mobile-collaborate-btn {
+    padding: 1rem 1.2rem;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+}
+.mobile-dashboard-btn { background: linear-gradient(135deg, #7c3aed, #4f46e5); }
+.mobile-collaborate-btn { background: linear-gradient(135deg, var(--mainColor, #00efff), #7c3aed); }
+
+.mobile-nav-footer {
+    padding-top: 1.25rem;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* ------------------------------------------------------------ a11y / motion */
+
+.mobile-nav-close:focus-visible,
+.mobile-theme-btn:focus-visible,
+.mobile-fullscreen-btn:focus-visible,
+.mobile-nav-link:focus-visible,
+.mobile-dashboard-btn:focus-visible,
+.mobile-collaborate-btn:focus-visible {
+    outline: 2px solid var(--mainColor, #00efff);
+    outline-offset: 3px;
+}
+
+@media (max-width: 380px) {
+    .drawer-toggles { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-nav-close, .mobile-theme-btn, .mobile-fullscreen-btn, .mobile-nav-link { transition: none; }
+    .mobile-nav-close:hover, .mobile-theme-btn:hover, .mobile-fullscreen-btn:hover,
+    .mobile-nav-link:hover { transform: none; }
+}
