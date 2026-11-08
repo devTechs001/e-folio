@@ -1,6 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api.service';
 import { ensureUserWorkspace } from '../utils/userWorkspace';
+import {
+    normalizeRole, isOwnerRole, isAdminRole, OWNER_ROLE, ADMIN_ROLE,
+    COLLABORATOR_ROLE, USER_ROLE
+} from '../utils/authRoles';
 
 const AuthContext = createContext(undefined);
 
@@ -40,16 +44,16 @@ const AuthProvider = ({ children }) => {
                                 username: verifiedUser.username,
                                 email: verifiedUser.email,
                                 avatar: verifiedUser.avatar || null,
-                                role: verifiedUser.role || savedRole,
+                                role: normalizeRole(verifiedUser.role || savedRole),
                                 loginTime: new Date().toISOString()
                             };
                             setUser(data);
-                            setUserRole(data.role || savedRole);
+                            setUserRole(data.role);
                             localStorage.setItem('efolio_user', JSON.stringify(data));
-                            localStorage.setItem('efolio_role', data.role || savedRole);
+                            localStorage.setItem('efolio_role', data.role);
                         } else {
                             setUser(JSON.parse(savedUser));
-                            setUserRole(savedRole);
+                            setUserRole(normalizeRole(savedRole));
                         }
                     } else {
                         // Token invalid, clear session
@@ -121,12 +125,12 @@ const AuthProvider = ({ children }) => {
                     };
                     
                     setUser(userData);
-                    setUserRole(response.user.role);
+                    setUserRole(normalizeRole(response.user.role));
                     
                     // Store token and user data
                     localStorage.setItem('token', response.token);
                     localStorage.setItem('efolio_user', JSON.stringify(userData));
-                    localStorage.setItem('efolio_role', response.user.role);
+                    localStorage.setItem('efolio_role', normalizeRole(response.user.role));
                     
                     setLoading(false);
                     return { success: true, user: userData, role: response.user.role };
@@ -224,11 +228,12 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    const isOwner = () => userRole === 'owner';
-    const isCollaborator = () => userRole === 'collaborator';
-    const isUser = () => userRole === 'user';
+    const isOwner = () => isOwnerRole(userRole);
+    const isAdmin = () => isAdminRole(userRole);
+    const isCollaborator = () => normalizeRole(userRole) === COLLABORATOR_ROLE;
+    const isUser = () => normalizeRole(userRole) === USER_ROLE;
     const isAuthenticated = () => user !== null;
-    const canEdit = () => userRole === 'owner' || userRole === 'collaborator' || userRole === 'user';
+    const canEdit = () => [OWNER_ROLE, ADMIN_ROLE, COLLABORATOR_ROLE, USER_ROLE].includes(normalizeRole(userRole));
 
     const value = {
         user,
@@ -239,6 +244,7 @@ const AuthProvider = ({ children }) => {
         register,
         googleSignIn,
         isOwner,
+        isAdmin,
         isCollaborator,
         isUser,
         isAuthenticated,

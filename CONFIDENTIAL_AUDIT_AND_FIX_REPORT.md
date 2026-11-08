@@ -68,7 +68,8 @@ for phase 28; PR #4 remains open and untouched.
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
 | UI polish: fonts, card viewpoint, hero + drawer (phase 26) | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
 | Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers |
-| CV work history + mobile drawer fix (phase 28) | the CV had no entry for the owner's current contract role; the mobile menu button appeared at 769–1024px (and, after phase 27, on desktop) but the drawer was gated at 768px, so clicking it did nothing | one new Experience entry using only owner-supplied facts, with the existing CV markup/CSS untouched; the JS breakpoint aligned to the 1024px CSS breakpoint, the modern button restyle scoped to mobile, and click-outside hardened for SVG targets |
+| CV work history + mobile drawer fix (phase 28) |
+| Admin/owner login + main links (phase 30) | the seeded `admin` DB account had a role the dashboard did not know, the login page only redirected three roles to `/dashboard`, and the public main-site links were mounted only on the landing page | a canonical role helper, safe role normalisation, admin-aware dashboard menu, main-site links in both dashboard drawers, and real mobile bottom-nav targets; owner privileges unchanged | the CV had no entry for the owner's current contract role; the mobile menu button appeared at 769–1024px (and, after phase 27, on desktop) but the drawer was gated at 768px, so clicking it did nothing | one new Experience entry using only owner-supplied facts, with the existing CV markup/CSS untouched; the JS breakpoint aligned to the 1024px CSS breakpoint, the modern button restyle scoped to mobile, and click-outside hardened for SVG targets |
 | Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
 | Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
@@ -1976,6 +1977,99 @@ made in this phase.
 
 ---
 
+## 3ac. Phase 30 — review of the admin/owner login vs the regular user login, and the missing main links
+
+Requested as *"i login as the aadmin/owner but cant se the main links of the
+user(review the separate admin login from the regular user ogin system"*.
+
+### What the review found (read-only first)
+
+There is **no separate admin login page**. One `/login` form (plus
+`/login/collaborator`) calls one `/auth/login` endpoint, which has three
+credential paths:
+
+| Path | Where credentials live | Role returned |
+| --- | --- | --- |
+| Bootstrap owner | `OWNER_EMAIL` + `OWNER_PASSWORD` / `OWNER_PASSWORD_HASH` from `server/config/security.js`, checked before any DB lookup | `owner` |
+| Regular user | MongoDB `User` record with bcrypt password | `user.role || 'user'` |
+| Collaborator | `/auth/login/collaborator` with an optional access code | `collaborator` |
+| Seeded legacy admin | `admin@efolio.com` DB account in `server/seed-projects.js` | **`admin`** |
+
+The front end only ever knew `owner`, `collaborator` and `user`, so the legacy
+`admin` role broke three things at once:
+
+1. `LoginPage` redirected only `owner` / `collaborator` / `user` to
+   `/dashboard`; an `admin` login was sent back to `/`.
+2. `Dashboard.jsx` filtered every menu item with
+   `item.roles.includes(userRole)` and **no item lists `admin`**, producing an
+   empty sidebar — including the whole `Main` group.
+3. `AuthContext.isOwner()` and the server's `isOwner` / `isAuthorized`
+   middleware do not recognise `admin`, so even visible owner panels would
+   have returned 403.
+
+Separately, the **public main links** (About, Skills, Education, Interests,
+Projects, Testimonials, Contact) are rendered by `LandingPage`'s `Header`,
+which is never mounted on `/dashboard`. An owner in the dashboard only had a
+single "Back to Portfolio" link. `MobileBottomNav` also advertised
+`/projects`, `/about` and `/contact` — paths with no routes, which silently
+fell through to the landing-page catch-all.
+
+### Changes
+
+- New `src/utils/authRoles.js`: one canonical role vocabulary with
+  `normalizeRole`, `isOwnerRole`, `isAdminRole`, `canOpenDashboard`,
+  `rolesForMenu` and `canSeeMenuItem`. It folds `admin`, `administrator`,
+  `superadmin` and `root` into `admin`.
+- `AuthContext`: normalises roles from login, registration, Google sign-in
+  and session verification; adds `isAdmin`; **keeps `isOwner()` strict**.
+- `LoginPage`: every authenticated role, including the legacy admin, now lands
+  on `/dashboard`.
+- `Dashboard.jsx`: menu visibility uses `canSeeMenuItem`. An admin receives the
+  **regular-user** menu set, so the main links appear; it never receives
+  owner-only panels. Owner / collaborator / user visibility is unchanged.
+- `DashboardSideNavbar.jsx`: a compact "Main site" group with the seven real
+  public section hash links is rendered in **both** the desktop and mobile
+  drawers. Presentation only — no routes, data or authorization changes.
+- `MobileBottomNav.jsx`: the broken paths now point at `/#projects`, `/#about`
+  and `/#contact`.
+
+### Deliberately unchanged (security)
+
+`server/middleware/auth.middleware.js` still requires the literal `owner`
+role for `/api/admin/*`, and `isAuthorized` still allows only
+`owner` / `collaborator` / `user`. The seeded admin account, its credentials
+and `server/seed-projects.js` were not touched. **No auth bypass, privilege
+elevation, token change, DB write or new login endpoint was introduced.**
+Because the server does not grant admin any owner privilege, the admin account
+still cannot use owner-only APIs; if the owner wants that account to be a full
+owner, that is a separate, explicit security decision (backlog 34).
+
+### Verification (static only)
+
+- `npm test` exit 0: **314** Node-only regression checks (**10** new in
+  `tests/admin-login-links.test.mjs`). `npm run check` exit 0: lint **0 errors**,
+  endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build and PWA
+  precache regenerated. Preview `/`, `/cv`, `/dashboard` and the touched
+  modules return 200; `git diff --check` clean; masked secret scan clean.
+- Protected project cards, showcase, seed/sample/backup files and NetGate
+  links were not touched; 14 grid + 2 showcase records and the 600 counter
+  floor are unchanged.
+- **Not verified:** a live login as owner/admin against Express/MongoDB, the
+  rendered dashboard sidebar in a browser, or real socket/API calls. No live
+  API/DB, SMTP/LLM/Cloudinary call or offensive test in this phase. Runtime
+  confirmation is backlog 34.
+
+### Note on the interrupted phase 29 request
+
+The earlier *"remove the dev api button badge screen…"* request was stopped
+before any edit, test, commit or push. `src/components/DevDiagnostics.jsx`,
+`src/styles/DevDiagnostics.css` and the desktop header are still exactly as
+phase 28 left them. That work remains outstanding and is **not** included in
+this phase.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2117,6 +2211,14 @@ made in this phase.
     icon renders as an SVG, the desktop nav pills/active state look right, and
     the compact Skills cards still scroll both inside each card and as a
     group. No headless browser or touch device was available in this sandbox.
+34. Phase 30 follow-up: decide whether the legacy `admin@efolio.com` account
+    should be a full owner (requires an explicit server-side authorization
+    change and removing its hard-coded seed password), retired, or kept as a
+    separate lower-privilege role. Then verify a live owner/admin login, the
+    rendered sidebar and main-site hash links in a browser. Also finish the
+    interrupted phase 29 request (remove the dev API badge/panel, retidy the
+    header and drop unneeded desktop icons) if still wanted. No live backend,
+    browser or auth flow was available in this sandbox.
 33. Phase 28 follow-up: visually confirm the new Experience card on `/cv`
     keeps the existing typography/spacing, and click the menu button at a
     769–1024px viewport (and on a real phone) to confirm the drawer opens,
@@ -2179,4 +2281,9 @@ to directly and PR #4 remains open and untouched. Phase 28 (§3ab) was
 committed and pushed to the new active branch `arena/c0cbab09-e-folio` after
 the explicit **"push everything"** instruction; **no PR or merge** was
 requested for it. `main` was not pushed to directly in this phase and PR #4
-remains open and untouched.
+remains open and untouched. Phase 30
+(§3ac) was committed locally to the same branch after a read-only auth
+review; **no push, PR or merge** was requested or made for it. the local `origin/main`
+tracking ref remains `5c2b902`; the remote `main` head has since moved
+independently to `b6a3e0ad` and was **not** fetched, modified or merged in
+this phase. PR #4 remains open and untouched.

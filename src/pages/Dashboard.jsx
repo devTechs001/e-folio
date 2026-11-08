@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from '../components/NotificationSystem';
 import DashboardProvider, { useDashboard } from '../contexts/DashboardContext';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { canSeeMenuItem } from '../utils/authRoles';
 
 // Dashboard Layout Components
 import DashboardSideNavbar from '../components/dashboard/DashboardSideNavbar';
@@ -671,7 +672,7 @@ const DashboardContent = () => {
 
     // Filter menu items by role
     const filteredMenuItems = useMemo(() => {
-        return menuItems.filter(item => item.roles.includes(userRole));
+        return menuItems.filter(item => canSeeMenuItem(item, userRole));
     }, [menuItems, userRole]);
 
     // Use filtered items directly for routing

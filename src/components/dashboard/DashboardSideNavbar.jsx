@@ -14,6 +14,44 @@ import {
     Bookmark, Calendar, Clock, Globe, Award, Code, FileText
 } from 'lucide-react';
 
+// Phase 30 — the public main-site navigation lives in LandingPage's Header,
+// which is not mounted on /dashboard. Signed-in owners/admins landed on the
+// dashboard with only "Back to Portfolio" and could not reach the main links.
+// These are plain hash links to the existing public sections (no new routes,
+// no new data and no change to authorization).
+const MAIN_SITE_LINKS = [
+    { hash: 'about', label: 'About', icon: User },
+    { hash: 'skills', label: 'Skills', icon: Wrench },
+    { hash: 'education', label: 'Education', icon: GraduationCap },
+    { hash: 'interests', label: 'Interests', icon: Star },
+    { hash: 'projects', label: 'Projects', icon: FolderKanban },
+    { hash: 'testimonials', label: 'Testimonials', icon: MessageSquare },
+    { hash: 'contact', label: 'Contact', icon: Mail }
+];
+
+const MainSiteLinks = ({ collapsed = false, onNavigate }) => (
+    <div className={`pt-3 mt-3 border-t border-slate-800/60 ${collapsed ? 'space-y-1' : 'space-y-0.5'}`}>
+        {!collapsed && (
+            <h3 className="px-3 mb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Main site
+            </h3>
+        )}
+        {MAIN_SITE_LINKS.map(({ hash, label, icon: Icon }) => (
+            <Link
+                key={hash}
+                to={`/#${hash}`}
+                onClick={onNavigate}
+                title={collapsed ? label : undefined}
+                aria-label={label}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800/50 hover:text-cyan-300 transition-colors ${collapsed ? 'justify-center' : ''}`}
+            >
+                <Icon size={16} className="flex-shrink-0" />
+                {!collapsed && <span className="text-sm font-medium">{label}</span>}
+            </Link>
+        ))}
+    </div>
+);
+
 const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMenuOpen, setMobileMenuOpen }) => {
     const { user, userRole, logout } = useAuth();
     const { theme, isDark } = useTheme();
@@ -277,6 +315,9 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
                             ))
                         )}
                     </div>
+
+                    {/* Phase 30: public main links for signed-in users */}
+                    <MainSiteLinks collapsed={collapsed} />
                 </nav>
 
                 {/* Footer */}
@@ -543,6 +584,9 @@ const MobileSidebarContent = ({
                         </div>
                     </div>
                 ))}
+
+                {/* Phase 30: public main links for signed-in users */}
+                <MainSiteLinks onNavigate={onClose} />
             </nav>
 
             {/* Footer */}

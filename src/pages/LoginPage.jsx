@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { recordDevIssue, publicCopy } from '../utils/publicMessaging';
+import { canOpenDashboard } from '../utils/authRoles';
 import '../styles/LoginPage.css';
 
 const LoginPage = ({ collaborator = false }) => {
@@ -73,7 +74,7 @@ const LoginPage = ({ collaborator = false }) => {
                 setSuccess('Login successful! Redirecting...');
                 
                 setTimeout(() => {
-                    if (result.role === 'owner' || result.role === 'collaborator' || result.role === 'user') {
+                    if (canOpenDashboard(result.role)) {
                         navigate('/dashboard');
                     } else {
                         navigate('/');

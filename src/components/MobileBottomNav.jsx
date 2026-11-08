@@ -3,12 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, FolderKanban, LayoutDashboard, User, Mail } from 'lucide-react';
 
+// Phase 30: /projects, /about and /contact were never real routes; they fell
+// through to the LandingPage catch-all. Point them at the real public sections.
 const NAV_ITEMS = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: FolderKanban, label: 'Projects', path: '/projects' },
+    { icon: FolderKanban, label: 'Projects', path: '/#projects' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: User, label: 'About', path: '/about' },
-    { icon: Mail, label: 'Contact', path: '/contact' },
+    { icon: User, label: 'About', path: '/#about' },
+    { icon: Mail, label: 'Contact', path: '/#contact' },
 ];
 
 const MobileBottomNav = () => {
