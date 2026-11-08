@@ -9,12 +9,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { recordDevIssue, publicCopy } from '../utils/publicMessaging';
+import { canOpenDashboard } from '../utils/authRoles';
 import '../styles/LoginPage.css';
 
 const LoginPage = ({ collaborator = false }) => {
     const { isDarkMode } = useTheme();
     const [formData, setFormData] = useState({
-        name: '',
         email: '',
         password: '',
         accessCode: '',
@@ -64,7 +64,7 @@ const LoginPage = ({ collaborator = false }) => {
         try {
             // For the collaborator login screen, always authenticate via the
             // collaborator endpoint (the server validates the access code).
-            const role = collaborator ? 'collaborator' : 'visitor';
+            const role = collaborator ? 'collaborator' : 'user';
 
             // Attempt login via backend API
             const result = await login(formData, role);
@@ -73,7 +73,7 @@ const LoginPage = ({ collaborator = false }) => {
                 setSuccess('Login successful! Redirecting...');
                 
                 setTimeout(() => {
-                    if (result.role === 'owner' || result.role === 'collaborator' || result.role === 'user') {
+                    if (canOpenDashboard(result.role)) {
                         navigate('/dashboard');
                     } else {
                         navigate('/');
@@ -198,7 +198,7 @@ const LoginPage = ({ collaborator = false }) => {
                                         Enter your collaboration credentials
                                     </>
                                 ) : (
-                                    'Sign in to access your account'
+                                    'Sign in to build and manage your CV and portfolio'
                                 )}
                             </p>
                         </div>
@@ -232,30 +232,6 @@ const LoginPage = ({ collaborator = false }) => {
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Name Field */}
-                            <div className="form-group">
-                                <label className="form-label">
-                                    <User size={16} />
-                                    Full Name
-                                </label>
-                                <div className="relative">
-                                    <div className="form-icon">
-                                        <User size={20} />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        onFocus={() => setFocusedField('name')}
-                                        onBlur={() => setFocusedField('')}
-                                        required
-                                        placeholder="Enter your full name"
-                                        className={`form-input ${focusedField === 'name' ? 'form-input-focused' : ''}`}
-                                    />
-                                </div>
-                            </div>
-
                             {/* Email Field */}
                             <div className="form-group">
                                 <label className="form-label">
@@ -457,10 +433,21 @@ const LoginPage = ({ collaborator = false }) => {
                                     Sign up now
                                 </Link>
                             </p>
+                            {!collaborator && (
+                                <p className="text-gray-500 text-xs mt-2">
+                                    Accounts are for creating and managing your own CV and portfolio.
+                                </p>
+                            )}
                             {collaborator && (
                                 <p className="text-gray-500 text-xs mt-2">
                                     <Shield size={12} className="inline-block mr-1" />
                                     Collaboration access is invite-only
+                                </p>
+                            )}
+                            {!collaborator && (
+                                <p className="owner-login-link mt-3">
+                                    Portfolio owner?{' '}
+                                    <Link to="/login/owner">Owner sign in</Link>
                                 </p>
                             )}
                         </div>

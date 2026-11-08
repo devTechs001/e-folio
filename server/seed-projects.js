@@ -100,29 +100,32 @@ async function seedProjects() {
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/e-folio');
         console.log('Connected to MongoDB');
 
-        // Get the admin user (assuming you have one)
-        let adminUser = await User.findOne({ email: 'admin@efolio.com' });
-        
+        // Phase 32: the seeded admin credentials come ONLY from the
+        // environment (Render). No demo email or password is compiled in.
+        const adminEmail = (process.env.ADMIN_EMAIL || '').replace(/^["']|["']$/g, '').trim().toLowerCase();
+        const adminPassword = (process.env.ADMIN_PASSWORD || '').replace(/^["']|["']$/g, '').trim();
+
+        let adminUser = adminEmail ? await User.findOne({ email: adminEmail }) : null;
         if (!adminUser) {
-            console.log('Admin user not found. Creating admin user...');
-            
-            // Create admin user if not exists
+            adminUser = await User.findOne({ role: { $in: ['admin', 'owner'] } });
+        }
+
+        if (!adminUser) {
+            if (!adminEmail || !adminPassword) {
+                throw new Error('No admin/owner account found. Set ADMIN_EMAIL and ADMIN_PASSWORD in the Render environment before seeding.');
+            }
             const bcrypt = require('bcryptjs');
-            const hashedPassword = await bcrypt.hash('admin123', 12);
-            
+            const hashedPassword = await bcrypt.hash(adminPassword, 12);
             const newAdmin = new User({
-                name: 'Admin User',
+                name: process.env.ADMIN_NAME || 'Admin User',
                 username: 'admin',
-                email: 'admin@efolio.com',
+                email: adminEmail,
                 password: hashedPassword,
                 role: 'admin',
                 isEmailVerified: true
             });
-            
             await newAdmin.save();
-            console.log('Admin user created successfully');
-            
-            // Use the newly created admin
+            console.log('Admin user created from environment credentials');
             adminUser = newAdmin;
         }
 

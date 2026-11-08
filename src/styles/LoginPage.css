@@ -858,3 +858,21 @@
     color: #6b7280;
   }
 }
+/* Phase 31 — discreet cross-link between the two sign-in pages. */
+.owner-login-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.owner-login-link a {
+    color: #c4b5fd;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.owner-login-link a:hover { color: #e9d5ff; }

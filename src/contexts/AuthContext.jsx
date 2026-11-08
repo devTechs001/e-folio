@@ -1,6 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api.service';
 import { ensureUserWorkspace } from '../utils/userWorkspace';
+import {
+    normalizeRole, isOwnerRole, isAdminRole, OWNER_ROLE, ADMIN_ROLE,
+    COLLABORATOR_ROLE, USER_ROLE
+} from '../utils/authRoles';
 
 const AuthContext = createContext(undefined);
 
@@ -12,24 +16,20 @@ export const useAuth = () => {
     return context;
 };
 
-const normalizeRole = (value) => {
-    const role = String(value || '').trim().toLowerCase();
-    if (['owner', 'collaborator', 'user', 'visitor'].includes(role)) {
-        return role;
-    }
-    return 'visitor';
-};
-
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // User roles: 'owner', 'collaborator', 'visitor'
+    // User roles: owner, admin, collaborator, user, visitor.
     const [userRole, setUserRole] = useState('visitor');
 
+    // Merge resolution (main's fix, using the shared helper): a saved session
+    // with a stale/missing role must not leave a signed-in user as a visitor.
+    // Our normalizeRole also keeps the legacy `admin` role, which main's
+    // local helper would have collapsed back to `visitor`.
     const effectiveRole = userRole && userRole !== 'visitor'
         ? normalizeRole(userRole)
-        : (user ? 'user' : 'visitor');
+        : (user ? USER_ROLE : 'visitor');
 
     useEffect(() => {
         // Check for existing session and verify token
@@ -52,18 +52,16 @@ const AuthProvider = ({ children }) => {
                                 username: verifiedUser.username,
                                 email: verifiedUser.email,
                                 avatar: verifiedUser.avatar || null,
-                                role: verifiedUser.role || savedRole || 'user',
+                                role: normalizeRole(verifiedUser.role || savedRole || USER_ROLE),
                                 loginTime: new Date().toISOString()
                             };
-                            const nextRole = normalizeRole(data.role || savedRole || 'user');
                             setUser(data);
-                            setUserRole(nextRole);
+                            setUserRole(data.role);
                             localStorage.setItem('efolio_user', JSON.stringify(data));
-                            localStorage.setItem('efolio_role', nextRole);
+                            localStorage.setItem('efolio_role', data.role);
                         } else {
-                            const nextRole = normalizeRole(savedRole || 'user');
                             setUser(JSON.parse(savedUser));
-                            setUserRole(nextRole);
+                            setUserRole(normalizeRole(savedRole || USER_ROLE));
                         }
                     } else {
                         // Token invalid, clear session
@@ -121,11 +119,46 @@ const AuthProvider = ({ children }) => {
                 return { success: false, error: response.message || 'Invalid credentials' };
             }
 
-            // General / Owner / User authentication via backend API
+            // Private owner sign-in: dedicated endpoint, dedicated token.
+            // The client verifies the returned role before granting any owner UI.
+            if (role === 'owner' && credentials.email && credentials.password) {
+                const response = await apiService.ownerLogin(credentials.email, credentials.password);
+
+                if (response.success && response.token && normalizeRole(response.user?.role) === OWNER_ROLE) {
+                    const userData = {
+                        id: response.user.id,
+                        name: response.user.name,
+                        email: response.user.email,
+                        avatar: response.user.avatar || null,
+                        loginTime: new Date().toISOString()
+                    };
+
+                    setUser(userData);
+                    setUserRole(OWNER_ROLE);
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('efolio_user', JSON.stringify(userData));
+                    localStorage.setItem('efolio_role', OWNER_ROLE);
+                    setLoading(false);
+                    return { success: true, user: userData, role: OWNER_ROLE };
+                }
+
+                setLoading(false);
+                return { success: false, error: response.message || 'Invalid credentials' };
+            }
+
+            // Regular user authentication via the public /auth/login endpoint.
             if (credentials.email && credentials.password) {
                 const response = await apiService.login(credentials.email, credentials.password);
                 
                 if (response.success && response.token) {
+                    const sessionRole = normalizeRole(response.user?.role);
+
+                    // Owner sessions must come from the owner endpoint only.
+                    if (sessionRole === OWNER_ROLE) {
+                        setLoading(false);
+                        return { success: false, error: 'Please use the owner sign-in page.' };
+                    }
+
                     const userData = {
                         id: response.user.id,
                         name: response.user.name,
@@ -134,17 +167,16 @@ const AuthProvider = ({ children }) => {
                         loginTime: new Date().toISOString()
                     };
                     
-                    const nextRole = normalizeRole(response.user.role || (userData.email === 'devtechs842@gmail.com' ? 'owner' : 'user'));
                     setUser(userData);
-                    setUserRole(nextRole);
+                    setUserRole(sessionRole);
                     
                     // Store token and user data
                     localStorage.setItem('token', response.token);
                     localStorage.setItem('efolio_user', JSON.stringify(userData));
-                    localStorage.setItem('efolio_role', nextRole);
+                    localStorage.setItem('efolio_role', sessionRole);
                     
                     setLoading(false);
-                    return { success: true, user: userData, role: nextRole };
+                    return { success: true, user: userData, role: sessionRole };
                 }
 
                 setLoading(false);
@@ -182,10 +214,10 @@ const AuthProvider = ({ children }) => {
                     loginTime: new Date().toISOString()
                 };
                 setUser(data);
-                setUserRole('user');
+                setUserRole(USER_ROLE);
                 localStorage.setItem('token', response.token);
                 localStorage.setItem('efolio_user', JSON.stringify(data));
-                localStorage.setItem('efolio_role', 'user');
+                localStorage.setItem('efolio_role', USER_ROLE);
                 setLoading(false);
                 // New accounts get their own CV and portfolio records through
                 // the real get-or-create APIs. Best effort: registration still
@@ -198,7 +230,7 @@ const AuthProvider = ({ children }) => {
                         }
                     })
                     .catch(() => {});
-                return { success: true, user: data, role: 'user' };
+                return { success: true, user: data, role: USER_ROLE };
             }
             setLoading(false);
             // Surface the API's real reason (duplicate username, maintenance,
@@ -224,12 +256,12 @@ const AuthProvider = ({ children }) => {
                     loginTime: new Date().toISOString()
                 };
                 setUser(data);
-                setUserRole('user');
+                setUserRole(USER_ROLE);
                 localStorage.setItem('token', response.token);
                 localStorage.setItem('efolio_user', JSON.stringify(data));
-                localStorage.setItem('efolio_role', 'user');
+                localStorage.setItem('efolio_role', USER_ROLE);
                 setLoading(false);
-                return { success: true, user: data, role: 'user' };
+                return { success: true, user: data, role: USER_ROLE };
             }
             setLoading(false);
             return { success: false, error: response.message || 'Google sign-in failed' };
@@ -239,11 +271,12 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    const isOwner = () => effectiveRole === 'owner';
-    const isCollaborator = () => effectiveRole === 'collaborator';
-    const isUser = () => effectiveRole === 'user';
+    const isOwner = () => isOwnerRole(effectiveRole);
+    const isAdmin = () => isAdminRole(effectiveRole);
+    const isCollaborator = () => effectiveRole === COLLABORATOR_ROLE;
+    const isUser = () => effectiveRole === USER_ROLE;
     const isAuthenticated = () => user !== null;
-    const canEdit = () => ['owner', 'collaborator', 'user'].includes(effectiveRole);
+    const canEdit = () => [OWNER_ROLE, ADMIN_ROLE, COLLABORATOR_ROLE, USER_ROLE].includes(effectiveRole);
 
     const value = {
         user,
@@ -254,6 +287,7 @@ const AuthProvider = ({ children }) => {
         register,
         googleSignIn,
         isOwner,
+        isAdmin,
         isCollaborator,
         isUser,
         isAuthenticated,

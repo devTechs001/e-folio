@@ -128,6 +128,15 @@ class ApiService {
         });
     }
 
+    // Private owner sign-in. Separate endpoint so a user credential can never
+    // be exchanged for an owner session (and vice versa).
+    async ownerLogin(email, password) {
+        return this.request('/auth/login/owner', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+    }
+
     async collaboratorLogin(email, password, accessCode) {
         return this.request('/auth/login/collaborator', {
             method: 'POST',

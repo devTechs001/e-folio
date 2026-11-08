@@ -21,6 +21,17 @@ const DEFAULT_CV = {
   },
   experience: [
     {
+      // Phase 28 — owner-supplied current contract role. No invented start
+      // year, location or technology list; the existing card markup and CSS
+      // are untouched so the CV keeps its look and style.
+      title: "IT Assistant Manager (Contract)",
+      company: "Genco Livestock",
+      period: "Present",
+      location: "",
+      description: "Data entry and analysis, database management, security, data integrity, technical support, and other IT-related duties.",
+      technologies: []
+    },
+    {
       title: "Full Stack Developer",
       company: "Tech Innovations Ltd",
       period: "2022 - Present",

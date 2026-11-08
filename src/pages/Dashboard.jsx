@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from '../components/NotificationSystem';
 import DashboardProvider, { useDashboard } from '../contexts/DashboardContext';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { canSeeMenuItem } from '../utils/authRoles';
 
 // Dashboard Layout Components
 import DashboardSideNavbar from '../components/dashboard/DashboardSideNavbar';
@@ -671,7 +672,7 @@ const DashboardContent = () => {
 
     // Filter menu items by role
     const filteredMenuItems = useMemo(() => {
-        return menuItems.filter(item => item.roles.includes(userRole));
+        return menuItems.filter(item => canSeeMenuItem(item, userRole));
     }, [menuItems, userRole]);
 
     // Use filtered items directly for routing
@@ -831,21 +832,14 @@ const DashboardContent = () => {
                 <DashboardFooter />
             </div>
 
-            {/* Mobile Menu Backdrop */}
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
-                    />
-                )}
-            </AnimatePresence>
+            {/* Phase 32: the single mobile backdrop is rendered by
+                DashboardSideNavbar; a second one here sat below the sticky
+                header and swallowed taps on the menu button. */}
 
             {/* Quick Access Button (Mobile) */}
             <button
+                type="button"
+                aria-label="Open menu"
                 onClick={() => setMobileMenuOpen(true)}
                 className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full shadow-2xl shadow-cyan-500/50 flex items-center justify-center z-40 active:scale-95 transition-transform"
             >

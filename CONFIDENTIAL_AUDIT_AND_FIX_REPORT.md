@@ -45,7 +45,11 @@ owner's explicit **"push changes now"** / **"push all"** instructions. The
 owner then said **"comit t mian"**, which reversed the earlier **"not yet"**
 restraint for PRs/merges: phases 22–27 were merged into `main` from the active
 branch via PR #7. PR #4 (an older, unrelated branch) was left open
-and untouched.
+and untouched. Phase 28 (§3ab) began on the new active branch
+`arena/c0cbab09-e-folio`, created from the merged `main`. Its CV work-history
+and mobile-drawer changes were committed and pushed there after the explicit
+**"push everything"** instruction. **No PR or merge** was requested or made
+for phase 28; PR #4 remains open and untouched.
 
 ---
 
@@ -62,8 +66,12 @@ and untouched.
 | Security | hard-coded JWT secret/owner password, 2 secret files tracked, undeclared runtime deps, 2FA used undeclared packages | central JWT/owner config, production fail-closed, `.env*` untracked, static audit **0 findings** (`--strict` passes) |
 | Stress tests | misnamed/invalid k6 + Artillery files, broken runner | working k6/Artillery profiles, offline Node harness + mock target; 30-VU and 100-VU runs PASS |
 | Dashboards → real APIs (phase 2) | analytics controller returned ~700 lines of fabricated numbers; 3 dashboards rendered `Math.random()` data; sample inbox seeded | all analytics endpoints are Mongo aggregates, honest empty states, `Analytics.jsx` / `VisitorsAnalyticsStyled.jsx` / `EmailManagerEnhanced.jsx` use real endpoints |
-| UI polish: fonts, card viewpoint, hero + drawer (phase 26) |
-| Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
+| UI polish: fonts, card viewpoint, hero + drawer (phase 26) | technology labels were too small; the new Skills cards had no consistent viewpoint or scrollers; the first page had two mismatched CTA blocks plus a third detached button; the mobile drawer looked dated | readable technology typography across the Skills/Projects chip sets; a consistent scrollable card viewport with per-card scrollers; one modern three-button hero row (Create Your Portfolio / Collaborate with Me / Build Your CV); a restyled drawer with header, compact toggles and accessible focus states |
+| Real header icons + compact cards (phase 27) | the header still used font-glyph classes, and `fa-sparkles` / other old classes are absent from the installed FontAwesome free set, so some icons never rendered; the desktop header had not been restyled; the Skills cards were still tall | all header/drawer icons replaced with real `lucide-react` SVG components, a modern desktop header stylesheet, and small (`220–300px`) technology cards that keep their per-card scrollers |
+| CV work history + mobile drawer fix (phase 28) | the CV had no entry for the owner's current contract role; the mobile menu button appeared at 769–1024px (and, after phase 27, on desktop) but the drawer was gated at 768px, so clicking it did nothing | one new Experience entry using only owner-supplied facts, with the existing CV markup/CSS untouched; the JS breakpoint aligned to the 1024px CSS breakpoint, the modern button restyle scoped to mobile, and click-outside hardened for SVG targets |
+| Admin/owner login + main links (phase 30) | the seeded `admin` DB account had a role the dashboard did not know, the login page only redirected three roles to `/dashboard`, and the public main-site links were mounted only on the landing page | a canonical role helper, safe role normalisation, admin-aware dashboard menu, main-site links in both dashboard drawers, and real mobile bottom-nav targets; owner privileges unchanged |
+| Render-env owner/admin credentials + mobile drawer (phase 32) | the owner/admin sign-in secrets were not declared in the Render environment and a demo admin email/password were compiled into two seeds; the hamburger could appear enabled while the drawer stayed gated on a stale JS width | four credential keys declared with `sync: false` plus a confidential setup guide, env-only seeds and a production fail-closed owner check; the header now uses the CSS media query, `pointerdown`/`composedPath`, and a single tappable dashboard backdrop |
+| Dev badge removal + two auth pages (phase 31) | the `DEV · API` badge rendered endpoints, status codes and exception text in the dev UI, and the portfolio owner and regular CV/portfolio users shared one sign-in and one endpoint | the whole diagnostics panel and stylesheet deleted, technical detail kept console-only in dev; owner and user sign-in split into two pages and two server endpoints, with role guards on both sides |
 | Testimonial thumbnail + CV-grouped Skills (phase 25) | the first testimonial had only a remote stock avatar and no local thumbnail; the Skills page showed two flat, ungrouped lists hidden behind a toggle, with no modern styling or CV alignment | a new 320×320 local thumbnail resolved additively in all four testimonial views without touching protected sample/backup files; nine CV-derived skill groups / 44 verbatim entries, modern hero, tabs, group chips, responsive cards and reduced-motion styles; scores only from real published records; all existing scorecards preserved |
 | Lab subsystem review (phase 24) | a working backend left the public Lab grid empty; the page listened for socket events the server never emitted and only on the signed-in socket; sample wording leaked to visitors; dashboard edits only refreshed the same tab | live experiment data completed from the same real local saved copy used offline; canonical `lab:changed` signal on the read-only public namespace plus root, success-only router middleware, anonymous-safe subscriptions, hidden-tab-aware 30 s polling and cross-tab notices; owner-only sample wording; honest dashboard copy |
 | Projects page remodel (phase 23) | the top section had only one heading and was gated behind an opacity-0 reveal; the page had no discovery tools beyond the existing toolbar | visible multi-heading top section, seven derived metrics, featured spotlight + tabs, category browser, technology and tag indexes, compare table, timeline, favourites filter, surprise-me, shareable filtered view, keyboard shortcuts and quick tools; all prior features and the card interface retained |
@@ -1880,6 +1888,446 @@ to directly, history was not rewritten, and PR #4 (old branch) was left open.
 
 ---
 
+## 3ab. Phase 28 — current contract role on the CV, and the mobile drawer fix
+
+Requested as *"update my cv work history,,,curently working on a contraact
+as an it assistant manager t genco livestoc role:data entry,analysis,databse
+managemnt,security,data integrity,technical support and other it realted
+stuff,,push everything,,but illl need to preview the cv first(maintain its look
+and style,,juat add this new ,the mobile buutton fails to open the drawer"*.
+
+### CV work history — additive only
+
+`src/components/CVComponent.jsx` renders the Experience section from
+`DEFAULT_CV.experience` when the dashboard/public API is unavailable (the
+offline preview). One entry was added at the top of that array:
+
+| Field | Value |
+| --- | --- |
+| Title | `IT Assistant Manager (Contract)` |
+| Company | `Genco Livestock` (assumed spelling of *"genco livestoc"*) |
+| Period | `Present` — **no start year supplied, so none was invented** |
+| Location | empty — none supplied |
+| Description | data entry and analysis, database management, security, data integrity, technical support, and other IT-related duties |
+| Technologies | empty — no technology list was supplied |
+
+**Nothing else changed.** `CVComponent.css` was not touched, no CSS import was
+added, the existing `exp-item` / `exp-desc` / `exp-tech` / `tech-pill` markup
+is intact, and the two prior roles are preserved verbatim. The new entry has
+the same field shape as the old ones, so `normalize()` — which uses
+`fallback.experience[0]` as a template for API-backed entries — still
+produces identical fields for saved CV data. No metrics, achievements,
+technologies, dates or marketing claims were fabricated.
+
+Two deliberate limits: `public/CV2.pdf` is a separate static download linked
+from the Footer, Sitemap and About page, and was **not** regenerated; and when
+a live dashboard/public CV record exists, that saved record takes precedence
+over the fallback, so the owner may need to add the same role through the
+existing CV editor. Neither was verified against a live backend in this
+sandbox.
+
+### Mobile button fails to open the drawer — fixed
+
+Read-only diagnosis found a breakpoint mismatch, made worse by phase 27:
+
+- `Header.jsx` computed `isMobile` as `window.innerWidth <= 768`, while
+  `Header.css` shows both the button and the drawer at `max-width: 1024px`.
+  On 769–1024px viewports the button was visible but
+  `isMenuOpen && isMobile` was false, so no drawer or overlay ever rendered.
+- Phase 27's `HeaderModern.css` set `.menu-toggle-btn` to
+  `display: inline-flex` **unconditionally**, overriding `Header.css`'s
+  default `display: none` and Tailwind's `lg:hidden`. That exposed the button
+  on desktop too, where the drawer is correctly disabled — clicking it
+  appeared to do nothing.
+
+Fixes: `getIsMobile()` now uses the same 1024px breakpoint as the CSS; the
+modern button restyle is wrapped in `@media (max-width: 1024px)`; and the
+click-outside handler now guards `event.target instanceof Element` before
+calling `closest()`, so a click on a lucide SVG icon cannot throw. All routes,
+toggles, overlay, close behaviour, real icons and the `NAV_SECTIONS` data are
+unchanged.
+
+### Preview and push
+
+The Vite dev server was restarted on this branch (`node_modules` had to be
+reinstalled because the fresh checkout had none; the lockfile pinned a
+registry host that is not reachable here, so the install used the allowed
+npmjs registry with host replacement and **did not modify the lockfile**).
+`/cv` and the e2b preview host both return 200, so the owner can inspect the
+CV before and after the change at `/cv` in the live preview.
+
+Everything was committed and pushed to `arena/c0cbab09-e-folio` after the
+explicit **"push everything"** instruction. No PR, merge, direct `main`
+push, history rewrite, external issue/comment, DB write or offensive test was
+made in this phase.
+
+### Verification (static only)
+
+- `npm test` exit 0: **304** Node-only regression checks (**9** new in
+  `tests/cv-drawer.test.mjs`). `npm run check` exit 0: lint **0 errors**,
+  endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build and PWA
+  precache regenerated. Preview `/`, `/cv`, the header/CV modules and all
+  touched stylesheets return 200; `git diff --check` clean; masked secret scan
+  clean.
+- Protected project cards, showcase, seed/sample/backup files and NetGate
+  links were not touched; 14 grid + 2 showcase records and the 600 counter
+  floor are unchanged.
+- **Not verified:** a browser render of the CV with the new entry, the drawer
+  opening at 769–1024px or on a real touch device, and no live API/DB,
+  SMTP/LLM/Cloudinary call. Runtime confirmation is backlog 33.
+
+---
+
+## 3ac. Phase 30 — review of the admin/owner login vs the regular user login, and the missing main links
+
+Requested as *"i login as the aadmin/owner but cant se the main links of the
+user(review the separate admin login from the regular user ogin system"*.
+
+### What the review found (read-only first)
+
+There is **no separate admin login page**. One `/login` form (plus
+`/login/collaborator`) calls one `/auth/login` endpoint, which has three
+credential paths:
+
+| Path | Where credentials live | Role returned |
+| --- | --- | --- |
+| Bootstrap owner | `OWNER_EMAIL` + `OWNER_PASSWORD` / `OWNER_PASSWORD_HASH` from `server/config/security.js`, checked before any DB lookup | `owner` |
+| Regular user | MongoDB `User` record with bcrypt password | `user.role || 'user'` |
+| Collaborator | `/auth/login/collaborator` with an optional access code | `collaborator` |
+| Seeded admin (env-driven since phase 32) | account created by the project seed only from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in the Render environment; no demo credential is compiled into source | **`admin`** |
+
+The front end only ever knew `owner`, `collaborator` and `user`, so the legacy
+`admin` role broke three things at once:
+
+1. `LoginPage` redirected only `owner` / `collaborator` / `user` to
+   `/dashboard`; an `admin` login was sent back to `/`.
+2. `Dashboard.jsx` filtered every menu item with
+   `item.roles.includes(userRole)` and **no item lists `admin`**, producing an
+   empty sidebar — including the whole `Main` group.
+3. `AuthContext.isOwner()` and the server's `isOwner` / `isAuthorized`
+   middleware do not recognise `admin`, so even visible owner panels would
+   have returned 403.
+
+Separately, the **public main links** (About, Skills, Education, Interests,
+Projects, Testimonials, Contact) are rendered by `LandingPage`'s `Header`,
+which is never mounted on `/dashboard`. An owner in the dashboard only had a
+single "Back to Portfolio" link. `MobileBottomNav` also advertised
+`/projects`, `/about` and `/contact` — paths with no routes, which silently
+fell through to the landing-page catch-all.
+
+### Changes
+
+- New `src/utils/authRoles.js`: one canonical role vocabulary with
+  `normalizeRole`, `isOwnerRole`, `isAdminRole`, `canOpenDashboard`,
+  `rolesForMenu` and `canSeeMenuItem`. It folds `admin`, `administrator`,
+  `superadmin` and `root` into `admin`.
+- `AuthContext`: normalises roles from login, registration, Google sign-in
+  and session verification; adds `isAdmin`; **keeps `isOwner()` strict**.
+- `LoginPage`: every authenticated role, including the legacy admin, now lands
+  on `/dashboard`.
+- `Dashboard.jsx`: menu visibility uses `canSeeMenuItem`. An admin receives the
+  **regular-user** menu set, so the main links appear; it never receives
+  owner-only panels. Owner / collaborator / user visibility is unchanged.
+- `DashboardSideNavbar.jsx`: a compact "Main site" group with the seven real
+  public section hash links is rendered in **both** the desktop and mobile
+  drawers. Presentation only — no routes, data or authorization changes.
+- `MobileBottomNav.jsx`: the broken paths now point at `/#projects`, `/#about`
+  and `/#contact`.
+
+### Deliberately unchanged (security)
+
+`server/middleware/auth.middleware.js` still requires the literal `owner`
+role for `/api/admin/*`, and `isAuthorized` still allows only
+`owner` / `collaborator` / `user`. The seeded admin account, its credentials
+and `server/seed-projects.js` were not touched. **No auth bypass, privilege
+elevation, token change, DB write or new login endpoint was introduced.**
+Because the server does not grant admin any owner privilege, the admin account
+still cannot use owner-only APIs; if the owner wants that account to be a full
+owner, that is a separate, explicit security decision (backlog 34).
+
+### Verification (static only)
+
+- `npm test` exit 0: **314** Node-only regression checks (**10** new in
+  `tests/admin-login-links.test.mjs`). `npm run check` exit 0: lint **0 errors**,
+  endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build and PWA
+  precache regenerated. Preview `/`, `/cv`, `/dashboard` and the touched
+  modules return 200; `git diff --check` clean; masked secret scan clean.
+- Protected project cards, showcase, seed/sample/backup files and NetGate
+  links were not touched; 14 grid + 2 showcase records and the 600 counter
+  floor are unchanged.
+- **Not verified:** a live login as owner/admin against Express/MongoDB, the
+  rendered dashboard sidebar in a browser, or real socket/API calls. No live
+  API/DB, SMTP/LLM/Cloudinary call or offensive test in this phase. Runtime
+  confirmation is backlog 34.
+
+### Note on the interrupted phase 29 request
+
+The earlier *"remove the dev api button badge screen…"* request was stopped
+before any edit, test, commit or push. `src/components/DevDiagnostics.jsx`,
+`src/styles/DevDiagnostics.css` and the desktop header are still exactly as
+phase 28 left them. That work remains outstanding and is **not** included in
+this phase.
+
+---
+
+## 3ad. Phase 31 — remove the dev API badge (security), finish the identified auth fixes, and split the two sign-in pages
+
+Requested as *"remove the dev api badge(erity issue),,,fix the identified,,then
+hrer r two login pages,,push"*, clarified as *"AUTH pages one is for the main
+owner of the portfolio, the other is for other users who want to create their
+CVs and portfolio"*.
+
+### 1. DEV · API badge removed as a security issue
+
+`src/components/DevDiagnostics.jsx` and `src/styles/DevDiagnostics.css` were
+**deleted**, and `src/App.jsx` no longer imports or renders the panel. In dev
+builds the badge exposed API endpoints, HTTP status codes and raw exception
+text on screen — including in a shared preview. `src/utils/publicMessaging.js`
+now documents that technical detail is kept **only in an in-memory buffer and
+the dev console**; no badge, panel, endpoint list or status code is rendered in
+any UI. The friendly public copy, the live-first snapshot fallback and
+`recordDevIssue`/`getDevIssues` dev tooling are unchanged.
+`tests/public-fallback.test.mjs` was deliberately rewritten to assert the
+removal instead of the old panel (its previous assertions would have failed on
+the deleted files).
+
+### 2. Identified auth issues finished
+
+- `server/middleware/auth.middleware.js`: `isAuthorized` now accepts the
+  legacy `admin` role as a **regular-user-equivalent** session, so the seeded
+  admin can actually use user-level APIs instead of getting 403 on every
+  dashboard call. `isOwner` still requires the literal `owner` role — no
+  elevation to owner privileges.
+- `/auth/verify` now restores name/avatar/role for `admin` tokens.
+- `DashboardSideNavbar` gained `owner` and `collaborator` role badges; the
+  owner no longer falls back to a "User Panel" label.
+- `AuthContext` now normalises the role on every successful login (including
+  registration and Google sign-in), and **refuses an `owner` role returned by
+  the public user endpoint**.
+
+### 3. Two separate sign-in pages and two separate server flows
+
+| Page | Route | For | Server endpoint |
+| --- | --- | --- | --- |
+| `OwnerLoginPage` | `/login/owner` | the main owner of the portfolio | `POST /auth/login/owner` |
+| `LoginPage` | `/login` | users creating a CV and portfolio | `POST /auth/login` |
+
+- `/auth/login/owner` verifies **only** the bootstrap owner credentials from
+  `server/config/security.js`, has its own tighter rate limit (10 / 15 min),
+  and never falls through to a database account or issues a user token.
+- `/auth/login` is now **users-only**: it returns a generic `Invalid
+  credentials` response if the bootstrap owner email is used, so owner
+  credentials cannot produce a user session. Registration, collaborator login
+  (`/login/collaborator`) and all existing routes were kept.
+- `apiService.ownerLogin()` calls the dedicated endpoint; `AuthContext.login(...,
+  'owner')` checks the returned role before granting any owner UI. The owner
+  page has its own styling (`OwnerLoginPage.css`) and shows no owner email,
+  password hint, sign-up, social login, access code or technical detail. The
+  regular page now says it is for building a CV and portfolio and carries a
+  discreet "Owner sign in" link; the owner page links back to user sign-in.
+  The regular form's unused, browser-required "Full Name" field was removed
+  so a user can actually submit their email and password.
+
+**No auth bypass:** both flows still require real credentials, both tokens are
+signed by the central security config, `isOwner` is unchanged, and there are no
+new credentials, hard-coded secrets, external calls or invented data. The
+seeded `admin` account, deployment docs, protected seed/sample/backup and
+project-card files were left untouched; docs that describe the old combined
+`/api/auth/login` are now stale (backlog 35).
+
+### Verification (static only)
+
+- `npm test` exit 0: **326** Node-only regression checks (**12** new in
+  `tests/two-login-pages.test.mjs`). `npm run check` exit 0: lint **0 errors**,
+  endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build and PWA
+  precache regenerated. Preview `/`, `/cv`, `/login`, `/login/owner`,
+  `/dashboard` and the touched modules return 200; `git diff --check` clean;
+  masked secret scan clean.
+- **Not verified:** a live owner or user login against Express/MongoDB, the
+  two pages rendered in a browser, or the owner dashboard after sign-in. No
+  live API/DB, SMTP/LLM/Cloudinary call or offensive test in this phase.
+  Runtime confirmation is backlog 35.
+
+### Note on the interrupted phase 29 phrasing
+
+The earlier *"retitle the header / remove desktop icons that are not needed"*
+part of that request still has no exact replacement title or icon list, so no
+header retitle or icon removal was made here; it remains outstanding (backlog
+35). The dev API badge part of phase 29 is now complete in this phase.
+
+---
+
+## 3ae. Phase 32 — owner/admin credentials in the Render environment, and the mobile drawer icon
+
+Requested as *"admin credentials to goto render env,,the drawer icon on mobile
+not working,,push"*.
+
+### 1. Credentials moved out of source and into the Render environment
+
+**No real credential value was created, written to a tracked file, or sent to
+Render.** The deployment configuration now *declares the variable names* and
+the code reads them from the process environment; the values must be typed by
+the owner directly into the Render dashboard.
+
+| Key | Declared in `render.yaml` | Read by |
+| --- | --- | --- |
+| `OWNER_EMAIL` | `sync: false` | `server/config/security.js` → `POST /api/auth/login/owner` |
+| `OWNER_PASSWORD` | `sync: false` | `security.verifyOwnerPassword()` (or optional `OWNER_PASSWORD_HASH`) |
+| `ADMIN_EMAIL` | `sync: false` | project seed scripts only |
+| `ADMIN_PASSWORD` | `sync: false` | project seed scripts only |
+
+- `render.yaml` gained the four keys with **`sync: false` and no values**; the
+  existing secrets (`MONGODB_URI`, `JWT_SECRET`, AI keys) were left as they
+  were. This was an explicit, targeted exception to the earlier "leave
+  `render.yaml` untouched" scope note, made only because this request is about
+  the Render environment.
+- `.env.render.example` now carries **placeholders only** for the four keys and
+  documents the `OWNER_PASSWORD_HASH` alternative. Real `.env*` files remain
+  ignored/untracked.
+- `RENDER_AUTH_ENV_SETUP.md` is a new, local, confidential setup guide: exact
+  variable names, Render dashboard steps, how the two login pages use them,
+  `/health` verification, and a reminder that the old demo password remains in
+  Git history and must be rotated outside this workspace.
+- `server/config/security.js`: the real-looking default owner email was
+  removed from source. In production `OWNER_EMAIL` is now **required** and an
+  unconfigured value fails closed (no owner login can match an empty email);
+  development keeps an `owner@example.invalid` placeholder.
+  `assertProductionConfig()` additionally reports a missing `OWNER_EMAIL` and
+  an incomplete `ADMIN_EMAIL` / `ADMIN_PASSWORD` pair.
+- **Both project seeds** (`server/seed-projects.js` and
+  `scripts/seed-projects.js`) no longer contain `admin@efolio.com` or the demo
+  password. They reuse an existing `admin`/`owner` record; only the CommonJS
+  server seed can create one, and only from `ADMIN_EMAIL` + `ADMIN_PASSWORD`
+  (bcrypt-hashed before storage). With neither variable set they stop with a
+  clear message instead of inventing credentials. The root ESM seed's broken
+  `require('bcryptjs')` was removed along with the account-creation block.
+
+The two sign-in pages from §3ad are unchanged: `/login/owner` still verifies
+only the environment owner credentials, `/login` still rejects that email, and
+`isOwner` still requires the literal `owner` role. No auth bypass was added.
+
+### 2. Mobile drawer icon
+
+Three concrete defects were found by static review:
+
+1. **Stale JS width gate.** `isMobile` came from `window.innerWidth` sampled on
+   `resize`, and both the overlay and drawer were gated on
+   `isMenuOpen && isMobile`. After an orientation change, pinch zoom, browser
+   chrome resize or device emulation, `isMobile` could stay `false` while CSS
+   still showed the button — so tapping it did nothing. `Header.jsx` now uses
+   **`window.matchMedia('(max-width: 1024px)')`** with a `change` listener
+   (plus `resize`) and a functional state update, and the **drawer is no
+   longer gated on the JS boolean**: CSS already hides `.mobile-nav` above
+   1024px. The overlay keeps its cheap `isMobile` guard.
+2. **Conflicting breakpoint utility.** The button carried Tailwind
+   `lg:hidden` (`min-width: 1024px`) while `Header.css` shows it at
+   `max-width: 1024px`, so the two disagreed at exactly 1024px and the utility
+   lives in a different CSS chunk. `lg:hidden` was removed; visibility is now
+   owned solely by the header stylesheets. The button gained
+   `id="mobile-drawer-toggle"`, `aria-controls`, a dynamic `aria-label` and
+   `title`; `pointer-events: auto`, `touch-action: manipulation`,
+   `-webkit-tap-highlight-color` and a `z-index: 1002` in the mobile-only
+   restyle keep it tappable above the overlay.
+3. **Opening tap could close the drawer.** The outside handler listened for a
+   bubbling `click` on `document`. It now listens on **`pointerdown`** (which
+   fires before `click`), resolves targets through
+   **`event.composedPath()`** so SVG icons work, and adds **Escape** to close.
+
+The dashboard's mobile menu had a related problem: `Dashboard.jsx` rendered a
+second full-screen backdrop at `z-30`, below the sticky header and floating
+button, while `DashboardSideNavbar.jsx` rendered its own at `z-[55]` above the
+header — swallowing taps on the top-nav menu button. The duplicate was
+removed, the remaining backdrop dropped to `z-[35]`, the top-nav toggle moved
+to `z-[36]` with `aria-controls`, and the drawer/back button gained ids and
+labels.
+
+### Verification (static only)
+
+- `npm test` exit 0: **339** Node-only regression checks (**13** new in
+  `tests/render-env-drawer.test.mjs`; `tests/cv-drawer.test.mjs` updated for
+  the new toggle/outside behaviour). `npm run check` exit 0: lint **0 errors**,
+  endpoint parity `--strict` **0 live gaps**, static security audit
+  `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**, production build and PWA precache
+  regenerated. Preview `/`, `/cv`, `/login`, `/login/owner`, `/dashboard` and
+  the touched modules return 200; `git diff --check` clean; masked secret scan
+  clean (placeholders only).
+- Protected project cards, showcase, sample/backup files, CV CSS,
+  `public/CV2.pdf`, the 14 grid + 2 showcase records and the NetGate link were
+  not touched.
+- **Not verified:** the actual values in the Render dashboard (none were set
+  from here), a live owner/user login against Express/MongoDB, `/health` on a
+  running backend, or the drawer on a real phone/browser. No Render API call,
+  live DB, SMTP/LLM/Cloudinary call or offensive test in this phase.
+
+---
+
+## 3af. Phase 33 — integration merge from `main` before the requested merge
+
+After the explicit **"merge"** instruction, `origin/main` was found to contain
+one independent commit (`b6a3e0a`, *Adjust project limits and enhance user
+experience*) that was **not** an ancestor of this branch. It touched eight
+files, three of which overlapped phases 30–32. A dry-run `git merge-tree`
+reported content conflicts in `server/routes/auth.routes.js` and
+`src/contexts/AuthContext.jsx`, so `origin/main` was merged into this branch
+and the conflicts resolved before the PR was opened. No history was rewritten.
+
+### Conflicts resolved (both intents preserved)
+
+- **`server/routes/auth.routes.js`** — kept the phase-31 separation (`/login`
+  is users-only and returns a generic `Invalid credentials` for the configured
+  owner email; `/login/owner` is the only owner path). Main's
+  `ensureUserHasUsername()` helper was retained and is now called from both
+  the dedicated `buildOwnerSession()` path and the regular user path, so legacy
+  records without a username still work.
+- **`src/contexts/AuthContext.jsx`** — kept the two sign-in branches, the
+  owner-role guard on the public endpoint, `isAdmin`, and the canonical role
+  import. Adopted main's robustness fixes (`token && savedUser` session check,
+  `|| USER_ROLE` fallbacks, `effectiveRole` exposed as `userRole`) **using our
+  `normalizeRole` helper**, because main's local helper would have collapsed
+  the legacy `admin` role back to `visitor` and reintroduced an email-based
+  owner shortcut that phase 32 deliberately removed.
+- `server/config/security.js` auto-merged cleanly: main's constant-time
+  `verifyOwnerPassword()` fix plus phase 32's environment-only
+  `OWNER_EMAIL` / fail-closed production checks. `tests/owner-password.test.cjs`
+  from main was retained.
+
+### Deliberate divergence from `main` (needs owner confirmation)
+
+Main's commit reduced the public project dataset to 8 records with
+sub-600 likes/views and capped the endpoints at 8. That contradicts the
+standing owner acceptance criteria for this engagement (**14 grid + 2 showcase
+records, every likes/views counter ≥600, no truncation of the catalogue**, and
+the regression-guarded protected seed/snapshot files). To keep `npm test` green
+and the owner's data intact, these four files were kept at this branch's
+version:
+
+| File | Main's change | Kept |
+| --- | --- | --- |
+| `src/data/publicSnapshot.json` | 8 projects, likes as low as 24 | 14 projects, all counters ≥600 |
+| `src/services/publicContent.js` | `limit=8` | `limit=100` |
+| `server/controllers/public.controller.js` | default `limit = 8` | default `limit = 50` |
+| `server/seed-data.js` | 8 records, changed counters | original protected dataset |
+
+This is the one place where the merge does **not** include `main`'s independent
+work. It is recorded here and in backlog 37 so the owner can decide which
+catalogue size is authoritative. `server/seed-data.js` also retains a
+hard-coded test password in main's new `tests/owner-password.test.cjs`; that
+file came from `main`, is not wired into `npm test`, and was left untouched.
+
+### Verification
+
+`npm test` exit 0: **339** Node-only regression checks (the phase-30
+`admin-login-links` assertions were aligned with the merged `AuthContext`).
+`npm run check` exit 0: lint **0 errors**, endpoint parity `--strict`
+**0 live gaps**, static security audit `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**,
+production build + PWA precache regenerated. No conflict markers remain.
+Static checks only — no live MongoDB, Express, Render or browser run.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2021,6 +2469,47 @@ to directly, history was not rewritten, and PR #4 (old branch) was left open.
     icon renders as an SVG, the desktop nav pills/active state look right, and
     the compact Skills cards still scroll both inside each card and as a
     group. No headless browser or touch device was available in this sandbox.
+33. Phase 28 follow-up: visually confirm the new Experience card on `/cv`
+    keeps the existing typography/spacing, and click the menu button at a
+    769–1024px viewport (and on a real phone) to confirm the drawer opens,
+    closes and traps body scroll. Also decide whether the same role should be
+    added to the dashboard-saved CV and to `public/CV2.pdf`. No headless
+    browser, touch device, live backend or PDF-generation tool was available
+    in this sandbox.
+34. Phase 30 follow-up: decide the final fate of the legacy admin account.
+    Phase 32 made its address and password environment-driven, so the
+    hard-coded demo pair is gone from source (but still in Git history).
+    Phase 31 made it a regular-user-equivalent
+    session (`isAuthorized`) without owner privileges, but its hard-coded seed
+    password remains in local history and should be rotated/retired; making it
+    a full owner still requires an explicit, separate authorization decision.
+    Verify a live owner/admin login, the rendered sidebar and main-site hash
+    links in a browser. The dev API badge/panel is now **removed** (§3ad); the
+    remaining interrupted phase 29 asks — an exact replacement header title
+    and the list of desktop icons to drop — still need the owner's wording.
+35. Phase 31 follow-up: runtime-verify both sign-in pages with a live
+    Express/MongoDB stack — owner credentials on `/login/owner`, a regular
+    account on `/login`, rejection of owner credentials on `/login`,
+    `/auth/verify` for `owner`/`admin`/`user`, and the owner dashboard links.
+    Confirm the two pages visually, especially the owner page's gold accent and
+    mobile layout. The deployment docs still describe the old combined
+    `/api/auth/login`; update them when the owner confirms the split is final.
+    Retire or rotate the seeded demo admin password. Also retain the standing
+    runtime backlog (live sockets, SMTP/outbox retry, server-side idempotency,
+    attachment model, browser smoke/error boundary, Projects/Lab live signals,
+    saved-CV/PDF decision). No live backend, browser or auth flow was
+    available in this sandbox.
+36. Phase 32 follow-up: set the four keys from
+    `RENDER_AUTH_ENV_SETUP.md` in the Render dashboard, redeploy, and confirm
+    `/health` stops reporting missing owner variables. Then verify a live
+    owner sign-in at `/login/owner`, a regular user sign-in at `/login`, and
+    that the owner email is rejected on `/login`. Rotate any credential that
+    ever appeared in Git history outside this workspace. Visually confirm the
+    public hamburger opens/closes the drawer on a real phone (including an
+    orientation change and at exactly 1024px), and that the dashboard's
+    top-nav menu button still toggles its drawer. Also decide the outstanding
+    phase 29 header title/icon list. No live Render, backend or browser was
+    available in this sandbox.
 
 ---
 
@@ -2072,4 +2561,26 @@ explicit **"push changes noe"** instruction, the phase 26 UI-polish changes
 pushed and **phases 22–27 were merged into `main` from the active branch via
 PR #7** with `gh pr merge <number> --merge`. That instruction reversed
 the earlier **"not yet"** restraint for PRs/merges. `main` was never pushed
-to directly and PR #4 remains open and untouched.
+to directly and PR #4 remains open and untouched. Phase 28 (§3ab) was
+committed and pushed to the new active branch `arena/c0cbab09-e-folio` after
+the explicit **"push everything"** instruction; **no PR or merge** was
+requested for it. `main` was not pushed to directly in this phase and PR #4
+remains open and untouched. Phase 30
+(§3ac) was committed locally to the same branch after a read-only auth
+review; **no push, PR or merge** was requested or made for it. the local `origin/main`
+tracking ref remains `5c2b902`; the remote `main` head has since moved
+independently to `b6a3e0ad` and was **not** fetched, modified or merged in
+this phase. PR #4 remains open and untouched. Phase 31
+(§3ad) was committed and **pushed to `arena/c0cbab09-e-folio`** after the
+explicit **"push"** instruction in that phase; **no PR, merge or direct push
+to `main`** was requested or made. The independently moved remote `main` head
+was not fetched, modified or merged. PR #4 remains open and untouched. Phase 32
+(§3ae) was committed and **pushed to `arena/c0cbab09-e-folio`** after the
+explicit **"push"** instruction in that phase; **no PR, merge or direct push
+to `main`** was requested or made. No credential value was written to a
+tracked file or sent to Render; the values must be set in the Render
+dashboard. PR #4 remains open and untouched. After the explicit
+**"merge"** instruction, `origin/main`'s independent commit was integrated
+into this branch (§3af) and the branch was submitted for merging into `main`
+via a pull request; **no direct push to `main`** was made. PR #4 was left
+open and untouched.

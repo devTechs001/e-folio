@@ -5,8 +5,9 @@
  * data unavailable", raw exception text, or "temporarily unavailable" banners.
  * They see real content (loaded from the bundled snapshot) and, when needed,
  * short friendly sentences. All technical detail is kept for developers: it is
- * recorded in an in-memory buffer, printed only in dev builds, and surfaced by
- * the dev-only <DevDiagnostics /> panel — never in the public UI.
+ * recorded in an in-memory buffer and printed to the console in dev builds
+ * only. No diagnostics badge, panel, endpoint list or status code is ever
+ * rendered in the UI (phase 31 security fix).
  */
 
 export const IS_DEV = Boolean(import.meta.env.DEV);
@@ -71,7 +72,7 @@ export const recordDevIssue = ({ section, endpoint, error, detail }) => {
     return issue;
 };
 
-/** Read-only copy of the technical buffer (developer tooling / dev panel). */
+/** Read-only copy of the technical buffer (developer console tooling only). */
 export const getDevIssues = () => issues.slice();
 
 export const clearDevIssues = () => { issues.length = 0; };

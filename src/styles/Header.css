@@ -475,6 +475,11 @@
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 1001;
+    /* Phase 32: the toggle must stay tappable above the overlay and must not
+       wait for the mobile 300 ms tap delay. */
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .menu-toggle-btn:hover {
