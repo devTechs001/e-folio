@@ -125,47 +125,100 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 });
 
-// Owner bootstrap credentials are validated through the central security config.
-// Login
+// Phase 31 — two separate sign-in systems.
+// The portfolio owner uses /login/owner (bootstrap credentials from the central
+// security config). Regular accounts use /login (MongoDB user records). Neither
+// endpoint can issue the other's role.
+async function buildOwnerSession(ownerEmail) {
+    let ownerUser = await User.findOne({ email: ownerEmail });
+    if (!ownerUser) {
+        ownerUser = await User.findOne({ role: 'owner' });
+    }
+    const ownerId = ownerUser ? ownerUser._id.toString() : '507f1f77bcf86cd799439011';
+
+    return {
+        token: security.signToken({ email: ownerEmail, role: 'owner', id: ownerId }, { expiresIn: '7d' }),
+        user: {
+            id: ownerId,
+            name: ownerUser?.name || process.env.OWNER_NAME || 'Portfolio Owner',
+            email: ownerEmail,
+            role: 'owner'
+        }
+    };
+}
+
+const ownerLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Too many login attempts, please try again later.' }
+});
+
+// Dedicated owner sign-in for the portfolio owner's private auth page.
+// It verifies ONLY the bootstrap owner credentials, never a database account,
+// and never issues a regular-user token.
+router.post('/login/owner', ownerLoginLimiter, async (req, res) => {
+    try {
+        const email = sanitizeString(req.body.email);
+        const password = sanitizeString(req.body.password);
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
+
+        const ownerEmail = security.getOwnerEmail();
+        const emailMatches = email.toLowerCase() === ownerEmail;
+        const passwordMatches = emailMatches
+            ? await security.verifyOwnerPassword(password, bcrypt)
+            : false;
+
+        if (!emailMatches || !passwordMatches) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials'
+            });
+        }
+
+        const session = await buildOwnerSession(ownerEmail);
+        return res.json({
+            success: true,
+            message: 'Login successful',
+            user: session.user,
+            token: session.token
+        });
+    } catch (error) {
+        console.error('Owner login error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error during login'
+        });
+    }
+});
+
+// Regular user sign-in for people creating a CV and portfolio.
 router.post('/login', loginLimiter, async (req, res) => {
     try {
         const email = sanitizeString(req.body.email);
         const password = sanitizeString(req.body.password);
 
         if (!email || !password) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and password are required' 
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
             });
         }
 
         const normalizedEmail = email.toLowerCase();
-        const ownerEmail = security.getOwnerEmail();
 
-        // Owner login
-        if (normalizedEmail === ownerEmail) {
-            const isOwnerMatch = await security.verifyOwnerPassword(password, bcrypt);
-            if (isOwnerMatch) {
-                let ownerUser = await User.findOne({ email: ownerEmail });
-                if (!ownerUser) {
-                    ownerUser = await User.findOne({ role: 'owner' });
-                }
-                const ownerId = ownerUser ? ownerUser._id.toString() : '507f1f77bcf86cd799439011';
-
-                const token = security.signToken({ email: ownerEmail, role: 'owner', id: ownerId }, { expiresIn: '7d' });
-
-                return res.json({
-                    success: true,
-                    message: 'Login successful',
-                    user: {
-                        id: ownerId,
-                        name: ownerUser?.name || process.env.OWNER_NAME || 'Portfolio Owner',
-                        email: ownerEmail,
-                        role: 'owner'
-                    },
-                    token
-                });
-            }
+        // The bootstrap owner account must use /login/owner. A generic response
+        // avoids confirming whether that account exists.
+        if (normalizedEmail === security.getOwnerEmail()) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials'
+            });
         }
 
         // Regular user login
@@ -214,9 +267,9 @@ router.post('/login', loginLimiter, async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Server error during login' 
+        res.status(500).json({
+            success: false,
+            message: 'Server error during login'
         });
     }
 });
@@ -323,7 +376,7 @@ router.get('/verify', async (req, res) => {
         if (decoded.role === 'owner') {
             user.name = process.env.OWNER_NAME || 'Portfolio Owner';
             user.id = decoded.id || '507f1f77bcf86cd799439011';
-        } else if (['user', 'collaborator'].includes(decoded.role)) {
+        } else if (['user', 'admin', 'collaborator'].includes(decoded.role)) {
             const dbUser = await User.findById(decoded.id).select('name username email role isPremium avatar isActive');
             if (dbUser) {
                 user = {

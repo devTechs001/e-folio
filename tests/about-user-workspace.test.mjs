@@ -81,7 +81,8 @@ check('registration surfaces the real API message and initialises a workspace', 
     const src = read('src/contexts/AuthContext.jsx');
     assert.match(src, /ensureUserWorkspace/);
     assert.match(src, /response\?\.message \|\| 'Registration failed'/);
-    assert.match(src, /setUserRole\('user'\)/);
+    // Phase 31: registration uses the canonical USER_ROLE constant.
+    assert.match(src, /setUserRole\(USER_ROLE\)/);
 });
 
 check('public CV and portfolio pages use relative real APIs, not localhost', () => {

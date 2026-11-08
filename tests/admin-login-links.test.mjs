@@ -43,8 +43,8 @@ check('admin is never silently promoted to owner (no auth bypass)', () => {
     assert.equal(isAdminRole('owner'), false);
     const middleware = read('server/middleware/auth.middleware.js');
     assert.match(middleware, /req\.user\?\.role !== 'owner'/);
-    assert.match(middleware, /\['owner', 'collaborator', 'user'\]\.includes/);
-    assert.doesNotMatch(middleware, /'owner', 'admin'|'admin', 'owner'/);
+    assert.match(middleware, /\['owner', 'admin', 'collaborator', 'user'\]\.includes/);
+    assert.match(middleware, /exports\.isOwner = \(req, res, next\) => \{\s*if \(req\.user\?\.role !== 'owner'\)/);
 });
 
 check('every authenticated role can now open the dashboard', () => {
@@ -80,7 +80,7 @@ check('the dashboard menu filter uses the shared helper', () => {
 check('the auth context normalises roles without weakening isOwner', () => {
     const auth = read('src/contexts/AuthContext.jsx');
     assert.match(auth, /normalizeRole\(verifiedUser\.role \|\| savedRole\)/);
-    assert.match(auth, /normalizeRole\(response\.user\.role\)/);
+    assert.match(auth, /const sessionRole = normalizeRole\(response\.user\?\.role\)/);
     assert.match(auth, /normalizeRole\(savedRole\)/);
     assert.match(auth, /const isOwner = \(\) => isOwnerRole\(userRole\)/);
     assert.match(auth, /const isAdmin = \(\) => isAdminRole\(userRole\)/);

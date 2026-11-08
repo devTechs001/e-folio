@@ -129,7 +129,9 @@ const DashboardSideNavbar = ({ collapsed, setCollapsed, menuItems = [], mobileMe
     // Get role badge
     const getRoleBadge = () => {
         const badges = {
+            owner: { icon: Crown, color: 'from-amber-400 to-yellow-600', label: 'Owner' },
             admin: { icon: Crown, color: 'from-yellow-400 to-orange-500', label: 'Admin' },
+            collaborator: { icon: Shield, color: 'from-cyan-400 to-blue-500', label: 'Collaborator' },
             editor: { icon: Shield, color: 'from-blue-400 to-cyan-500', label: 'Editor' },
             user: { icon: User, color: 'from-purple-400 to-pink-500', label: 'User' }
         };

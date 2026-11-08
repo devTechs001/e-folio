@@ -1,11 +1,13 @@
 /**
  * Phase 30 — canonical auth-role vocabulary.
  *
- * The repo has three credential paths but the dashboard only ever knew three
- * roles: owner (bootstrap OWNER_EMAIL / OWNER_PASSWORD), collaborator
- * (/auth/login/collaborator) and user (regular DB account). A seeded DB
- * account uses the legacy role `admin`, which no dashboard menu item lists,
- * so signing in with it produced an empty sidebar and no main links.
+ * The repo had one shared /auth/login form for every credential path while
+ * the dashboard only knew three roles: owner (bootstrap OWNER_EMAIL /
+ * OWNER_PASSWORD), collaborator (/auth/login/collaborator) and user (regular
+ * DB account). A seeded DB account uses the legacy role `admin`, which no
+ * dashboard menu item listed, so signing in with it produced an empty sidebar
+ * and no main links. Phase 31 split the owner flow into /auth/login/owner and
+ * kept /auth/login for regular users; this module stays the shared vocabulary.
  *
  * This module is deliberately presentation/routing only. It does NOT grant
  * privileges: the server's `isOwner` middleware still requires the literal

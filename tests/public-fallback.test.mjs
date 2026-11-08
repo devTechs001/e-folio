@@ -154,14 +154,20 @@ check('technical detail is recorded for developers but logged only in dev', () =
     assert.match(src, /MAX_ISSUES = 25/);
 });
 
-check('the dev diagnostics panel is dev-only and absent from production', () => {
+check('no developer/API diagnostics badge or panel is rendered anywhere', () => {
+    // Phase 31 security fix: the DEV · API badge exposed endpoints, status
+    // codes and exception text in the dev UI, so the whole panel was removed.
     const app = read('src/App.jsx');
-    assert.match(app, /\{import\.meta\.env\.DEV && <DevDiagnostics \/>\}/);
-    const panel = read('src/components/DevDiagnostics.jsx');
-    assert.match(panel, /if \(!IS_DEV\) return null/);
-    assert.match(panel, /getDevIssues\(\)/);
-    assert.match(panel, /document\.hidden/);
-    assert.doesNotMatch(panel, /localStorage|fetch\(|axios/);
+    assert.doesNotMatch(app, /DevDiagnostics|Developer diagnostics|DEV · API/);
+    assert.doesNotMatch(app, /import\.meta\.env\.DEV && </);
+    assert.ok(!exists('src/components/DevDiagnostics.jsx'));
+    assert.ok(!exists('src/styles/DevDiagnostics.css'));
+    for (const file of [...PUBLIC_FILES, 'src/pages/OwnerLoginPage.jsx', 'src/components/MobileBottomNav.jsx']) {
+        assert.doesNotMatch(read(file), /DEV · API|Developer diagnostics|dev-diagnostics|getDevIssues\(\)/i, file);
+    }
+    const messaging = read('src/utils/publicMessaging.js');
+    assert.doesNotMatch(messaging, /<DevDiagnostics \/>|dev panel/);
+    assert.match(messaging, /No diagnostics badge/);
 });
 
 check('raw API error text stays internal, for developers', () => {
@@ -188,7 +194,8 @@ check('no secrets or external calls were introduced', () => {
         'src/data/publicSnapshot.json',
         'src/services/publicContent.js',
         'src/utils/publicMessaging.js',
-        'src/components/DevDiagnostics.jsx',
+        'src/pages/OwnerLoginPage.jsx',
+        'src/styles/OwnerLoginPage.css',
         'src/components/ArchiveNote.jsx',
         'scripts/build-public-snapshot.mjs'
     ]) {
