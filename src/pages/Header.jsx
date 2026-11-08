@@ -27,10 +27,18 @@ const NAV_SECTIONS = [
 const NavIcon = ({ icon: Icon, size = 18, className }) =>
     Icon ? <Icon size={size} className={className} strokeWidth={2} aria-hidden="true" /> : null;
 
-// Phase 28: the button and drawer are shown by Header.css / HeaderDrawer.css
-// at max-width: 1024px. Using 768px here made the button visible on
-// 769–1024px viewports while the drawer stayed gated off, so it never opened.
-const getIsMobile = () => (typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
+// Phase 32: the button and drawer are shown by Header.css / HeaderDrawer.css
+// at max-width: 1024px. Reading innerWidth only on `resize` left `isMobile`
+// stale after an orientation change, pinch zoom or browser-chrome resize; the
+// drawer was gated on that stale value, so tapping the hamburger did nothing.
+// Use the SAME media query as the CSS and listen for its change event.
+const MOBILE_QUERY = '(max-width: 1024px)';
+
+const getIsMobile = () => {
+    if (typeof window === 'undefined') return false;
+    if (typeof window.matchMedia === 'function') return window.matchMedia(MOBILE_QUERY).matches;
+    return window.innerWidth <= 1024;
+};
 
 const Header = () => {
     const { isDarkMode, toggleTheme } = useTheme();
@@ -79,11 +87,16 @@ const Header = () => {
     }, []);
 
     useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(getIsMobile());
-            if (!getIsMobile() && isMenuOpen) {
-                setIsMenuOpen(false);
-            }
+        const mql = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+            ? window.matchMedia(MOBILE_QUERY)
+            : null;
+
+        // Phase 32: keep the JS gate in sync with the CSS media query. A
+        // functional state update avoids depending on stale isMenuOpen values.
+        const syncViewport = () => {
+            const mobile = getIsMobile();
+            setIsMobile(mobile);
+            if (!mobile) setIsMenuOpen(false);
         };
 
         let ticking = false;
@@ -97,14 +110,19 @@ const Header = () => {
             });
         };
 
+        syncViewport();
+        if (mql?.addEventListener) mql.addEventListener('change', syncViewport);
+        else if (mql?.addListener) mql.addListener(syncViewport);
+        window.addEventListener('resize', syncViewport);
         window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', handleResize);
 
         return () => {
+            if (mql?.removeEventListener) mql.removeEventListener('change', syncViewport);
+            else if (mql?.removeListener) mql.removeListener(syncViewport);
+            window.removeEventListener('resize', syncViewport);
             window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleResize);
         };
-    }, [isMobile, isMenuOpen]);
+    }, []);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -133,22 +151,32 @@ const Header = () => {
         return () => observer.disconnect();
     }, []);
 
-    // Close menu when clicking outside
+    // Close when the interaction starts outside the drawer or the toggle.
+    // Phase 32: pointerdown fires before click, so the very tap that opens the
+    // drawer can never close it in the same gesture. composedPath() works for
+    // SVG icon targets and shadow DOM; Escape closes it for keyboard users.
     useEffect(() => {
-        if (!isMenuOpen) return;
+        if (!isMenuOpen) return undefined;
 
-        const handleClickOutside = (event) => {
-            // Close when clicking outside the mobile nav or the toggle button
-            const target = event.target instanceof Element ? event.target : null;
-            const clickedInsideNav = target?.closest('.mobile-nav');
-            const clickedOnToggle = target?.closest('.menu-toggle-btn');
-            if (!clickedInsideNav && !clickedOnToggle) {
-                setIsMenuOpen(false);
-            }
+        const handleOutside = (event) => {
+            const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+            const isInside = element => element instanceof Element &&
+                Boolean(element.closest('.mobile-nav') || element.closest('.menu-toggle-btn'));
+            const inside = path.length
+                ? path.some(node => node instanceof Element && isInside(node))
+                : isInside(event.target);
+            if (!inside) setIsMenuOpen(false);
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') setIsMenuOpen(false);
         };
 
-        document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
+        document.addEventListener('pointerdown', handleOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('pointerdown', handleOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, [isMenuOpen]);
 
     // Prevent body scroll when mobile menu is open
@@ -315,10 +343,13 @@ const Header = () => {
                         {/* Mobile Menu Button */}
                         <button
                             type="button"
-                            className="lg:hidden menu-toggle-btn"
+                            id="mobile-drawer-toggle"
+                            className="menu-toggle-btn"
                             onClick={toggleMenu}
-                            aria-label="Toggle menu"
+                            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                             aria-expanded={isMenuOpen}
+                            aria-controls="mobile-drawer"
+                            title={isMenuOpen ? 'Close menu' : 'Open menu'}
                         >
                             {isMenuOpen
                                 ? <X size={24} strokeWidth={2.2} aria-hidden="true" />
@@ -329,9 +360,11 @@ const Header = () => {
 
                 {/* Mobile Navigation Drawer */}
                 <AnimatePresence>
-                    {isMenuOpen && isMobile && (
+                    {isMenuOpen && (
                         <motion.nav
                             key="mobile-drawer"
+                            id="mobile-drawer"
+                            aria-label="Main navigation"
                             className="mobile-nav"
                             variants={drawerVariants}
                             initial="closed"

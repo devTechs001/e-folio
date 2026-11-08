@@ -86,7 +86,11 @@ check('the drawer breakpoint now matches the CSS that shows the button', () => {
     assert.match(headerCss, /@media \(max-width: 1024px\) \{\s*\.mobile-nav/);
     // Gating, toggle, overlay and close behaviour remain.
     assert.match(header, /isMenuOpen && isMobile/);
-    assert.match(header, /className="lg:hidden menu-toggle-btn"/);
+    // Phase 32 removed lg:hidden: its min-width:1024px rule conflicted with
+    // the max-width:1024px CSS that actually shows the button.
+    assert.doesNotMatch(header, /lg:hidden menu-toggle-btn/);
+    assert.match(header, /className="menu-toggle-btn"/);
+    assert.match(header, /aria-controls="mobile-drawer"/);
     assert.match(header, /onClick=\{toggleMenu\}/);
     assert.match(header, /onClick=\{closeMenu\}/);
     assert.match(header, /className="menu-overlay"/);
@@ -104,10 +108,14 @@ check('the modern menu-button restyle is mobile-only', () => {
     assert.match(css, /prefers-reduced-motion/);
 });
 
-check('click-outside is safe for SVG icon targets and real icons remain', () => {
+check('outside interactions are safe for SVG icon targets and real icons remain', () => {
     const header = read('src/pages/Header.jsx');
-    assert.match(header, /event\.target instanceof Element/);
-    assert.match(header, /target\?\.closest\('\.menu-toggle-btn'\)/);
+    // Phase 32: pointerdown + composedPath() instead of a bubbling click.
+    assert.match(header, /document\.addEventListener\('pointerdown', handleOutside\)/);
+    assert.match(header, /event\.composedPath/);
+    assert.match(header, /element\.closest\('\.menu-toggle-btn'\)/);
+    assert.match(header, /event\.key === 'Escape'/);
+    assert.doesNotMatch(header, /addEventListener\('click', handleClickOutside\)/);
     assert.match(header, /from 'lucide-react'/);
     assert.match(header, /const NAV_SECTIONS/);
     const code = header.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');

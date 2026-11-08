@@ -411,29 +411,16 @@ async function seedProjects() {
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/e-folio');
         console.log('Connected to MongoDB');
 
-        // Get the admin user (assuming you have one)
-        let adminUser = await User.findOne({ email: 'admin@efolio.com' });
-        
+        // Phase 32: this ESM seed never creates accounts and never contains
+        // credentials. It reuses an existing admin/owner record; the CommonJS
+        // server seed can create one from ADMIN_EMAIL / ADMIN_PASSWORD.
+        const adminEmail = (process.env.ADMIN_EMAIL || '').replace(/^["']|["']$/g, '').trim().toLowerCase();
+        let adminUser = adminEmail ? await User.findOne({ email: adminEmail }) : null;
         if (!adminUser) {
-            console.log('Admin user not found. Creating admin user...');
-            
-            // Create admin user if not exists
-            const bcrypt = require('bcryptjs');
-            const hashedPassword = await bcrypt.hash('admin123', 12);
-            
-            const newAdmin = new User({
-                name: 'Admin User',
-                email: 'admin@efolio.com',
-                password: hashedPassword,
-                role: 'admin',
-                isEmailVerified: true
-            });
-            
-            await newAdmin.save();
-            console.log('Admin user created successfully');
-            
-            // Use the newly created admin
-            adminUser = newAdmin;
+            adminUser = await User.findOne({ role: { $in: ['admin', 'owner'] } });
+        }
+        if (!adminUser) {
+            throw new Error('No admin/owner account found. Set ADMIN_EMAIL and ADMIN_PASSWORD in the Render environment and run server/seed-projects.js first.');
         }
 
         console.log(`Using admin user: ${adminUser.name}`);

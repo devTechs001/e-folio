@@ -106,6 +106,11 @@
         border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 30%, transparent);
         background: color-mix(in srgb, var(--mainColor, #00efff) 10%, rgba(255, 255, 255, 0.04));
         color: var(--mainColor, #00efff);
+        /* Phase 32: keep this last-loaded restyle from making the icon
+           unresponsive to touch, and keep it above the drawer overlay. */
+        pointer-events: auto;
+        touch-action: manipulation;
+        z-index: 1002;
     }
 }
 .menu-toggle-btn svg { width: 24px; height: 24px; }

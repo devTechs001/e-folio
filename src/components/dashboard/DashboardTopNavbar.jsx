@@ -165,8 +165,11 @@ const DashboardTopNavbar = ({
 
                             {/* Mobile Menu Toggle */}
                             <button
+                                type="button"
                                 onClick={onToggleMobileMenu}
-                                className="lg:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
+                                aria-label="Open menu"
+                                aria-controls="dashboard-mobile-drawer"
+                                className="lg:hidden relative z-[36] p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/30 hover:border-cyan-500/50 transition-all"
                                 title="Open Menu"
                             >
                                 <Menu size={20} className="text-slate-400" />

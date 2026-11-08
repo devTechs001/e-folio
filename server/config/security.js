@@ -67,7 +67,13 @@ function verifyToken(token) {
 }
 
 function getOwnerEmail() {
-    return (process.env.OWNER_EMAIL || 'devtechs842@gmail.com')
+    // Phase 32: on Render the owner email must come from the environment.
+    // In production an unconfigured value fails closed (no login can match an
+    // empty email); development keeps a local fallback for offline work.
+    // No real-looking address is compiled into source. Set OWNER_EMAIL in
+    // the environment for local owner sign-in too.
+    const fallback = isProduction() ? '' : 'owner@example.invalid';
+    return (process.env.OWNER_EMAIL || fallback)
         .replace(/^["']|["']$/g, '').trim().toLowerCase();
 }
 
@@ -106,8 +112,12 @@ function assertProductionConfig() {
     if (!secret) issues.push('JWT_SECRET is missing');
     else if (secret.length < 32 || WEAK_SECRET.test(secret)) issues.push('JWT_SECRET is weak or a placeholder');
 
+    if (!process.env.OWNER_EMAIL) issues.push('OWNER_EMAIL is missing');
     if (!process.env.OWNER_PASSWORD && !process.env.OWNER_PASSWORD_HASH) {
         issues.push('OWNER_PASSWORD / OWNER_PASSWORD_HASH is missing');
+    }
+    if (Boolean(process.env.ADMIN_EMAIL) !== Boolean(process.env.ADMIN_PASSWORD)) {
+        issues.push('ADMIN_EMAIL / ADMIN_PASSWORD must be set together');
     }
     if (!process.env.MONGODB_URI) issues.push('MONGODB_URI is missing');
     if (!process.env.CLIENT_URL) issues.push('CLIENT_URL is missing');

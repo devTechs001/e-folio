@@ -832,21 +832,14 @@ const DashboardContent = () => {
                 <DashboardFooter />
             </div>
 
-            {/* Mobile Menu Backdrop */}
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
-                    />
-                )}
-            </AnimatePresence>
+            {/* Phase 32: the single mobile backdrop is rendered by
+                DashboardSideNavbar; a second one here sat below the sticky
+                header and swallowed taps on the menu button. */}
 
             {/* Quick Access Button (Mobile) */}
             <button
+                type="button"
+                aria-label="Open menu"
                 onClick={() => setMobileMenuOpen(true)}
                 className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full shadow-2xl shadow-cyan-500/50 flex items-center justify-center z-40 active:scale-95 transition-transform"
             >

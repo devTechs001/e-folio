@@ -20,6 +20,17 @@ services:
       # Secrets are set in the Render dashboard, never committed to the repo.
       - key: JWT_SECRET
         sync: false
+      # Phase 32: owner/admin sign-in credentials live ONLY in the Render
+      # environment. No value is ever committed here. See
+      # RENDER_AUTH_ENV_SETUP.md for the exact variables and setup steps.
+      - key: OWNER_EMAIL
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_BASE_URL

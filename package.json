@@ -30,7 +30,7 @@
     "audit:security": "node server/scripts/security-audit.js",
     "test:load": "node server/tests/load/smoke-load.js",
     "check": "npm run lint && npm test && npm run build",
-    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs && node tests/public-fallback.test.mjs && node tests/ecommerce-link.test.mjs && node tests/homescape-link.test.mjs && node tests/project-likes.test.mjs && node tests/tracking-conflict.test.mjs && node tests/projects-page-filters.test.mjs && node tests/project-links.test.mjs && node tests/project-sync.test.mjs && node tests/review-submission.test.mjs && node tests/hook-dependency-order.test.mjs && node tests/projects-features.test.mjs && node tests/projects-remodel.test.mjs && node tests/lab-review.test.mjs && node tests/testimonial-thumbnail.test.mjs && node tests/skills-cv-groups.test.mjs && node tests/ui-polish.test.mjs && node tests/header-icons.test.mjs && node tests/cv-drawer.test.mjs && node tests/admin-login-links.test.mjs && node tests/two-login-pages.test.mjs",
+    "test": "npm run audit:endpoints -- --strict && npm run audit:security -- --strict && node tests/dashboard-api.test.mjs && node tests/collaboration-review.test.mjs && node tests/lab-page.test.mjs && node tests/testimonial-samples.test.mjs && node tests/profile-settings-api.test.mjs && node tests/about-user-workspace.test.mjs && node tests/user-workspace-realtime.test.mjs && node tests/security-resources-page.test.mjs && node tests/live-preview-lag.test.mjs && node tests/project-showcase.test.mjs && node tests/public-fallback.test.mjs && node tests/ecommerce-link.test.mjs && node tests/homescape-link.test.mjs && node tests/project-likes.test.mjs && node tests/tracking-conflict.test.mjs && node tests/projects-page-filters.test.mjs && node tests/project-links.test.mjs && node tests/project-sync.test.mjs && node tests/review-submission.test.mjs && node tests/hook-dependency-order.test.mjs && node tests/projects-features.test.mjs && node tests/projects-remodel.test.mjs && node tests/lab-review.test.mjs && node tests/testimonial-thumbnail.test.mjs && node tests/skills-cv-groups.test.mjs && node tests/ui-polish.test.mjs && node tests/header-icons.test.mjs && node tests/cv-drawer.test.mjs && node tests/admin-login-links.test.mjs && node tests/two-login-pages.test.mjs && node tests/render-env-drawer.test.mjs",
     "test:dashboards": "node tests/dashboard-api.test.mjs",
     "test:collaboration": "node tests/collaboration-review.test.mjs",
     "seed:lab": "node server/scripts/seedLabSamples.js",
@@ -71,7 +71,8 @@
     "test:header-icons": "node tests/header-icons.test.mjs",
     "test:cv-drawer": "node tests/cv-drawer.test.mjs",
     "test:admin-login-links": "node tests/admin-login-links.test.mjs",
-    "test:two-login-pages": "node tests/two-login-pages.test.mjs"
+    "test:two-login-pages": "node tests/two-login-pages.test.mjs",
+    "test:render-env-drawer": "node tests/render-env-drawer.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
