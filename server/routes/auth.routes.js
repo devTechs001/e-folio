@@ -26,6 +26,26 @@ function sanitizeString(val) {
     return val.trim();
 }
 
+async function ensureUserHasUsername(user, fallbackBase = 'user') {
+    if (!user) return null;
+    const current = sanitizeString(user.username || '');
+    if (current) return user;
+
+    const source = sanitizeString(user.name || user.email || fallbackBase) || fallbackBase;
+    const base = String(source).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24) || fallbackBase;
+
+    let candidate = base;
+    let counter = 1;
+    while (await User.findOne({ username: candidate })) {
+        candidate = `${base}${counter}`;
+        counter += 1;
+    }
+
+    user.username = candidate;
+    await user.save();
+    return user;
+}
+
 function constantTimeCompare(a, b) {
     if (typeof a !== 'string' || typeof b !== 'string') return false;
     return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -134,6 +154,10 @@ async function buildOwnerSession(ownerEmail) {
     if (!ownerUser) {
         ownerUser = await User.findOne({ role: 'owner' });
     }
+    // Kept from main: legacy owner records may have no username.
+    if (ownerUser && !ownerUser.username) {
+        ownerUser = await ensureUserHasUsername(ownerUser, ownerUser.name || ownerEmail.split('@')[0]);
+    }
     const ownerId = ownerUser ? ownerUser._id.toString() : '507f1f77bcf86cd799439011';
 
     return {
@@ -212,8 +236,10 @@ router.post('/login', loginLimiter, async (req, res) => {
 
         const normalizedEmail = email.toLowerCase();
 
-        // The bootstrap owner account must use /login/owner. A generic response
-        // avoids confirming whether that account exists.
+        // Merge resolution (phase 31): the bootstrap owner account must use
+        // /login/owner. Main's older combined-login owner branch is replaced
+        // by the dedicated endpoint above; a generic response avoids
+        // confirming whether that account exists.
         if (normalizedEmail === security.getOwnerEmail()) {
             return res.status(401).json({
                 success: false,
@@ -228,6 +254,10 @@ router.post('/login', loginLimiter, async (req, res) => {
                 success: false,
                 message: 'Invalid credentials'
             });
+        }
+
+        if (!user.username) {
+            await ensureUserHasUsername(user, user.name || normalizedEmail.split('@')[0]);
         }
 
         if (user.isActive === false) {

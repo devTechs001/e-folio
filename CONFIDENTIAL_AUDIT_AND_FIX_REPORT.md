@@ -2264,6 +2264,70 @@ labels.
 
 ---
 
+## 3af. Phase 33 — integration merge from `main` before the requested merge
+
+After the explicit **"merge"** instruction, `origin/main` was found to contain
+one independent commit (`b6a3e0a`, *Adjust project limits and enhance user
+experience*) that was **not** an ancestor of this branch. It touched eight
+files, three of which overlapped phases 30–32. A dry-run `git merge-tree`
+reported content conflicts in `server/routes/auth.routes.js` and
+`src/contexts/AuthContext.jsx`, so `origin/main` was merged into this branch
+and the conflicts resolved before the PR was opened. No history was rewritten.
+
+### Conflicts resolved (both intents preserved)
+
+- **`server/routes/auth.routes.js`** — kept the phase-31 separation (`/login`
+  is users-only and returns a generic `Invalid credentials` for the configured
+  owner email; `/login/owner` is the only owner path). Main's
+  `ensureUserHasUsername()` helper was retained and is now called from both
+  the dedicated `buildOwnerSession()` path and the regular user path, so legacy
+  records without a username still work.
+- **`src/contexts/AuthContext.jsx`** — kept the two sign-in branches, the
+  owner-role guard on the public endpoint, `isAdmin`, and the canonical role
+  import. Adopted main's robustness fixes (`token && savedUser` session check,
+  `|| USER_ROLE` fallbacks, `effectiveRole` exposed as `userRole`) **using our
+  `normalizeRole` helper**, because main's local helper would have collapsed
+  the legacy `admin` role back to `visitor` and reintroduced an email-based
+  owner shortcut that phase 32 deliberately removed.
+- `server/config/security.js` auto-merged cleanly: main's constant-time
+  `verifyOwnerPassword()` fix plus phase 32's environment-only
+  `OWNER_EMAIL` / fail-closed production checks. `tests/owner-password.test.cjs`
+  from main was retained.
+
+### Deliberate divergence from `main` (needs owner confirmation)
+
+Main's commit reduced the public project dataset to 8 records with
+sub-600 likes/views and capped the endpoints at 8. That contradicts the
+standing owner acceptance criteria for this engagement (**14 grid + 2 showcase
+records, every likes/views counter ≥600, no truncation of the catalogue**, and
+the regression-guarded protected seed/snapshot files). To keep `npm test` green
+and the owner's data intact, these four files were kept at this branch's
+version:
+
+| File | Main's change | Kept |
+| --- | --- | --- |
+| `src/data/publicSnapshot.json` | 8 projects, likes as low as 24 | 14 projects, all counters ≥600 |
+| `src/services/publicContent.js` | `limit=8` | `limit=100` |
+| `server/controllers/public.controller.js` | default `limit = 8` | default `limit = 50` |
+| `server/seed-data.js` | 8 records, changed counters | original protected dataset |
+
+This is the one place where the merge does **not** include `main`'s independent
+work. It is recorded here and in backlog 37 so the owner can decide which
+catalogue size is authoritative. `server/seed-data.js` also retains a
+hard-coded test password in main's new `tests/owner-password.test.cjs`; that
+file came from `main`, is not wired into `npm test`, and was left untouched.
+
+### Verification
+
+`npm test` exit 0: **339** Node-only regression checks (the phase-30
+`admin-login-links` assertions were aligned with the merged `AuthContext`).
+`npm run check` exit 0: lint **0 errors**, endpoint parity `--strict`
+**0 live gaps**, static security audit `--strict` **HIGH 0 / MEDIUM 0 / LOW 0**,
+production build + PWA precache regenerated. No conflict markers remain.
+Static checks only — no live MongoDB, Express, Render or browser run.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2515,4 +2579,8 @@ was not fetched, modified or merged. PR #4 remains open and untouched. Phase 32
 explicit **"push"** instruction in that phase; **no PR, merge or direct push
 to `main`** was requested or made. No credential value was written to a
 tracked file or sent to Render; the values must be set in the Render
-dashboard. PR #4 remains open and untouched.
+dashboard. PR #4 remains open and untouched. After the explicit
+**"merge"** instruction, `origin/main`'s independent commit was integrated
+into this branch (§3af) and the branch was submitted for merging into `main`
+via a pull request; **no direct push to `main`** was made. PR #4 was left
+open and untouched.

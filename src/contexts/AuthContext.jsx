@@ -20,8 +20,16 @@ const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // User roles: 'owner', 'collaborator', 'visitor'
+    // User roles: owner, admin, collaborator, user, visitor.
     const [userRole, setUserRole] = useState('visitor');
+
+    // Merge resolution (main's fix, using the shared helper): a saved session
+    // with a stale/missing role must not leave a signed-in user as a visitor.
+    // Our normalizeRole also keeps the legacy `admin` role, which main's
+    // local helper would have collapsed back to `visitor`.
+    const effectiveRole = userRole && userRole !== 'visitor'
+        ? normalizeRole(userRole)
+        : (user ? USER_ROLE : 'visitor');
 
     useEffect(() => {
         // Check for existing session and verify token
@@ -30,7 +38,7 @@ const AuthProvider = ({ children }) => {
             const savedUser = localStorage.getItem('efolio_user');
             const savedRole = localStorage.getItem('efolio_role');
             
-            if (token && savedUser && savedRole) {
+            if (token && savedUser) {
                 try {
                     // Verify token with backend
                     const response = await apiService.verifyToken();
@@ -44,7 +52,7 @@ const AuthProvider = ({ children }) => {
                                 username: verifiedUser.username,
                                 email: verifiedUser.email,
                                 avatar: verifiedUser.avatar || null,
-                                role: normalizeRole(verifiedUser.role || savedRole),
+                                role: normalizeRole(verifiedUser.role || savedRole || USER_ROLE),
                                 loginTime: new Date().toISOString()
                             };
                             setUser(data);
@@ -53,7 +61,7 @@ const AuthProvider = ({ children }) => {
                             localStorage.setItem('efolio_role', data.role);
                         } else {
                             setUser(JSON.parse(savedUser));
-                            setUserRole(normalizeRole(savedRole));
+                            setUserRole(normalizeRole(savedRole || USER_ROLE));
                         }
                     } else {
                         // Token invalid, clear session
@@ -263,16 +271,16 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    const isOwner = () => isOwnerRole(userRole);
-    const isAdmin = () => isAdminRole(userRole);
-    const isCollaborator = () => normalizeRole(userRole) === COLLABORATOR_ROLE;
-    const isUser = () => normalizeRole(userRole) === USER_ROLE;
+    const isOwner = () => isOwnerRole(effectiveRole);
+    const isAdmin = () => isAdminRole(effectiveRole);
+    const isCollaborator = () => effectiveRole === COLLABORATOR_ROLE;
+    const isUser = () => effectiveRole === USER_ROLE;
     const isAuthenticated = () => user !== null;
-    const canEdit = () => [OWNER_ROLE, ADMIN_ROLE, COLLABORATOR_ROLE, USER_ROLE].includes(normalizeRole(userRole));
+    const canEdit = () => [OWNER_ROLE, ADMIN_ROLE, COLLABORATOR_ROLE, USER_ROLE].includes(effectiveRole);
 
     const value = {
         user,
-        userRole,
+        userRole: effectiveRole,
         loading,
         login,
         logout,

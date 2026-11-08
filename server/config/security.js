@@ -95,12 +95,19 @@ function getOwnerPassword() {
 async function verifyOwnerPassword(candidate, bcrypt) {
     const hash = process.env.OWNER_PASSWORD_HASH;
     if (hash) return bcrypt.compare(candidate, hash);
+
     const plain = getOwnerPassword();
-    if (!plain) return false;
-    // Constant-time comparison against a hash of the configured password.
-    const candidateHash = crypto.createHash('sha256').update(candidate).digest();
-    const expectedHash = crypto.createHash('sha256').update(plain).digest();
-    return crypto.timingSafeEqual(candidateHash, expectedHash);
+    if (!plain || typeof candidate !== 'string') return false;
+
+    // Defensive constant-time comparison against the configured plain-text value.
+    // Hashing the candidate and the plain value here makes the comparison
+    // impossible to match correctly when the inputs are different lengths,
+    // which is why the owner login was failing even with the correct password.
+    if (candidate.length !== plain.length) return false;
+    return crypto.timingSafeEqual(
+        Buffer.from(candidate, 'utf8'),
+        Buffer.from(plain, 'utf8')
+    );
 }
 
 /** Non-fatal boot-time checks; surfaced through /health for monitoring. */

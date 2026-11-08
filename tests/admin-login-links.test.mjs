@@ -79,11 +79,17 @@ check('the dashboard menu filter uses the shared helper', () => {
 
 check('the auth context normalises roles without weakening isOwner', () => {
     const auth = read('src/contexts/AuthContext.jsx');
-    assert.match(auth, /normalizeRole\(verifiedUser\.role \|\| savedRole\)/);
+    assert.match(auth, /normalizeRole\(verifiedUser\.role \|\| savedRole \|\| USER_ROLE\)/);
     assert.match(auth, /const sessionRole = normalizeRole\(response\.user\?\.role\)/);
-    assert.match(auth, /normalizeRole\(savedRole\)/);
-    assert.match(auth, /const isOwner = \(\) => isOwnerRole\(userRole\)/);
-    assert.match(auth, /const isAdmin = \(\) => isAdminRole\(userRole\)/);
+    assert.match(auth, /normalizeRole\(savedRole \|\| USER_ROLE\)/);
+    assert.match(auth, /if \(token && savedUser\)/);
+    // Merge resolution: main's effectiveRole fix, expressed with our helper so
+    // the legacy `admin` role is preserved rather than collapsed to visitor.
+    assert.match(auth, /const effectiveRole = userRole/);
+    assert.match(auth, /userRole: effectiveRole/);
+    assert.doesNotMatch(auth, /const normalizeRole = \(value\)/);
+    assert.match(auth, /const isOwner = \(\) => isOwnerRole\(effectiveRole\)/);
+    assert.match(auth, /const isAdmin = \(\) => isAdminRole\(effectiveRole\)/);
     assert.match(auth, /isAdmin,/);
 });
 
