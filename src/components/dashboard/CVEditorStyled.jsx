@@ -1316,7 +1316,13 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
   return (
     <DashboardLayout
       title="CV Editor"
-      subtitle="Create and manage your professional curriculum vitae"
+      subtitle={
+        lastSavedAt
+          ? `Saved ${lastSavedAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · ${
+              published ? 'published for visitors' : 'private draft'
+            }`
+          : 'Create and manage your professional curriculum vitae'
+      }
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
@@ -1360,7 +1366,13 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
             {tabs.map(tab => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                <button key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    // Review doubles as an action: re-check the current
+                    // document and stamp it on the server.
+                    if (tab.id === 'review') void runReview();
+                  }}
                   className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
