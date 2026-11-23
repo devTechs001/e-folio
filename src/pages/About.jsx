@@ -4,6 +4,7 @@ import Typed from 'typed.js';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettingsListener } from '../hooks/useSettingsListener';
 import WelcomeTag3D from '../components/WelcomeTag3D';
+import SectionHeading from '../components/SectionHeading';
 import {
     ABOUT_WELCOME_3D, ABOUT_AVAILABILITY, ABOUT_CV_HREF, ABOUT_ROLES,
     ABOUT_IMAGES, ABOUT_BIO_FALLBACK, ABOUT_SECOND_PARAGRAPH,
@@ -92,10 +93,14 @@ const About = () => {
                             </span>
                         </div>
 
-                        {/* Main Heading */}
-                        <h2 className="main-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-textColor mb-4 leading-tight">
-                            {first} <span className="gradient-text-animated">{second}</span>
-                        </h2>
+                        {/* Main Heading — same centred treatment as the other
+                            public sections; the 3D wordmark stays above it and
+                            the name reads slightly larger than the rest. */}
+                        <SectionHeading
+                            text={`${first} ${second}`.trim()}
+                            accent={second}
+                            className="about-heading"
+                        />
 
                         {/* Typed Text */}
                         <div className="mb-6">

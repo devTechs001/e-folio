@@ -35,7 +35,12 @@ check('the welcome wording stays the same and comes from the shared module', () 
     // Exactly one h1 remains on the page (the wordmark); the name is an h2.
     const source = about.replace(/\/\*[\s\S]*?\*\//g, '');
     assert.equal((source.match(/<h1[\s>]/g) || []).length, 0, 'the wordmark supplies the h1');
-    assert.match(source, /<h2 className="main-heading/);
+    // Phase 35 moved the name into the shared SectionHeading; it still renders
+    // an h2 (the component's default level), so the page keeps one h1 only.
+    assert.match(source, /<SectionHeading[\s\S]{0,240}className="about-heading"/);
+    const heading = read('src/components/SectionHeading.jsx');
+    assert.match(heading, /level = 2,/);
+    assert.match(heading, /const Heading = `h\$\{level\}`;/);
 });
 
 check('the 3D tag is pure CSS, animated in view, and motion-safe', () => {

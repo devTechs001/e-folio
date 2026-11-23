@@ -887,3 +887,37 @@
   outline: 3px solid var(--mainColor);
   outline-offset: 3px;
 }
+/* ---------------------------------------------------------------
+   About heading layout (phase 35)
+
+   The About section is a two-column hero, so its heading must stay
+   left-aligned on desktop while the rest of the public pages centre
+   theirs. `SectionHeading` is centred by default; these rules restore
+   the column's alignment and give the name one extra step of size.
+   --------------------------------------------------------------- */
+
+.about-section .about-heading {
+  align-items: center;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .about-section .about-heading {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  /* Keep the decoration under the words, not stretched across the column. */
+  .about-section .about-heading .sec-head__deco {
+    margin-left: 0;
+    margin-right: auto;
+    width: 170px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .about-section .about-heading .sec-head__title {
+    font-size: 4.25rem;
+  }
+}

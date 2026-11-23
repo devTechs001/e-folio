@@ -2458,6 +2458,95 @@ verified statically only — this is not a claim of live behaviour.
 
 ---
 
+## 3ah. Phase 35 — centred public headings, and a real hobbies dashboard with its own endpoints
+
+Scope from the owner: *"maintain the headings at the center of public pages
+(increase the font size a little (with a decoration animated like for the
+hobbies page heading)), add a hobbies dashboard and endpoints."* Static and
+build verification only — **no MongoDB, Express runtime or browser was
+available**, so no behaviour here is claimed as live-tested.
+
+### Shared heading
+
+`src/components/SectionHeading.jsx` (+ `SectionHeading.css`) holds one centred
+heading treatment taken from the hobbies page: an animated gradient rule with
+two pulsing dots, an optional eyebrow and an optional supporting sentence. The
+title is passed as plain text plus the words to tint, so the two halves can
+never drift out of order and the accessible name is the whole phrase.
+
+Sizes step up from the previous per-page `text-4xl md:text-5xl lg:text-6xl`
+scale to `2.25 → 2.75 → 3.25 → 3.75 → 4rem`, with the decoration and reduced
+motion handled once. Applied to Education, Projects, Contact, Lab, Hobbies &
+Interests, Testimonials and About. Skills keeps its own already-decorated,
+larger heading rather than being shrunk into the new one. About is a
+two-column hero, so `.about-heading` restores left alignment at ≥1024 px while
+staying centred below that, and its name renders one step larger.
+
+The hobbies page's bespoke `.title-decoration` markup was removed because the
+same decoration now comes from the shared component; its wording, stats grid
+and background effects are untouched.
+
+### Hobbies endpoints (`/api/interests`)
+
+All owner-guarded (`auth` + `isOwner`), all behind `labSync('interests')` so a
+successful write still refreshes the public Lab/portfolio sections.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/interests` | Owner list with optional `category`, `visible`, `q` filters |
+| GET | `/interests/stats` | Totals, hidden count, category/level breakdown, recent five |
+| GET | `/interests/export` | JSON export of the writable fields |
+| POST | `/interests` | Create (appends to the manual order) |
+| POST | `/interests/reorder` | Persist a new order, ignoring unknown ids |
+| POST | `/interests/import` | Bulk import, de-duplicated by name, max 200 |
+| PATCH | `/interests/:id/visibility` | Show/hide without opening the edit form |
+| PUT | `/interests/:id` | Update (explicitly cannot change `order`) |
+| DELETE | `/interests/:id` | Delete |
+
+The model gained `order`, `visible`, `tags` and `startedYear` plus supporting
+indexes. `getPublicInterests` now filters `visible: { $ne: false }`, and its
+projection never emits visibility or ordering. `addInterest` appends to the end
+of the order instead of defaulting to 0, which previously put every new hobby at
+the top of an arbitrarily ordered list.
+
+### Hobbies dashboard
+
+`HobbiesManager.jsx` now reads the **owner** list (`/interests`) rather than the
+public endpoint, which could never show hidden hobbies or ordering. Kept: add,
+edit, delete, search, the three summary cards, the animated grid. Added: a
+four-card summary that includes hidden and average level, category and
+visibility filters, a breakdown panel, drag-and-drop **and** arrow reordering
+with an explicit "Save order / Discard" step (nothing is written until Save),
+an eye toggle per card, tags, comfort level and "since" year in the form, and
+JSON import/export. Every new call has a user-facing error path; no stack
+trace or driver text is surfaced.
+
+The public hobbies page also accepts the new labels: tags join the existing
+filter row, and an optional "Since <year>" line renders when set.
+
+### Verification
+
+`node tests/hobbies-headings.test.mjs` — **18 checks**, wired into both
+`package.json` and `server/package.json`; `npm test` is now **378 checks, 0
+failures**. `npm run check` exit 0: lint **0 errors** (682 warnings, all
+pre-existing), endpoint parity `--strict` **0 live code gaps** (484 matched,
+146 orphaned/legacy files unchanged), static security audit `--strict`
+**HIGH 0 / MEDIUM 0 / LOW 0**, production build + 227-entry PWA precache.
+All seven headings were rendered with `react-dom/server` and keep their exact
+wording and word order with the accent phrase in its own span; the `level`
+prop was confirmed to change the tag.
+
+One earlier assertion in `tests/cv-system-testimonials.test.mjs` pinned the
+literal `<h2 className="main-heading` on the About page. It was rewritten to
+test the same guarantee it was protecting — the page still has no `<h1>` of its
+own and the name is still an `h2` — rather than the markup that used to carry
+it. Nothing about that requirement was relaxed.
+
+Not verified: MongoDB writes, drag-and-drop in a real browser, the import path
+against a live API, and the visual result of the new heading sizes.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2658,6 +2747,18 @@ verified statically only — this is not a claim of live behaviour.
 39. Phase 34 follow-up: `publishedSnapshot` stores a full copy of the CV, so a
     large document is duplicated per publish. If CVs grow, switch to a
     version-pointer (publish a version id) instead of a copy.
+40. Phase 35 follow-up: confirm the new heading sizes on a real device at
+    360 px, 768 px and 1024 px. The About heading must stay left-aligned once
+    the hero becomes two columns, and the decoration must not overlap the
+    welcome wordmark. No browser was available here.
+41. Phase 35 follow-up: exercise the hobbies endpoints against a live MongoDB —
+    reorder with a stale id list, import of a file exported from a *different*
+    database (ids must not collide), and the hidden-hobby filter on
+    `/public/interests`. Drag-and-drop ordering was never run in a browser.
+42. Phase 35 follow-up: `POST /interests/import` creates documents one at a
+    time so a single bad row cannot fail the batch; for large imports this is
+    N round-trips. Consider `insertMany({ ordered: false })` once validation
+    feedback per row is no longer needed.
 
 ---
 

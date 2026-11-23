@@ -976,3 +976,10 @@
   outline: 3px solid var(--mainColor);
   outline-offset: 3px;
 }
+/* Phase 35: optional "since" line added from the hobbies dashboard. */
+.interest-since {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  letter-spacing: 0.01em;
+}

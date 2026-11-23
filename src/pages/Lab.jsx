@@ -12,6 +12,7 @@ import { useSocket } from '../contexts/SocketContext';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import api from '../services/api.service';
 import ArchiveNote from '../components/ArchiveNote';
+import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import socketService from '../services/socket.service';
 import { subscribeProjectsChanged, publishProjectsChanged } from '../utils/projectSync';
@@ -278,12 +279,11 @@ const Lab = () => {
             </button>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-textColor mb-4">
-            My <span className="text-mainColor gradient-text">Lab</span>
-          </h2>
-          <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto">
-            Experiments, the toolkit behind them, and what I tinker with off the bench.
-          </p>
+          <SectionHeading
+            text="My Lab"
+            accent="Lab"
+            lede="Experiments, the toolkit behind them, and what I tinker with off the bench."
+          />
 
           <div className="lab-header-meta mt-3">
             <span className={`lab-source lab-source-${dataStatus}`}>

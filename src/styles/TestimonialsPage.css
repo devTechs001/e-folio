@@ -87,17 +87,23 @@
     margin-bottom: 0.7rem;
 }
 
-.tst-title {
-    margin: 0 0 0.55rem;
-    font-size: clamp(1.7rem, 3.6vw, 2.6rem);
-    font-weight: 800;
-    line-height: 1.12;
-    letter-spacing: -0.02em;
-    color: var(--textColor, #e8f1ff);
-    background: linear-gradient(100deg, var(--textColor, #e8f1ff) 18%, var(--mainColor, #00efff) 68%, #a78bfa 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+/* Phase 35: the hero title is now the shared SectionHeading, so it inherits
+   the centred decoration but keeps this hero's left alignment. */
+.tst-hero .tst-heading {
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    text-align: left;
+}
+
+.tst-hero .tst-heading .sec-head__title {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+}
+
+.tst-hero .tst-heading .sec-head__deco {
+    margin-left: 0;
+    margin-right: auto;
+    width: 150px;
+    margin-top: 0.9rem;
 }
 
 .tst-lede {

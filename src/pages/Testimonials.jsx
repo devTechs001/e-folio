@@ -8,6 +8,7 @@ import thumbnailOverrides from '../data/testimonialThumbnails.json';
 import ArchiveNote from '../components/ArchiveNote';
 import ReviewForm from '../components/ReviewForm';
 import { loadPublicSection, getSnapshotSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import SectionHeading from '../components/SectionHeading';
 import { subscribeReviewsChanged, flushReviewOutbox } from '../utils/reviewOutbox';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import {
@@ -367,7 +368,11 @@ const Testimonials = () => {
               <i className="fas fa-comments" aria-hidden="true" />
               Voices from the work
             </span>
-            <h2 className="tst-title">Testimonials &amp; reviews</h2>
+            <SectionHeading
+              text="Testimonials & reviews"
+              accent="reviews"
+              className="tst-heading"
+            />
             <p className="tst-lede">
               Recommendations from clients sit next to reviews visitors left on this site.
               Both are the same system — a review only appears here once it has been approved.

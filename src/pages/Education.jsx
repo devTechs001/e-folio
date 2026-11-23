@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ArchiveNote from '../components/ArchiveNote';
+import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue } from '../utils/publicMessaging';
 import '../styles/Education.css';
@@ -145,14 +146,12 @@ const Education = () => {
 
             <div className="max-w-7xl mx-auto relative z-10">
                 {/* Header */}
-                <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
-                        Education <span className="gradient-text">History</span>
-                    </h2>
-                    <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mb-8">
-                        My academic journey and professional certifications that shaped my expertise
-                    </p>
-                    <ArchiveNote source={contentSource} />
+                <SectionHeading
+                    text="Education History"
+                    accent="History"
+                    lede="My academic journey and professional certifications that shaped my expertise"
+                >
+                    <ArchiveNote source={contentSource} className="mt-4" />
 
                     {/* View Mode Toggle */}
                     <div className="flex items-center justify-center gap-4 mb-8">
@@ -195,7 +194,7 @@ const Education = () => {
                             ))}
                         </div>
                     )}
-                </div>
+                </SectionHeading>
 
                 {/* Education Content */}
                 {viewMode === 'grid' ? (
