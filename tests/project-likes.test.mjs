@@ -23,7 +23,9 @@ const TITLES = [
     'Portfolio Website', 'Task Management App', 'AI Image Generator',
     'Social Media Dashboard', 'Blockchain Wallet',
     'Kazi Find', 'HomeScape Platform', 'Net Gate',
-    'Schedule Manager', 'AI Image Editor Pro', 'Elimu Pro Beta'
+    'Schedule Manager', 'AI Image Editor Pro', 'Elimu Pro Beta',
+    // Phase 36 — owner-supplied records, published at the owner's floor of 600.
+    'SokoMesh', 'Nexus SaaS Platform'
 ];
 const PRESERVED_VIEWS = [1245, 856, 1243];
 const NETGATE = 'https://net-gate-portal.netlify.app/';
@@ -87,7 +89,7 @@ check('existing counters above the floor and all published links are preserved',
     const views = seedNumbers('views');
     assert.deepEqual(views.slice(0, 3), PRESERVED_VIEWS);
     for (const url of [
-        'https://ominbiz-solution.netlify.app/',
+        'https://bizsolutionz.netlify.app/',
         'https://gbchat.netlify.app/',
         'https://cinemaflx.netlify.app/',
         'https://home-scape-platform.netlify.app/',

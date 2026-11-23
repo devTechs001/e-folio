@@ -87,13 +87,28 @@ check('the first page has exactly three restyled primary actions, in order', () 
 check('the hero restyle is modern, scoped and motion-safe', () => {
     const css = read('src/styles/LandingPage.css');
     for (const token of [
-        '.lp-hero .lp-actions', 'grid-template-columns: repeat(3, minmax(0, 1fr))',
+        '.lp-hero .lp-actions',
         '.lp-hero .lp-action--primary', '.lp-hero .lp-action--accent',
         '.lp-hero .lp-action--ghost', '.lp-hero .lp-action__title',
         '.lp-hero .feature-card h3', '.lp-hero .lp-trust',
         'prefers-reduced-motion', 'focus-visible'
     ]) assert.ok(css.includes(token), `missing hero style: ${token}`);
     assert.doesNotMatch(css, /\.projects-grid\s*\{|\.project-card\s*\{/);
+});
+
+check('the three actions read as one clear primary plus two supporting cards', () => {
+    const src = read('src/pages/LandingPage.jsx');
+    const css = read('src/styles/LandingPage.css');
+    // The two supporting actions live in their own row below the primary one.
+    assert.match(src, /<div className="lp-actions__secondary">/);
+    const secondary = src.slice(src.indexOf('lp-actions__secondary'), src.indexOf('lp-trust'));
+    assert.match(secondary, /lp-action--accent/);
+    assert.match(secondary, /lp-action--ghost/);
+    // Two per row from tablet up, one per row on phones — no overflow.
+    assert.match(css, /\.lp-hero \.lp-actions__secondary \{\s*display: grid;\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+    assert.match(css, /@media \(max-width: 720px\) \{[\s\S]*?\.lp-hero \.lp-actions__secondary \{ grid-template-columns: minmax\(0, 1fr\); \}/);
+    // Reduced motion still disables the hover lift.
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.lp-hero \.lp-action \{ transition: none; \}/);
 });
 
 check('no new claims or metrics were added to the first page', () => {

@@ -147,7 +147,9 @@ const LandingPage = () => {
                                 ))}
                             </div>
 
-                            {/* Phase 26 — the three primary actions in one modern row */}
+                            {/* Phase 36 — one clear primary action, then the two
+                                supporting actions underneath. Same three
+                                destinations and the same wording as before. */}
                             <div className="lp-actions" data-aos="fade-up" data-aos-delay="150">
                                 <Link to="/register" className="lp-action lp-action--primary">
                                     <span className="lp-action__icon"><i className="fas fa-magic" /></span>
@@ -157,22 +159,25 @@ const LandingPage = () => {
                                     </span>
                                     <i className="fas fa-arrow-right lp-action__arrow" />
                                 </Link>
-                                <Link to="/collaborate" className="lp-action lp-action--accent">
-                                    <span className="lp-action__icon"><i className="fas fa-handshake" /></span>
-                                    <span className="lp-action__body">
-                                        <span className="lp-action__title">Collaborate with Me</span>
-                                        <span className="lp-action__note">Start a conversation</span>
-                                    </span>
-                                    <i className="fas fa-arrow-right lp-action__arrow" />
-                                </Link>
-                                <Link to="/cv" className="lp-action lp-action--ghost">
-                                    <span className="lp-action__icon"><i className="fas fa-file-alt" /></span>
-                                    <span className="lp-action__body">
-                                        <span className="lp-action__title">Build Your CV</span>
-                                        <span className="lp-action__note">Preview and download</span>
-                                    </span>
-                                    <i className="fas fa-arrow-right lp-action__arrow" />
-                                </Link>
+
+                                <div className="lp-actions__secondary">
+                                    <Link to="/collaborate" className="lp-action lp-action--accent">
+                                        <span className="lp-action__icon"><i className="fas fa-handshake" /></span>
+                                        <span className="lp-action__body">
+                                            <span className="lp-action__title">Collaborate with Me</span>
+                                            <span className="lp-action__note">Start a conversation</span>
+                                        </span>
+                                        <i className="fas fa-arrow-right lp-action__arrow" />
+                                    </Link>
+                                    <Link to="/cv" className="lp-action lp-action--ghost">
+                                        <span className="lp-action__icon"><i className="fas fa-file-alt" /></span>
+                                        <span className="lp-action__body">
+                                            <span className="lp-action__title">Build Your CV</span>
+                                            <span className="lp-action__note">Preview and download</span>
+                                        </span>
+                                        <i className="fas fa-arrow-right lp-action__arrow" />
+                                    </Link>
+                                </div>
                             </div>
 
                             {/* Trust Indicators */}

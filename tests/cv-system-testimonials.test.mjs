@@ -332,7 +332,7 @@ check('project cards, CV look files and saved sample data are untouched', () => 
     ];
     for (const file of protectedFiles) assert.ok(exists(file), `missing protected file: ${file}`);
     const snapshot = json('src/data/publicSnapshot.json');
-    assert.equal(snapshot.sections.projects.projects.length, 14);
+    assert.equal(snapshot.sections.projects.projects.length, 16);
     for (const project of snapshot.sections.projects.projects) {
         assert.ok(project.likes >= 600 && project.views >= 600, `${project.title} lost its counters`);
     }

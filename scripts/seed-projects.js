@@ -27,9 +27,9 @@ const projects = [
         likes: 600,
         links: {
             github: "https://github.com/devTechs001/ecommerce-platform",
-            live: "https://ominbiz-solution.netlify.app/",
-            demo: "https://ominbiz-solution.netlify.app/",
-            netlify: "https://ominbiz-solution.netlify.app/"
+            live: "https://bizsolutionz.netlify.app/",
+            demo: "https://bizsolutionz.netlify.app/",
+            netlify: "https://bizsolutionz.netlify.app/"
         },
         images: [
             { url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d", caption: "Main E-commerce View" },
@@ -398,6 +398,62 @@ const projects = [
             { url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644", caption: "Course Catalog" }
         ],
         completionDate: "2025-04-12",
+        duration: "2 weeks",
+        teamSize: 1,
+        priority: "standard",
+        visibility: "public"
+    },
+    // Phase 36 — two projects the owner supplied on 2026-11-03. Descriptions
+    // and feature lists are limited to what the live pages themselves state;
+    // no stack, metric, rating or achievement is claimed for either. Images
+    // reuse the Unsplash photos the live SokoMesh page serves.
+    {
+        title: "SokoMesh",
+        description: "A Nairobi-first local marketplace preview connecting shoppers with independent neighbourhood shops.",
+        fullDescription: "SokoMesh is a local marketplace concept built around independent shops: a Nairobi-first browse experience, storefront categories, marked-down sample finds with clear prices, a product catalogue, and a seller preview that explains how a shop would take part. The live page labels its catalogue, ratings, sellers and ranked shelves as illustrative demo data rather than live shopper activity.",
+        technologies: ["React", "JavaScript", "Marketplace UI", "Netlify"],
+        category: "Web",
+        status: "completed",
+        featured: false,
+        tags: ["E-Commerce", "Marketplace", "Local Shops", "Product Catalogue"],
+        views: 600,
+        likes: 600,
+        links: {
+            live: "https://e-commerce-alfa.netlify.app/",
+            demo: "https://e-commerce-alfa.netlify.app/",
+            netlify: "https://e-commerce-alfa.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e", caption: "Sample find — studio wireless headphones" },
+            { url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa", caption: "Sample find — the everyday carry-all" }
+        ],
+        completionDate: "2025-06-20",
+        duration: "3 weeks",
+        teamSize: 1,
+        priority: "standard",
+        visibility: "public"
+    },
+    {
+        title: "Nexus SaaS Platform",
+        description: "A SaaS analytics platform shell with a dashboard shell, CRM and AI copilot surfaces.",
+        fullDescription: "Nexus is a SaaS platform interface presenting three core surfaces — analytics, CRM, and an AI copilot — behind a sign-in screen that shows the dashboard syncing its metrics. The live page exposes the loading shell only, so this record describes the interface as published and claims nothing about the underlying services.",
+        technologies: ["React", "JavaScript", "SaaS UI", "Netlify"],
+        category: "Web",
+        status: "completed",
+        featured: false,
+        tags: ["SaaS", "Analytics", "CRM", "Dashboard"],
+        views: 600,
+        likes: 600,
+        links: {
+            live: "https://saas-systeme.netlify.app/",
+            demo: "https://saas-systeme.netlify.app/",
+            netlify: "https://saas-systeme.netlify.app/"
+        },
+        images: [
+            { url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71", caption: "Analytics dashboard" },
+            { url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f", caption: "Platform overview" }
+        ],
+        completionDate: "2025-07-10",
         duration: "2 weeks",
         teamSize: 1,
         priority: "standard",

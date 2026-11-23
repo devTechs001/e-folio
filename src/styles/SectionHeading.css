@@ -43,7 +43,9 @@
 .sec-head__title {
   margin: 0;
   color: var(--textColor, #e8f1ff);
-  font-size: 2.25rem;
+  /* One scale for every public heading. Phase 36 raised each step; change
+     these five values to re-tune the whole site at once. */
+  font-size: var(--sec-head-size, 2.5rem);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -167,7 +169,7 @@
   }
 
   .sec-head__title {
-    font-size: 2.75rem;
+    font-size: var(--sec-head-size, 3rem);
   }
 
   .sec-head__lede {
@@ -177,7 +179,7 @@
 
 @media (min-width: 768px) {
   .sec-head__title {
-    font-size: 3.25rem;
+    font-size: var(--sec-head-size, 3.5rem);
   }
 }
 
@@ -187,7 +189,7 @@
   }
 
   .sec-head__title {
-    font-size: 3.75rem;
+    font-size: var(--sec-head-size, 4.25rem);
     line-height: 1.1;
   }
 
@@ -203,7 +205,7 @@
 
 @media (min-width: 1280px) {
   .sec-head__title {
-    font-size: 4rem;
+    font-size: var(--sec-head-size, 4.75rem);
   }
 }
 

@@ -49,9 +49,13 @@ check('the heading decoration animates and respects reduced motion', () => {
     // Every animated selector is switched off in that block.
     const block = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
     assert.match(block, /\.sec-head__line,\s*\.sec-head__dot\s*\{\s*animation: none;/);
-    // Font size increases across breakpoints from the old 4xl/5xl baselines.
-    assert.match(css, /\.sec-head__title \{\s*margin: 0;[\s\S]*?font-size: 2\.25rem;/);
-    assert.match(css, /@media \(min-width: 1280px\) \{\s*\.sec-head__title \{\s*font-size: 4rem;/);
+    // Phase 36 raised the scale one more step. Every breakpoint reads the same
+    // custom property, so the whole site can be re-tuned in one place.
+    assert.match(css, /\.sec-head__title \{\s*margin: 0;[\s\S]*?font-size: var\(--sec-head-size, 2\.5rem\);/);
+    for (const size of ['3rem', '3\.5rem', '4\.25rem', '4\.75rem']) {
+        assert.match(css, new RegExp(`font-size: var\\(--sec-head-size, ${size}\\);`), `missing step ${size}`);
+    }
+    assert.match(css, /@media \(min-width: 1280px\) \{\s*\.sec-head__title \{\s*font-size: var\(--sec-head-size, 4\.75rem\);/);
 });
 
 check('every public page uses the shared centred heading', () => {

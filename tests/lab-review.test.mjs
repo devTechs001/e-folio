@@ -131,7 +131,7 @@ check('protected Lab sample files, seed script and NetGate links are untouched',
     const seed = read('server/scripts/seedLabSamples.js');
     assert.match(seed, /--remove/);
     assert.match(seed, /Project\.deleteMany\(\{ tags: LAB_SAMPLE_TAG \}\)/);
-    assert.equal(json('src/data/publicSnapshot.json').sections.projects.projects.length, 14);
+    assert.equal(json('src/data/publicSnapshot.json').sections.projects.projects.length, 16);
 });
 
 check('no secret, runtime service call or external write was introduced', () => {

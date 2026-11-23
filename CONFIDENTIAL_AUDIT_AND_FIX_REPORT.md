@@ -86,7 +86,7 @@ for phase 28; PR #4 remains open and untouched.
 | Tracking conflict (phase 16) | `findOneAndUpdate` wrote `pagesViewed` through both `$setOnInsert` and `$inc` (plus `pageJourney` and `scrollDepth`), producing the pasted MongoServerError | conflicting paths removed from `$setOnInsert`; `$inc`/`$push`/`$max` now own them, `$max` always runs, 8 static regression checks |
 | Project likes (phase 15) | the three public project cards showed the old low seed counts; the offline snapshot hardcoded `likes: 0` | owner-specified 500 / 600 / 100 carried from the seed into the snapshot; card markup, all other project records and all links unchanged, values labelled as display numbers rather than measured engagement |
 | HomeScape link → Projects (phase 14) | no entry for the property marketplace; the card button text was hardcoded for one project | `https://homescape-pro.netlify.app/` appended as a second record in the shared showcase JSON, data-driven button label and conditional notes, 13 new regression checks; NetGate/NEX Store/CellarKeep/OmniBiz links untouched |
-| E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
+| E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | the owner-supplied marketplace URL (phase 36 moved it to `https://bizsolutionz.netlify.app/`; the earlier host is retired) set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
 | Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
 | Live preview + lagging issues (phase 10) | browser-facing code called localhost and hung 15 s per request; 1 s fake loader; dead raw WS retrying every 5 s; uncached file scans | same-origin `/api` + proxy fixes, no artificial loader, hidden-tab timer guards, authenticated tracking namespace, 30 s inventory caches, preview-safe Vite host/proxy |
@@ -1032,7 +1032,7 @@ Request: *"keep dev info away from the publi [public] … like the database data
 
 ## 3m. Phase 13 — replace the E-Commerce project link with OmniBiz
 
-Request: *"[https://ominbiz-solution.netlify.app/](https://ominbiz-solution.netlify.app/), replace with project link for ecomerce"*.
+Request: *"[https://bizsolutionz.netlify.app/](https://bizsolutionz.netlify.app/), replace with project link for ecomerce"*.
 
 The destination was read once, read-only: it serves **"OmniBiz - Complete Business Management Platform"**. No workspace code, data or credential was sent to that site. The URL is stored exactly as supplied, including its trailing slash.
 
@@ -1227,7 +1227,7 @@ Zero-valued public data is omitted, never fabricated into a non-zero number: Lab
 ### Explicitly not changed
 
 - The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). The new `https://net-gate.netlify.app/` is a **separate, additional** link, not a replacement.
-- NEX Store, CellarKeep, `https://ominbiz-solution.netlify.app/` and `https://homescape-pro.netlify.app/` links; all seed/backup/testimonial/lab datasets; the eight saved project records and the two featured cards.
+- NEX Store, CellarKeep, `https://bizsolutionz.netlify.app/` and `https://homescape-pro.netlify.app/` links; all seed/backup/testimonial/lab datasets; the eight saved project records and the two featured cards.
 - No push, PR, merge, external issue, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing.
 
 ### Verification
@@ -1256,7 +1256,7 @@ Only `scripts/seed-projects.js` and the regenerated `src/data/publicSnapshot.jso
 
 ### Deliberately left alone
 
-- E-Commerce Platform → `https://ominbiz-solution.netlify.app/`, GB Chat → `https://gbchat.netlify.app/`, CinemaFlix → `https://cinemaflx.netlify.app/` (all still working).
+- E-Commerce Platform → `https://bizsolutionz.netlify.app/`, GB Chat → `https://gbchat.netlify.app/`, CinemaFlix → `https://cinemaflx.netlify.app/` (all still working).
 - CellarKeep → `https://liqourstor.netlify.app/client` and HomeScape → `https://homescape-pro.netlify.app/` (featured showcase cards).
 - The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). `https://net-gate.netlify.app/` is a different, owner-supplied deployment used as one project link, not a replacement.
 - All other seed/backups/testimonial/lab datasets, the eight saved project records, the two featured cards, and the §3q fixes (complete front-end catalogue, Lab copy cleanup, no zero values).
@@ -2544,6 +2544,83 @@ it. Nothing about that requirement was relaxed.
 
 Not verified: MongoDB writes, drag-and-drop in a real browser, the import path
 against a live API, and the visual result of the new heading sizes.
+
+---
+
+## 3ai. Phase 36 — E-Commerce link swap, two new published projects, larger headings, cleaner hero
+
+Owner request: *"https://bizsolutionz.netlify.app/ (replace the existing one
+with this), then add this project https://e-commerce-alfa.netlify.app/,
+https://saas-systeme.netlify.app/, increase the heading fonts, enhance the page
+with the three main buttons with cleaner layout/responsiveness."* The owner
+then confirmed the target record and the placement. Static checks only — **no
+MongoDB, Express runtime or browser was available here**.
+
+### Link swap
+
+The **E-Commerce Platform** record now uses `https://bizsolutionz.netlify.app/`
+in all three link fields, in every seed that defines it (`scripts/seed-projects.js`,
+`server/seed-data.js`, `server/scripts/seedProjects.js`,
+`server/scripts/seed-all-projects.js`, `server/seed-enterprise-projects.js`).
+The previous `ominbiz-solution` host is retired: it no longer appears in any
+seed, the saved snapshot, the owner catalogue or this report. The GitHub link
+and both enterprise demo links are untouched, as is the protected NetGate link.
+
+`src/data/projectLinks.json` already listed this host as the OmniBiz catalogue
+entry, so it now simply *is* the E-Commerce link — no duplicate was created.
+
+### The two new projects
+
+Both were added as **grid records** (the owner's choice), appended after the
+fourteen originals, and the offline snapshot was regenerated from the seed
+rather than hand-edited:
+
+| Record | URL | Notes |
+|---|---|---|
+| SokoMesh | `https://e-commerce-alfa.netlify.app/` | Nairobi-first local marketplace; copy taken from the live page |
+| Nexus SaaS Platform | `https://saas-systeme.netlify.app/` | Analytics · CRM · AI Copilot shell; copy taken from the live page |
+
+Both use the owner's floor of **600 views / 600 likes**. Neither claims a
+metric, rating, achievement or stack the live page does not show: the live
+SokoMesh page labels its own catalogue and ranked shelves as illustrative demo
+data, and the Nexus page exposes only its loading shell, so the record
+describes the interface as published. Technologies are limited to the visible
+build (React, JavaScript, Netlify); no database, payments or backend service is
+claimed.
+
+**A note on what "no invented data" can mean here.** The fourteen original
+records carry seeded view/like figures that were never measured either — they
+are owner-specified display values, documented as such in the seed file and in
+phase 19. The two new records follow the same documented convention at the same
+floor rather than re-using the higher historical numbers.
+
+### Headings
+
+The shared public heading scale was raised one step at every breakpoint —
+`2.5 / 3 / 3.5 / 4.25 / 4.75rem` against the previous
+`2.25 / 2.75 / 3.25 / 3.75 / 4rem`. All five steps now read a single
+`--sec-head-size` custom property, so the whole site can be re-tuned in one
+place. Wrapping (`text-wrap: balance`) and the reduced-motion block are intact.
+
+### Hero buttons
+
+The three actions keep their exact wording and destinations, but the row is no
+longer three equal blocks: `Create Your Portfolio` is now the single dominant
+card, with `Collaborate with Me` and `Build Your CV` paired underneath. Phones
+stack all three, tablets and up show the 1 + 2 arrangement, the primary card is
+taller with a larger title, and the reduced-motion block disables the hover
+lift.
+
+### Verification
+
+`node tests/projects-links-headings.test.mjs` — **15 checks**, wired into both
+manifests. Existing suites that pinned the old counts were updated to the new
+reality (14 → 16 grid records, 16 → 18 with the showcase cards) and their
+original intent was kept: the original eight and the six restored records keep
+their positions and links, and a new check asserts the two phase-36 records
+sit *after* them. The phase-35 heading test now asserts the larger scale.
+Not verified: MongoDB seeding, the rendered projects grid, and the hero at real
+device widths.
 
 ---
 

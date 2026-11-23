@@ -16,7 +16,7 @@ const json = rel => JSON.parse(read(rel));
 const HOMESCAPE = 'https://homescape-pro.netlify.app/';
 const CELLARKEEP = 'https://liqourstor.netlify.app/client';
 const NEX_STORE = 'https://nex-store-pro.netlify.app/';
-const OMNIBIZ = 'https://ominbiz-solution.netlify.app/';
+const OMNIBIZ = 'https://bizsolutionz.netlify.app/';
 const NETGATE = 'https://net-gate-portal.netlify.app/';
 
 let passed = 0;

@@ -30,14 +30,16 @@ const seed = () => read('scripts/seed-projects.js');
 const snapshotProjects = () => json('src/data/publicSnapshot.json').sections.projects.projects;
 const showcase = () => json('src/data/projectShowcase.json').projects;
 
-/* ------------------------------ the 16 projects ---------------------------- */
+/* ------------------------------ the 18 projects ---------------------------- */
 
-check('all fourteen original project records are back, plus two featured cards', () => {
+check('all sixteen grid records are published, plus two featured cards', () => {
+    // Phase 36 added SokoMesh and Nexus SaaS Platform on top of the fourteen
+    // original records; the two featured showcase cards are separate.
     const projects = snapshotProjects();
-    assert.equal(projects.length, 14);
+    assert.equal(projects.length, 16);
     for (const title of RESTORED) assert.ok(projects.some(p => p.title === title), `${title} is missing`);
     assert.equal(showcase().length, 2);
-    assert.equal(projects.length + showcase().length, 16, 'the page must show 16 projects in total');
+    assert.equal(projects.length + showcase().length, 18, 'the page must show 18 projects in total');
     assert.equal(new Set(projects.map(p => p.title)).size, projects.length);
 });
 
@@ -45,7 +47,7 @@ check('the restored records come from the local seed file, not invented data', (
     const src = seed();
     for (const title of RESTORED) assert.ok(src.includes(`title: "${title}"`));
     assert.match(src, /Recovered verbatim from the pre-phase-4 getFallbackProjects/);
-    assert.equal((src.match(/title: "/g) || []).length, 14);
+    assert.equal((src.match(/title: "/g) || []).length, 16);
 });
 
 check('every project has non-zero technologies, so filter buttons have real data', () => {
@@ -156,7 +158,7 @@ check('NetGate and every protected link file are unchanged', () => {
     assert.equal((read('src/data/publicSnapshot.json').match(/net-gate-portal\.netlify\.app\//g) || []).length, 3);
     assert.equal(showcase()[0].url, 'https://liqourstor.netlify.app/client');
     assert.equal(showcase()[1].url, 'https://homescape-pro.netlify.app/');
-    assert.ok(read('src/data/publicSnapshot.json').includes('https://ominbiz-solution.netlify.app/'));
+    assert.ok(read('src/data/publicSnapshot.json').includes('https://bizsolutionz.netlify.app/'));
 });
 
 check('no secret or external call was introduced', () => {
