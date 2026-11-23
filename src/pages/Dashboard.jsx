@@ -123,6 +123,10 @@ const ResourcesPage = lazy(() => import('../components/dashboard/ResourcesPage')
     console.error('Failed to load ResourcesPage:', err);
     return { default: () => <div>Error loading Resources</div> };
 }));
+const SystemMonitorPage = lazy(() => import('../components/dashboard/SystemMonitorPage').catch(err => {
+    console.error('Failed to load SystemMonitorPage:', err);
+    return { default: () => <div>Error loading System Monitor</div> };
+}));
 
 // Wrapper components to avoid primitive value error
 const LazyDashboardHome = () => {
@@ -368,6 +372,15 @@ const LazyResourcesPage = () => {
         </Suspense>
     );
 };
+const LazySystemMonitorPage = () => {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+        </div>}>
+            <SystemMonitorPage />
+        </Suspense>
+    );
+};
 
 const Dashboard = () => {
     return (
@@ -487,6 +500,16 @@ const DashboardContent = () => {
             badge: null,
             category: 'Security',
             description: 'Local file inventory and curated security references'
+        },
+        {
+            path: '/dashboard/system-monitor',
+            icon: 'fas fa-heart-pulse',
+            label: 'System Monitor',
+            component: LazySystemMonitorPage,
+            roles: ['owner'],
+            badge: null,
+            category: 'Security',
+            description: 'Live process, memory and database metrics with alerts and cache control'
         },
         {
             path: '/dashboard/user-workspaces',
