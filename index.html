@@ -41,13 +41,92 @@
     
     
     <title>E-Folio Pro - Advanced Portfolio Platform</title>
-    <script type="module" crossorigin src="/assets/js/index-CIhvtGdX.js"></script>
+
+    <style>
+      /* Boot splash only. Scoped to #efolio-boot so it cannot leak into the app. */
+      #efolio-boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f172a;
+        z-index: 9999;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        transition: opacity 220ms ease;
+      }
+      #efolio-boot.is-hidden { opacity: 0; pointer-events: none; }
+      #efolio-boot .efolio-boot__glow {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(420px 420px at 50% 38%, rgba(34, 211, 238, 0.16), transparent 70%),
+          radial-gradient(360px 360px at 62% 62%, rgba(124, 58, 237, 0.14), transparent 72%);
+      }
+      #efolio-boot .efolio-boot__inner { position: relative; text-align: center; padding: 0 24px; }
+      #efolio-boot .efolio-boot__mark {
+        width: 80px; height: 80px; margin: 0 auto 24px;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 1px;
+        background: linear-gradient(135deg, #7c3aed, #2563eb);
+        box-shadow: 0 18px 40px rgba(34, 211, 238, 0.28);
+        animation: efolioBootPulse 2.4s ease-in-out infinite;
+      }
+      #efolio-boot .efolio-boot__title { font-size: 24px; font-weight: 700; color: #fff; margin: 0 0 8px; }
+      #efolio-boot .efolio-boot__text { font-size: 14px; color: #94a3b8; margin: 0; }
+      #efolio-boot .efolio-boot__dots { display: flex; gap: 8px; justify-content: center; margin-top: 24px; }
+      #efolio-boot .efolio-boot__dots span {
+        width: 8px; height: 8px; border-radius: 50%; background: #22d3ee;
+        animation: efolioBootDot 1s ease-in-out infinite;
+      }
+      #efolio-boot .efolio-boot__dots span:nth-child(2) { animation-delay: 0.15s; }
+      #efolio-boot .efolio-boot__dots span:nth-child(3) { animation-delay: 0.3s; }
+      @keyframes efolioBootPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.06); }
+      }
+      @keyframes efolioBootDot {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.4); }
+      }
+      /* Respect a reduced-motion preference: no pulsing, no bouncing dots. */
+      @media (prefers-reduced-motion: reduce) {
+        #efolio-boot .efolio-boot__mark,
+        #efolio-boot .efolio-boot__dots span { animation: none; }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/js/index-CqaWBm7G.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-C4HdNN9j.js">
-    <link rel="modulepreload" crossorigin href="/assets/js/animation-Desx1sqp.js">
-    <link rel="stylesheet" crossorigin href="/assets/css/index-DfUZKwiw.css">
+    <link rel="modulepreload" crossorigin href="/assets/js/animation-C_ABU_nZ.js">
+    <link rel="stylesheet" crossorigin href="/assets/css/index-DyCqt2fq.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
+    <!-- Phase 40: static boot splash. It paints before the bundle arrives so the
+         first frame is branded instead of blank, and it is removed automatically
+         the moment React mounts <div id="root">. No fake progress bar: it only
+         animates a pulsing mark, which makes no claim about how much is done. -->
+    <div id="efolio-boot" role="status" aria-live="polite" aria-label="Loading E-Folio Pro">
+      <div class="efolio-boot__glow" aria-hidden="true"></div>
+      <div class="efolio-boot__inner">
+        <div class="efolio-boot__mark">EF</div>
+        <h1 class="efolio-boot__title">E-Folio Pro</h1>
+        <p class="efolio-boot__text">Preparing the workspace</p>
+        <div class="efolio-boot__dots" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
     <div id="root"></div>
+    <script>
+      // Fail-safe: if the bundle never starts, say so rather than spinning forever.
+      window.setTimeout(function () {
+        var boot = document.getElementById('efolio-boot');
+        if (!boot) return;
+        var text = boot.querySelector('.efolio-boot__text');
+        if (text) text.textContent = 'Still loading — this can take a moment on a slow connection';
+      }, 9000);
+    </script>
   </body>
 </html>
 
