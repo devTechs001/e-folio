@@ -8,6 +8,12 @@ router.use(isAuthorized);
 
 router.get('/', cvController.getCV);
 router.post('/', cvController.saveCV);
+// Phase 33 — lifecycle routes. Registered before the /versions family so a
+// literal path is never read as a version id.
+router.post('/publish', cvController.publishCV);
+router.post('/unpublish', cvController.unpublishCV);
+router.post('/review', cvController.reviewCV);
+router.post('/import', cvController.importCV);
 router.post('/versions', cvController.createVersion);
 router.get('/versions', cvController.getVersions);
 router.post('/versions/:versionId/restore', cvController.restoreVersion);

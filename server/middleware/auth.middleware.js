@@ -91,6 +91,33 @@ exports.auth = async (req, res, next) => {
     }
 };
 
+/**
+ * Phase 33 — attach the viewer when a bearer token is present, but never
+ * reject the request. Used by public content routes that behave differently
+ * for the record holder (for example, previewing your own unpublished CV).
+ * No token, or an invalid/expired one, means an ordinary anonymous visitor.
+ * Read-only: this middleware never writes to the user record.
+ */
+exports.optionalAuth = async (req, res, next) => {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer')) return next();
+    const token = header.split(' ')[1];
+    if (!token) return next();
+    try {
+        const decoded = security.verifyToken(token);
+        let user = null;
+        if (decoded.id && ObjectId.isValid(decoded.id)) {
+            user = await User.findById(decoded.id).select('-password');
+        } else if (decoded.email) {
+            user = await User.findOne({ email: decoded.email.toLowerCase() }).select('-password');
+        }
+        if (user && user.isActive !== false) req.user = user;
+    } catch (error) {
+        // A public route stays public: an invalid token is simply anonymous.
+    }
+    next();
+};
+
 // Check if user is owner
 exports.isOwner = (req, res, next) => {
     if (req.user?.role !== 'owner') {

@@ -98,6 +98,14 @@ const testimonialSchema = new mongoose.Schema({
         enum: ['manual', 'form', 'import', 'api'],
         default: 'manual'
     },
+    // Phase 33 — a testimonial mirrored from an approved visitor review keeps
+    // the link, so moderation changes update or remove it instead of leaving
+    // a stale copy on the public page.
+    sourceReviewId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Review',
+        default: undefined
+    },
     // Analytics
     views: {
         type: Number,
@@ -116,6 +124,9 @@ const testimonialSchema = new mongoose.Schema({
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
+
+// One mirrored testimonial per approved review.
+testimonialSchema.index({ sourceReviewId: 1 }, { unique: true, sparse: true });
 
 // Indexes for better query performance
 testimonialSchema.index({ featured: 1, visible: 1, date: -1 });

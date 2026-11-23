@@ -2328,6 +2328,136 @@ Static checks only — no live MongoDB, Express, Render or browser run.
 
 ---
 
+## 3ag. Phase 34 — CV system expansion, animated 3D welcome tag, and one testimonials/reviews feed
+
+Scope from the owner: *"review the create cv system (expand, connect as
+needed), the welcome to my portfolio tag (make it animated 3D), improve the
+testimonials page layout to match the rest of the system, add good features to
+existing ones, route it with the reviews system for auto updates from reviews,
+keeping the existing ones."* Everything below is static/offline work plus a
+local Vite render check; **no live Express/MongoDB/Render run was possible in
+this sandbox**, so nothing here claims runtime behaviour.
+
+### 1. Create‑CV system — what was missing and what was added
+
+The CV editor could already edit personal info, experience, education, skills,
+projects and achievements. The gaps were structural, not cosmetic:
+
+| Gap | Fix |
+| --- | --- |
+| `projects.highlights`, `projects.technologies` and `education.details` were edited but **silently dropped** by `/api/cv` | `saveCV` now writes every section through one sanitiser (`normaliseSection`) built from the same field list the UI uses |
+| The editor's template picker and colour/font settings existed but the **preview and export ignored them** | one renderer (`src/components/CVPreview.jsx`) applies `settings.template` (modern / classic / minimal / creative / professional), primary colour and font family |
+| No certifications, languages or free links | three new sections across model → route → editor → preview → export → public page |
+| Public `/cv/:username` showed an **unstyled ad‑hoc layout** that differed from the editor preview | the public page now renders the same `CVPreview` component, so what is written is what visitors see |
+| A half‑written CV was readable by anyone who guessed the username | `isPublished` + `publishedSnapshot`; the public route returns 404 for an unpublished CV, while the holder can still preview their own |
+| No way to tell whether the CV is complete | a **Review** tab derived only from the saved document (`reviewCv`/`summarizeCv`) + `POST /api/cv/review` timestamp |
+| No import path; JSON export could not be restored | `POST /api/cv/import` + an Import button accepting only this editor's own export shape |
+| Work could be lost when the browser closed | explicit **local draft** (`src/utils/cvDraft.js`, per‑account, 7‑day expiry) that is *offered*, never applied silently, and labelled "not yet saved to your CV" |
+| No publishing control in the editor | publish / unpublish buttons with an honest Private/Published state in the header |
+| Version history did not include the new sections | `snapshotOf()` is used by both "save version" and publish |
+
+New/changed files: `src/utils/cvSchema.js`, `src/utils/cvDraft.js`,
+`src/components/CVPreview.jsx`, `src/styles/CVPreview.css`,
+`src/styles/UserCVPage.css`, `src/pages/UserCVPage.jsx`,
+`src/components/dashboard/CVEditorStyled.jsx`,
+`server/models/CurriculumVitae.js`, `server/controllers/cv.controller.js`,
+`server/routes/cv.routes.js`, `server/routes/public.routes.js`,
+`server/middleware/auth.middleware.js` (`optionalAuth`),
+`src/services/api.service.js` (`publishCV`, `unpublishCV`, `reviewCV`,
+`importCV`, `getOwnPublicCV`).
+
+Safety: every field is length‑capped and typed server‑side; `optionalAuth`
+only *attaches* a viewer and never rejects, so the public CV route stays
+public; publishing stores a copy, so later drafts do not leak.
+
+### 2. "Welcome to my portfolio" — animated 3D
+
+`src/components/WelcomeTag3D.jsx` + `src/styles/WelcomeTag3D.css` replace the
+old flat badge with a CSS‑3D wordmark:
+
+* each letter turns on its own Y axis with a staggered delay (a depth wave, not
+  a fade), with back/side faces giving the glyphs thickness;
+* the wave starts only when the tag is **in view** (`IntersectionObserver`), so
+  it costs nothing above the fold on phones;
+* it is pure CSS transforms — **no WebGL, no new dependency**;
+* `prefers-reduced-motion` renders it flat and static (never invisible), and a
+  keyboard focus ring is provided;
+* the exact wording is unchanged and now comes from
+  `ABOUT_WELCOME_3D` in the shared `aboutPageData` module.
+
+The section now has one `h1` (the wordmark) and the owner's name is an `h2`.
+The availability pill keeps its wording but no longer overflows its container
+(the old rule rendered it at `clamp(1.8rem, 4vw, 2.8rem)` inside a small
+rounded pill).
+
+### 3. Testimonials page — layout brought in line with the rest of the system
+
+The page had accumulated four overlapping toolbars, a confetti effect, an
+unreachable export control, and its own visual language. It now uses the same
+composition as the Skills/Projects sections: hero → stats → toolbar → grid.
+
+* `src/styles/TestimonialsPage.css` (new, scoped `.tst-*`) mirrors the
+  `.sk-*` tokens (hero panel, eyebrow, gradient title, segmented controls,
+  card grid with `repeat(auto-fill, minmax(300px, 1fr))`, empty state,
+  pagination, modal, `prefers-reduced-motion`, `focus-visible`).
+* Dead UI removed: confetti, JSON "export" of the visible list, the duplicate
+  statistics chart, and the manual share fallback that used `alert()`.
+* Added: source filters (All / Testimonials / Reviews), rating + featured
+  filters, newest/oldest/rating/name sorting, three view modes that all work,
+  likes on visitor reviews, "Write a review" opening the existing
+  `ReviewForm`, an honest per‑source connection line, and a real empty state.
+* Preserved: the owner‑only sample preview, the `SAMPLE · PREVIEW` badges in
+  every view, the versioned cache key, the saved‑copy fallback, the local
+  thumbnail override, and the unchanged `Testimonials.css` primitives the
+  regression tests depend on.
+
+### 4. Routing testimonials through the reviews system (auto updates)
+
+Two connections, both real:
+
+1. **Client — one mixed feed.** `src/utils/testimonialFeed.js` reads the
+   curated testimonials (`/testimonials/public/testimonials`) and the
+   *approved* reviews (`/reviews/public`) and normalises them, keeping a
+   `kind` on every item so the UI can label the source. Pending reviews are
+   never requested. The page then refreshes itself from the existing channels:
+   `socketService.subscribePublicReviews`, the cross‑tab
+   `subscribeReviewsChanged` signal, a 30 s poll, `visibilitychange`, and
+   `online` (which also flushes the review outbox). No new socket namespace
+   was added.
+2. **Server — approved reviews are mirrored.** `syncTestimonialForReview()` in
+   `reviews.controller.js` creates/updates a `Testimonial` document for an
+   approved review (`sourceReviewId` is a sparse unique index) and deletes it
+   when the review is rejected, hidden or removed — in both the single and
+   bulk moderation paths. That means the curated testimonials collection stays
+   the one public source, while a review approval appears there without a
+   second manual copy. The public testimonial projection was also narrowed
+   from `email website linkedin` to content fields only.
+
+Honest limits: moderation writes to two collections sequentially (no
+transaction in this sandbox), so a crash between them can leave a mirror to be
+cleaned by the next moderation action; nothing was run against a real
+MongoDB.
+
+### Verification (static only)
+
+`npm test` — **360** Node‑only checks, exit 0, including the new
+`tests/cv-system-testimonials.test.mjs` (21 checks) and every previously
+protected suite (projects catalogue at 14 records / ≥600 counters,
+testimonial samples, reviews, auth pages, drawer, render env).
+`npm run check` exit 0: lint **0 errors** (688 warnings, all pre‑existing
+`no-unused-vars` style), endpoint parity `--strict` **0 live code gaps**
+(146 orphaned/legacy files unchanged), static security audit `--strict`
+**HIGH 0 / MEDIUM 0 / LOW 0**, production build + PWA precache (227 entries)
+regenerated. `CVPreview` and `WelcomeTag3D` were additionally rendered with
+`react-dom/server` against a real CV document: both render, every new section
+appears, and no sample name leaks. A local Vite dev server served `/`,
+`/reviews` and `/cv/:username` and transformed every touched module with no
+errors. No browser automation, MongoDB, Express runtime or Render deployment
+was available, so the CV page, the 3D wordmark and the mixed feed are
+verified statically only — this is not a claim of live behaviour.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2510,6 +2640,24 @@ Static checks only — no live MongoDB, Express, Render or browser run.
     top-nav menu button still toggles its drawer. Also decide the outstanding
     phase 29 header title/icon list. No live Render, backend or browser was
     available in this sandbox.
+37. Phase 34 follow-up: with a live Express/MongoDB backend, publish a CV,
+    edit the draft and confirm the public `/cv/:username` page still serves the
+    published snapshot (and 404s for a private CV while the holder still sees
+    it). Exercise publish → unpublish → re-publish, import a JSON export,
+    restore a version saved before the new sections existed, and confirm the
+    certifications/languages/links sections round-trip. Visually confirm the 3D
+    wordmark on a real device (including `prefers-reduced-motion`) and the
+    rebuilt testimonials page in all three view modes. Approve a visitor
+    review and confirm the mirrored testimonial appears once (not twice) on the
+    public page, then reject it and confirm the mirror is removed. No database,
+    socket runtime or browser automation was available here.
+38. Phase 34 follow-up: decide whether the review→testimonial mirror should run
+    inside a MongoDB transaction or be replaced by a single collection with a
+    `type` discriminator; the current two-collection write is sequential and a
+    mid-flight failure leaves a mirror for the next moderation action to clean.
+39. Phase 34 follow-up: `publishedSnapshot` stores a full copy of the CV, so a
+    large document is duplicated per publish. If CVs grow, switch to a
+    version-pointer (publish a version id) instead of a copy.
 
 ---
 

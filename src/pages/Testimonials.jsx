@@ -1,13 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import apiService from '../services/api.service';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
+import socketService from '../services/socket.service';
 import { useAuth } from '../contexts/AuthContext';
 import sampleDataset from '../data/testimonialSamples.json';
 import thumbnailOverrides from '../data/testimonialThumbnails.json';
 import ArchiveNote from '../components/ArchiveNote';
+import ReviewForm from '../components/ReviewForm';
 import { loadPublicSection, getSnapshotSection, isLiveContent, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { subscribeReviewsChanged, flushReviewOutbox } from '../utils/reviewOutbox';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
+import {
+  FEED_KIND, fromTestimonial, combineFeed, loadApprovedReviews, sortFeed, filterFeed
+} from '../utils/testimonialFeed';
 import '../styles/Testimonials.css';
+import '../styles/TestimonialsPage.css';
 
 const SAMPLE_TAG = sampleDataset.tag;
 // A local thumbnail takes precedence when one exists for this testimonial;
@@ -19,6 +26,7 @@ const PREVIEW_KEY = 'testimonial_preview';
 // invented testimonial records.
 const CACHE_KEY = 'public_testimonials_v2';
 const LEGACY_CACHE_KEY = 'public_testimonials';
+const PAGE_SIZE = 9;
 
 const isSampleTestimonial = (item) =>
   Array.isArray(item?.tags) && item.tags.includes(SAMPLE_TAG);
@@ -34,103 +42,263 @@ const readPreviewFlag = () => {
   }
 };
 
+const formatDate = value => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+};
+
+const Stars = ({ rating, size = 'sm' }) => (
+  <span className={`tst-stars tst-stars--${size}`} aria-label={`${rating} out of 5`}>
+    {[1, 2, 3, 4, 5].map(star => (
+      <i key={star} className={`fas fa-star ${star <= rating ? 'star-filled' : 'star-empty'}`} aria-hidden="true" />
+    ))}
+  </span>
+);
+
+const SourceChip = ({ kind }) => (
+  <span className={`tst-source tst-source--${kind}`}>
+    <i className={kind === FEED_KIND.review ? 'fas fa-comment-dots' : 'fas fa-quote-left'} aria-hidden="true" />
+    {kind === FEED_KIND.review ? 'Visitor review' : 'Client testimonial'}
+  </span>
+);
+
 const Testimonials = () => {
-  const [testimonials, setTestimonials] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [contentSource, setContentSource] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [feedStatus, setFeedStatus] = useState({ testimonials: false, reviews: false });
+  const [query, setQuery] = useState('');
+  const [kindFilter, setKindFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [showStats, setShowStats] = useState(true);
-  const [viewMode, setViewMode] = useState('grid'); // grid, list, carousel
-  const [selectedTestimonial, setSelectedTestimonial] = useState(null);
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('recent');
+  const [viewMode, setViewMode] = useState('grid');
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [animateCards, setAnimateCards] = useState(false);
-  const carouselRef = useRef(null);
-  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
-  const { isOwner: checkOwner } = useAuth();
-  const owner = typeof checkOwner === 'function' ? checkOwner() : false;
+  const [showForm, setShowForm] = useState(false);
+  const [likedIds, setLikedIds] = useState([]);
+  const [syncing, setSyncing] = useState(false);
   const [previewMode, setPreviewMode] = useState(readPreviewFlag);
   const [sampleCount, setSampleCount] = useState(0);
+  const carouselRef = useRef(null);
+  const slideTimer = useRef(null);
+  const { isOwner: checkOwner } = useAuth();
+  const owner = typeof checkOwner === 'function' ? checkOwner() : false;
 
-  const loadTestimonials = useCallback(async () => {
+  const loadFeed = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
+    else setSyncing(true);
     try {
-      // Never use a cached list while previewing samples.
+      // 1. Curated testimonials: live first, bundled saved copy as fallback
+      //    (unchanged behaviour, still never cached as live data).
+      // Never read a cached list while previewing samples.
       const cached = previewMode ? null : cacheService.get(CACHE_KEY);
-      let real = [];
-      let source = 'live';
+      const curatedResponse = Array.isArray(cached) && cached.length
+        ? { testimonials: cached, source: 'live' }
+        : await loadPublicSection('testimonials');
+      const curated = Array.isArray(curatedResponse.testimonials) ? curatedResponse.testimonials : [];
+      const source = curatedResponse.source || '';
 
-      if (Array.isArray(cached) && cached.length) {
-        real = cached;
-      } else {
-        // Live API first; the saved copy keeps the section complete and
-        // consistent. Technical failures are for developers only.
-        const response = await loadPublicSection('testimonials');
-        real = Array.isArray(response.testimonials) ? response.testimonials : [];
-        source = response.source || '';
-        if (isLiveContent(response) && !previewMode) {
-          cacheService.set(CACHE_KEY, real, CACHE_TTL.TEN_MINUTES);
-        }
+      if (!previewMode && isLiveContent(curatedResponse) && curated.length) {
+        cacheService.set(CACHE_KEY, curated, CACHE_TTL.TEN_MINUTES);
       }
-      setContentSource(source);
 
-      let display = real;
+      // 2. Approved visitor reviews from the reviews system.
+      const reviewFeed = await loadApprovedReviews({ limit: 50 });
+
+      let display = combineFeed(curated, reviewFeed.items);
+
+      // 3. Owner preview appends the labelled mock samples (unchanged).
       if (previewMode && owner) {
         const admin = await apiService.getAllTestimonials({ limit: 100 });
         const all = admin?.success && Array.isArray(admin.testimonials) ? admin.testimonials : [];
         const samples = all.filter(isSampleTestimonial);
         setSampleCount(samples.length);
-        const seen = new Set(real.map(item => item._id || item.id || item.name));
-        display = [...real, ...samples.filter(item => !seen.has(item._id || item.id || item.name))];
+        const seen = new Set(display.map(item => item.id));
+        display = [
+          ...display,
+          ...samples
+            .filter(sample => !seen.has(String(sample._id || sample.id || sample.name)))
+            .map(fromTestimonial)
+        ];
       } else {
         setSampleCount(0);
       }
-      setTestimonials(display);
+
+      // A public page with no live records keeps its saved copy, so the
+      // section is never blank for a first-time visitor.
+      if (!display.length) {
+        const snapshot = getSnapshotSection('testimonials');
+        display = (snapshot.testimonials || []).map(fromTestimonial);
+        setContentSource('snapshot');
+      } else {
+        setContentSource(source);
+      }
+
+      setItems(display);
+      setFeedStatus(reviewFeed.status
+        ? { testimonials: source !== 'snapshot', reviews: true }
+        : { testimonials: source !== 'snapshot', reviews: false });
     } catch (error) {
       recordDevIssue({ section: 'testimonials', endpoint: PUBLIC_ENDPOINTS.testimonials, error });
-      setTestimonials(getSnapshotSection('testimonials').testimonials || []);
+      setItems((getSnapshotSection('testimonials').testimonials || []).map(fromTestimonial));
       setContentSource('snapshot');
+      setFeedStatus({ testimonials: false, reviews: false });
     } finally {
       setLoading(false);
+      setSyncing(false);
     }
   }, [previewMode, owner]);
 
   useEffect(() => {
-    loadTestimonials();
-    setAnimateCards(true);
-  }, [loadTestimonials]);
-
-  useEffect(() => {
-    if (viewMode === 'carousel') {
-      const interval = setInterval(() => {
-        if (typeof document !== 'undefined' && document.hidden) return;
-        nextSlide();
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [viewMode, activeCarouselIndex, testimonials.length]);
-
-  // Listen for settings changes from dashboard
-  useEffect(() => {
-    const handleSettingsChange = (e) => {
-      console.log('[Testimonials] Settings changed, refreshing data...');
-      cacheService.delete(CACHE_KEY);
-      loadTestimonials();
-    };
-    window.addEventListener('settingsChanged', handleSettingsChange);
-    return () => window.removeEventListener('settingsChanged', handleSettingsChange);
-  }, [loadTestimonials]);
+    loadFeed();
+  }, [loadFeed]);
 
   // Drop the pre-version cache once so fabricated fallback records cannot
   // survive in a returning visitor's browser.
   useEffect(() => {
     cacheService.delete(LEGACY_CACHE_KEY);
   }, []);
+
+  // Settings edits in the dashboard should refresh the section immediately.
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      cacheService.delete(CACHE_KEY);
+      loadFeed({ quiet: true });
+    };
+    window.addEventListener('settingsChanged', handleSettingsChange);
+    return () => window.removeEventListener('settingsChanged', handleSettingsChange);
+  }, [loadFeed]);
+
+  // Automatic updates: the reviews system broadcasts a change, a cross-tab
+  // signal or a poll keeps this page current without a manual refresh. Only
+  // approved reviews ever appear, so queued submissions stay private.
+  useEffect(() => {
+    const refresh = () => {
+      if (typeof document === 'undefined' || !document.hidden) loadFeed({ quiet: true });
+    };
+    const unsubscribeSocket = socketService.subscribePublicReviews(refresh);
+    const unsubscribeCrossTab = subscribeReviewsChanged(refresh);
+    const interval = setInterval(refresh, 30000);
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    const onOnline = () => { void flushReviewOutbox(); refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', onOnline);
+    return () => {
+      unsubscribeSocket();
+      unsubscribeCrossTab();
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [loadFeed]);
+
+  // Remember which visitor reviews this browser has already liked.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('likedReviews') || '[]');
+      if (Array.isArray(saved)) setLikedIds(saved.map(String));
+    } catch (error) {
+      setLikedIds([]);
+    }
+  }, []);
+
+  const visible = useMemo(() => {
+    const filtered = filterFeed(items, {
+      query,
+      kind: kindFilter,
+      rating: ratingFilter,
+      featuredOnly
+    });
+    if (sortBy === 'rating') return [...filtered].sort((a, b) => b.rating - a.rating || b.sortTime - a.sortTime);
+    if (sortBy === 'oldest') return [...filtered].sort((a, b) => a.sortTime - b.sortTime);
+    if (sortBy === 'name') return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    return sortFeed(filtered);
+  }, [items, query, kindFilter, ratingFilter, featuredOnly, sortBy]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, kindFilter, ratingFilter, featuredOnly, sortBy]);
+
+  // Grid/list paginate by PAGE_SIZE; the carousel steps one item at a time, so
+  // the two counts must not share a single value.
+  const gridPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const carouselPages = Math.max(1, visible.length);
+  const totalPages = viewMode === 'carousel' ? carouselPages : gridPages;
+  const activeSlide = Math.min(page, carouselPages) - 1;
+  const paged = viewMode === 'carousel' ? visible : visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const autoAdvance = useCallback(() => {
+    setPage(current => (current >= carouselPages ? 1 : current + 1));
+  }, [carouselPages]);
+
+  useEffect(() => {
+    if (viewMode !== 'carousel' || visible.length < 2) return undefined;
+    slideTimer.current = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      autoAdvance();
+    }, 6000);
+    return () => {
+      if (slideTimer.current) clearInterval(slideTimer.current);
+    };
+  }, [viewMode, visible.length, autoAdvance]);
+
+  const stats = useMemo(() => {
+    const total = items.length;
+    const ratings = items.map(item => item.rating).filter(value => Number.isFinite(value));
+    const average = ratings.length ? ratings.reduce((sum, value) => sum + value, 0) / ratings.length : 0;
+    const reviewCount = items.filter(item => item.kind === FEED_KIND.review).length;
+    const testimonialCount = total - reviewCount;
+    const featured = items.filter(item => item.featured).length;
+    const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = items.filter(item => item.sortTime >= monthAgo).length;
+    return { total, average, reviewCount, testimonialCount, featured, recent };
+  }, [items]);
+
+  const toggleLike = async item => {
+    if (item.kind !== FEED_KIND.review) return;
+    const already = likedIds.includes(item.id);
+    try {
+      const response = already ? await apiService.unlikeReview(item.id) : await apiService.likeReview(item.id);
+      if (response?.success === false) return;
+      const next = already ? likedIds.filter(id => id !== item.id) : [...likedIds, item.id];
+      setLikedIds(next);
+      localStorage.setItem('likedReviews', JSON.stringify(next));
+      setItems(current => current.map(entry =>
+        entry.id === item.id
+          ? { ...entry, likes: Math.max(0, (entry.likes || 0) + (already ? -1 : 1)) }
+          : entry
+      ));
+    } catch (error) {
+      recordDevIssue({ section: 'testimonials', endpoint: `/reviews/${item.id}/like`, error });
+    }
+  };
+
+  const openModal = item => {
+    setSelected(item);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setTimeout(() => setSelected(null), 200);
+  };
+
+  const shareItem = async item => {
+    const payload = { title: `Recommendation from ${item.name}`, text: item.content, url: window.location.href };
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+        return;
+      }
+      await navigator.clipboard.writeText(`${item.content} — ${item.name}`);
+    } catch (error) {
+      // Closed share sheet or unavailable clipboard: nothing to report.
+    }
+  };
 
   const togglePreview = () => {
     const next = !previewMode;
@@ -148,192 +316,38 @@ const Testimonials = () => {
     cacheService.delete(CACHE_KEY);
   };
 
-  const filteredAndSortedTestimonials = testimonials
-    .filter(testimonial => {
-      const matchesSearch = testimonial.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        testimonial.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        testimonial.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        testimonial.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        testimonial.project?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesFilter = filter === 'all' ||
-        (filter === 'featured' && testimonial.featured) ||
-        (filter === 'verified' && testimonial.verified);
-
-      const matchesRating = ratingFilter === 0 || testimonial.rating === ratingFilter;
-
-      return matchesSearch && matchesFilter && matchesRating;
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'rating':
-          comparison = b.rating - a.rating;
-          break;
-        case 'date':
-          comparison = new Date(b.date) - new Date(a.date);
-          break;
-        case 'company':
-          comparison = (a.company || '').localeCompare(b.company || '');
-          break;
-        default:
-          comparison = 0;
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTestimonials = filteredAndSortedTestimonials.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredAndSortedTestimonials.length / itemsPerPage);
-
-  // Calculate statistics
-  const stats = {
-    total: testimonials.length,
-    featured: testimonials.filter(t => t.featured).length,
-    verified: testimonials.filter(t => t.verified).length,
-    averageRating: testimonials.length > 0
-      ? (testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length).toFixed(1)
-      : 0,
-    ratingDistribution: [5, 4, 3, 2, 1].map(rating => ({
-      rating,
-      count: testimonials.filter(t => t.rating === rating).length,
-      percentage: testimonials.length > 0
-        ? (testimonials.filter(t => t.rating === rating).length / testimonials.length * 100).toFixed(0)
-        : 0
-    })),
-    recentCount: testimonials.filter(t => {
-      const daysDiff = (new Date() - new Date(t.date)) / (1000 * 60 * 60 * 24);
-      return daysDiff <= 30;
-    }).length
+  const resetFilters = () => {
+    setQuery('');
+    setKindFilter('all');
+    setRatingFilter(0);
+    setFeaturedOnly(false);
+    setSortBy('recent');
   };
 
-  const renderStars = (rating, interactive = false) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <i
-        key={i}
-        className={`fas fa-star ${i < rating ? 'star-filled' : 'star-empty'} ${interactive ? 'star-interactive' : ''}`}
-        onClick={() => interactive && setRatingFilter(i + 1)}
-      ></i>
-    ));
-  };
-
-  const openModal = (testimonial) => {
-    setSelectedTestimonial(testimonial);
-    setShowModal(true);
-    if (testimonial.rating === 5) {
-      triggerConfetti();
-    }
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setTimeout(() => setSelectedTestimonial(null), 300);
-  };
-
-  const triggerConfetti = () => {
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 3000);
-  };
-
-  const nextSlide = () => {
-    setActiveCarouselIndex((prev) => 
-      prev === filteredAndSortedTestimonials.length - 1 ? 0 : prev + 1
-    );
-  };
-
-  const prevSlide = () => {
-    setActiveCarouselIndex((prev) => 
-      prev === 0 ? filteredAndSortedTestimonials.length - 1 : prev - 1
-    );
-  };
-
-  const exportTestimonials = () => {
-    const dataStr = JSON.stringify(filteredAndSortedTestimonials, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = `testimonials_${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const shareTestimonial = async (testimonial) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Testimonial from ${testimonial.name}`,
-          text: testimonial.content,
-          url: window.location.href
-        });
-      } catch (err) {
-        console.log('Error sharing:', err);
-      }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(
-        `"${testimonial.content}" - ${testimonial.name}, ${testimonial.position} @ ${testimonial.company}`
-      );
-      alert('Testimonial copied to clipboard!');
-    }
-  };
+  const filterCount = (query ? 1 : 0) + (kindFilter !== 'all' ? 1 : 0) + (ratingFilter ? 1 : 0) + (featuredOnly ? 1 : 0);
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-bgColor flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="testimonial-loader-advanced">
-            <div className="loader-ring"></div>
-            <div className="loader-ring"></div>
-            <div className="loader-ring"></div>
-            <div className="loader-pulse"></div>
-          </div>
-          <p className="text-textColor/60 text-lg">Loading testimonials...</p>
-          <div className="flex gap-2">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 0.2}s` }}></div>
-            ))}
-          </div>
+      <section className="tst-shell tst-shell--loading" aria-busy="true">
+        <div className="tst-loading">
+          <span className="tst-loading-ring" />
+          <p>Gathering what people have said…</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section id="testimonials" className="py-16 bg-bgColor relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="background-orbs">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
-      </div>
+    <section id="testimonials" className="tst-shell">
+      <div className="tst-orb tst-orb--1" aria-hidden="true" />
+      <div className="tst-orb tst-orb--2" aria-hidden="true" />
 
-      {/* Confetti Effect */}
-      {showConfetti && (
-        <div className="confetti-container">
-          {[...Array(50)].map((_, i) => (
-            <div key={i} className="confetti" style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#fbbf24'][Math.floor(Math.random() * 4)]
-            }}></div>
-          ))}
-        </div>
-      )}
-
-      <div className="container mx-auto px-4">
+      <div className="tst-container">
         {previewMode && owner && (
           <div className="testimonial-preview-banner" role="status">
             <span className="testimonial-preview-badge">PREVIEW MODE</span>
             <span>
-              {owner
-                ? `Sample testimonials are mock data (${sampleCount} shown). They are not published to normal visitors.`
-                : 'Preview mode is on. Sign in as owner to see the labelled sample data.'}
+              Sample testimonials are mock data ({sampleCount} shown). They are not published to normal visitors.
             </span>
             <button type="button" onClick={togglePreview} className="testimonial-preview-exit">
               Exit preview
@@ -342,722 +356,474 @@ const Testimonials = () => {
         )}
         {owner && !previewMode && (
           <button type="button" onClick={togglePreview} className="testimonial-preview-open">
-            <i className="fas fa-eye"></i> Preview sample testimonials
+            <i className="fas fa-eye" aria-hidden="true"></i> Preview sample testimonials
           </button>
         )}
-        {/* Header */}
-        <div className="text-center mb-16" data-aos="fade-up">
-          <div className="inline-flex items-center gap-3 px-6 py-3 mb-8 glass-badge">
-            <span className="w-3 h-3 bg-mainColor rounded-full animate-pulse"></span>
-            <span className="text-mainColor text-base font-bold tracking-widest uppercase">
-              Client Testimonials 2025
+
+        {/* ------------------------------------------------------- hero --- */}
+        <header className="tst-hero">
+          <div className="tst-hero-copy">
+            <span className="tst-eyebrow">
+              <i className="fas fa-comments" aria-hidden="true" />
+              Voices from the work
             </span>
-            <span className="w-3 h-3 bg-purple-600 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></span>
+            <h2 className="tst-title">Testimonials &amp; reviews</h2>
+            <p className="tst-lede">
+              Recommendations from clients sit next to reviews visitors left on this site.
+              Both are the same system — a review only appears here once it has been approved.
+            </p>
+            <ArchiveNote source={contentSource} className="tst-archive" />
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-            <span className="relative block animated-gradient-text">
-              <span className="bg-gradient-to-r from-mainColor via-purple-600 to-pink-600 bg-clip-text text-transparent drop-shadow-2xl">
-                What Clients
+          <div className="tst-hero-side">
+            <div className="tst-score">
+              <span className="tst-score-value">{stats.average ? stats.average.toFixed(1) : '—'}</span>
+              <span className="tst-score-max">/ 5</span>
+              <Stars rating={Math.round(stats.average)} />
+              <span className="tst-score-label">
+                {stats.total} {stats.total === 1 ? 'voice' : 'voices'} on this page
               </span>
-              <div className="gradient-underline gradient-underline-1"></div>
-            </span>
-            <span className="relative block mt-4 animated-gradient-text" style={{ animationDelay: '0.2s' }}>
-              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-mainColor bg-clip-text text-transparent drop-shadow-2xl">
-                Are Saying
-              </span>
-              <div className="gradient-underline gradient-underline-2"></div>
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-textColor/60 max-w-4xl mx-auto leading-relaxed font-light">
-            Real feedback from <span className="text-mainColor font-semibold">{stats.total}+ amazing clients</span> I've had the pleasure to work with
-          </p>
-          <ArchiveNote source={contentSource} className="mt-3" />
-
-          {/* Decorative Quote Marks */}
-          <div className="relative mt-8">
-            <div className="flex justify-center gap-20 relative z-10">
-              <div className="quote-mark quote-left">
-                <i className="fas fa-quote-left"></i>
-              </div>
-              <div className="quote-mark quote-right">
-                <i className="fas fa-quote-right"></i>
-              </div>
             </div>
+            <div className="tst-hero-actions">
+              <button type="button" className="tst-btn tst-btn--primary" onClick={() => setShowForm(true)}>
+                <i className="fas fa-pen" aria-hidden="true" /> Write a review
+              </button>
+              <a className="tst-btn" href="/reviews">
+                <i className="fas fa-star" aria-hidden="true" /> Reviews page
+              </a>
+            </div>
+            <div className="tst-sync" role="status" aria-live="polite">
+              <span className={`tst-sync-dot ${syncing ? 'is-syncing' : ''}`} aria-hidden="true" />
+              {syncing ? 'Checking for new reviews…' : 'Updates automatically when a review is approved'}
+            </div>
+          </div>
+        </header>
+
+        {/* ------------------------------------------------------- stats --- */}
+        <div className="tst-stats">
+          <div className="tst-stat">
+            <span className="tst-stat-value">{stats.total}</span>
+            <span className="tst-stat-label">Total</span>
+          </div>
+          <div className="tst-stat">
+            <span className="tst-stat-value">{stats.testimonialCount}</span>
+            <span className="tst-stat-label">Testimonials</span>
+          </div>
+          <div className="tst-stat">
+            <span className="tst-stat-value">{stats.reviewCount}</span>
+            <span className="tst-stat-label">Visitor reviews</span>
+          </div>
+          <div className="tst-stat">
+            <span className="tst-stat-value">{stats.featured}</span>
+            <span className="tst-stat-label">Featured</span>
+          </div>
+          <div className="tst-stat">
+            <span className="tst-stat-value">{stats.recent}</span>
+            <span className="tst-stat-label">Last 30 days</span>
           </div>
         </div>
 
-        {/* Enhanced Statistics Section */}
-        {showStats && testimonials.length > 0 && (
-          <div className="mb-10" data-aos="fade-up" data-aos-delay="200">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              <div className="stat-card stat-card-blue">
-                <div className="stat-icon">
-                  <i className="fas fa-comments"></i>
-                </div>
-                <div className="stat-number">{stats.total}</div>
-                <div className="stat-label">Total Reviews</div>
-                <div className="stat-sparkle"></div>
-              </div>
-
-              <div className="stat-card stat-card-yellow">
-                <div className="stat-icon">
-                  <i className="fas fa-star"></i>
-                </div>
-                <div className="stat-number">{stats.averageRating}</div>
-                <div className="stat-label">Average Rating</div>
-                <div className="stat-progress" style={{ width: `${(stats.averageRating / 5) * 100}%` }}></div>
-              </div>
-
-              <div className="stat-card stat-card-green">
-                <div className="stat-icon">
-                  <i className="fas fa-trophy"></i>
-                </div>
-                <div className="stat-number">{stats.featured}</div>
-                <div className="stat-label">Featured</div>
-                <div className="stat-sparkle"></div>
-              </div>
-
-              <div className="stat-card stat-card-purple">
-                <div className="stat-icon">
-                  <i className="fas fa-shield-check"></i>
-                </div>
-                <div className="stat-number">{stats.verified}</div>
-                <div className="stat-label">Verified</div>
-                <div className="stat-sparkle"></div>
-              </div>
-
-              <div className="stat-card stat-card-pink">
-                <div className="stat-icon">
-                  <i className="fas fa-clock"></i>
-                </div>
-                <div className="stat-number">{stats.recentCount}</div>
-                <div className="stat-label">This Month</div>
-                <div className="stat-sparkle"></div>
-              </div>
-            </div>
-
-            {/* Rating Distribution Chart */}
-            <div className="mt-6 glass-panel p-6" data-aos="fade-up" data-aos-delay="300">
-              <h3 className="text-xl font-semibold text-textColor mb-4 flex items-center gap-2">
-                <i className="fas fa-chart-bar text-mainColor"></i>
-                Rating Distribution
-              </h3>
-              <div className="space-y-3">
-                {stats.ratingDistribution.map(({ rating, count, percentage }) => (
-                  <div key={rating} className="rating-bar-container">
-                    <div className="flex items-center gap-3">
-                      <div className="flex gap-1">
-                        {renderStars(rating)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="rating-bar-bg">
-                          <div 
-                            className="rating-bar-fill" 
-                            style={{ width: `${percentage}%` }}
-                          >
-                            <span className="rating-bar-label">{count}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-textColor/70 text-sm font-semibold min-w-[50px] text-right">
-                        {percentage}%
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* ------------------------------------------------------ toolbar --- */}
+        <div className="tst-toolbar">
+          <div className="tst-search">
+            <i className="fas fa-search" aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="Search a name, company or phrase"
+              aria-label="Search testimonials and reviews"
+            />
+            {query && (
+              <button type="button" onClick={() => setQuery('')} aria-label="Clear search">
+                <i className="fas fa-times" aria-hidden="true" />
+              </button>
+            )}
           </div>
-        )}
 
-        {/* Advanced Search and Controls */}
-        <div className="mb-6" data-aos="fade-up" data-aos-delay="300">
-          <div className="glass-panel p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-              {/* Search */}
-              <div className="relative flex-1 max-w-md w-full">
-                <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-mainColor"></i>
-                <input
-                  type="text"
-                  placeholder="Search by name, company, content..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-textColor/50 hover:text-textColor"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                )}
-              </div>
+          <div className="tst-segment" role="group" aria-label="Filter by source">
+            {[
+              { id: 'all', label: 'All', count: stats.total },
+              { id: FEED_KIND.testimonial, label: 'Testimonials', count: stats.testimonialCount },
+              { id: FEED_KIND.review, label: 'Reviews', count: stats.reviewCount }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`tst-segment-btn ${kindFilter === tab.id ? 'is-active' : ''}`}
+                aria-pressed={kindFilter === tab.id}
+                onClick={() => setKindFilter(tab.id)}
+              >
+                {tab.label}<span className="tst-segment-count">{tab.count}</span>
+              </button>
+            ))}
+          </div>
 
-              {/* Controls */}
-              <div className="flex flex-wrap gap-3 items-center justify-center lg:justify-end">
-                {/* View Mode Toggle */}
-                <div className="btn-group">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`btn-group-item ${viewMode === 'grid' ? 'active' : ''}`}
-                    title="Grid View"
-                  >
-                    <i className="fas fa-th"></i>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`btn-group-item ${viewMode === 'list' ? 'active' : ''}`}
-                    title="List View"
-                  >
-                    <i className="fas fa-list"></i>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('carousel')}
-                    className={`btn-group-item ${viewMode === 'carousel' ? 'active' : ''}`}
-                    title="Carousel View"
-                  >
-                    <i className="fas fa-images"></i>
-                  </button>
-                </div>
+          <div className="tst-toolbar-right">
+            <button
+              type="button"
+              className={`tst-chip ${featuredOnly ? 'is-active' : ''}`}
+              aria-pressed={featuredOnly}
+              onClick={() => setFeaturedOnly(value => !value)}
+            >
+              <i className="fas fa-star" aria-hidden="true" /> Featured
+            </button>
 
-                {/* Sort */}
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="control-select"
-                >
-                  <option value="date">📅 Date</option>
-                  <option value="rating">⭐ Rating</option>
-                  <option value="name">👤 Name</option>
-                  <option value="company">🏢 Company</option>
-                </select>
+            <label className="tst-select">
+              <span className="sr-only">Minimum rating</span>
+              <select value={ratingFilter} onChange={event => setRatingFilter(Number(event.target.value))}>
+                <option value={0}>All ratings</option>
+                {[5, 4, 3].map(rating => (
+                  <option key={rating} value={rating}>{rating} stars</option>
+                ))}
+              </select>
+            </label>
 
-                {/* Sort Order */}
+            <label className="tst-select">
+              <span className="sr-only">Sort order</span>
+              <select value={sortBy} onChange={event => setSortBy(event.target.value)}>
+                <option value="recent">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="rating">Highest rated</option>
+                <option value="name">Name</option>
+              </select>
+            </label>
+
+            <div className="tst-segment tst-segment--icons" role="group" aria-label="View mode">
+              {[
+                { id: 'grid', icon: 'fas fa-th-large', label: 'Grid view' },
+                { id: 'list', icon: 'fas fa-list', label: 'List view' },
+                { id: 'carousel', icon: 'fas fa-images', label: 'Carousel view' }
+              ].map(option => (
                 <button
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="control-btn"
-                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                  key={option.id}
+                  type="button"
+                  className={`tst-segment-btn ${viewMode === option.id ? 'is-active' : ''}`}
+                  aria-pressed={viewMode === option.id}
+                  aria-label={option.label}
+                  title={option.label}
+                  onClick={() => setViewMode(option.id)}
                 >
-                  <i className={`fas fa-sort-amount-${sortOrder === 'asc' ? 'down' : 'up'}-alt`}></i>
+                  <i className={option.icon} aria-hidden="true" />
                 </button>
-
-                {/* Toggle Stats */}
-                <button
-                  onClick={() => setShowStats(!showStats)}
-                  className={`control-btn ${showStats ? 'active' : ''}`}
-                  title="Toggle Statistics"
-                >
-                  <i className="fas fa-chart-bar"></i>
-                </button>
-
-                {/* Export */}
-                <button
-                  onClick={exportTestimonials}
-                  className="control-btn"
-                  title="Export Testimonials"
-                >
-                  <i className="fas fa-download"></i>
-                </button>
-
-                {/* Refresh */}
-                <button
-                  onClick={loadTestimonials}
-                  className="control-btn"
-                  title="Refresh"
-                >
-                  <i className="fas fa-sync-alt"></i>
-                </button>
-              </div>
+              ))}
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 mt-4 items-center">
-              <span className="text-textColor/70 text-sm font-semibold">Filters:</span>
-              
-              {/* Category Filters */}
-              <div className="filter-pills">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`filter-pill ${filter === 'all' ? 'active' : ''}`}
-                >
-                  <i className="fas fa-globe"></i>
-                  All ({testimonials.length})
-                </button>
-                <button
-                  onClick={() => setFilter('featured')}
-                  className={`filter-pill ${filter === 'featured' ? 'active' : ''}`}
-                >
-                  <i className="fas fa-star"></i>
-                  Featured ({stats.featured})
-                </button>
-                <button
-                  onClick={() => setFilter('verified')}
-                  className={`filter-pill ${filter === 'verified' ? 'active' : ''}`}
-                >
-                  <i className="fas fa-shield-check"></i>
-                  Verified ({stats.verified})
-                </button>
-              </div>
+            <button
+              type="button"
+              className="tst-chip"
+              onClick={() => loadFeed({ quiet: true })}
+              aria-label="Refresh"
+              title="Refresh"
+            >
+              <i className={`fas fa-sync-alt ${syncing ? 'fa-spin' : ''}`} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
 
-              {/* Rating Filter */}
-              <div className="filter-pills">
-                <button
-                  onClick={() => setRatingFilter(0)}
-                  className={`filter-pill ${ratingFilter === 0 ? 'active' : ''}`}
-                >
-                  All Ratings
-                </button>
-                {[5, 4, 3].map(rating => (
-                  <button
-                    key={rating}
-                    onClick={() => setRatingFilter(rating)}
-                    className={`filter-pill ${ratingFilter === rating ? 'active' : ''}`}
-                  >
-                    {rating} <i className="fas fa-star text-yellow-500 text-xs"></i>
-                  </button>
-                ))}
-              </div>
+        <div className="tst-resultbar">
+          <span>
+            Showing {paged.length} of {visible.length}
+            {filterCount > 0 && <button type="button" className="tst-clear" onClick={resetFilters}>Clear {filterCount} filter{filterCount > 1 ? 's' : ''}</button>}
+          </span>
+          <span className="tst-resultbar-source">
+            {feedStatus.reviews ? 'Reviews connected' : 'Reviews pending connection'}
+            <span aria-hidden="true"> · </span>
+            {feedStatus.testimonials ? 'Testimonials connected' : 'Testimonials from the saved copy'}
+          </span>
+        </div>
 
-              {/* Clear Filters */}
-              {(filter !== 'all' || ratingFilter !== 0 || searchTerm) && (
-                <button
-                  onClick={() => {
-                    setFilter('all');
-                    setRatingFilter(0);
-                    setSearchTerm('');
-                  }}
-                  className="filter-pill clear-filter"
-                >
-                  <i className="fas fa-times"></i>
-                  Clear All
-                </button>
+        {/* ------------------------------------------------------- feed --- */}
+        {visible.length === 0 ? (
+          <div className="tst-empty">
+            <span className="tst-empty-icon"><i className="fas fa-comment-slash" aria-hidden="true" /></span>
+            <h3>Nothing to show yet</h3>
+            <p>
+              {items.length === 0
+                ? publicEmptyCopy('emptyTestimonials')
+                : 'No testimonial or review matches these filters yet.'}
+            </p>
+            <div className="tst-empty-actions">
+              <button type="button" className="tst-btn tst-btn--primary" onClick={() => setShowForm(true)}>
+                Be the first to write one
+              </button>
+              {filterCount > 0 && (
+                <button type="button" className="tst-btn" onClick={resetFilters}>Reset filters</button>
               )}
             </div>
-
-            {/* Results Count */}
-            <div className="mt-4 text-textColor/60 text-sm">
-              Showing {viewMode === 'carousel' ? 1 : currentTestimonials.length} of {filteredAndSortedTestimonials.length} testimonial{filteredAndSortedTestimonials.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-
-        {/* Testimonials Display */}
-        {filteredAndSortedTestimonials.length === 0 ? (
-          /* Empty State */
-          <div className="empty-state" data-aos="fade-up">
-            <div className="empty-state-icon">
-              <i className="fas fa-search"></i>
-            </div>
-            <h3 className="empty-state-title">No testimonials found</h3>
-            <p className="empty-state-text">
-              {searchTerm
-                ? `No results for "${searchTerm}". Try adjusting your search or filters.`
-                : testimonials.length === 0
-                  ? publicEmptyCopy('emptyTestimonials')
-                  : 'Try adjusting your filters to see more testimonials.'}
-            </p>
-            <button
-              onClick={() => {
-                setFilter('all');
-                setRatingFilter(0);
-                setSearchTerm('');
-              }}
-              className="btn-primary mt-4"
-            >
-              <i className="fas fa-redo mr-2"></i>
-              Reset Filters
-            </button>
           </div>
         ) : (
           <>
-            {/* Grid View */}
             {viewMode === 'grid' && (
-              <div className="testimonials-scrollable-container">
-                <div className={`testimonials-grid ${animateCards ? 'animate' : ''}`}>
-                {currentTestimonials.map((testimonial, index) => (
-                  <div
-                    key={index}
-                    className={`testimonial-card-enhanced ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
-                    data-aos="fade-up"
-                    data-aos-delay={index * 50}
-                    onClick={() => openModal(testimonial)}
+              <div className="tst-grid">
+                {paged.map(item => (
+                  <article
+                    key={item.id}
+                    className={`tst-card ${isSampleTestimonial(item.raw) ? 'is-sample' : ''}`}
+                    onClick={() => openModal(item)}
                   >
-                    {/* Card Header */}
-                    <div className="card-header">
-                      <img
-                        src={thumbnailFor(testimonial)}
-                        alt={testimonial.name}
-                        className="card-avatar"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div className="card-badges">
-                        {isSampleTestimonial(testimonial) && (
-                          <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
-                        )}
-                        {testimonial.featured && (
-                          <span className="badge badge-featured">
-                            <i className="fas fa-star"></i>
-                          </span>
-                        )}
-                        {testimonial.verified && (
-                          <span className="badge badge-verified">
-                            <i className="fas fa-shield-check"></i>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Rating */}
-                    <div className="card-rating">
-                      {renderStars(testimonial.rating)}
-                      <span className="rating-text">{testimonial.rating}.0</span>
-                    </div>
-
-                    {/* Content */}
-                    <blockquote className="card-content">
-                      <i className="fas fa-quote-left quote-icon-left"></i>
-                      {testimonial.content}
-                      <i className="fas fa-quote-right quote-icon-right"></i>
-                    </blockquote>
-
-                    {/* Client Info */}
-                    <div className="card-client-info">
-                      <div>
-                        <h4 className="client-name">{testimonial.name}</h4>
-                        <p className="client-position">
-                          {testimonial.position}
-                          {testimonial.company && (
-                            <>
-                              {' '}@ <span className="client-company">{testimonial.company}</span>
-                            </>
-                          )}
+                    <div className="tst-card-top">
+                      <img src={thumbnailFor(item)} alt={item.name} className="tst-avatar" loading="lazy" decoding="async" />
+                      <div className="tst-card-who">
+                        <h3 className="tst-name">{item.name}</h3>
+                        <p className="tst-role">
+                          {[item.position, item.company].filter(Boolean).join(' · ') || 'Visitor'}
                         </p>
                       </div>
+                      <SourceChip kind={item.kind} />
                     </div>
-
-                    {/* Project Tags */}
-                    {testimonial.tags && (
-                      <div className="card-tags">
-                        {testimonial.tags.slice(0, 3).map((tag, i) => (
-                          <span key={i} className="tag">
-                            {tag}
-                          </span>
-                        ))}
+                    <div className="tst-card-rating">
+                      <Stars rating={item.rating} />
+                      <span>{item.rating}.0</span>
+                      {item.featured && <span className="tst-badge">Featured</span>}
+                      {item.verified && <span className="tst-badge tst-badge--muted">Verified</span>}
+                      {isSampleTestimonial(item.raw) && (
+                        <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                      )}
+                    </div>
+                    <p className="tst-quote">{item.content}</p>
+                    {item.reply && (
+                      <div className="tst-reply">
+                        <span>Reply</span>
+                        <p>{item.reply}</p>
                       </div>
                     )}
-
-                    {/* Card Footer */}
-                    <div className="card-footer">
-                      <div className="card-date">
-                        <i className="far fa-calendar"></i>
-                        {new Date(testimonial.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          shareTestimonial(testimonial);
-                        }}
-                        className="card-share-btn"
-                      >
-                        <i className="fas fa-share-alt"></i>
-                      </button>
-                    </div>
-
-                    {/* Hover Glow Effect */}
-                    <div className="card-glow"></div>
-                  </div>
-                ))}
-                </div>
-              </div>
-            )}
-
-            {/* List View */}
-            {viewMode === 'list' && (
-              <div className="testimonials-scrollable-container">
-                <div className="testimonials-list">
-                {currentTestimonials.map((testimonial, index) => (
-                  <div
-                    key={index}
-                    className={`testimonial-list-item ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
-                    data-aos="fade-right"
-                    data-aos-delay={index * 50}
-                    onClick={() => openModal(testimonial)}
-                  >
-                    <img
-                      src={thumbnailFor(testimonial)}
-                      alt={testimonial.name}
-                      className="list-avatar"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="list-content">
-                      <div className="list-header">
-                        <div>
-                          <h4 className="list-name">
-                            {isSampleTestimonial(testimonial) && (
-                              <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
-                            )}
-                            {testimonial.name}
-                            {testimonial.verified && (
-                              <i className="fas fa-shield-check text-green-500 text-sm ml-2"></i>
-                            )}
-                          </h4>
-                          <p className="list-position">
-                            {testimonial.position} @ {testimonial.company}
-                          </p>
-                        </div>
-                        <div className="list-rating">
-                          {renderStars(testimonial.rating)}
-                        </div>
-                      </div>
-                      <p className="list-text">{testimonial.content}</p>
-                      <div className="list-footer">
-                        {testimonial.project && (
-                          <span className="list-project">
-                            <i className="fas fa-briefcase"></i>
-                            {testimonial.project}
-                          </span>
+                    <div className="tst-card-foot">
+                      <span className="tst-date">{formatDate(item.date)}</span>
+                      <span className="tst-card-actions">
+                        {item.kind === FEED_KIND.review && (
+                          <button
+                            type="button"
+                            className={`tst-mini ${likedIds.includes(item.id) ? 'is-active' : ''}`}
+                            onClick={event => { event.stopPropagation(); toggleLike(item); }}
+                            aria-pressed={likedIds.includes(item.id)}
+                          >
+                            <i className="fas fa-thumbs-up" aria-hidden="true" /> {item.likes || 0}
+                          </button>
                         )}
-                        <span className="list-date">
-                          {new Date(testimonial.date).toLocaleDateString()}
-                        </span>
-                      </div>
+                        <button
+                          type="button"
+                          className="tst-mini"
+                          onClick={event => { event.stopPropagation(); shareItem(item); }}
+                          aria-label={`Share ${item.name}'s message`}
+                        >
+                          <i className="fas fa-share-alt" aria-hidden="true" />
+                        </button>
+                      </span>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        shareTestimonial(testimonial);
-                      }}
-                      className="list-share-btn"
-                    >
-                      <i className="fas fa-share-alt"></i>
-                    </button>
-                  </div>
+                  </article>
                 ))}
-                </div>
               </div>
             )}
 
-            {/* Carousel View */}
-            {viewMode === 'carousel' && (
-              <div className="testimonial-carousel" ref={carouselRef}>
-                <button onClick={prevSlide} className="carousel-btn carousel-btn-prev">
-                  <i className="fas fa-chevron-left"></i>
-                </button>
-                
-                <div className="carousel-container">
-                  {filteredAndSortedTestimonials.map((testimonial, index) => (
-                    <div
-                      key={index}
-                      className={`carousel-slide ${index === activeCarouselIndex ? 'active' : ''} ${isSampleTestimonial(testimonial) ? 'is-sample' : ''}`}
-                      style={{
-                        transform: `translateX(${(index - activeCarouselIndex) * 100}%)`
-                      }}
-                    >
-                      <div className="carousel-content">
-                        {isSampleTestimonial(testimonial) && (
+            {viewMode === 'list' && (
+              <div className="tst-list">
+                {paged.map(item => (
+                  <article
+                    key={item.id}
+                    className={`tst-row ${isSampleTestimonial(item.raw) ? 'is-sample' : ''}`}
+                    onClick={() => openModal(item)}
+                  >
+                    <img src={thumbnailFor(item)} alt={item.name} className="tst-row-avatar" loading="lazy" decoding="async" />
+                    <div className="tst-row-body">
+                      <div className="tst-row-head">
+                        <div>
+                          <h3 className="tst-name">
+                            {item.name}
+                            {item.verified && <i className="fas fa-circle-check tst-verified" aria-label="Verified" />}
+                          </h3>
+                          <p className="tst-role">{[item.position, item.company].filter(Boolean).join(' · ') || 'Visitor'}</p>
+                        </div>
+                        <div className="tst-row-meta">
+                          <Stars rating={item.rating} />
+                          <span className="tst-date">{formatDate(item.date)}</span>
+                        </div>
+                      </div>
+                      <p className="tst-quote">{item.content}</p>
+                      <div className="tst-row-foot">
+                        <SourceChip kind={item.kind} />
+                        {item.project && <span className="tst-tag">{item.project}</span>}
+                        {(item.tags || []).slice(0, 3).map(tag => (
+                          <span className="tst-tag" key={tag}>{tag}</span>
+                        ))}
+                        {isSampleTestimonial(item.raw) && (
                           <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
                         )}
-                        <div className="carousel-quote-mark">
-                          <i className="fas fa-quote-left"></i>
-                        </div>
-                        <div className="carousel-rating">
-                          {renderStars(testimonial.rating)}
-                        </div>
-                        <blockquote className="carousel-text">
-                          {testimonial.content}
-                        </blockquote>
-                        <div className="carousel-client">
-                          <img
-                            src={thumbnailFor(testimonial)}
-                            alt={testimonial.name}
-                            className="carousel-avatar"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                          <div>
-                            <h4 className="carousel-name">{testimonial.name}</h4>
-                            <p className="carousel-position">
-                              {testimonial.position} @ {testimonial.company}
-                            </p>
-                            {testimonial.project && (
-                              <p className="carousel-project">
-                                <i className="fas fa-briefcase"></i>
-                                {testimonial.project}
-                              </p>
-                            )}
-                          </div>
-                          {testimonial.verified && (
-                            <span className="carousel-verified">
-                              <i className="fas fa-shield-check"></i>
-                            </span>
-                          )}
-                        </div>
+                        {item.kind === FEED_KIND.review && (
+                          <button
+                            type="button"
+                            className={`tst-mini ${likedIds.includes(item.id) ? 'is-active' : ''}`}
+                            onClick={event => { event.stopPropagation(); toggleLike(item); }}
+                            aria-pressed={likedIds.includes(item.id)}
+                          >
+                            <i className="fas fa-thumbs-up" aria-hidden="true" /> {item.likes || 0}
+                          </button>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                <button onClick={nextSlide} className="carousel-btn carousel-btn-next">
-                  <i className="fas fa-chevron-right"></i>
-                </button>
-
-                {/* Carousel Indicators */}
-                <div className="carousel-indicators">
-                  {filteredAndSortedTestimonials.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveCarouselIndex(index)}
-                      className={`carousel-indicator ${index === activeCarouselIndex ? 'active' : ''}`}
-                    />
-                  ))}
-                </div>
+                  </article>
+                ))}
               </div>
             )}
 
-            {/* Pagination (for grid and list views) */}
-            {viewMode !== 'carousel' && totalPages > 1 && (
-              <div className="pagination" data-aos="fade-up">
+            {viewMode === 'carousel' && (
+              <div className="tst-carousel" ref={carouselRef}>
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="pagination-btn"
+                  type="button"
+                  className="tst-carousel-nav"
+                  onClick={() => setPage(current => (current <= 1 ? totalPages : current - 1))}
+                  aria-label="Previous"
                 >
-                  <i className="fas fa-chevron-left"></i>
-                  Previous
+                  <i className="fas fa-chevron-left" aria-hidden="true" />
                 </button>
 
-                <div className="pagination-numbers">
-                  {[...Array(totalPages)].map((_, index) => {
-                    const pageNumber = index + 1;
-                    if (
-                      pageNumber === 1 ||
-                      pageNumber === totalPages ||
-                      (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                    ) {
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => setCurrentPage(pageNumber)}
-                          className={`pagination-number ${currentPage === pageNumber ? 'active' : ''}`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    } else if (
-                      pageNumber === currentPage - 2 ||
-                      pageNumber === currentPage + 2
-                    ) {
-                      return <span key={pageNumber} className="pagination-ellipsis">...</span>;
-                    }
-                    return null;
+                <div className="tst-carousel-track">
+                  {visible.map((item, index) => {
+                    const activeIndex = activeSlide;
+                    return (
+                      <article
+                        key={item.id}
+                        className={`tst-slide ${index === activeIndex ? 'is-active' : ''} ${isSampleTestimonial(item.raw) ? 'is-sample' : ''}`}
+                        style={{ transform: `translateX(${(index - activeIndex) * 100}%)` }}
+                        aria-hidden={index !== activeIndex}
+                      >
+                        <div className="tst-slide-inner">
+                          <Stars rating={item.rating} size="lg" />
+                          <p className="tst-slide-quote">{item.content}</p>
+                          <div className="tst-slide-who">
+                            <img src={thumbnailFor(item)} alt={item.name} className="tst-avatar" loading="lazy" decoding="async" />
+                            <div>
+                              <h3 className="tst-name">{item.name}</h3>
+                              <p className="tst-role">
+                                {[item.position, item.company].filter(Boolean).join(' · ') || 'Visitor'}
+                              </p>
+                            </div>
+                            <SourceChip kind={item.kind} />
+                          </div>
+                          {isSampleTestimonial(item.raw) && (
+                            <span className="testimonial-sample-badge">SAMPLE · PREVIEW</span>
+                          )}
+                        </div>
+                      </article>
+                    );
                   })}
                 </div>
 
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="pagination-btn"
+                  type="button"
+                  className="tst-carousel-nav"
+                  onClick={() => setPage(current => (current >= totalPages ? 1 : current + 1))}
+                  aria-label="Next"
                 >
-                  Next
-                  <i className="fas fa-chevron-right"></i>
+                  <i className="fas fa-chevron-right" aria-hidden="true" />
                 </button>
+
+                <div className="tst-dots">
+                  {visible.map((item, index) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`tst-dot ${page === index + 1 ? 'is-active' : ''}`}
+                      aria-label={`Go to message ${index + 1}`}
+                      onClick={() => setPage(index + 1)}
+                    />
+                  ))}
+                </div>
               </div>
+            )}
+
+            {viewMode !== 'carousel' && gridPages > 1 && (
+              <nav className="tst-pagination" aria-label="Testimonials pages">
+                <button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page === 1}>
+                  <i className="fas fa-chevron-left" aria-hidden="true" /> Previous
+                </button>
+                {Array.from({ length: gridPages }, (_, index) => index + 1)
+                  .filter(number => number === 1 || number === gridPages || Math.abs(number - page) <= 1)
+                  .map((number, index, list) => (
+                    <span key={number} className="tst-pagination-slot">
+                      {index > 0 && list[index - 1] !== number - 1 && <span className="tst-ellipsis">…</span>}
+                      <button
+                        type="button"
+                        className={`tst-page ${page === number ? 'is-active' : ''}`}
+                        aria-current={page === number ? 'page' : undefined}
+                        onClick={() => setPage(number)}
+                      >
+                        {number}
+                      </button>
+                    </span>
+                  ))}
+                <button type="button" onClick={() => setPage(current => Math.min(gridPages, current + 1))} disabled={page === gridPages}>
+                  Next <i className="fas fa-chevron-right" aria-hidden="true" />
+                </button>
+              </nav>
             )}
           </>
         )}
       </div>
 
-      {/* Modal */}
-      {showModal && selectedTestimonial && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button onClick={closeModal} className="modal-close">
-              <i className="fas fa-times"></i>
+      {/* ------------------------------------------------------- modal --- */}
+      {showModal && selected && (
+        <div className="tst-modal-backdrop" role="presentation" onClick={closeModal}>
+          <div
+            className="tst-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Message from ${selected.name}`}
+            onClick={event => event.stopPropagation()}
+          >
+            <button type="button" className="tst-modal-close" onClick={closeModal} aria-label="Close">
+              <i className="fas fa-times" aria-hidden="true" />
             </button>
-
-            <div className="modal-header">
-              <img
-                src={thumbnailFor(selectedTestimonial)}
-                alt={selectedTestimonial.name}
-                className="modal-avatar"
-              />
+            <div className="tst-modal-head">
+              <img src={thumbnailFor(selected)} alt={selected.name} className="tst-avatar tst-avatar--lg" />
               <div>
-                <h3 className="modal-name">
-                  {selectedTestimonial.name}
-                  {selectedTestimonial.verified && (
-                    <i className="fas fa-shield-check text-green-500 ml-2"></i>
-                  )}
-                </h3>
-                <p className="modal-position">
-                  {selectedTestimonial.position} @ {selectedTestimonial.company}
-                </p>
-              </div>
-              {selectedTestimonial.featured && (
-                <span className="badge badge-featured">
-                  <i className="fas fa-star"></i>
-                  Featured
-                </span>
-              )}
-            </div>
-
-            <div className="modal-rating">
-              {renderStars(selectedTestimonial.rating)}
-              <span className="rating-text">{selectedTestimonial.rating}.0 / 5.0</span>
-            </div>
-
-            <blockquote className="modal-quote">
-              <i className="fas fa-quote-left quote-icon-large"></i>
-              {selectedTestimonial.content}
-              <i className="fas fa-quote-right quote-icon-large"></i>
-            </blockquote>
-
-            {selectedTestimonial.project && (
-              <div className="modal-project">
-                <i className="fas fa-briefcase"></i>
-                <strong>Project:</strong> {selectedTestimonial.project}
-              </div>
-            )}
-
-            {selectedTestimonial.tags && (
-              <div className="modal-tags">
-                <strong>Technologies:</strong>
-                <div className="tags-container">
-                  {selectedTestimonial.tags.map((tag, i) => (
-                    <span key={i} className="tag tag-large">
-                      {tag}
-                    </span>
-                  ))}
+                <h3 className="tst-name">{selected.name}</h3>
+                <p className="tst-role">{[selected.position, selected.company].filter(Boolean).join(' · ') || 'Visitor'}</p>
+                <div className="tst-modal-rating">
+                  <Stars rating={selected.rating} />
+                  <span>{selected.rating}.0 / 5.0</span>
                 </div>
               </div>
-            )}
-
-            <div className="modal-footer">
-              <div className="modal-date">
-                <i className="far fa-calendar"></i>
-                {new Date(selectedTestimonial.date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+              <SourceChip kind={selected.kind} />
+            </div>
+            <p className="tst-modal-quote">{selected.content}</p>
+            {selected.reply && (
+              <div className="tst-reply tst-reply--modal">
+                <span>Reply</span>
+                <p>{selected.reply}</p>
               </div>
-              <button
-                onClick={() => shareTestimonial(selectedTestimonial)}
-                className="btn-primary"
-              >
-                <i className="fas fa-share-alt mr-2"></i>
-                Share
-              </button>
+            )}
+            <div className="tst-modal-tags">
+              {[selected.project, ...(selected.tags || [])].filter(Boolean).map(tag => (
+                <span className="tst-tag" key={tag}>{tag}</span>
+              ))}
+            </div>
+            <div className="tst-modal-foot">
+              <span className="tst-date">{formatDate(selected.date)}</span>
+              <div className="tst-modal-actions">
+                {selected.kind === FEED_KIND.review && (
+                  <button
+                    type="button"
+                    className={`tst-mini ${likedIds.includes(selected.id) ? 'is-active' : ''}`}
+                    onClick={() => toggleLike(selected)}
+                  >
+                    <i className="fas fa-thumbs-up" aria-hidden="true" /> Helpful ({selected.likes || 0})
+                  </button>
+                )}
+                <button type="button" className="tst-btn" onClick={() => shareItem(selected)}>
+                  <i className="fas fa-share-alt" aria-hidden="true" /> Share
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      )}
+
+      {showForm && (
+        <ReviewForm
+          onClose={() => setShowForm(false)}
+          onSuccess={() => { setShowForm(false); loadFeed({ quiet: true }); }}
+        />
       )}
     </section>
   );

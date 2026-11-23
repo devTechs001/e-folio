@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Typed from 'typed.js';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettingsListener } from '../hooks/useSettingsListener';
+import WelcomeTag3D from '../components/WelcomeTag3D';
 import {
-    ABOUT_WELCOME, ABOUT_AVAILABILITY, ABOUT_CV_HREF, ABOUT_ROLES,
+    ABOUT_WELCOME_3D, ABOUT_AVAILABILITY, ABOUT_CV_HREF, ABOUT_ROLES,
     ABOUT_IMAGES, ABOUT_BIO_FALLBACK, ABOUT_SECOND_PARAGRAPH,
     buildAboutProfile, aboutNameParts
 } from '../utils/aboutPageData';
@@ -80,18 +81,21 @@ const About = () => {
                     
                     {/* Left Content */}
                     <div className="flex-1 max-w-3xl text-center lg:text-left order-2 lg:order-1" data-aos="fade-right">
-                        {/* Welcome Badge */}
+                        {/* Welcome wordmark — animated CSS 3D (single h1 per page) */}
+                        <WelcomeTag3D text={ABOUT_WELCOME_3D} as="h1" />
+
+                        {/* Availability pill (unchanged wording) */}
                         <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-gradient-to-r from-mainColor/10 to-mainColor/5 border border-mainColor/30 rounded-full backdrop-blur-sm">
                             <span className="w-2 h-2 bg-mainColor rounded-full animate-pulse"></span>
                             <span className="welcome-badge-text gradient-text-animated">
-                                {ABOUT_WELCOME}
+                                {ABOUT_AVAILABILITY}
                             </span>
                         </div>
 
                         {/* Main Heading */}
-                        <h1 className="main-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-textColor mb-4 leading-tight">
+                        <h2 className="main-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-textColor mb-4 leading-tight">
                             {first} <span className="gradient-text-animated">{second}</span>
-                        </h1>
+                        </h2>
 
                         {/* Typed Text */}
                         <div className="mb-6">

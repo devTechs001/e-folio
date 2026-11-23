@@ -69,6 +69,28 @@ const curriculumVitaeSchema = new mongoose.Schema({
     text: { type: String, default: '' },
     visible: { type: Boolean, default: true }
   }],
+  // Phase 33 — sections that already existed in the editor/export flow are
+  // now stored, so the public CV can show a complete document.
+  certifications: [{
+    id: { type: String, required: true },
+    name: { type: String, default: '' },
+    issuer: { type: String, default: '' },
+    period: { type: String, default: '' },
+    credentialUrl: { type: String, default: '' },
+    visible: { type: Boolean, default: true }
+  }],
+  languages: [{
+    id: { type: String, required: true },
+    name: { type: String, default: '' },
+    level: { type: String, default: '' },
+    visible: { type: Boolean, default: true }
+  }],
+  links: [{
+    id: { type: String, required: true },
+    label: { type: String, default: '' },
+    url: { type: String, default: '' },
+    visible: { type: Boolean, default: true }
+  }],
   settings: {
     template: { type: String, default: 'modern' },
     primaryColor: { type: String, default: '#2563eb' },
@@ -78,6 +100,15 @@ const curriculumVitaeSchema = new mongoose.Schema({
     showContactIcons: { type: Boolean, default: true },
     sectionOrder: [String],
     customCSS: { type: String, default: '' }
+  },
+  // Lifecycle: a CV can be kept private while it is being written, and every
+  // save keeps the last published snapshot for "view as visitor".
+  isPublished: { type: Boolean, default: false },
+  publishedAt: { type: Date, default: null },
+  lastReviewedAt: { type: Date, default: null },
+  publishedSnapshot: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
   versions: [{
     name: String,

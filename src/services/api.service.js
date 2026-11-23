@@ -1701,6 +1701,32 @@ class ApiService {
         }
     }
 
+    // Phase 33 — CV lifecycle: publish for visitors, review, import a JSON
+    // export back into the draft, and read the holder's own public document.
+    async publishCV() {
+        return this.request('/cv/publish', { method: 'POST' });
+    }
+
+    async unpublishCV() {
+        return this.request('/cv/unpublish', { method: 'POST' });
+    }
+
+    async reviewCV() {
+        return this.request('/cv/review', { method: 'POST' });
+    }
+
+    async importCV(cv) {
+        return this.request('/cv/import', {
+            method: 'POST',
+            body: JSON.stringify({ cv })
+        });
+    }
+
+    /** Own public CV document (works while unpublished for the holder). */
+    async getOwnPublicCV(username) {
+        return this.request(`/public/cv/${encodeURIComponent(username)}`);
+    }
+
 
     async getBookmarks() {
         try {

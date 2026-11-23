@@ -827,16 +827,18 @@
 
 /* Override / enlarge main heading for About section (more prominent) */
 
-/* Welcome badge text */
+/* Availability pill text (the welcome line is now the CSS-3D wordmark in
+   .welcome-3d / WelcomeTag3D.css; the earlier oversized rule made this pill
+   overflow its rounded container, so it is sized to sit inside it). */
 .about-section .welcome-badge-text {
   display: inline-block;
   position: relative;
   color: var(--mainColor);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  padding: 0.2em 0.4em;
+  letter-spacing: 0.12em;
+  font-size: clamp(0.7rem, 1.4vw, 0.85rem);
+  padding: 0;
   white-space: nowrap;
   text-shadow: 0 0 8px rgba(14,239,239,0.6);
 }
