@@ -823,6 +823,13 @@
     cursor: pointer;
 }
 .tst-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+/* First/last jump buttons sit beside the numbered pages. */
+.tst-pagination .tst-page--edge { padding: 0.45rem 0.6rem; }
+.tst-pagination .tst-page--edge i { font-size: 0.78rem; }
+.tst-pagination .tst-page-note {
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--textColor, #e8f1ff) 55%, transparent);
+}
 .tst-pagination .tst-page.is-active {
     background: color-mix(in srgb, var(--mainColor, #00efff) 18%, transparent);
     color: var(--mainColor, #00efff);

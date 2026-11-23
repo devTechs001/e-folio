@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/security';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, Shield, Users, AlertCircle, Mail, Phone, ExternalLink, CheckCircle, Info, Calendar, User, Building, DollarSign, Eye, Lock } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -469,7 +470,7 @@ const TermsAndConditions = () => {
                             </h1>
                             <div 
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: content[activeSection].content }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(content[activeSection].content) }}
                             />
                         </motion.div>
                     </div>

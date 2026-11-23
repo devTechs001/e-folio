@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/security';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shield, Database, Eye, Mail, Lock, Users, FileText, CheckCircle, AlertTriangle, Info, UserCheck, Cookie, Search, Download, ExternalLink, Clock, MapPin, Phone } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -671,7 +672,7 @@ const PrivacyPolicy = () => {
                             </h1>
                             <div 
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: content[activeSection].content }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(content[activeSection].content) }}
                             />
                         </motion.div>
                     </div>

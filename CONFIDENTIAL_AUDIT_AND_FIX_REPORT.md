@@ -2763,6 +2763,112 @@ touch device, and the category counts against a populated production database.
 
 ---
 
+## 3al. Phase 39 — pagination buttons, production-only hardening (developer flags, XSS, route guessing), and a rebuilt icon set
+
+Owner request: *"add the pagination buttons, restrict developer options, XSS,
+route guess, in production mode, enhance the PWA icon / browser icon."*
+Static and build verification only — **no MongoDB, Express runtime or browser
+was available**, so no claim below is a live-acceptance claim.
+
+### Pagination buttons
+
+The testimonials pager already had prev/next and numbered pages, but the whole
+nav was hidden whenever a single page held everything
+(`gridPages > 1 && ...`). It now always renders in grid and list mode, gained
+first/last jump buttons, and shows "All N fit in 4 rows" when there is only one
+page, so the control never silently disappears.
+
+`PublicReviews` (`/reviews`) only had two arrows and a "Page x of y" line. It
+now has numbered buttons windowed around the current page with ellipses,
+first/last jumps, `aria-current="page"` on the active page, and the same total
+line. Both pagers are `<nav>` elements with explicit labels.
+
+### Restricting developer options in production
+
+`src/utils/security.js` gained `stripDevParams()`: on a production build it
+removes `?debug`, `?dev`, `?developer`, `?internal`, `?test` and `?trace` from
+the URL via `history.replaceState` before anything can read them. It is called
+from `src/main.jsx` **before** `createRoot`, so no route or API call can ever
+observe the flag. `isProductionBuild()` returns `true` when
+`import.meta.env.PROD` cannot be read, so the guard fails closed rather than
+open. Development builds keep their tooling untouched.
+
+### XSS
+
+The two `dangerouslySetInnerHTML` call sites (`TermsAndConditions`,
+`PrivacyPolicy`) rendered `content[activeSection].content` unvetted. That copy
+is static and in-repo today, so this was defence in depth rather than an active
+breach — but the render path was unguarded. A new `sanitizeHtml()` in
+`src/utils/security.js` is allow-list based (an explicit tag set, an explicit
+attribute set), strips `on*` handlers, forces `rel="noopener noreferrer"` on
+links, and rejects `javascript:`, `data:`, `vbscript:` and `file:` URLs. It also
+strips C0 control characters first, which is how `java\nscript:` payloads slip
+past naive schemes checks. Without a DOM (SSR/tests) it falls back to removing
+the dangerous constructs by pattern rather than returning the markup unchanged.
+Both call sites now render `sanitizeHtml(content[activeSection].content)`, and a
+test asserts that **no** component in `src/` passes unsanitised HTML to
+`dangerouslySetInnerHTML`.
+
+### Route guessing
+
+- **Owner identity squatting.** `POST /api/auth/register` did not reserve the
+  owner email. The owner session resolver looks an account up by `OWNER_EMAIL`,
+  so registering that address before the owner first signed in could have
+  pointed owner resolution at an attacker-controlled record. Registration now
+  refuses the configured owner email with a generic message that does not
+  confirm which address is reserved. Verified in source that this guard runs
+  before the user is created, and that `/login` still rejects the owner explicitly
+  while `/login/owner` verifies the password.
+- Confirmed already safe and left alone: owner login fails closed in production
+  (`OWNER_EMAIL` unset resolves to an empty string, matching nothing), the
+  dashboard menu is filtered by role so a guessed `/dashboard/*` path has no
+  matching route and falls back to `/dashboard`, `helmet()` is mounted, and
+  `apiLimiter` is applied to `/api` *before* the route table.
+
+### PWA and browser icons
+
+The old PWA icons were a full-bleed circle with "EF" set in a system font, and
+the manifest pointed the **maskable** purpose at the same any-purpose file — so
+Android's launcher mask cropped through the mark. `apple-touch-icon.png` did not
+exist at all even though `index.html` referenced it, `favicon.ico` was a broken
+187-byte stub, and the tab icon was one base64 inline SVG that iOS and legacy
+browsers ignore.
+
+`scripts/generate-icons.mjs` (run with `npm run icons:build`) now generates the
+whole set from geometry — no font dependency, so it renders identically
+anywhere:
+
+| file | purpose |
+| --- | --- |
+| `icons/icon-192x192.png` | any |
+| `icons/icon-512x512.png` | any |
+| `icons/icon-maskable-512x512.png` | maskable, art confined to 60% so it sits inside the 80% safe circle |
+| `icons/icon-monochrome-512x512.png` | monochrome badge for themed launchers |
+| `apple-touch-icon.png` | 180×180, opaque |
+| `favicon-32x32.png`, `favicon-16x16.png` | tab rendering |
+| `favicon.svg`, `favicon.ico` (16+32+48) | scalable + legacy |
+
+The brand gradient is a real ImageMagick gradient clipped by a rounded-rectangle
+alpha mask, not a stacked-shape approximation. At 16px a letterform cannot
+resolve (two letters and their counters all land under a pixel and anti-alias
+into a blob), so the 16px entry uses a single solid diagonal mark instead of a
+mangled "EF"; 32px and above keep the monogram.
+
+### Verification
+
+`node tests/prod-hardening.test.mjs` — **24 checks**, wired into both manifests
+as `test:prod-hardening`. They cover the pagers, the flag stripping and its
+ordering, the sanitizer's allow list and scheme rules, the registration guard,
+the icon manifest/files/dimensions, and the absence of unsanitised
+`dangerouslySetInnerHTML`.
+
+Not verified: real browser tab rendering, actual Android/iOS launcher masking,
+and the sanitizer against a real DOM (no browser or jsdom was available). The
+non-DOM fallback is exercised against a payload corpus in the test suite; the
+DOM walk is reviewed but not DOM-tested.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2975,6 +3081,15 @@ touch device, and the category counts against a populated production database.
     time so a single bad row cannot fail the batch; for large imports this is
     N round-trips. Consider `insertMany({ ordered: false })` once validation
     feedback per row is no longer needed.
+43. Phase 39 follow-up: exercise `sanitizeHtml()` in a real DOM (browser or
+    jsdom) against a payload corpus. Only the non-DOM fallback path is
+    exercised today; the allow-list walk is reviewed but not DOM-tested.
+44. Phase 39 follow-up: confirm the new icon set on a real Android launcher and
+    on iOS home screen. The maskable safe-zone maths and the PNG dimensions are
+    verified statically; actual launcher masking was not observed.
+45. Phase 39 follow-up: if developer flags are ever needed for a support
+    session, add an explicitly build-time-gated allow list rather than relying
+    on the current blanket strip.
 
 ---
 

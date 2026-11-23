@@ -1,10 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+    <linearGradient id="ef-bg" x1="0" y1="0" x2="0" y2="1">
       <stop stop-color="#7c3aed"/>
       <stop offset="1" stop-color="#2563eb"/>
     </linearGradient>
   </defs>
-  <circle cx="90" cy="90" r="90" fill="url(#bg)"/>
-  <text x="90" y="122" font-family="system-ui,-apple-system,sans-serif" font-size="68" font-weight="700" fill="white" text-anchor="middle" letter-spacing="2">EF</text>
+  <rect width="180" height="180" rx="40" fill="#0f172a"/>
+  <rect x="13" y="13" width="154" height="154" rx="34" fill="url(#ef-bg)"/>
+  <g fill="#ffffff">
+    <rect x="53" y="59" width="11" height="62"/>
+    <rect x="53" y="59" width="39" height="11"/>
+    <rect x="53" y="85" width="33" height="11"/>
+    <rect x="53" y="110" width="39" height="11"/>
+    <rect x="101" y="59" width="11" height="62"/>
+    <rect x="101" y="59" width="39" height="11"/>
+    <rect x="101" y="85" width="33" height="11"/>
+  </g>
 </svg>

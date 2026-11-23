@@ -1,7 +1,7 @@
 // components/PublicReviews.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Quote, ThumbsUp, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Quote, ThumbsUp, MessageSquare, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api.service';
 import socketService from '../services/socket.service';
@@ -244,29 +244,86 @@ const PublicReviews = ({ limit = 6, showWriteButton = true }) => {
                             ))}
                         </div>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-4">
+                        {/* Pagination — numbered buttons, windowed around the current page */}
+                        {reviews.length > 0 && (
+                            <nav
+                                className="flex flex-wrap items-center justify-center gap-2"
+                                aria-label="Reviews pages"
+                            >
                                 <button
+                                    type="button"
+                                    onClick={() => setCurrentPage(0)}
+                                    disabled={currentPage === 0}
+                                    aria-label="First page"
+                                    title="First page"
+                                    className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <ChevronsLeft size={18} className="text-gray-600 dark:text-gray-400" />
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                                     disabled={currentPage === 0}
+                                    aria-label="Previous page"
                                     className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
                                     <ChevronLeft size={20} className="text-gray-600 dark:text-gray-400" />
                                 </button>
-                                
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                    Page {currentPage + 1} of {totalPages}
-                                </span>
+
+                                {Array.from({ length: totalPages }, (_, index) => index)
+                                    .filter(
+                                        index =>
+                                            index === 0 ||
+                                            index === totalPages - 1 ||
+                                            Math.abs(index - currentPage) <= 1
+                                    )
+                                    .map((index, position, list) => (
+                                        <span key={index} className="inline-flex items-center gap-2">
+                                            {position > 0 && list[position - 1] !== index - 1 && (
+                                                <span className="text-sm text-gray-500 dark:text-gray-400" aria-hidden="true">
+                                                    …
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setCurrentPage(index)}
+                                                aria-current={index === currentPage ? 'page' : undefined}
+                                                aria-label={`Page ${index + 1}`}
+                                                className={
+                                                    index === currentPage
+                                                        ? 'min-w-9 h-9 px-2 rounded-lg bg-blue-600 text-white text-sm font-semibold'
+                                                        : 'min-w-9 h-9 px-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+                                                }
+                                            >
+                                                {index + 1}
+                                            </button>
+                                        </span>
+                                    ))}
 
                                 <button
+                                    type="button"
                                     onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
                                     disabled={currentPage === totalPages - 1}
+                                    aria-label="Next page"
                                     className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
                                     <ChevronRight size={20} className="text-gray-600 dark:text-gray-400" />
                                 </button>
-                            </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentPage(totalPages - 1)}
+                                    disabled={currentPage === totalPages - 1}
+                                    aria-label="Last page"
+                                    title="Last page"
+                                    className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <ChevronsRight size={18} className="text-gray-600 dark:text-gray-400" />
+                                </button>
+
+                                <span className="w-full text-center text-sm text-gray-600 dark:text-gray-400">
+                                    Page {currentPage + 1} of {totalPages}
+                                </span>
+                            </nav>
                         )}
                     </>
                 )}
