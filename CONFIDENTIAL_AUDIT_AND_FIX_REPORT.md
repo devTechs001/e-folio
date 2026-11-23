@@ -2869,6 +2869,118 @@ DOM walk is reviewed but not DOM-tested.
 
 ---
 
+## 3am. Phase 40 — system monitor, resource readout, cache cleaner with alerts, and an enhanced splash screen
+
+Owner request: *"add a system monitor/resources/cache cleaner system, monitor
+the system, alerts, enhance the splash screen."*
+Static and build verification only — **no MongoDB, Express runtime or browser
+was available**, so nothing below is a live-acceptance claim.
+
+### What already existed (and was reused, not duplicated)
+
+- `GET /api/admin/health` — basic health payload (owner-only).
+- `GET /api/admin/resources` — allow-listed local file inventory, metadata only.
+- `src/services/cache.service.js` — client cache with `stats()`, `clear()` and
+  `clearByPrefix()`.
+- `src/services/cacheService.js` (server) — `clear(pattern)` / `getStats()`.
+
+The new work builds on those rather than adding a second set of caches.
+
+### System monitor
+
+`server/controllers/systemMonitor.controller.js` measures the **running
+process**: `os.totalmem/freemem/loadavg/cpus`, `process.memoryUsage/uptime`,
+`v8.getHeapStatistics().heap_size_limit`, the Mongoose ready-state, per-collection
+`estimatedDocumentCount()` when connected, and the response-cache statistics from
+the real `cacheService`. Every field is a measurement; anything unreadable is
+`null` and the UI renders "not measurable" instead of a confident zero.
+
+`GET /api/admin/system` (owner-only, behind `auth` → `isOwner`, rate-limited with
+the existing `/api` limiter) returns the metrics plus server-evaluated alerts.
+
+### Alerts
+
+Two evaluation points, deliberately overlapping in intent but not in output:
+
+- **Server** — memory, V8 heap, CPU load-per-core and database connectivity.
+- **Browser** — the same thresholds applied to locally measured storage and
+  cache size, so a bloated browser cache is visible without a server round-trip.
+
+Rules are mutually exclusive: the "memory elevated" rule carries a `below: 90`
+bound so a critical memory alert is not double-reported as two. Thresholds are
+only evaluated against metrics that actually exist — a missing measurement
+raises nothing, so the page cannot cry wolf from absent data.
+
+### Cache cleaner
+
+`src/utils/cacheCleaner.js` holds every decision (pure, unit-tested);
+`src/services/cacheCleaner.service.js` applies it to the browser. Six surfaces:
+API response cache, localStorage, sessionStorage, service-worker caches, the
+review outbox, and the server-side caches.
+
+Safety rules, each covered by a test:
+
+- Sign-in state and CV drafts are **never** removed, and the protected list is
+  checked *before* the clearable prefixes so a protected key always wins.
+- Only keys under this app's prefixes are eligible; another app's data on the
+  same origin is left alone.
+- The review outbox holds **user data** (submissions that never reached the
+  server), so it is marked destructive and skipped unless the owner ticks an
+  explicit opt-in.
+- Service-worker caches are deleted **by name**, matching only
+  `static-media-cache`, `google-fonts-cache` and `workbox-*` — never a blanket
+  "delete all caches".
+- `summariseRun()` reports `cleared` / `partial` / `failed` / `empty` and never
+  claims success for work that did not happen; skipped surfaces are listed with
+  the reason.
+
+`POST /api/admin/system/cache/purge` clears the server caches (dashboard
+inventory/audit caches and the real `cacheService`), rejects unknown target
+names with `400` rather than guessing, and reports the count actually removed.
+
+While wiring this I found **`server/middleware/cacheMiddleware.js` is dead code**:
+it requires `./CacheService` but the file is `cacheService.js`, so it would throw
+`MODULE_NOT_FOUND` if it were ever mounted. It is not mounted anywhere. The monitor
+was pointed at the working `cacheService` instead; removing the dead middleware is
+logged as backlog item 46.
+
+### Splash screen
+
+Two layers, because they cover different waits:
+
+1. **Static boot shell in `index.html`** — paints before the bundle downloads, so
+   the first frame is branded instead of blank. Inline scoped CSS (it cannot
+   depend on a CSS bundle that has not loaded), `prefers-reduced-motion`
+   honoured, and a 9-second fail-safe that changes the text rather than spinning
+   forever. `src/main.jsx` fades it out and removes it from the DOM after two
+   animation frames, with `pointer-events: none` while fading so it can never
+   trap a click or hold focus.
+2. **`LoadingScreen` (React Suspense fallback)** — rewritten: real milestones
+   only (`document.fonts.ready`), no `setInterval` fake percentage, a
+   "still working" note after 8 s, reduced-motion support, and a **Reload**
+   button when a chunk genuinely fails to load.
+
+### Verification
+
+`node tests/system-monitor.test.mjs` — **28 checks**, wired into both manifests as
+`test:system-monitor`. The shared logic is imported and executed in Node, so the
+alert thresholds, protection rules, scope isolation and summary verdicts are
+real assertions rather than string matches.
+
+Two genuine bugs surfaced while writing those tests and were fixed:
+
+- `formatBytes(null)` returned `"0 B"` because `Number(null) === 0` — exactly the
+  fabricated-zero failure this page must avoid.
+- The boolean alert rule was inverted, so `databaseConnected: true` raised
+  "Database disconnected". A boolean rule's `threshold` is now documented as the
+  **unhealthy** value.
+
+Not verified: the monitor against a live Express/Mongo process, real alert firing
+under memory pressure, and the splash on a real device. All are static/build
+verified only.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3090,6 +3202,15 @@ DOM walk is reviewed but not DOM-tested.
 45. Phase 39 follow-up: if developer flags are ever needed for a support
     session, add an explicitly build-time-gated allow list rather than relying
     on the current blanket strip.
+46. Phase 40 follow-up: **delete `server/middleware/cacheMiddleware.js`** — it
+    requires `./CacheService` while the file is `cacheService.js`, so it is
+    broken dead code. Confirm nothing imports it, then remove it.
+47. Phase 40 follow-up: runtime-verify `/api/admin/system` and the purge endpoint
+    against a real Express + MongoDB process, and confirm alerts fire under
+    genuine memory pressure rather than only in unit tests.
+48. Phase 40 follow-up: check the boot splash on a real device and a throttled
+    connection — confirm the fade-out never flashes and that the 9-second
+    slow-load message appears only when it should.
 
 ---
 

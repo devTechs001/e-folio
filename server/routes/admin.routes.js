@@ -8,6 +8,11 @@ const {
     getSecurityControls,
     getResources
 } = require('../controllers/securityDashboard.controller');
+const {
+    getSystemMetrics,
+    purgeServerCache,
+    trackRequests
+} = require('../controllers/systemMonitor.controller');
 
 router.use(auth);
 router.use(isOwner);
@@ -23,6 +28,19 @@ const auditLimiter = rateLimit({
 router.get('/security-audit', auditLimiter, getSecurityAudit);
 router.get('/security-controls', getSecurityControls);
 router.get('/resources', getResources);
+
+// Phase 40 — system monitor and server cache purge (owner only, see router.use
+// above). Metrics are read from the live process; nothing is estimated.
+router.use(trackRequests);
+router.get('/system', getSystemMetrics);
+
+// Purging is cheap but repeatable, so cap how often it can be hammered.
+const purgeLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Too many cache purges. Please try again shortly.' }
+});
+router.post('/system/cache/purge', purgeLimiter, purgeServerCache);
 
 // List all users with activity data
 router.get('/users', async (req, res) => {

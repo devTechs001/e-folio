@@ -278,4 +278,37 @@ const getResources = async (req, res) => {
     }
 };
 
-module.exports = { getSecurityAudit, getSecurityControls, getResources };
+/**
+ * Phase 40 — drop the in-process inventory/audit caches.
+ *
+ * Returns what was actually held so the caller can report a real number rather
+ * than a guess. `force` audits re-populate on the next request.
+ */
+const clearDashboardCaches = () => {
+    const held = [
+        auditCache ? { id: 'audit', entries: 1 } : null,
+        controlsCache ? { id: 'controls', entries: 1 } : null,
+        resourcesCache ? { id: 'resources', entries: 1 } : null
+    ].filter(Boolean);
+
+    auditCache = null;
+    controlsCache = null;
+    resourcesCache = null;
+
+    return { cleared: held.length, surfaces: held.map(item => item.id) };
+};
+
+/** Current size of those caches, for the monitor panel. */
+const getDashboardCacheStats = () => ({
+    audit: auditCache && auditCache.expiresAt > Date.now() ? 'fresh' : 'empty',
+    controls: controlsCache && controlsCache.expiresAt > Date.now() ? 'fresh' : 'empty',
+    resources: resourcesCache && resourcesCache.expiresAt > Date.now() ? 'fresh' : 'empty'
+});
+
+module.exports = {
+    getSecurityAudit,
+    getSecurityControls,
+    getResources,
+    clearDashboardCaches,
+    getDashboardCacheStats
+};
