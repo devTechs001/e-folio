@@ -349,7 +349,10 @@ const CVEditorStyled = () => {
   useEffect(() => {
     loadCV();
     loadVersions();
-  }, []);
+    // `user` is a dependency on purpose: the first render can happen before
+    // the session resolves, and the local draft is scoped to the account id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.id]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
