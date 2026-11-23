@@ -1609,6 +1609,7 @@
             "live": "https://net-gate-portal.netlify.app/",
             "demo": "https://net-gate-portal.netlify.app/"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,
@@ -1635,6 +1636,7 @@
           "links": {
             "github": "https://github.com/devTechs001/wifi-security-lab"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,
@@ -1660,6 +1662,7 @@
           "links": {
             "github": "https://github.com/devTechs001/web-pentest-lab"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,
@@ -1684,6 +1687,7 @@
           "links": {
             "github": "https://github.com/devTechs001/cloud-iam-sentinel"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,

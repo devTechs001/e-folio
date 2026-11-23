@@ -92,10 +92,18 @@ exports.getProjects = asyncHandler(async (req, res) => {
         .lean();
 
     // Add id field for frontend compatibility (lean queries don't include virtuals)
-    const formatted = projects.map(p => ({
-        ...p,
-        id: p._id.toString()
-    }));
+    const formatted = projects.map(p => {
+        // Phase 37: always expose a resolved poster URL so every card surface
+        // (Lab grid, dashboard preview, project cards) agrees on one image.
+        // `thumbnail` wins; otherwise the first uploaded image is the poster.
+        const poster = p.thumbnail || p.images?.[0]?.url || '';
+        return {
+            ...p,
+            id: p._id.toString(),
+            thumbnail: poster,
+            imageUrl: poster
+        };
+    });
     
     res.json({
         success: true,

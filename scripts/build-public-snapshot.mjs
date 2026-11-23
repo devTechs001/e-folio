@@ -65,8 +65,8 @@ const projects = seedProjects.map((project, index) => ({
     tags: project.tags || [],
     links: project.links || {},
     images: project.images || [],
-    thumbnail: project.images?.[0]?.url || '',
-    imageUrl: project.images?.[0]?.url || '',
+    thumbnail: project.thumbnail || project.images?.[0]?.url || '',
+    imageUrl: project.imageUrl || project.images?.[0]?.url || '',
     completionDate: project.completionDate || null,
     teamSize: project.teamSize ?? 1,
     // Phase 22: the project card and detail modal render duration, challenges
@@ -128,8 +128,12 @@ const labProjects = labSamples.map((sample, index) => ({
     technologies: sample.technologies || [],
     tags: sample.tags || [],
     links: sample.links || {},
-    thumbnail: '',
-    imageUrl: '',
+    // Phase 37: lab cards now render a real image. The sample records carry
+    // their own local assets; the derived fields match what the DB record and
+    // the public page expect, so the card and its dashboard preview agree.
+    images: sample.images || [],
+    thumbnail: sample.thumbnail || sample.images?.[0]?.url || '',
+    imageUrl: sample.imageUrl || sample.images?.[0]?.url || '',
     views: 0,
     likes: 0,
     updatedAt: null

@@ -2624,6 +2624,82 @@ device widths.
 
 ---
 
+## 3aj. Phase 37 — hero background image, Lab card redesign, and poster sync with the Lab dashboard
+
+Owner request: *"add a background image to the hero section, improve the labs
+page cards (only) for projects showcase with images (sync with its dashboard)"*.
+Static and build verification only — **no MongoDB, Express runtime or browser
+was available here**, so nothing below is claimed as live-tested.
+
+### Hero background
+
+A new local asset, `public/assets/images/hero-portfolio-bg.jpg` (1600×547,
+~148 KB), sits behind the hero. It is served from the repository — no remote
+image host, no third-party CDN, no request outside the site.
+
+Two layers were added: `.hero-bg-photo` (the image, `opacity: 0.55`, scaled
+1.04) and `.hero-bg-scrim` (a radial + linear dark gradient that keeps the
+existing hero copy readable). The hero's own animated blobs and particles were
+*not* removed: they were re-pinned above the photo and scrim so the motion
+survives, with the content and the close button above everything. The photo
+dims further below 720 px, and `prefers-reduced-motion` drops the scale
+transform.
+
+Both layers are `aria-hidden`, so the image is decoration and never carries
+meaning. **The photo is a generated abstract, not a photograph of the owner** —
+swap the file if a real image is wanted.
+
+### Lab cards (only)
+
+Scoped strictly to `.lab-card` and its children. `src/pages/ProjectCard.jsx`,
+`src/styles/ProjectCard.css` and the `.lab-grid` rule are untouched.
+
+- **Real images now render.** The card previously read only
+  `thumbnail || imageUrl`, so any record whose image lived in `images[]` showed
+  a letter placeholder. It now resolves `thumbnail → imageUrl → images[0].url`,
+  and a failed URL falls back to a designed placeholder rather than a broken
+  image icon.
+- **Designed fallback** instead of a bare letter on flat colour: a themed
+  gradient tile with the initial plus a small "No preview image" label.
+- **Card anatomy**: fixed 196 px poster, gentle zoom on hover, 2-line clamped
+  title, 3-line clamped description, and a bottom-pinned meta/actions footer so
+  every card in a row shares a baseline. Hover lifts with a theme-tinted glow;
+  `focus-within` shows a ring for keyboard users.
+
+### Syncing the dashboard with the public card
+
+The sync was broken in a way that looked like a styling problem: the dashboard
+sent `thumbnail`, but **`thumbnail` was not a schema field**, so Mongoose
+dropped it silently on every save, and `/api/public/projects` never set it
+either. Three changes close the loop:
+
+1. `server/models/Project.model.js` — `thumbnail` is now a persisted path
+   (trimmed string, default empty).
+2. `server/controllers/public.controller.js` — every public project is returned
+   with one resolved poster (`thumbnail || images[0].url`), exposed as both
+   `thumbnail` and `imageUrl`.
+3. `src/components/dashboard/LabManager.jsx` — each experiment row shows the
+   poster the public card will use (same `posterOf()` rule), and an owner-only
+   URL field saves it through the existing project update endpoint, then fires
+   `settingsChanged` + `publishProjectsChanged()` so open public pages refresh
+   through their existing channels.
+
+The snapshot builder was also corrected so its records derive the same poster
+fields instead of always writing empty strings.
+
+### Verification
+
+`node tests/hero-lab-cards.test.mjs` — **18 checks**, wired into both
+manifests. Full `npm test` passes. Two earlier assertions were updated for the
+new structure: the Lab dashboard now publishes a fourth change notice (the
+poster save), and the sample badge moved into the `LabThumb` component's props
+while still rendering for the owner on sample cards only.
+
+Not verified: real MongoDB persistence of `thumbnail`, the rendered Lab grid in
+a browser, and the hero photo against the live text overlay.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval

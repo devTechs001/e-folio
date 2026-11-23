@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
     FlaskConical, Rocket, RefreshCw, Trash2, Plus, Database,
-    ExternalLink, AlertCircle, CheckCircle2, Terminal, ArrowUpRight
+    ExternalLink, AlertCircle, CheckCircle2, Terminal, ArrowUpRight,
+    ImageIcon, Save, Link2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../NotificationSystem';
@@ -16,6 +17,14 @@ const LAB_STATUSES = ['live', 'beta', 'development', 'experimental'];
 
 const isSample = (project) =>
     Array.isArray(project?.tags) && project.tags.includes(LAB_SAMPLE_TAG);
+
+/**
+ * Resolve the poster a Lab card will show, exactly the way the public page and
+ * the public API do. Keeping one rule here is what makes the dashboard preview
+ * and the published card agree.
+ */
+const posterOf = (project) =>
+    project?.thumbnail || project?.imageUrl || project?.images?.[0]?.url || '';
 
 const settled = (result) =>
     result.status === 'fulfilled' && result.value?.success ? result.value : null;
@@ -141,6 +150,42 @@ const LabManager = () => {
         }
     };
 
+    // Phase 37 — set the card poster from the dashboard. The URL is written to
+    // `thumbnail`, which the public API and card both resolve first, so saving
+    // here is what the public Lab page shows on its next refresh.
+    const [posterEdits, setPosterEdits] = useState({});
+    const [savingPoster, setSavingPoster] = useState(null);
+
+    const savePoster = async (project) => {
+        const id = project.id || project._id;
+        const value = (posterEdits[id] ?? posterOf(project)).trim();
+        if (!id) return;
+        setSavingPoster(id);
+        try {
+            const response = await ApiService.updateProject(id, {
+                title: project.title,
+                description: project.description,
+                thumbnail: value
+            });
+            if (response?.success === false) throw new Error(response.message || 'Save failed');
+            setProjects(prev => prev.map(p =>
+                (p.id || p._id) === id ? { ...p, thumbnail: value, imageUrl: value } : p
+            ));
+            setPosterEdits(prev => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            notifySuccess('Card image saved — the public Lab card uses it now.');
+            window.dispatchEvent(new CustomEvent('settingsChanged'));
+            publishProjectsChanged();
+        } catch (error) {
+            notifyError(error?.message || 'Could not save the card image.');
+        } finally {
+            setSavingPoster(null);
+        }
+    };
+
     const panel = 'rounded-2xl border border-slate-700/60 bg-slate-900/50 p-5';
 
     return (
@@ -256,39 +301,85 @@ const LabManager = () => {
                                 return (
                                     <div
                                         key={project.id || project._id || project.title}
-                                        className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 ${sample ? 'border-amber-500/40 bg-amber-500/5' : 'border-slate-700/60 bg-slate-950/30'}`}
+                                        className={`rounded-xl border ${sample ? 'border-amber-500/40 bg-amber-500/5' : 'border-slate-700/60 bg-slate-950/30'}`}
                                     >
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-semibold text-slate-100 truncate">{project.title}</span>
-                                                <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-                                                    {project.status}
-                                                </span>
-                                                {sample && (
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
-                                                        Sample · deletable
-                                                    </span>
+                                        <div className="flex flex-wrap items-center gap-3 p-3">
+                                            {/* Same poster rule as the public card, so this
+                                                preview cannot drift from what visitors see. */}
+                                            <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-700/60 bg-slate-800">
+                                                {posterOf(project) ? (
+                                                    <img
+                                                        src={posterOf(project)}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center text-slate-500">
+                                                        <ImageIcon size={18} />
+                                                    </div>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-slate-400 mt-1 line-clamp-1 max-w-2xl">{project.description}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Link
-                                                to="/dashboard/projects"
-                                                className="text-xs text-cyan-400 hover:underline inline-flex items-center gap-1"
-                                            >
-                                                Edit <ArrowUpRight size={12} />
-                                            </Link>
-                                            {owner && sample && (
-                                                <button
-                                                    onClick={() => deleteSample(project)}
-                                                    disabled={busy}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-500/40 text-rose-300 text-xs hover:bg-rose-500/15 disabled:opacity-50 transition"
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-semibold text-slate-100 truncate">{project.title}</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                                                        {project.status}
+                                                    </span>
+                                                    {sample && (
+                                                        <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                                                            Sample · deletable
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-slate-400 mt-1 line-clamp-1 max-w-2xl">{project.description}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    to="/dashboard/projects"
+                                                    className="text-xs text-cyan-400 hover:underline inline-flex items-center gap-1"
                                                 >
-                                                    <Trash2 size={13} /> Delete
-                                                </button>
-                                            )}
+                                                    Edit <ArrowUpRight size={12} />
+                                                </Link>
+                                                {owner && sample && (
+                                                    <button
+                                                        onClick={() => deleteSample(project)}
+                                                        disabled={busy}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-500/40 text-rose-300 text-xs hover:bg-rose-500/15 disabled:opacity-50 transition"
+                                                    >
+                                                        <Trash2 size={13} /> Delete
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
+
+                                        {owner && (
+                                            <div className="flex flex-wrap items-center gap-2 border-t border-slate-700/50 px-3 py-2">
+                                                <Link2 size={13} className="text-slate-500" />
+                                                <input
+                                                    type="url"
+                                                    inputMode="url"
+                                                    placeholder="Card image URL (https://… or /assets/images/…)"
+                                                    aria-label={`Card image URL for ${project.title}`}
+                                                    value={posterEdits[project.id || project._id] ?? posterOf(project)}
+                                                    onChange={(e) => setPosterEdits(prev => ({
+                                                        ...prev,
+                                                        [project.id || project._id]: e.target.value
+                                                    }))}
+                                                    className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                                                />
+                                                <button
+                                                    onClick={() => savePoster(project)}
+                                                    disabled={savingPoster === (project.id || project._id)}
+                                                    className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1.5 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-50"
+                                                >
+                                                    {savingPoster === (project.id || project._id)
+                                                        ? <RefreshCw size={12} className="animate-spin" />
+                                                        : <Save size={12} />}
+                                                    Save image
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

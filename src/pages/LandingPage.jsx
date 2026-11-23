@@ -84,6 +84,11 @@ const LandingPage = () => {
             {/* Hero Collaboration Banner */}
             {showBanner && (
                 <section className="collaboration-hero lp-hero" data-aos="fade-down">
+                    {/* Background photo (local asset), then the existing
+                        animated blobs and particles on top of it. */}
+                    <div className="hero-bg-photo" aria-hidden="true"></div>
+                    <div className="hero-bg-scrim" aria-hidden="true"></div>
+
                     {/* Background Effects */}
                     <div className="hero-blob hero-blob-1"></div>
                     <div className="hero-blob hero-blob-2"></div>

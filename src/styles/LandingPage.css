@@ -315,6 +315,78 @@
   overflow: hidden;
 }
 
+/* Phase 37 — hero background photograph.
+   A local asset (no remote request, no third-party CDN) sits behind the
+   existing blobs and particles. The scrim on top of it keeps every piece of
+   hero text at a readable contrast in both themes; the photo itself is purely
+   decorative, so it is aria-hidden and never carries information. */
+.collaboration-hero .hero-bg-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/assets/images/hero-portfolio-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Slightly softer than full strength so the animated blobs still read. */
+  opacity: 0.55;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.collaboration-hero .hero-bg-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Darken behind the copy, fade the edges, and stay tinted with the theme. */
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(7, 11, 20, 0.35) 0%, rgba(7, 11, 20, 0.72) 55%, rgba(7, 11, 20, 0.88) 100%),
+    linear-gradient(180deg, rgba(7, 11, 20, 0.55) 0%, rgba(7, 11, 20, 0.35) 40%, rgba(7, 11, 20, 0.8) 100%);
+  backdrop-filter: saturate(1.05);
+}
+
+/* The animated blobs and particles glow OVER the photo and its scrim, so the
+   hero keeps its existing motion instead of turning into a flat image. */
+.collaboration-hero > .hero-blob,
+.collaboration-hero > .hero-particles {
+  position: absolute;
+  z-index: 2;
+}
+
+/* Content, controls and the close button sit above everything decorative. */
+.collaboration-hero > *:not(.hero-bg-photo):not(.hero-bg-scrim):not(.hero-blob):not(.hero-particles) {
+  position: relative;
+  z-index: 3;
+}
+
+/* The close button must stay on top of the photo and the content stack. */
+.collaboration-hero > .banner-close-btn {
+  z-index: 20;
+}
+
+/* On small screens the crop is tighter, so keep the photo from competing
+   with the stacked buttons and text. */
+@media (max-width: 720px) {
+  .collaboration-hero .hero-bg-photo {
+    opacity: 0.42;
+    background-position: center top;
+  }
+  .collaboration-hero .hero-bg-scrim {
+    background:
+      radial-gradient(140% 80% at 50% 0%, rgba(7, 11, 20, 0.45) 0%, rgba(7, 11, 20, 0.8) 60%, rgba(7, 11, 20, 0.92) 100%),
+      linear-gradient(180deg, rgba(7, 11, 20, 0.6) 0%, rgba(7, 11, 20, 0.4) 40%, rgba(7, 11, 20, 0.88) 100%);
+  }
+}
+
+/* A user who prefers less motion still gets the photo, just without the
+   parallax scale. */
+@media (prefers-reduced-motion: reduce) {
+  .collaboration-hero .hero-bg-photo {
+    transform: none;
+  }
+}
+
 /* Banner Close Button */
 .banner-close-btn {
   position: absolute;
