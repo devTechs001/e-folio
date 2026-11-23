@@ -42,7 +42,7 @@ const WORKING = [
     'https://fintech-banking.netlify.app/'
 ];
 const KEPT = [
-    'https://ominbiz-solution.netlify.app/',
+    'https://bizsolutionz.netlify.app/',
     'https://gbchat.netlify.app/',
     'https://cinemaflx.netlify.app/'
 ];

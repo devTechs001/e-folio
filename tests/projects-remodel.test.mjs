@@ -97,7 +97,7 @@ check('the page wires the new layer and its keyboard/share/filter features', () 
 check('none of the pre-existing Projects features were deleted', () => {
     const src = page();
     for (const token of KEPT_FEATURES) assert.ok(src.includes(token), `lost feature: ${token}`);
-    assert.equal(json('src/data/publicSnapshot.json').sections.projects.projects.length, 14);
+    assert.equal(json('src/data/publicSnapshot.json').sections.projects.projects.length, 16);
     assert.equal(json('src/data/projectShowcase.json').projects.length, 2);
 });
 

@@ -827,16 +827,18 @@
 
 /* Override / enlarge main heading for About section (more prominent) */
 
-/* Welcome badge text */
+/* Availability pill text (the welcome line is now the CSS-3D wordmark in
+   .welcome-3d / WelcomeTag3D.css; the earlier oversized rule made this pill
+   overflow its rounded container, so it is sized to sit inside it). */
 .about-section .welcome-badge-text {
   display: inline-block;
   position: relative;
   color: var(--mainColor);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  padding: 0.2em 0.4em;
+  letter-spacing: 0.12em;
+  font-size: clamp(0.7rem, 1.4vw, 0.85rem);
+  padding: 0;
   white-space: nowrap;
   text-shadow: 0 0 8px rgba(14,239,239,0.6);
 }
@@ -884,4 +886,38 @@
 .btn-secondary:focus-visible {
   outline: 3px solid var(--mainColor);
   outline-offset: 3px;
+}
+/* ---------------------------------------------------------------
+   About heading layout (phase 35)
+
+   The About section is a two-column hero, so its heading must stay
+   left-aligned on desktop while the rest of the public pages centre
+   theirs. `SectionHeading` is centred by default; these rules restore
+   the column's alignment and give the name one extra step of size.
+   --------------------------------------------------------------- */
+
+.about-section .about-heading {
+  align-items: center;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .about-section .about-heading {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  /* Keep the decoration under the words, not stretched across the column. */
+  .about-section .about-heading .sec-head__deco {
+    margin-left: 0;
+    margin-right: auto;
+    width: 170px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .about-section .about-heading .sec-head__title {
+    font-size: 4.25rem;
+  }
 }

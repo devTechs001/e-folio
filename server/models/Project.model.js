@@ -51,6 +51,16 @@ const projectSchema = new mongoose.Schema({
         caption: { type: String, default: '' },
         uploadedAt: { type: Date, default: Date.now }
     }],
+    // Phase 37 — an explicit poster image for card surfaces (the Lab grid).
+    // Before this, the dashboard sent `thumbnail` and Mongoose dropped it
+    // silently because the path did not exist, so cards could never keep the
+    // image the owner picked. When empty, both the card and the API fall back
+    // to `images[0].url`.
+    thumbnail: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     featured: {
         type: Boolean,
         default: false,

@@ -12,6 +12,7 @@ import { useSocket } from '../contexts/SocketContext';
 import cacheService, { CACHE_TTL } from '../services/cache.service';
 import api from '../services/api.service';
 import ArchiveNote from '../components/ArchiveNote';
+import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import socketService from '../services/socket.service';
 import { subscribeProjectsChanged, publishProjectsChanged } from '../utils/projectSync';
@@ -22,6 +23,46 @@ import '../styles/Lab.css';
 const LAB_STATUSES = ['live', 'beta', 'development', 'experimental'];
 const LAB_SAMPLE_TAG = 'lab-sample';
 const CACHE_KEY = 'lab_bundle';
+
+/**
+ * Lab card poster.
+ *
+ * Phase 37: the card used to render `thumbnail || imageUrl` only, so a record
+ * whose image lived in `images[]` (the normal case for an uploaded project)
+ * showed a letter placeholder instead of its photo. The poster is now resolved
+ * the same way the API does, and a broken URL falls back to the designed
+ * placeholder instead of a broken-image icon.
+ */
+const LabThumb = ({ project, statusClass, statusLabel, StatusIcon, sampleLabel }) => {
+  const source = project.thumbnail || project.imageUrl || project.images?.[0]?.url || '';
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(source) && !failed;
+  const initial = String(project.title || 'L').trim().charAt(0).toUpperCase();
+
+  return (
+    <div className={`lab-thumb ${showImage ? 'lab-thumb--photo' : 'lab-thumb--empty'}`}>
+      {showImage ? (
+        <img
+          src={source}
+          alt={project.title || 'Lab experiment'}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="lab-thumb-placeholder" aria-hidden="true">
+          <span className="lab-thumb-placeholder__glyph">{initial}</span>
+          <span className="lab-thumb-placeholder__label">No preview image</span>
+        </div>
+      )}
+      <div className="lab-thumb-overlay" aria-hidden="true"></div>
+      <span className={`lab-status lab-status-${statusClass}`}>
+        <StatusIcon size={12} /> {statusLabel}
+      </span>
+      {sampleLabel}
+    </div>
+  );
+};
 
 const STATUS_LABELS = {
   live: 'Live',
@@ -278,12 +319,11 @@ const Lab = () => {
             </button>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-textColor mb-4">
-            My <span className="text-mainColor gradient-text">Lab</span>
-          </h2>
-          <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto">
-            Experiments, the toolkit behind them, and what I tinker with off the bench.
-          </p>
+          <SectionHeading
+            text="My Lab"
+            accent="Lab"
+            lede="Experiments, the toolkit behind them, and what I tinker with off the bench."
+          />
 
           <div className="lab-header-meta mt-3">
             <span className={`lab-source lab-source-${dataStatus}`}>
@@ -395,18 +435,15 @@ const Lab = () => {
                   transition={{ type: 'spring', stiffness: 260, damping: 24, delay: index * 0.05 }}
                   onClick={() => setSelectedProject(project)}
                 >
-                  <div className="lab-thumb">
-                    {(project.thumbnail || project.imageUrl) ? (
-                      <img src={project.thumbnail || project.imageUrl} alt={project.title} loading="lazy" />
-                    ) : (
-                      <div className="lab-thumb-placeholder">{(project.title || 'L').charAt(0)}</div>
-                    )}
-                    <div className="lab-thumb-overlay"></div>
-                    <span className={`lab-status lab-status-${statusClass}`}>
-                      <StatusIcon size={12} /> {statusLabel}
-                    </span>
-                    {owner && sample && <span className="lab-sample-badge">Sample · deletable</span>}
-                  </div>
+                  <LabThumb
+                    project={project}
+                    statusClass={statusClass}
+                    statusLabel={statusLabel}
+                    StatusIcon={StatusIcon}
+                    sampleLabel={owner && sample
+                      ? <span className="lab-sample-badge">Sample · deletable</span>
+                      : null}
+                  />
                   <div className="lab-body">
                     <h3 className="lab-title group-hover:text-cyan-400 transition flex items-center justify-between">
                       <span>{project.title}</span>

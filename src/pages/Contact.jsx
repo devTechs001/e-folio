@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettingsListener } from '../hooks/useSettingsListener';
 import apiService from '../services/api.service';
+import SectionHeading from '../components/SectionHeading';
 import '../styles/Contact.css';
 
 const Contact = () => {
@@ -168,13 +169,12 @@ const Contact = () => {
 
             <div className="max-w-7xl mx-auto relative z-10">
                 {/* Header */}
-                <div className="text-center mb-16" data-aos="fade-down">
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
-                        Contact <span className="gradient-text-contact">Me</span>
-                    </h2>
-                    <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto">
-                        Have a project in mind? Let's discuss how we can work together
-                    </p>
+                <div className="text-center" data-aos="fade-down">
+                    <SectionHeading
+                        text="Contact Me"
+                        accent="Me"
+                        lede="Have a project in mind? Let's discuss how we can work together"
+                    />
                     
                     {/* Availability Badge */}
                     <div className="inline-flex items-center gap-2 mt-6 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full">

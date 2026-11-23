@@ -1,0 +1,232 @@
+/* ============================================================
+   SectionHeading — shared centred heading for the public pages.
+
+   Brought over from the hobbies/interests heading so the whole
+   public site speaks in one voice: a large centred title, an
+   animated gradient rule with two pulsing dots, an optional small
+   eyebrow and an optional supporting sentence.
+
+   Sizes step one notch above the previous per-page headings
+   (3xl / 4xl / 5xl) so the title reads as the section anchor.
+   ============================================================ */
+
+.sec-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 auto 3rem;
+  text-align: center;
+}
+
+/* ---------------------------------------------------- eyebrow --- */
+
+.sec-head__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--mainColor, #00efff) 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mainColor, #00efff) 10%, transparent);
+  color: var(--mainColor, #00efff);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ----------------------------------------------------- title --- */
+
+.sec-head__title {
+  margin: 0;
+  color: var(--textColor, #e8f1ff);
+  /* One scale for every public heading. Phase 36 raised each step; change
+     these five values to re-tune the whole site at once. */
+  font-size: var(--sec-head-size, 2.5rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.sec-head__text {
+  color: inherit;
+}
+
+.sec-head__accent {
+  background: linear-gradient(
+    90deg,
+    var(--mainColor, #00efff) 0%,
+    #8b5cf6 25%,
+    #ec4899 50%,
+    #8b5cf6 75%,
+    var(--mainColor, #00efff) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: secHeadGradient 6s linear infinite;
+}
+
+@keyframes secHeadGradient {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* ------------------------------------------------ decoration --- */
+
+.sec-head__deco {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: min(190px, 60%);
+  margin: 1.25rem auto 0;
+}
+
+.sec-head__line {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--mainColor, #00efff),
+    transparent
+  );
+  animation: secHeadLineGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes secHeadLineGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--mainColor, #00efff) 70%, transparent);
+    opacity: 0.85;
+  }
+  50% {
+    box-shadow:
+      0 0 18px var(--mainColor, #00efff),
+      0 0 30px color-mix(in srgb, var(--mainColor, #00efff) 55%, transparent);
+    opacity: 1;
+  }
+}
+
+.sec-head__dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--mainColor, #00efff);
+  animation: secHeadDotPulse 2.4s ease-in-out infinite;
+}
+
+.sec-head__dot--left {
+  animation-delay: 0s;
+}
+
+.sec-head__dot--right {
+  animation-delay: 1.2s;
+}
+
+@keyframes secHeadDotPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--mainColor, #00efff);
+  }
+  50% {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* ------------------------------------------------------- lede --- */
+
+.sec-head__lede {
+  max-width: 46rem;
+  margin: 1.5rem auto 0;
+  color: color-mix(in srgb, var(--textColor, #e8f1ff) 72%, transparent);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+/* ----------------------------------------------- breakpoints --- */
+
+@media (min-width: 640px) {
+  .sec-head {
+    margin-bottom: 3.5rem;
+  }
+
+  .sec-head__title {
+    font-size: var(--sec-head-size, 3rem);
+  }
+
+  .sec-head__lede {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .sec-head__title {
+    font-size: var(--sec-head-size, 3.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .sec-head {
+    margin-bottom: 4rem;
+  }
+
+  .sec-head__title {
+    font-size: var(--sec-head-size, 4.25rem);
+    line-height: 1.1;
+  }
+
+  .sec-head__deco {
+    width: min(220px, 55%);
+    margin-top: 1.5rem;
+  }
+
+  .sec-head__lede {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .sec-head__title {
+    font-size: var(--sec-head-size, 4.75rem);
+  }
+}
+
+/* --------------------------------------------- reduced motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-head__accent,
+  .sec-head__line,
+  .sec-head__dot {
+    animation: none;
+  }
+
+  .sec-head__accent {
+    background-position: 0% center;
+  }
+}
+
+/* Keyboard focus stays visible on anything interactive a page nests here. */
+.sec-head a:focus-visible,
+.sec-head button:focus-visible {
+  outline: 2px solid var(--mainColor, #00efff);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}

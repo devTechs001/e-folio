@@ -43,7 +43,7 @@ const allProjects = [
             github: "https://github.com/devtechs001/enterprise-ecommerce-platform",
             live: "https://enterprise-ecommerce-platform.netlify.app",
             demo: "https://enterprise-ecommerce-platform.netlify.app/demo",
-            netlify: "https://ominbiz-solution.netlify.app/"
+            netlify: "https://bizsolutionz.netlify.app/"
         },
         technologies: ["React", "Vite", "Node.js", "MongoDB", "Stripe", "PayPal", "TailwindCSS"],
         category: "Web",

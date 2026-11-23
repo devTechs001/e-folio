@@ -768,9 +768,21 @@ class ApiService {
         });
     }
 
-    // Interests APIs
-    async getInterests() {
+    // Interests (hobbies) APIs
+    //
+    // The dashboard used to read the *public* endpoint, which cannot show
+    // hidden hobbies and never returns ordering. It now reads the owner list;
+    // the public page keeps using `/public/interests` through publicContent.
+    async getInterests(params) {
+        return this.request('/interests', { params });
+    }
+
+    async getPublicInterests() {
         return this.request('/public/interests');
+    }
+
+    async getInterestStats() {
+        return this.request('/interests/stats');
     }
 
     async addInterest(interestData) {
@@ -790,6 +802,31 @@ class ApiService {
     async deleteInterest(id) {
         return this.request(`/interests/${id}`, {
             method: 'DELETE'
+        });
+    }
+
+    async setInterestVisibility(id, visible) {
+        return this.request(`/interests/${id}/visibility`, {
+            method: 'PATCH',
+            body: JSON.stringify({ visible: Boolean(visible) })
+        });
+    }
+
+    async reorderInterests(items) {
+        return this.request('/interests/reorder', {
+            method: 'POST',
+            body: JSON.stringify({ items })
+        });
+    }
+
+    async exportInterests() {
+        return this.request('/interests/export');
+    }
+
+    async importInterests(hobbies) {
+        return this.request('/interests/import', {
+            method: 'POST',
+            body: JSON.stringify({ hobbies })
         });
     }
 
@@ -1699,6 +1736,32 @@ class ApiService {
             console.warn('CV version delete unavailable');
             return { success: false, message: 'Failed to delete version' };
         }
+    }
+
+    // Phase 33 — CV lifecycle: publish for visitors, review, import a JSON
+    // export back into the draft, and read the holder's own public document.
+    async publishCV() {
+        return this.request('/cv/publish', { method: 'POST' });
+    }
+
+    async unpublishCV() {
+        return this.request('/cv/unpublish', { method: 'POST' });
+    }
+
+    async reviewCV() {
+        return this.request('/cv/review', { method: 'POST' });
+    }
+
+    async importCV(cv) {
+        return this.request('/cv/import', {
+            method: 'POST',
+            body: JSON.stringify({ cv })
+        });
+    }
+
+    /** Own public CV document (works while unpublished for the holder). */
+    async getOwnPublicCV(username) {
+        return this.request(`/public/cv/${encodeURIComponent(username)}`);
     }
 
 

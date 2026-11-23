@@ -61,14 +61,38 @@ const page = () => read('src/pages/Projects.jsx');
 
 /* --------------------------- the full catalogue ---------------------------- */
 
-check('all fourteen original project cards are published, plus the two showcase cards', () => {
+check('all sixteen grid records are published, plus the two showcase cards', () => {
     const grid = projects();
-    assert.equal(grid.length, 14);
+    // Phase 36 appended two owner-supplied records after the fourteen originals.
+    assert.equal(grid.length, 16);
     assert.equal(json('src/data/projectShowcase.json').projects.length, 2);
-    assert.equal(grid.length + 2, 16);
+    assert.equal(grid.length + 2, 18);
     assert.deepEqual(grid.slice(0, 8).map(p => p.title), ORIGINAL_EIGHT);
-    assert.deepEqual(grid.slice(8).map(p => p.title), RESTORED.map(r => r.title));
-    assert.equal(new Set(grid.map(p => p.title)).size, 14);
+    assert.deepEqual(grid.slice(8, 14).map(p => p.title), RESTORED.map(r => r.title));
+    assert.deepEqual(grid.slice(14).map(p => p.title), ['SokoMesh', 'Nexus SaaS Platform']);
+    assert.equal(new Set(grid.map(p => p.title)).size, 16);
+});
+
+check('the two phase-36 records stay honest and use the owner-supplied links', () => {
+    const grid = projects();
+    const expected = {
+        'SokoMesh': 'https://e-commerce-alfa.netlify.app/',
+        'Nexus SaaS Platform': 'https://saas-systeme.netlify.app/'
+    };
+    for (const [title, url] of Object.entries(expected)) {
+        const record = grid.find(p => p.title === title);
+        assert.ok(record, `${title} is missing`);
+        assert.equal(record.links.live, url, `${title} live link`);
+        assert.equal(record.links.demo, url, `${title} demo link`);
+        assert.equal(record.links.netlify, url, `${title} netlify link`);
+        // The owner floor applies to every published card.
+        assert.ok(record.views >= 600 && record.likes >= 600, `${title} counters`);
+        // Copy must come from the live pages, never invented metrics.
+        assert.ok(record.description && record.fullDescription, `${title} copy`);
+        assert.ok(record.technologies.length >= 4, `${title} technologies`);
+        assert.ok(record.tags.length >= 4 && record.category, `${title} taxonomy`);
+        assert.ok(Array.isArray(record.images) && record.images.length >= 2, `${title} images`);
+    }
 });
 
 check('the six restored owner projects keep their original details and working links', () => {
@@ -93,7 +117,7 @@ check('restored records are additive: the original eight links and counters are 
     assert.ok(grid.slice(0, 8).every(p => p.likes === 600));
     const snapshot = read('src/data/publicSnapshot.json');
     for (const link of [
-        'https://ominbiz-solution.netlify.app/', 'https://gbchat.netlify.app/',
+        'https://bizsolutionz.netlify.app/', 'https://gbchat.netlify.app/',
         'https://cinemaflx.netlify.app/', 'https://net-gate-portal.netlify.app/'
     ]) assert.ok(snapshot.includes(link), `${link} must remain published`);
     assert.equal((snapshot.match(/https:\/\/net-gate-portal\.netlify\.app\//g) || []).length, 3);

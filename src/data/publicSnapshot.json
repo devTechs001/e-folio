@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04",
+  "generatedAt": "2026-11-23",
   "description": "Saved copy of local backup/seed records. Used by public pages only when the live API cannot supply a section. Live data always wins.",
   "sources": [
     "scripts/seed-projects.js",
@@ -38,9 +38,9 @@
           ],
           "links": {
             "github": "https://github.com/devTechs001/ecommerce-platform",
-            "live": "https://ominbiz-solution.netlify.app/",
-            "demo": "https://ominbiz-solution.netlify.app/",
-            "netlify": "https://ominbiz-solution.netlify.app/"
+            "live": "https://bizsolutionz.netlify.app/",
+            "demo": "https://bizsolutionz.netlify.app/",
+            "netlify": "https://bizsolutionz.netlify.app/"
           },
           "images": [
             {
@@ -704,9 +704,97 @@
           "views": 880,
           "likes": 600,
           "order": 14
+        },
+        {
+          "id": "snapshot-sokomesh",
+          "title": "SokoMesh",
+          "description": "A Nairobi-first local marketplace preview connecting shoppers with independent neighbourhood shops.",
+          "fullDescription": "SokoMesh is a local marketplace concept built around independent shops: a Nairobi-first browse experience, storefront categories, marked-down sample finds with clear prices, a product catalogue, and a seller preview that explains how a shop would take part. The live page labels its catalogue, ratings, sellers and ranked shelves as illustrative demo data rather than live shopper activity.",
+          "technologies": [
+            "React",
+            "JavaScript",
+            "Marketplace UI",
+            "Netlify"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": false,
+          "tags": [
+            "E-Commerce",
+            "Marketplace",
+            "Local Shops",
+            "Product Catalogue"
+          ],
+          "links": {
+            "live": "https://e-commerce-alfa.netlify.app/",
+            "demo": "https://e-commerce-alfa.netlify.app/",
+            "netlify": "https://e-commerce-alfa.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+              "caption": "Sample find — studio wireless headphones"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa",
+              "caption": "Sample find — the everyday carry-all"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+          "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+          "completionDate": "2025-06-20",
+          "teamSize": 1,
+          "duration": "3 weeks",
+          "views": 600,
+          "likes": 600,
+          "order": 15
+        },
+        {
+          "id": "snapshot-nexus-saas-platform",
+          "title": "Nexus SaaS Platform",
+          "description": "A SaaS analytics platform shell with a dashboard shell, CRM and AI copilot surfaces.",
+          "fullDescription": "Nexus is a SaaS platform interface presenting three core surfaces — analytics, CRM, and an AI copilot — behind a sign-in screen that shows the dashboard syncing its metrics. The live page exposes the loading shell only, so this record describes the interface as published and claims nothing about the underlying services.",
+          "technologies": [
+            "React",
+            "JavaScript",
+            "SaaS UI",
+            "Netlify"
+          ],
+          "category": "Web",
+          "status": "completed",
+          "featured": false,
+          "tags": [
+            "SaaS",
+            "Analytics",
+            "CRM",
+            "Dashboard"
+          ],
+          "links": {
+            "live": "https://saas-systeme.netlify.app/",
+            "demo": "https://saas-systeme.netlify.app/",
+            "netlify": "https://saas-systeme.netlify.app/"
+          },
+          "images": [
+            {
+              "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71",
+              "caption": "Analytics dashboard"
+            },
+            {
+              "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f",
+              "caption": "Platform overview"
+            }
+          ],
+          "thumbnail": "https://images.unsplash.com/photo-1551288049-bebda4e38f71",
+          "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71",
+          "completionDate": "2025-07-10",
+          "teamSize": 1,
+          "duration": "2 weeks",
+          "views": 600,
+          "likes": 600,
+          "order": 16
         }
       ],
-      "count": 14
+      "count": 16
     },
     "skills": {
       "success": true,
@@ -1521,6 +1609,7 @@
             "live": "https://net-gate-portal.netlify.app/",
             "demo": "https://net-gate-portal.netlify.app/"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,
@@ -1547,6 +1636,7 @@
           "links": {
             "github": "https://github.com/devTechs001/wifi-security-lab"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,
@@ -1572,6 +1662,7 @@
           "links": {
             "github": "https://github.com/devTechs001/web-pentest-lab"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,
@@ -1596,6 +1687,7 @@
           "links": {
             "github": "https://github.com/devTechs001/cloud-iam-sentinel"
           },
+          "images": [],
           "thumbnail": "",
           "imageUrl": "",
           "views": 0,

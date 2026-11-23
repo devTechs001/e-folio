@@ -13,6 +13,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../NotificationSystem';
 import apiService from '../../services/api.service';
 import DashboardLayout from './DashboardLayout';
+import CVPreview from '../CVPreview';
+import { reviewCv, summarizeCv, CV_LANGUAGE_LEVELS } from '../../utils/cvSchema';
+import { saveCvDraft, readCvDraft, clearCvDraft, describeCvDraft } from '../../utils/cvDraft';
 
 const generateId = () => `item_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
@@ -26,10 +29,13 @@ const emptyCV = {
   skills: {},
   projects: [],
   achievements: [],
+  certifications: [],
+  languages: [],
+  links: [],
   settings: {
     template: 'modern', primaryColor: '#2563eb', fontFamily: 'Inter, sans-serif',
     showPhoto: false, showQRCode: false, showContactIcons: true,
-    sectionOrder: ['experience', 'education', 'skills', 'projects', 'achievements'],
+    sectionOrder: ['experience', 'education', 'skills', 'projects', 'achievements', 'certifications', 'languages', 'links'],
     customCSS: ''
   }
 };
@@ -41,6 +47,23 @@ const templateOptions = [
   { id: 'creative', name: 'Creative', description: 'Bold creative layout' },
   { id: 'professional', name: 'Professional', description: 'Corporate standard' }
 ];
+
+// Phase 33 — every entry section the editor manages. The public page and the
+// saved document use the same keys, so nothing edited here is dropped later.
+const ENTRY_TABS = ['experience', 'education', 'skills', 'projects', 'achievements', 'certifications', 'languages', 'links'];
+
+const mergeLoadedCv = data => ({
+  personalInfo: { ...emptyCV.personalInfo, ...(data?.personalInfo || {}) },
+  experience: data?.experience || [],
+  education: data?.education || [],
+  skills: data?.skills && typeof data.skills === 'object' && !Array.isArray(data.skills) ? data.skills : {},
+  projects: data?.projects || [],
+  achievements: data?.achievements || [],
+  certifications: data?.certifications || [],
+  languages: data?.languages || [],
+  links: data?.links || [],
+  settings: { ...emptyCV.settings, ...(data?.settings || {}) }
+});
 
 const SectionCard = ({ item, index, onEdit, onDelete, onToggle, icon: Icon, children }) => (
   <motion.div
@@ -128,7 +151,8 @@ const FormModal = ({ showFormModal, setShowFormModal, formMode, activeTab, editi
         title: '', company: '', period: '', location: '', description: '',
         degree: '', institution: '', details: '',
         name: '', technologies: [], highlights: [], url: '',
-        text: '', visible: true
+        text: '', issuer: '', credentialUrl: '', label: '', level: '',
+        visible: true
       });
     }
   }, [editingItem, showFormModal]);
@@ -245,6 +269,30 @@ const FormModal = ({ showFormModal, setShowFormModal, formMode, activeTab, editi
             {renderField('Achievement Text', 'text', 'textarea', { rows: 2, placeholder: 'e.g. Best Developer Award — Company (2023)' })}
           </>
         )}
+        {section === 'certifications' && (
+          <>
+            {renderField('Certification Name', 'name', 'text', { placeholder: 'e.g. AWS Certified Developer' })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {renderField('Issuer', 'issuer')}
+              {renderField('Year / Period', 'period')}
+            </div>
+            {renderField('Credential URL (optional)', 'credentialUrl', 'url', { placeholder: 'https://...' })}
+          </>
+        )}
+        {section === 'languages' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {renderField('Language', 'name', 'text', { placeholder: 'e.g. English' })}
+            {renderField('Level', 'level', 'select', {
+              options: CV_LANGUAGE_LEVELS.map(level => ({ value: level, label: level }))
+            })}
+          </div>
+        )}
+        {section === 'links' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {renderField('Label', 'label', 'text', { placeholder: 'e.g. GitHub' })}
+            {renderField('URL', 'url', 'url', { placeholder: 'https://... or /portfolio/you' })}
+          </div>
+        )}
         <div className="flex items-center gap-2 pt-4">
           <input type="checkbox" id="form-visible" checked={form.visible !== false}
             onChange={e => update('visible', e.target.checked)} className="rounded bg-slate-700 border-slate-600" />
@@ -284,11 +332,27 @@ const CVEditorStyled = () => {
   const [skillCategorySkills, setSkillCategorySkills] = useState('');
   const [newSkillName, setNewSkillName] = useState('');
   const [activeCat, setActiveCat] = useState(null);
+  // Phase 33 — lifecycle, review and draft state.
+  const [published, setPublished] = useState(false);
+  const [publishedAt, setPublishedAt] = useState(null);
+  const [publishing, setPublishing] = useState(false);
+  const [review, setReview] = useState(null);
+  const [showReview, setShowReview] = useState(false);
+  const [draftInfo, setDraftInfo] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [slug, setSlug] = useState('');
+  const importRef = useRef(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     loadCV();
     loadVersions();
-  }, []);
+    // `user` is a dependency on purpose: the first render can happen before
+    // the session resolves, and the local draft is scoped to the account id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.id]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -307,17 +371,15 @@ const CVEditorStyled = () => {
       const response = await apiService.getCV();
       if (response.success && response.data) {
         const data = response.data;
-        const merged = {
-          personalInfo: { ...emptyCV.personalInfo, ...(data.personalInfo || {}) },
-          experience: data.experience || [],
-          education: data.education || [],
-          skills: data.skills && typeof data.skills === 'object' && !Array.isArray(data.skills) ? data.skills : {},
-          projects: data.projects || [],
-          achievements: data.achievements || [],
-          settings: { ...emptyCV.settings, ...(data.settings || {}) }
-        };
-        setCV(merged);
+        setCV(mergeLoadedCv(data));
+        setPublished(Boolean(data.isPublished));
+        setPublishedAt(data.publishedAt || null);
+        setReview(reviewCv(data));
+        setSlug(data.slug || user?.username || '');
       }
+      // A locally stored draft is offered, never applied silently.
+      const stored = readCvDraft(user?._id || user?.id);
+      setDraftInfo(stored ? { record: stored, label: describeCvDraft(stored) } : null);
     } catch (err) {
       console.error('Failed to load CV:', err);
     } finally {
@@ -343,6 +405,14 @@ const CVEditorStyled = () => {
       if (response.success) {
         success('CV saved successfully');
         setUnsavedChanges(false);
+        setLastSavedAt(new Date());
+        setReview(reviewCv(response.data || cv));
+        if (response.data) {
+          setPublished(Boolean(response.data.isPublished));
+          setPublishedAt(response.data.publishedAt || null);
+        }
+        clearCvDraft(user?._id || user?.id);
+        setDraftInfo(null);
         loadVersions();
       } else {
         showError(response.message || 'Failed to save CV');
@@ -351,6 +421,96 @@ const CVEditorStyled = () => {
       showError('Failed to save CV');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ---------------------------------------------------------------- Phase 33
+  // Draft: an explicit action that stores the working copy on this device.
+  // It never claims the server has the change.
+  const saveDraftLocally = () => {
+    const record = saveCvDraft(user?._id || user?.id, cv);
+    if (record) {
+      setDraftInfo({ record, label: describeCvDraft(record) });
+      success('Draft saved on this device — not yet saved to your CV');
+    } else {
+      showError('This browser cannot store a draft');
+    }
+  };
+
+  const restoreDraft = () => {
+    if (!draftInfo?.record?.cv) return;
+    setCV(mergeLoadedCv(draftInfo.record.cv));
+    setUnsavedChanges(true);
+    success('Draft restored — review it, then save to your CV');
+  };
+
+  const discardDraft = () => {
+    clearCvDraft(user?._id || user?.id);
+    setDraftInfo(null);
+    success('Local draft discarded');
+  };
+
+  const runReview = async () => {
+    const local = reviewCv(cv);
+    setReview(local);
+    setShowReview(true);
+    try {
+      const response = await apiService.reviewCV();
+      if (response.success) setReview(reviewCv(response.data || cv));
+    } catch (err) {
+      // The local review is already accurate; a failed ping changes nothing.
+    }
+  };
+
+  const togglePublished = async () => {
+    try {
+      setPublishing(true);
+      const response = published ? await apiService.unpublishCV() : await apiService.publishCV();
+      if (response.success) {
+        setPublished(!published);
+        setPublishedAt(response.data?.publishedAt || null);
+        success(published ? 'CV hidden from visitors' : 'CV published — your link is live');
+      } else {
+        showError(response.message || 'Could not update publishing');
+      }
+    } catch (err) {
+      showError('Could not update publishing');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const exportJson = () => {
+    setIsExporting(true);
+    try {
+      const blob = new Blob([JSON.stringify(cv, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${(cv.personalInfo.name || 'cv').replace(/\s+/g, '_')}_cv.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportFile = async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const source = parsed?.cv && typeof parsed.cv === 'object' ? parsed.cv : parsed;
+      if (!source || typeof source !== 'object') throw new Error('Unreadable file');
+      setCV(mergeLoadedCv(source));
+      setUnsavedChanges(true);
+      success('Imported into the editor — save to apply it to your CV');
+    } catch (err) {
+      showError('That file is not a CV export from this editor');
+    } finally {
+      setImporting(false);
+      if (importRef.current) importRef.current.value = '';
     }
   };
 
@@ -567,6 +727,9 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
       case 'education': return cv.education;
       case 'projects': return cv.projects;
       case 'achievements': return cv.achievements;
+      case 'certifications': return cv.certifications || [];
+      case 'languages': return cv.languages || [];
+      case 'links': return cv.links || [];
       default: return [];
     }
   };
@@ -577,6 +740,9 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
       case 'education': return 'Education';
       case 'projects': return 'Project';
       case 'achievements': return 'Achievement';
+      case 'certifications': return 'Certification';
+      case 'languages': return 'Language';
+      case 'links': return 'Link';
       default: return 'Item';
     }
   };
@@ -592,6 +758,7 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
     }
     setShowFormModal(false);
     setEditingItem(null);
+    setReview(reviewCv({ ...cv, [section]: formMode === 'add' ? [...getSectionData(), data] : getSectionData() }));
   };
 
   const deleteSectionItem = (index) => {
@@ -615,9 +782,132 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
     { id: 'skills', label: 'Skills', icon: Code, count: Object.keys(cv.skills || {}).length },
     { id: 'projects', label: 'Projects', icon: Award, count: cv.projects.filter(p => p.visible !== false).length },
     { id: 'achievements', label: 'Achievements', icon: Star, count: cv.achievements.filter(a => a.visible !== false).length },
+    { id: 'certifications', label: 'Certifications', icon: CheckCircle, count: (cv.certifications || []).filter(c => c.visible !== false).length },
+    { id: 'languages', label: 'Languages', icon: Globe, count: (cv.languages || []).filter(l => l.visible !== false).length },
+    { id: 'links', label: 'Links', icon: FileText, count: (cv.links || []).filter(l => l.visible !== false).length },
+    { id: 'review', label: 'Review', icon: CheckCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'preview', label: 'Preview', icon: Eye }
   ];
+
+  // Generic renderer for the sections introduced in phase 33. It reuses the
+  // same SectionCard/FormModal machinery as experience/education, so add,
+  // edit, hide and delete behave identically everywhere.
+  const renderEntrySection = (section, { icon: Icon, title, empty }) => {
+    const items = cv[section] || [];
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-400">
+            {items.length} {items.length === 1 ? 'entry' : 'entries'}
+          </p>
+          <button onClick={openAddModal}
+            className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors text-sm">
+            <Plus size={16} /> Add {title}
+          </button>
+        </div>
+        <AnimatePresence mode="popLayout">
+          {items.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <Icon size={40} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm">{empty}</p>
+            </div>
+          ) : (
+            items.map((item, i) => (
+              <SectionCard key={item.id || i} item={item} index={i}
+                onEdit={openEditModal} onDelete={deleteSectionItem} onToggle={toggleSectionItem} icon={Icon}>
+                <h4 className="text-sm font-semibold text-white">
+                  {item.name || item.label || item.degree || item.title || 'Untitled'}
+                </h4>
+                {(item.issuer || item.level || item.company) && (
+                  <p className="text-xs text-cyan-400">{item.issuer || item.level || item.company}</p>
+                )}
+                {(item.period || item.url) && (
+                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.period || item.url}</p>
+                )}
+              </SectionCard>
+            ))
+          )}
+        </AnimatePresence>
+        <FormModal showFormModal={showFormModal} setShowFormModal={setShowFormModal} formMode={formMode} activeTab={activeTab} editingItem={editingItem} saveFormItem={saveFormItem} getSectionLabel={getSectionLabel} />
+      </div>
+    );
+  };
+
+  const renderCertifications = () => renderEntrySection('certifications', {
+    icon: CheckCircle,
+    title: 'Certification',
+    empty: 'No certifications yet. Add the ones that support your application.'
+  });
+
+  const renderLanguages = () => renderEntrySection('languages', {
+    icon: Globe,
+    title: 'Language',
+    empty: 'No languages yet. Add the languages you work in.'
+  });
+
+  const renderLinks = () => renderEntrySection('links', {
+    icon: FileText,
+    title: 'Link',
+    empty: 'No links yet. Add a portfolio, repository or profile URL.'
+  });
+
+  // Review panel: derived only from the current document.
+  const renderReview = () => {
+    const summary = summarizeCv(cv);
+    const checks = review?.checks || summary.checks;
+    return (
+      <div className="space-y-5 max-w-3xl">
+        <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-slate-800/40 border border-slate-700/60">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-white">{summary.score}%</span>
+            <span className="text-xs text-slate-400">complete</span>
+          </div>
+          <div className="flex-1 min-w-[160px] h-2 rounded-full bg-slate-700 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500"
+              style={{ width: `${summary.score}%` }} />
+          </div>
+          <button onClick={runReview}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-cyan-500/20 text-cyan-300 rounded-lg hover:bg-cyan-500/30 transition-colors">
+            <RefreshCw size={14} /> Re-check
+          </button>
+        </div>
+
+        <ul className="space-y-2">
+          {checks.map(check => (
+            <li key={check.id}
+              className={`flex items-start gap-3 p-3 rounded-lg border text-sm ${
+                check.ok
+                  ? 'bg-emerald-500/5 border-emerald-500/25 text-slate-300'
+                  : check.level === 'error'
+                    ? 'bg-red-500/5 border-red-500/25 text-slate-300'
+                    : 'bg-yellow-500/5 border-yellow-500/25 text-slate-300'
+              }`}>
+              {check.ok ? <CheckCircle size={16} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+                : <AlertTriangle size={16} className={check.level === 'error' ? 'text-red-400 mt-0.5 flex-shrink-0' : 'text-yellow-400 mt-0.5 flex-shrink-0'} />}
+              <span className="flex-1">
+                <span className="font-medium text-white">{check.label}</span>
+                <span className="block text-xs text-slate-400 mt-0.5">{check.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Object.entries(summary.counts).map(([key, value]) => (
+            <div key={key} className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50 text-center">
+              <div className="text-lg font-bold text-white">{value}</div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">{key}</div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-slate-500">
+          This review reads your own saved document only. Nothing here is graded against other people.
+        </p>
+      </div>
+    );
+  };
 
   const renderPersonalInfo = () => {
     const p = cv.personalInfo;
@@ -936,140 +1226,56 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
   };
 
   const renderPreview = () => {
-    const p = cv.personalInfo;
-    const primaryColor = cv.settings.primaryColor || '#2563eb';
-    const hasSkills = Object.keys(cv.skills || {}).length > 0;
-    const visibleExp = cv.experience.filter(e => e.visible !== false);
-    const visibleEdu = cv.education.filter(e => e.visible !== false);
-    const visibleProjects = cv.projects.filter(p => p.visible !== false);
-    const visibleAchievements = cv.achievements.filter(a => a.visible !== false);
-
+    const previewSlug = slug || user?.username || '';
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-400">Live preview of your CV</p>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-slate-400">Live preview — exactly what a visitor sees</p>
+            <p className="text-xs mt-1">
+              {published
+                ? <span className="text-emerald-400">Published{publishedAt ? ` · ${new Date(publishedAt).toLocaleDateString()}` : ''}</span>
+                : <span className="text-yellow-400">Not published — only you can open this link</span>}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={downloadAsHtml}
               className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm">
               <FileText size={16} /> HTML
             </button>
-            <button onClick={downloadAsJson}
+            <button onClick={exportJson} disabled={isExporting}
               className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm">
               <FileJson size={16} /> JSON
             </button>
+            {previewSlug && (
+              <a href={`/cv/${encodeURIComponent(previewSlug)}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm">
+                <Eye size={16} /> Open public page
+              </a>
+            )}
+            <button onClick={togglePublished} disabled={publishing}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                published
+                  ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                  : 'bg-cyan-500 text-white hover:bg-cyan-600'
+              }`}>
+              <Globe size={16} /> {publishing ? 'Working...' : published ? 'Unpublish' : 'Publish CV'}
+            </button>
           </div>
         </div>
-        <div ref={cvRef} className="bg-white rounded-xl overflow-hidden shadow-xl" style={{ fontFamily: cv.settings.fontFamily }}>
-          <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-              <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-3xl text-white/50 border-2 border-white/20">
-                {(p.name || '?').charAt(0)}
-              </div>
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-bold">{p.name || 'Your Name'}</h1>
-                {p.title && <div className="text-sm text-white/80 mt-1">{p.title}</div>}
-                {p.bio && <div className="text-xs text-white/60 mt-2 max-w-lg">{p.bio}</div>}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-white/10 text-xs text-white/80 justify-center sm:justify-start">
-              {p.email && <span>{p.email}</span>}
-              {p.phone && <span>{p.phone}</span>}
-              {p.location && <span>{p.location}</span>}
-              {p.website && <span>{p.website}</span>}
-              {p.github && <span>{p.github}</span>}
-              {p.linkedin && <span>{p.linkedin}</span>}
-            </div>
+
+        <div className="max-w-4xl mx-auto">
+          <CVPreview cv={cv} />
+        </div>
+
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-400">
+          <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50">
+            <div className="text-slate-200 font-medium mb-1">Export</div>
+            HTML keeps the layout for printing or emailing; JSON is the backup you can re-import here.
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5">
-            <div className="md:col-span-3 p-6 md:border-r border-gray-200">
-              {visibleExp.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: primaryColor }}>Experience</h3>
-                  <div className="space-y-5">
-                    {visibleExp.map((e, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between items-start gap-3">
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-900">{e.title}</h4>
-                            {e.company && <span className="text-xs font-medium" style={{ color: primaryColor }}>{e.company}</span>}
-                          </div>
-                          <div className="text-xs text-gray-400 text-right whitespace-nowrap">
-                            {e.period}{e.location ? <><br/>{e.location}</> : ''}
-                          </div>
-                        </div>
-                        {e.description && <p className="text-xs text-gray-600 mt-1 leading-relaxed">{e.description}</p>}
-                        {e.technologies?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {e.technologies.map((t, j) => <span key={j} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs rounded-full">{t}</span>)}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {visibleProjects.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: primaryColor }}>Projects</h3>
-                  <div className="space-y-4">
-                    {visibleProjects.map((proj, i) => (
-                      <div key={i}>
-                        <h4 className="text-sm font-semibold text-gray-900">{proj.name}</h4>
-                        {proj.description && <p className="text-xs text-gray-600 mt-1">{proj.description}</p>}
-                        {proj.technologies?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {proj.technologies.map((t, j) => <span key={j} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs rounded-full">{t}</span>)}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="md:col-span-2 p-6 bg-gray-50">
-              {hasSkills && (
-                <div className="mb-6">
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: primaryColor }}>Skills</h3>
-                  <div className="space-y-4">
-                    {Object.entries(cv.skills || {}).map(([cat, list]) => list?.length > 0 ? (
-                      <div key={cat}>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{cat}</h4>
-                        <div className="flex flex-wrap gap-1.5">
-                          {list.map((s, i) => <span key={i} className="px-2.5 py-1 bg-white text-gray-700 text-xs rounded-md border border-gray-200">{s}</span>)}
-                        </div>
-                      </div>
-                    ) : null)}
-                  </div>
-                </div>
-              )}
-              {visibleEdu.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: primaryColor }}>Education</h3>
-                  <div className="space-y-3">
-                    {visibleEdu.map((e, i) => (
-                      <div key={i}>
-                        <h4 className="text-sm font-semibold text-gray-900">{e.degree}</h4>
-                        <div className="text-xs text-gray-500">{e.institution}</div>
-                        <div className="text-xs text-gray-400">{e.period}{e.details ? ` — ${e.details}` : ''}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {visibleAchievements.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: primaryColor }}>Achievements</h3>
-                  <div className="space-y-2">
-                    {visibleAchievements.map((a, i) => (
-                      <div key={i} className="flex items-start gap-2 p-2.5 bg-white rounded-lg border-l-2 text-xs text-gray-600" style={{ borderLeftColor: primaryColor }}>
-                        {a.text}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50">
+            <div className="text-slate-200 font-medium mb-1">Publishing</div>
+            Publishing copies the current document to your public page. Unpublishing hides it again.
           </div>
         </div>
       </div>
@@ -1084,6 +1290,10 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
       case 'skills': return renderSkills();
       case 'projects': return renderProjects();
       case 'achievements': return renderAchievements();
+      case 'certifications': return renderCertifications();
+      case 'languages': return renderLanguages();
+      case 'links': return renderLinks();
+      case 'review': return renderReview();
       case 'settings': return renderSettings();
       case 'preview': return renderPreview();
       default: return null;
@@ -1106,12 +1316,30 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
   return (
     <DashboardLayout
       title="CV Editor"
-      subtitle="Create and manage your professional curriculum vitae"
+      subtitle={
+        lastSavedAt
+          ? `Saved ${lastSavedAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · ${
+              published ? 'published for visitors' : 'private draft'
+            }`
+          : 'Create and manage your professional curriculum vitae'
+      }
       actions={
-        <div className="flex items-center gap-2">
-          <button onClick={createVersion}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors">
-            <History size={16} /> Save Version
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+            published ? 'bg-emerald-500/15 text-emerald-300' : 'bg-yellow-500/15 text-yellow-300'
+          }`}>
+            {published ? 'Published' : 'Private'}
+          </span>
+          <input ref={importRef} type="file" accept="application/json,.json"
+            onChange={handleImportFile} className="hidden" />
+          <button onClick={() => importRef.current?.click()} disabled={importing}
+            title="Import a CV JSON export"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors">
+            <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
+          </button>
+          <button onClick={saveDraftLocally} title="Store a draft in this browser only"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors">
+            <Download size={16} /> Draft
           </button>
           <button onClick={() => setShowVersionModal(true)}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors">
@@ -1138,7 +1366,13 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
             {tabs.map(tab => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                <button key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    // Review doubles as an action: re-check the current
+                    // document and stamp it on the server.
+                    if (tab.id === 'review') void runReview();
+                  }}
                   className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
@@ -1164,6 +1398,16 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
                 <span className="text-xs text-yellow-400">You have unsaved changes. Click "Save Changes" to persist.</span>
               </div>
             )}
+            {draftInfo && (
+              <div className="flex flex-wrap items-center gap-3 px-4 py-2 mb-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                <Clock size={14} className="text-cyan-300 flex-shrink-0" />
+                <span className="text-xs text-cyan-200 flex-1">
+                  A draft saved in this browser exists{draftInfo.label ? ` from ${draftInfo.label}` : ''}. It is not on your CV yet.
+                </span>
+                <button onClick={restoreDraft} className="text-xs font-semibold text-cyan-300 hover:text-cyan-200">Restore</button>
+                <button onClick={discardDraft} className="text-xs text-slate-400 hover:text-slate-200">Discard</button>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
                 {renderTabContent()}
@@ -1175,6 +1419,10 @@ ${cv.achievements?.length ? `<div class="section"><div class="section-title">Ach
 
       <Modal isOpen={showVersionModal} onClose={() => setShowVersionModal(false)} title="Version History" size="max-w-lg">
         <div className="space-y-3">
+          <button onClick={createVersion}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-purple-500/20 text-purple-300 rounded-lg hover:bg-purple-500/30 transition-colors">
+            <History size={16} /> Save the current document as a version
+          </button>
           {versions.length === 0 ? (
             <p className="text-center text-slate-500 py-8 text-sm">No versions saved yet. Click "Save Version" to create one.</p>
           ) : (

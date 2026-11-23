@@ -69,9 +69,9 @@ const seedProjects = async () => {
                 images: [{ url: "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3", caption: "E-Commerce Platform" }],
                 links: {
                     github: "https://github.com/yourusername/ecommerce",
-                    live: "https://ominbiz-solution.netlify.app/",
-                    demo: "https://ominbiz-solution.netlify.app/",
-                    netlify: "https://ominbiz-solution.netlify.app/"
+                    live: "https://bizsolutionz.netlify.app/",
+                    demo: "https://bizsolutionz.netlify.app/",
+                    netlify: "https://bizsolutionz.netlify.app/"
                 }
             },
             {

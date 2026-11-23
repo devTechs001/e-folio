@@ -1,0 +1,188 @@
+/* WelcomeTag3D — CSS-only 3D wordmark.
+   Scoped to `.welcome-3d`; no project card or grid selector is touched. */
+
+.welcome-3d {
+  --welcome-size: clamp(1.35rem, 3.6vw, 2.15rem);
+  --welcome-depth: 0.09em;
+  --welcome-accent: var(--mainColor, #00efff);
+  --welcome-accent-2: #8b5cf6;
+  --welcome-accent-3: #ec4899;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 1.1rem;
+  perspective: 900px;
+  perspective-origin: 50% 45%;
+  isolation: isolate;
+}
+
+.welcome-3d--gradient .welcome-3d__text {
+  color: var(--textColor, #e8f1ff);
+}
+
+.welcome-3d__scene {
+  display: block;
+  transform-style: preserve-3d;
+  width: 100%;
+}
+
+.welcome-3d__text {
+  margin: 0;
+  font-size: var(--welcome-size);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.04em 0.32em;
+  transform-style: preserve-3d;
+  /* The whole line breathes slowly, so the letters never look pasted on. */
+  transform: rotateX(9deg);
+}
+
+.welcome-3d__word {
+  display: inline-flex;
+  transform-style: preserve-3d;
+}
+
+.welcome-3d__letter {
+  position: relative;
+  display: inline-block;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+  transition: transform 0.35s ease;
+}
+
+.welcome-3d__face {
+  display: inline-block;
+  backface-visibility: hidden;
+  background: linear-gradient(
+    100deg,
+    var(--welcome-accent) 0%,
+    #38bdf8 28%,
+    var(--welcome-accent-2) 58%,
+    var(--welcome-accent-3) 82%,
+    var(--welcome-accent) 100%
+  );
+  background-size: 240% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(8, 14, 30, 0.55));
+}
+
+/* Back and "side" copies give the glyph real thickness while it turns. */
+.welcome-3d__face--back,
+.welcome-3d__face--side {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+}
+.welcome-3d__face--back {
+  transform: translateZ(calc(var(--welcome-depth) * -1)) rotateY(180deg);
+}
+.welcome-3d__face--side {
+  transform: translateZ(calc(var(--welcome-depth) * -0.5));
+}
+
+/* Idle: each letter floats a few degrees out of plane. */
+.welcome-3d.is-live .welcome-3d__letter {
+  animation: welcome3dTurn 5.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  animation-delay: calc(var(--letter-index, 0) * 65ms);
+}
+
+.welcome-3d.is-live .welcome-3d__face {
+  animation: welcome3dSheen 9s linear infinite;
+  animation-delay: calc(var(--letter-index, 0) * -220ms);
+}
+
+@keyframes welcome3dTurn {
+  0%,
+  62%,
+  100% {
+    transform: rotateY(0deg) translateZ(0);
+  }
+  12% {
+    transform: rotateY(22deg) translateZ(0.12em);
+  }
+  26% {
+    transform: rotateY(0deg) translateZ(0.24em);
+  }
+  38% {
+    transform: rotateY(-20deg) translateZ(0.12em);
+  }
+}
+
+@keyframes welcome3dSheen {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 240% center;
+  }
+}
+
+/* Soft ground glow so the 3D text reads as sitting in the section. */
+.welcome-3d__floor {
+  display: block;
+  width: min(70%, 320px);
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--welcome-accent) 45%, transparent),
+    transparent 72%
+  );
+  filter: blur(6px);
+  opacity: 0.55;
+  transform: translateZ(-1px) rotateX(58deg);
+}
+
+/* Pointer tilt on capable devices — a small, bounded interaction. */
+@media (hover: hover) and (pointer: fine) {
+  .welcome-3d:hover .welcome-3d__letter {
+    transform: rotateY(14deg) translateZ(0.14em);
+    transition-delay: calc(var(--letter-index, 0) * 18ms);
+  }
+}
+
+/* Keyboard users still get a visible focus ring on the wordmark. */
+.welcome-3d__text:focus-visible,
+.welcome-3d__letter:focus-visible {
+  outline: 2px solid var(--welcome-accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-3d.is-live .welcome-3d__letter,
+  .welcome-3d.is-live .welcome-3d__face {
+    animation: none;
+  }
+  .welcome-3d__letter,
+  .welcome-3d:hover .welcome-3d__letter {
+    transform: none;
+    transition: none;
+  }
+  .welcome-3d__text {
+    transform: none;
+  }
+  .welcome-3d__floor {
+    opacity: 0.3;
+  }
+}
+
+/* Narrow phones: keep the phrase on one or two comfortable lines. */
+@media (max-width: 420px) {
+  .welcome-3d {
+    --welcome-size: clamp(1.2rem, 6.2vw, 1.6rem);
+  }
+  .welcome-3d__text {
+    gap: 0.02em 0.26em;
+  }
+}

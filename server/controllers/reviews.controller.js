@@ -1,6 +1,7 @@
 // controllers/reviews.controller.js
 const mongoose = require('mongoose');
 const Review = require('../models/Review.model');
+const Testimonial = require('../models/Testimonial.model');
 const User = require('../models/User.model');
 const ActivityLog = require('../models/ActivityLog');
 const emailService = require('../services/email.service');
@@ -64,6 +65,54 @@ const normaliseReviewInput = body => {
 // response. Notification / logging work is isolated from that outcome.
 const safeSideEffect = async (label, task) => {
     try { await task(); } catch (error) { console.error(label, error?.message || error); }
+};
+
+/**
+ * Phase 33 — approved reviews also feed the curated testimonials collection.
+ *
+ * This is what makes the two sides one system: a visitor review that the
+ * owner approves appears on the testimonials page (which reads Testimonial
+ * documents) without a second manual copy, and its moderation state can be
+ * traced back through `sourceReviewId`. A non-approved review is removed
+ * again, so the testimonials page can never show an unapproved review.
+ */
+const syncTestimonialForReview = async (review, action = 'approved') => {
+    if (!dbAvailable() || !review) return null;
+    try {
+        if (action !== 'approved') {
+            await Testimonial.deleteMany({ sourceReviewId: review._id });
+            return null;
+        }
+        const existing = await Testimonial.findOne({ sourceReviewId: review._id });
+        const fields = {
+            name: String(review.name || '').slice(0, 100),
+            position: 'Verified visitor',
+            content: String(review.comment || '').slice(0, 1000),
+            rating: Math.min(5, Math.max(1, Number(review.rating) || 5)),
+            project: review.title ? String(review.title).slice(0, 200) : '',
+            tags: ['visitor-review'],
+            featured: false,
+            visible: review.isPublic !== false,
+            verified: true,
+            avatar: '',
+            source: 'api'
+        };
+        if (existing) {
+            // Keep the owner's own featuring/order decisions on a re-sync.
+            const { featured, ...rest } = fields;
+            Object.assign(existing, rest);
+            await existing.save();
+            return existing;
+        }
+        return await Testimonial.create({
+            ...fields,
+            date: review.createdAt || new Date(),
+            sourceReviewId: review._id
+        });
+    } catch (error) {
+        console.error('[review] testimonial mirror failed:', error?.message || error);
+        return null;
+    }
 };
 
 // Public pages and the owner dashboard refresh themselves from their own
@@ -409,6 +458,10 @@ exports.moderateReview = async (req, res) => {
         review.moderatedAt = new Date();
 
         await review.save();
+        // Phase 33 — approved reviews are mirrored into the curated
+        // testimonials collection (and removed again when un-approved).
+        await safeSideEffect('[review] testimonial mirror failed', () =>
+            syncTestimonialForReview(review, status === 'approved' && review.isPublic !== false ? 'approved' : 'removed'));
         notifyReviewChange(req, 'moderated', review._id, status);
 
         // Send notification to reviewer
@@ -542,6 +595,13 @@ exports.bulkModerateReviews = async (req, res) => {
                 moderatedAt: new Date()
             }
         );
+
+        // Keep the public testimonials page in step with bulk moderation.
+        const updated = await Review.find({ _id: { $in: targetIds } });
+        for (const review of updated) {
+            await safeSideEffect('[review] bulk testimonial mirror failed', () =>
+                syncTestimonialForReview(review, status === 'approved' && review.isPublic !== false ? 'approved' : 'removed'));
+        }
 
         notifyReviewChange(req, 'bulk-moderated', targetIds[0], status);
         res.json({

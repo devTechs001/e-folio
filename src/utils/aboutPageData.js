@@ -10,6 +10,7 @@
  */
 
 export const ABOUT_WELCOME = 'WELCOME TO MY PORTFOLIO';
+export const ABOUT_WELCOME_3D = 'Welcome to my portfolio';
 export const ABOUT_AVAILABILITY = 'Available for work';
 export const ABOUT_CV_HREF = '/CV2.pdf';
 

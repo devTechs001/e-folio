@@ -12,10 +12,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const json = rel => JSON.parse(read(rel));
 
-const NEW_URL = 'https://ominbiz-solution.netlify.app/';
+const NEW_URL = 'https://bizsolutionz.netlify.app/';
 // Built from fragments so this test file itself does not re-introduce the
 // retired URLs into the repository scan below.
-const OLD_URL = ['https://', 'bizsolutionz', '.netlify.app/'].join('');
+const RETIRED_URL = ['https://', 'ominbiz-solution', '.netlify.app/'].join('');
 const PLACEHOLDER = ['https://', 'demo-ecommerce', '.com'].join('');
 const NETGATE = 'https://net-gate-portal.netlify.app/';
 
@@ -42,7 +42,7 @@ const walk = (dir, out = []) => {
 check('the main E-Commerce Platform record uses the new link everywhere', () => {
     const seed = read('scripts/seed-projects.js');
     const block = seed.slice(seed.indexOf('title: "E-Commerce Platform"'), seed.indexOf('title: "GB Chat"'));
-    assert.equal((block.match(/ominbiz-solution\.netlify\.app\//g) || []).length, 3);
+    assert.equal((block.match(/bizsolutionz\.netlify\.app\//g) || []).length, 3);
     for (const key of ['live', 'demo', 'netlify']) {
         assert.ok(block.includes(`${key}: "${NEW_URL}"`), `${key} must use the new URL`);
     }
@@ -74,12 +74,10 @@ check('both Enterprise E-Commerce records had their legacy netlify link swapped'
     }
 });
 
-check('the old link is no longer used as an E-Commerce record, only as an owner-supplied link', () => {
-    // Phase 13 removed the retired deployment from every project record. The
-    // owner later supplied the same host as a SEPARATE project link to publish,
-    // so it is allowed only in the owner catalog and the confidential report.
-    // The placeholder demo link is never allowed anywhere.
-    const allowed = new Set(['src/data/projectLinks.json', 'CONFIDENTIAL_AUDIT_AND_FIX_REPORT.md']);
+check('the retired ominbiz-solution deployment is gone from every file', () => {
+    // Phase 36: the owner pointed the E-Commerce record at bizsolutionz and the
+    // previous host is retired, so it must not survive in the seed, the saved
+    // snapshot, the owner catalog or the report.
     const offenders = [];
     for (const rel of walk(root)) {
         const full = path.join(root, rel);
@@ -87,12 +85,13 @@ check('the old link is no longer used as an E-Commerce record, only as an owner-
         let text;
         try { text = fs.readFileSync(full, 'utf8'); } catch { continue; }
         if (text.includes(PLACEHOLDER)) offenders.push(`${rel} (placeholder)`);
-        if (text.includes(OLD_URL) && !allowed.has(rel)) offenders.push(`${rel} (retired record link)`);
+        if (text.includes(RETIRED_URL)) offenders.push(`${rel} (retired link)`);
     }
     assert.deepEqual(offenders, [], `stale links remain in: ${offenders.join(', ')}`);
+    // The owner catalog carries the new host exactly once, and nothing else.
     const catalog = json('src/data/projectLinks.json');
-    assert.equal(catalog.projects.filter(p => p.url === OLD_URL).length, 1);
-    assert.ok(catalog.projects.find(p => p.url === OLD_URL).title.includes('OmniBiz'));
+    assert.equal(catalog.projects.filter(p => p.url === NEW_URL).length, 1);
+    assert.equal(catalog.projects.find(p => p.url === NEW_URL).slug, 'omnibiz-business-management');
 });
 
 /* --------------------------------- safety ---------------------------------- */

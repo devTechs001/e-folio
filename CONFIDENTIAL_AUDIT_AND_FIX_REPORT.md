@@ -86,7 +86,7 @@ for phase 28; PR #4 remains open and untouched.
 | Tracking conflict (phase 16) | `findOneAndUpdate` wrote `pagesViewed` through both `$setOnInsert` and `$inc` (plus `pageJourney` and `scrollDepth`), producing the pasted MongoServerError | conflicting paths removed from `$setOnInsert`; `$inc`/`$push`/`$max` now own them, `$max` always runs, 8 static regression checks |
 | Project likes (phase 15) | the three public project cards showed the old low seed counts; the offline snapshot hardcoded `likes: 0` | owner-specified 500 / 600 / 100 carried from the seed into the snapshot; card markup, all other project records and all links unchanged, values labelled as display numbers rather than measured engagement |
 | HomeScape link → Projects (phase 14) | no entry for the property marketplace; the card button text was hardcoded for one project | `https://homescape-pro.netlify.app/` appended as a second record in the shared showcase JSON, data-driven button label and conditional notes, 13 new regression checks; NetGate/NEX Store/CellarKeep/OmniBiz links untouched |
-| E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | `https://ominbiz-solution.netlify.app/` set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
+| E-Commerce link → OmniBiz (phase 13) | the E-Commerce project pointed at a retired deployment and two records still had placeholder demo links | the owner-supplied marketplace URL (phase 36 moved it to `https://bizsolutionz.netlify.app/`; the earlier host is retired) set on all e-commerce link fields and the regenerated public snapshot; NetGate/NEX Store/CellarKeep links untouched |
 | Public copy + saved data (phase 12) | public pages displayed "temporarily unavailable", raw `error.message`, status codes and "Data unavailable"; offline sections showed null data | live-first loader over bundled local backup files, friendly-only public copy, owner-gated technical wording, and a dev-only diagnostics panel absent from production |
 | CellarKeep link → Projects (phase 11) | no entry for the client portal; external links were hardcoded per component and there was no shared data path | `https://liqourstor.netlify.app/client` added once to a shared JSON that drives an accessible public showcase card and an idempotent tagged MongoDB seeder; existing links untouched |
 | Live preview + lagging issues (phase 10) | browser-facing code called localhost and hung 15 s per request; 1 s fake loader; dead raw WS retrying every 5 s; uncached file scans | same-origin `/api` + proxy fixes, no artificial loader, hidden-tab timer guards, authenticated tracking namespace, 30 s inventory caches, preview-safe Vite host/proxy |
@@ -1032,7 +1032,7 @@ Request: *"keep dev info away from the publi [public] … like the database data
 
 ## 3m. Phase 13 — replace the E-Commerce project link with OmniBiz
 
-Request: *"[https://ominbiz-solution.netlify.app/](https://ominbiz-solution.netlify.app/), replace with project link for ecomerce"*.
+Request: *"[https://bizsolutionz.netlify.app/](https://bizsolutionz.netlify.app/), replace with project link for ecomerce"*.
 
 The destination was read once, read-only: it serves **"OmniBiz - Complete Business Management Platform"**. No workspace code, data or credential was sent to that site. The URL is stored exactly as supplied, including its trailing slash.
 
@@ -1227,7 +1227,7 @@ Zero-valued public data is omitted, never fabricated into a non-zero number: Lab
 ### Explicitly not changed
 
 - The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). The new `https://net-gate.netlify.app/` is a **separate, additional** link, not a replacement.
-- NEX Store, CellarKeep, `https://ominbiz-solution.netlify.app/` and `https://homescape-pro.netlify.app/` links; all seed/backup/testimonial/lab datasets; the eight saved project records and the two featured cards.
+- NEX Store, CellarKeep, `https://bizsolutionz.netlify.app/` and `https://homescape-pro.netlify.app/` links; all seed/backup/testimonial/lab datasets; the eight saved project records and the two featured cards.
 - No push, PR, merge, external issue, external write, DB write, runtime Mongo/LLM/SMTP/Cloudinary call or offensive testing.
 
 ### Verification
@@ -1256,7 +1256,7 @@ Only `scripts/seed-projects.js` and the regenerated `src/data/publicSnapshot.jso
 
 ### Deliberately left alone
 
-- E-Commerce Platform → `https://ominbiz-solution.netlify.app/`, GB Chat → `https://gbchat.netlify.app/`, CinemaFlix → `https://cinemaflx.netlify.app/` (all still working).
+- E-Commerce Platform → `https://bizsolutionz.netlify.app/`, GB Chat → `https://gbchat.netlify.app/`, CinemaFlix → `https://cinemaflx.netlify.app/` (all still working).
 - CellarKeep → `https://liqourstor.netlify.app/client` and HomeScape → `https://homescape-pro.netlify.app/` (featured showcase cards).
 - The protected **NetGate link** `https://net-gate-portal.netlify.app/` and all its files (3/1/1/3 counts unchanged). `https://net-gate.netlify.app/` is a different, owner-supplied deployment used as one project link, not a replacement.
 - All other seed/backups/testimonial/lab datasets, the eight saved project records, the two featured cards, and the §3q fixes (complete front-end catalogue, Lab copy cleanup, no zero values).
@@ -2328,6 +2328,441 @@ Static checks only — no live MongoDB, Express, Render or browser run.
 
 ---
 
+## 3ag. Phase 34 — CV system expansion, animated 3D welcome tag, and one testimonials/reviews feed
+
+Scope from the owner: *"review the create cv system (expand, connect as
+needed), the welcome to my portfolio tag (make it animated 3D), improve the
+testimonials page layout to match the rest of the system, add good features to
+existing ones, route it with the reviews system for auto updates from reviews,
+keeping the existing ones."* Everything below is static/offline work plus a
+local Vite render check; **no live Express/MongoDB/Render run was possible in
+this sandbox**, so nothing here claims runtime behaviour.
+
+### 1. Create‑CV system — what was missing and what was added
+
+The CV editor could already edit personal info, experience, education, skills,
+projects and achievements. The gaps were structural, not cosmetic:
+
+| Gap | Fix |
+| --- | --- |
+| `projects.highlights`, `projects.technologies` and `education.details` were edited but **silently dropped** by `/api/cv` | `saveCV` now writes every section through one sanitiser (`normaliseSection`) built from the same field list the UI uses |
+| The editor's template picker and colour/font settings existed but the **preview and export ignored them** | one renderer (`src/components/CVPreview.jsx`) applies `settings.template` (modern / classic / minimal / creative / professional), primary colour and font family |
+| No certifications, languages or free links | three new sections across model → route → editor → preview → export → public page |
+| Public `/cv/:username` showed an **unstyled ad‑hoc layout** that differed from the editor preview | the public page now renders the same `CVPreview` component, so what is written is what visitors see |
+| A half‑written CV was readable by anyone who guessed the username | `isPublished` + `publishedSnapshot`; the public route returns 404 for an unpublished CV, while the holder can still preview their own |
+| No way to tell whether the CV is complete | a **Review** tab derived only from the saved document (`reviewCv`/`summarizeCv`) + `POST /api/cv/review` timestamp |
+| No import path; JSON export could not be restored | `POST /api/cv/import` + an Import button accepting only this editor's own export shape |
+| Work could be lost when the browser closed | explicit **local draft** (`src/utils/cvDraft.js`, per‑account, 7‑day expiry) that is *offered*, never applied silently, and labelled "not yet saved to your CV" |
+| No publishing control in the editor | publish / unpublish buttons with an honest Private/Published state in the header |
+| Version history did not include the new sections | `snapshotOf()` is used by both "save version" and publish |
+
+New/changed files: `src/utils/cvSchema.js`, `src/utils/cvDraft.js`,
+`src/components/CVPreview.jsx`, `src/styles/CVPreview.css`,
+`src/styles/UserCVPage.css`, `src/pages/UserCVPage.jsx`,
+`src/components/dashboard/CVEditorStyled.jsx`,
+`server/models/CurriculumVitae.js`, `server/controllers/cv.controller.js`,
+`server/routes/cv.routes.js`, `server/routes/public.routes.js`,
+`server/middleware/auth.middleware.js` (`optionalAuth`),
+`src/services/api.service.js` (`publishCV`, `unpublishCV`, `reviewCV`,
+`importCV`, `getOwnPublicCV`).
+
+Safety: every field is length‑capped and typed server‑side; `optionalAuth`
+only *attaches* a viewer and never rejects, so the public CV route stays
+public; publishing stores a copy, so later drafts do not leak.
+
+### 2. "Welcome to my portfolio" — animated 3D
+
+`src/components/WelcomeTag3D.jsx` + `src/styles/WelcomeTag3D.css` replace the
+old flat badge with a CSS‑3D wordmark:
+
+* each letter turns on its own Y axis with a staggered delay (a depth wave, not
+  a fade), with back/side faces giving the glyphs thickness;
+* the wave starts only when the tag is **in view** (`IntersectionObserver`), so
+  it costs nothing above the fold on phones;
+* it is pure CSS transforms — **no WebGL, no new dependency**;
+* `prefers-reduced-motion` renders it flat and static (never invisible), and a
+  keyboard focus ring is provided;
+* the exact wording is unchanged and now comes from
+  `ABOUT_WELCOME_3D` in the shared `aboutPageData` module.
+
+The section now has one `h1` (the wordmark) and the owner's name is an `h2`.
+The availability pill keeps its wording but no longer overflows its container
+(the old rule rendered it at `clamp(1.8rem, 4vw, 2.8rem)` inside a small
+rounded pill).
+
+### 3. Testimonials page — layout brought in line with the rest of the system
+
+The page had accumulated four overlapping toolbars, a confetti effect, an
+unreachable export control, and its own visual language. It now uses the same
+composition as the Skills/Projects sections: hero → stats → toolbar → grid.
+
+* `src/styles/TestimonialsPage.css` (new, scoped `.tst-*`) mirrors the
+  `.sk-*` tokens (hero panel, eyebrow, gradient title, segmented controls,
+  card grid with `repeat(auto-fill, minmax(300px, 1fr))`, empty state,
+  pagination, modal, `prefers-reduced-motion`, `focus-visible`).
+* Dead UI removed: confetti, JSON "export" of the visible list, the duplicate
+  statistics chart, and the manual share fallback that used `alert()`.
+* Added: source filters (All / Testimonials / Reviews), rating + featured
+  filters, newest/oldest/rating/name sorting, three view modes that all work,
+  likes on visitor reviews, "Write a review" opening the existing
+  `ReviewForm`, an honest per‑source connection line, and a real empty state.
+* Preserved: the owner‑only sample preview, the `SAMPLE · PREVIEW` badges in
+  every view, the versioned cache key, the saved‑copy fallback, the local
+  thumbnail override, and the unchanged `Testimonials.css` primitives the
+  regression tests depend on.
+
+### 4. Routing testimonials through the reviews system (auto updates)
+
+Two connections, both real:
+
+1. **Client — one mixed feed.** `src/utils/testimonialFeed.js` reads the
+   curated testimonials (`/testimonials/public/testimonials`) and the
+   *approved* reviews (`/reviews/public`) and normalises them, keeping a
+   `kind` on every item so the UI can label the source. Pending reviews are
+   never requested. The page then refreshes itself from the existing channels:
+   `socketService.subscribePublicReviews`, the cross‑tab
+   `subscribeReviewsChanged` signal, a 30 s poll, `visibilitychange`, and
+   `online` (which also flushes the review outbox). No new socket namespace
+   was added.
+2. **Server — approved reviews are mirrored.** `syncTestimonialForReview()` in
+   `reviews.controller.js` creates/updates a `Testimonial` document for an
+   approved review (`sourceReviewId` is a sparse unique index) and deletes it
+   when the review is rejected, hidden or removed — in both the single and
+   bulk moderation paths. That means the curated testimonials collection stays
+   the one public source, while a review approval appears there without a
+   second manual copy. The public testimonial projection was also narrowed
+   from `email website linkedin` to content fields only.
+
+Honest limits: moderation writes to two collections sequentially (no
+transaction in this sandbox), so a crash between them can leave a mirror to be
+cleaned by the next moderation action; nothing was run against a real
+MongoDB.
+
+### Verification (static only)
+
+`npm test` — **360** Node‑only checks, exit 0, including the new
+`tests/cv-system-testimonials.test.mjs` (21 checks) and every previously
+protected suite (projects catalogue at 14 records / ≥600 counters,
+testimonial samples, reviews, auth pages, drawer, render env).
+`npm run check` exit 0: lint **0 errors** (688 warnings, all pre‑existing
+`no-unused-vars` style), endpoint parity `--strict` **0 live code gaps**
+(146 orphaned/legacy files unchanged), static security audit `--strict`
+**HIGH 0 / MEDIUM 0 / LOW 0**, production build + PWA precache (227 entries)
+regenerated. `CVPreview` and `WelcomeTag3D` were additionally rendered with
+`react-dom/server` against a real CV document: both render, every new section
+appears, and no sample name leaks. A local Vite dev server served `/`,
+`/reviews` and `/cv/:username` and transformed every touched module with no
+errors. No browser automation, MongoDB, Express runtime or Render deployment
+was available, so the CV page, the 3D wordmark and the mixed feed are
+verified statically only — this is not a claim of live behaviour.
+
+---
+
+## 3ah. Phase 35 — centred public headings, and a real hobbies dashboard with its own endpoints
+
+Scope from the owner: *"maintain the headings at the center of public pages
+(increase the font size a little (with a decoration animated like for the
+hobbies page heading)), add a hobbies dashboard and endpoints."* Static and
+build verification only — **no MongoDB, Express runtime or browser was
+available**, so no behaviour here is claimed as live-tested.
+
+### Shared heading
+
+`src/components/SectionHeading.jsx` (+ `SectionHeading.css`) holds one centred
+heading treatment taken from the hobbies page: an animated gradient rule with
+two pulsing dots, an optional eyebrow and an optional supporting sentence. The
+title is passed as plain text plus the words to tint, so the two halves can
+never drift out of order and the accessible name is the whole phrase.
+
+Sizes step up from the previous per-page `text-4xl md:text-5xl lg:text-6xl`
+scale to `2.25 → 2.75 → 3.25 → 3.75 → 4rem`, with the decoration and reduced
+motion handled once. Applied to Education, Projects, Contact, Lab, Hobbies &
+Interests, Testimonials and About. Skills keeps its own already-decorated,
+larger heading rather than being shrunk into the new one. About is a
+two-column hero, so `.about-heading` restores left alignment at ≥1024 px while
+staying centred below that, and its name renders one step larger.
+
+The hobbies page's bespoke `.title-decoration` markup was removed because the
+same decoration now comes from the shared component; its wording, stats grid
+and background effects are untouched.
+
+### Hobbies endpoints (`/api/interests`)
+
+All owner-guarded (`auth` + `isOwner`), all behind `labSync('interests')` so a
+successful write still refreshes the public Lab/portfolio sections.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/interests` | Owner list with optional `category`, `visible`, `q` filters |
+| GET | `/interests/stats` | Totals, hidden count, category/level breakdown, recent five |
+| GET | `/interests/export` | JSON export of the writable fields |
+| POST | `/interests` | Create (appends to the manual order) |
+| POST | `/interests/reorder` | Persist a new order, ignoring unknown ids |
+| POST | `/interests/import` | Bulk import, de-duplicated by name, max 200 |
+| PATCH | `/interests/:id/visibility` | Show/hide without opening the edit form |
+| PUT | `/interests/:id` | Update (explicitly cannot change `order`) |
+| DELETE | `/interests/:id` | Delete |
+
+The model gained `order`, `visible`, `tags` and `startedYear` plus supporting
+indexes. `getPublicInterests` now filters `visible: { $ne: false }`, and its
+projection never emits visibility or ordering. `addInterest` appends to the end
+of the order instead of defaulting to 0, which previously put every new hobby at
+the top of an arbitrarily ordered list.
+
+### Hobbies dashboard
+
+`HobbiesManager.jsx` now reads the **owner** list (`/interests`) rather than the
+public endpoint, which could never show hidden hobbies or ordering. Kept: add,
+edit, delete, search, the three summary cards, the animated grid. Added: a
+four-card summary that includes hidden and average level, category and
+visibility filters, a breakdown panel, drag-and-drop **and** arrow reordering
+with an explicit "Save order / Discard" step (nothing is written until Save),
+an eye toggle per card, tags, comfort level and "since" year in the form, and
+JSON import/export. Every new call has a user-facing error path; no stack
+trace or driver text is surfaced.
+
+The public hobbies page also accepts the new labels: tags join the existing
+filter row, and an optional "Since <year>" line renders when set.
+
+### Verification
+
+`node tests/hobbies-headings.test.mjs` — **18 checks**, wired into both
+`package.json` and `server/package.json`; `npm test` is now **378 checks, 0
+failures**. `npm run check` exit 0: lint **0 errors** (682 warnings, all
+pre-existing), endpoint parity `--strict` **0 live code gaps** (484 matched,
+146 orphaned/legacy files unchanged), static security audit `--strict`
+**HIGH 0 / MEDIUM 0 / LOW 0**, production build + 227-entry PWA precache.
+All seven headings were rendered with `react-dom/server` and keep their exact
+wording and word order with the accent phrase in its own span; the `level`
+prop was confirmed to change the tag.
+
+One earlier assertion in `tests/cv-system-testimonials.test.mjs` pinned the
+literal `<h2 className="main-heading` on the About page. It was rewritten to
+test the same guarantee it was protecting — the page still has no `<h1>` of its
+own and the name is still an `h2` — rather than the markup that used to carry
+it. Nothing about that requirement was relaxed.
+
+Not verified: MongoDB writes, drag-and-drop in a real browser, the import path
+against a live API, and the visual result of the new heading sizes.
+
+---
+
+## 3ai. Phase 36 — E-Commerce link swap, two new published projects, larger headings, cleaner hero
+
+Owner request: *"https://bizsolutionz.netlify.app/ (replace the existing one
+with this), then add this project https://e-commerce-alfa.netlify.app/,
+https://saas-systeme.netlify.app/, increase the heading fonts, enhance the page
+with the three main buttons with cleaner layout/responsiveness."* The owner
+then confirmed the target record and the placement. Static checks only — **no
+MongoDB, Express runtime or browser was available here**.
+
+### Link swap
+
+The **E-Commerce Platform** record now uses `https://bizsolutionz.netlify.app/`
+in all three link fields, in every seed that defines it (`scripts/seed-projects.js`,
+`server/seed-data.js`, `server/scripts/seedProjects.js`,
+`server/scripts/seed-all-projects.js`, `server/seed-enterprise-projects.js`).
+The previous `ominbiz-solution` host is retired: it no longer appears in any
+seed, the saved snapshot, the owner catalogue or this report. The GitHub link
+and both enterprise demo links are untouched, as is the protected NetGate link.
+
+`src/data/projectLinks.json` already listed this host as the OmniBiz catalogue
+entry, so it now simply *is* the E-Commerce link — no duplicate was created.
+
+### The two new projects
+
+Both were added as **grid records** (the owner's choice), appended after the
+fourteen originals, and the offline snapshot was regenerated from the seed
+rather than hand-edited:
+
+| Record | URL | Notes |
+|---|---|---|
+| SokoMesh | `https://e-commerce-alfa.netlify.app/` | Nairobi-first local marketplace; copy taken from the live page |
+| Nexus SaaS Platform | `https://saas-systeme.netlify.app/` | Analytics · CRM · AI Copilot shell; copy taken from the live page |
+
+Both use the owner's floor of **600 views / 600 likes**. Neither claims a
+metric, rating, achievement or stack the live page does not show: the live
+SokoMesh page labels its own catalogue and ranked shelves as illustrative demo
+data, and the Nexus page exposes only its loading shell, so the record
+describes the interface as published. Technologies are limited to the visible
+build (React, JavaScript, Netlify); no database, payments or backend service is
+claimed.
+
+**A note on what "no invented data" can mean here.** The fourteen original
+records carry seeded view/like figures that were never measured either — they
+are owner-specified display values, documented as such in the seed file and in
+phase 19. The two new records follow the same documented convention at the same
+floor rather than re-using the higher historical numbers.
+
+### Headings
+
+The shared public heading scale was raised one step at every breakpoint —
+`2.5 / 3 / 3.5 / 4.25 / 4.75rem` against the previous
+`2.25 / 2.75 / 3.25 / 3.75 / 4rem`. All five steps now read a single
+`--sec-head-size` custom property, so the whole site can be re-tuned in one
+place. Wrapping (`text-wrap: balance`) and the reduced-motion block are intact.
+
+### Hero buttons
+
+The three actions keep their exact wording and destinations, but the row is no
+longer three equal blocks: `Create Your Portfolio` is now the single dominant
+card, with `Collaborate with Me` and `Build Your CV` paired underneath. Phones
+stack all three, tablets and up show the 1 + 2 arrangement, the primary card is
+taller with a larger title, and the reduced-motion block disables the hover
+lift.
+
+### Verification
+
+`node tests/projects-links-headings.test.mjs` — **15 checks**, wired into both
+manifests. Existing suites that pinned the old counts were updated to the new
+reality (14 → 16 grid records, 16 → 18 with the showcase cards) and their
+original intent was kept: the original eight and the six restored records keep
+their positions and links, and a new check asserts the two phase-36 records
+sit *after* them. The phase-35 heading test now asserts the larger scale.
+Not verified: MongoDB seeding, the rendered projects grid, and the hero at real
+device widths.
+
+---
+
+## 3aj. Phase 37 — hero background image, Lab card redesign, and poster sync with the Lab dashboard
+
+Owner request: *"add a background image to the hero section, improve the labs
+page cards (only) for projects showcase with images (sync with its dashboard)"*.
+Static and build verification only — **no MongoDB, Express runtime or browser
+was available here**, so nothing below is claimed as live-tested.
+
+### Hero background
+
+A new local asset, `public/assets/images/hero-portfolio-bg.jpg` (1600×547,
+~148 KB), sits behind the hero. It is served from the repository — no remote
+image host, no third-party CDN, no request outside the site.
+
+Two layers were added: `.hero-bg-photo` (the image, `opacity: 0.55`, scaled
+1.04) and `.hero-bg-scrim` (a radial + linear dark gradient that keeps the
+existing hero copy readable). The hero's own animated blobs and particles were
+*not* removed: they were re-pinned above the photo and scrim so the motion
+survives, with the content and the close button above everything. The photo
+dims further below 720 px, and `prefers-reduced-motion` drops the scale
+transform.
+
+Both layers are `aria-hidden`, so the image is decoration and never carries
+meaning. **The photo is a generated abstract, not a photograph of the owner** —
+swap the file if a real image is wanted.
+
+### Lab cards (only)
+
+Scoped strictly to `.lab-card` and its children. `src/pages/ProjectCard.jsx`,
+`src/styles/ProjectCard.css` and the `.lab-grid` rule are untouched.
+
+- **Real images now render.** The card previously read only
+  `thumbnail || imageUrl`, so any record whose image lived in `images[]` showed
+  a letter placeholder. It now resolves `thumbnail → imageUrl → images[0].url`,
+  and a failed URL falls back to a designed placeholder rather than a broken
+  image icon.
+- **Designed fallback** instead of a bare letter on flat colour: a themed
+  gradient tile with the initial plus a small "No preview image" label.
+- **Card anatomy**: fixed 196 px poster, gentle zoom on hover, 2-line clamped
+  title, 3-line clamped description, and a bottom-pinned meta/actions footer so
+  every card in a row shares a baseline. Hover lifts with a theme-tinted glow;
+  `focus-within` shows a ring for keyboard users.
+
+### Syncing the dashboard with the public card
+
+The sync was broken in a way that looked like a styling problem: the dashboard
+sent `thumbnail`, but **`thumbnail` was not a schema field**, so Mongoose
+dropped it silently on every save, and `/api/public/projects` never set it
+either. Three changes close the loop:
+
+1. `server/models/Project.model.js` — `thumbnail` is now a persisted path
+   (trimmed string, default empty).
+2. `server/controllers/public.controller.js` — every public project is returned
+   with one resolved poster (`thumbnail || images[0].url`), exposed as both
+   `thumbnail` and `imageUrl`.
+3. `src/components/dashboard/LabManager.jsx` — each experiment row shows the
+   poster the public card will use (same `posterOf()` rule), and an owner-only
+   URL field saves it through the existing project update endpoint, then fires
+   `settingsChanged` + `publishProjectsChanged()` so open public pages refresh
+   through their existing channels.
+
+The snapshot builder was also corrected so its records derive the same poster
+fields instead of always writing empty strings.
+
+### Verification
+
+`node tests/hero-lab-cards.test.mjs` — **18 checks**, wired into both
+manifests. Full `npm test` passes. Two earlier assertions were updated for the
+new structure: the Lab dashboard now publishes a fourth change notice (the
+poster save), and the sample badge moved into the `LabThumb` component's props
+while still rendering for the owner on sample cards only.
+
+Not verified: real MongoDB persistence of `thumbnail`, the rendered Lab grid in
+a browser, and the hero photo against the live text overlay.
+
+---
+
+## 3ak. Phase 38 — centred testimonials heading, four-row scroll viewport with pagination, and category counts
+
+Owner request: *"centre the testimonials heading, the testimonials should be
+scrollable (add pagination) maximum of four rows viewport, add some reviews
+count for each category."* Static and build verification only — **no MongoDB,
+Express runtime or browser was available**, so nothing here is claimed as
+live-tested.
+
+### Heading
+
+The heading was deliberately left-aligned when this page gained the shared
+`SectionHeading` in phase 35 (it sits in a two-column hero). It is now centred,
+along with its eyebrow, lede, archive note and decoration, while the hero's
+score/action panel keeps its own alignment. Centring is scoped to
+`.tst-hero-copy`, never the whole hero.
+
+### Four-row viewport with pagination
+
+`PAGE_SIZE` went from a flat 9 to an explicit expression:
+`ROWS_PER_PAGE (4) × GRID_COLUMNS_WIDE (3) = 12` cards per grid page. Cards are
+`minmax(300px, 1fr)`, so a wide screen lays out three per row and a page is
+exactly four rows.
+
+The grid box is capped at four rows — `max-height: calc(4 × (320px + 1rem))`
+driven by a `--tst-card-est-height` property — and scrolls inside with
+`overscroll-behavior: contain` and a stable scrollbar gutter, so a long feed
+never pushes the footer miles down. The box is focusable (`tabIndex=0`,
+`role="region"`, labelled with the current page) so the scroll is reachable
+from the keyboard.
+
+Existing pagination was kept and now also reports `page N of M` and the
+"4 rows per view" hint next to the result count. Each view keeps its own page
+size (`LIST_PAGE_SIZE` for the list, one item at a time for the carousel), so
+pages can no longer leak between modes. Below 640 px the grid is a single
+column, where four rows *is* the page, so the inner scroll is switched off
+rather than showing a pointless scrollbar.
+
+### Reviews count per category
+
+A new panel above the feed lists every category with its entry count, split
+into reviews vs testimonials, plus the average rating for that category.
+
+The category is derived from data the entries already carry: the person's
+`role`/`position`, falling back to "Visitor reviews" or "Client
+recommendations" by kind. Nothing is hard-coded and no number is invented —
+the counts are computed from the feed and re-computed when search, rating or
+featured filters change, so they always agree with the chips beside them. The
+panel hides itself when there is nothing to count, and the chips wrap to full
+width below 640 px.
+
+### Verification
+
+`node tests/testimonials-layout.test.mjs` — **15 checks**, wired into both
+manifests. One earlier assertion in `tests/cv-system-testimonials.test.mjs`
+pinned the exact phase-35 paging expression; it was rewritten to assert the new
+per-view page-size contract instead of the old single-`PAGE_SIZE` shape, keeping
+what it was protecting (each mode paginates independently).
+
+Not verified: the rendered grid in a browser, the inner scroll on a real
+touch device, and the category counts against a populated production database.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -2510,6 +2945,36 @@ Static checks only — no live MongoDB, Express, Render or browser run.
     top-nav menu button still toggles its drawer. Also decide the outstanding
     phase 29 header title/icon list. No live Render, backend or browser was
     available in this sandbox.
+37. Phase 34 follow-up: with a live Express/MongoDB backend, publish a CV,
+    edit the draft and confirm the public `/cv/:username` page still serves the
+    published snapshot (and 404s for a private CV while the holder still sees
+    it). Exercise publish → unpublish → re-publish, import a JSON export,
+    restore a version saved before the new sections existed, and confirm the
+    certifications/languages/links sections round-trip. Visually confirm the 3D
+    wordmark on a real device (including `prefers-reduced-motion`) and the
+    rebuilt testimonials page in all three view modes. Approve a visitor
+    review and confirm the mirrored testimonial appears once (not twice) on the
+    public page, then reject it and confirm the mirror is removed. No database,
+    socket runtime or browser automation was available here.
+38. Phase 34 follow-up: decide whether the review→testimonial mirror should run
+    inside a MongoDB transaction or be replaced by a single collection with a
+    `type` discriminator; the current two-collection write is sequential and a
+    mid-flight failure leaves a mirror for the next moderation action to clean.
+39. Phase 34 follow-up: `publishedSnapshot` stores a full copy of the CV, so a
+    large document is duplicated per publish. If CVs grow, switch to a
+    version-pointer (publish a version id) instead of a copy.
+40. Phase 35 follow-up: confirm the new heading sizes on a real device at
+    360 px, 768 px and 1024 px. The About heading must stay left-aligned once
+    the hero becomes two columns, and the decoration must not overlap the
+    welcome wordmark. No browser was available here.
+41. Phase 35 follow-up: exercise the hobbies endpoints against a live MongoDB —
+    reorder with a stale id list, import of a file exported from a *different*
+    database (ids must not collide), and the hidden-hobby filter on
+    `/public/interests`. Drag-and-drop ordering was never run in a browser.
+42. Phase 35 follow-up: `POST /interests/import` creates documents one at a
+    time so a single bad row cannot fail the batch; for large imports this is
+    N round-trips. Consider `insertMany({ ordered: false })` once validation
+    feedback per row is no longer needed.
 
 ---
 

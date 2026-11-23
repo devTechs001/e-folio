@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ArchiveNote from '../components/ArchiveNote';
+import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Interests.css';
@@ -55,13 +56,22 @@ const Interests = () => {
         card.style.transform = '';
     };
 
-    // Get unique categories
-    const categories = ['all', ...new Set(interests.map(int => int.category).filter(Boolean))];
+    // Get unique categories. Tags join the same filter row so a hobby tagged
+    // from the dashboard is reachable without a second control.
+    const categories = [
+        'all',
+        ...new Set(
+            interests.flatMap(int => [int.category, ...(Array.isArray(int.tags) ? int.tags : [])]).filter(Boolean)
+        )
+    ];
 
     // Filter interests based on active category
-    const filteredInterests = activeCategory === 'all' 
-        ? interests 
-        : interests.filter(int => int.category === activeCategory);
+    const filteredInterests = activeCategory === 'all'
+        ? interests
+        : interests.filter(int =>
+            int.category === activeCategory
+            || (Array.isArray(int.tags) && int.tags.includes(activeCategory))
+        );
 
     // Calculate average skill level
     const averageLevel = interests.length > 0
@@ -95,25 +105,16 @@ const Interests = () => {
 
             <div className="max-w-7xl mx-auto relative z-10">
                 {/* Header */}
-                <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-4 mb-6" data-aos="fade-down">
-                        <i className="fas fa-star text-3xl md:text-4xl text-mainColor animate-pulse-star"></i>
-                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor">
-                            Hobbies & <span className="gradient-text-interests">Interests</span>
-                        </h2>
-                        <i className="fas fa-star text-3xl md:text-4xl text-mainColor animate-pulse-star delay-500"></i>
-                    </div>
-                    
-                    <div className="title-decoration">
-                        <div className="decoration-line"></div>
-                        <div className="decoration-dot decoration-dot-left"></div>
-                        <div className="decoration-dot decoration-dot-right"></div>
-                    </div>
-
-                    <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mt-6" data-aos="fade-up">
-                        Exploring passions and cultivating skills that drive innovation and creativity
-                    </p>
-                    <ArchiveNote source={contentSource} className="mt-3" />
+                <div className="text-center mb-16" data-aos="fade-down">
+                    {/* The decoration that used to be bespoke here now lives in
+                        SectionHeading, so every public page shares it. */}
+                    <SectionHeading
+                        text="Hobbies & Interests"
+                        accent="Interests"
+                        lede="Exploring passions and cultivating skills that drive innovation and creativity"
+                    >
+                        <ArchiveNote source={contentSource} className="mt-3" />
+                    </SectionHeading>
 
                     {/* Stats Overview */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-8">
@@ -218,6 +219,14 @@ const Interests = () => {
                                     <p className="text-textColor/80 text-sm md:text-base leading-relaxed mb-4">
                                         {interest.description}
                                     </p>
+
+                                    {/* Since — only shown when the owner set a year */}
+                                    {interest.startedYear && (
+                                        <p className="interest-since text-xs text-textColor/50 mb-3">
+                                            <i className="fas fa-clock mr-1"></i>
+                                            Since {interest.startedYear}
+                                        </p>
+                                    )}
 
                                     {/* Skill Level */}
                                     {interest.level && (

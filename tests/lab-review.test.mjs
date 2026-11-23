@@ -104,7 +104,8 @@ check('skills and interests writes publish only a section name and timestamp', (
 check('dashboard Lab edits publish cross-tab notices and no longer claim instant delivery', () => {
     const src = read('src/components/dashboard/LabManager.jsx');
     assert.match(src, /publishProjectsChanged/);
-    assert.equal((src.match(/publishProjectsChanged\(\)/g) || []).length, 3);
+    // Add samples, delete one, delete all — plus the phase-37 poster save.
+    assert.equal((src.match(/publishProjectsChanged\(\)/g) || []).length, 4);
     assert.match(src, /live signals, cross-tab notices and its 30-second refresh/);
     assert.doesNotMatch(src, /appear there immediately/);
     assert.match(lab(), /publishProjectsChanged\(\)/);
@@ -114,7 +115,10 @@ check('dashboard Lab edits publish cross-tab notices and no longer claim instant
 
 check('sample wording is owner-only and zero values stay hidden', () => {
     const src = lab();
-    assert.match(src, /\{owner && sample && <span className="lab-sample-badge">/);
+    // Phase 37 moved the badge into the LabThumb component's `sampleLabel`
+    // prop; it is still rendered for the owner on sample cards only.
+    assert.match(src, /sampleLabel=\{owner && sample/);
+    assert.match(src, /className="lab-sample-badge"/);
     assert.match(src, /value: owner \? sampleCount : 0/);
     assert.match(src, /\.filter\(card => card\.value > 0\)\)/);
     assert.match(src, /project\.views > 0/);
@@ -131,7 +135,7 @@ check('protected Lab sample files, seed script and NetGate links are untouched',
     const seed = read('server/scripts/seedLabSamples.js');
     assert.match(seed, /--remove/);
     assert.match(seed, /Project\.deleteMany\(\{ tags: LAB_SAMPLE_TAG \}\)/);
-    assert.equal(json('src/data/publicSnapshot.json').sections.projects.projects.length, 14);
+    assert.equal(json('src/data/publicSnapshot.json').sections.projects.projects.length, 16);
 });
 
 check('no secret, runtime service call or external write was introduced', () => {

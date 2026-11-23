@@ -14,6 +14,7 @@ const {
     refreshProjects
 } = require('../controllers/public.controller');
 const { getPublicTestimonials } = require('../controllers/public-testimonials.controller');
+const { optionalAuth } = require('../middleware/auth.middleware');
 const { getPublicEducation } = require('../controllers/education.controller');
 const { getPublicInterests } = require('../controllers/interests.controller');
 
@@ -49,23 +50,43 @@ router.get('/portfolio/:username', async (req, res) => {
     }
 });
 
-// Public CV by username
-router.get('/cv/:username', async (req, res) => {
+// Public CV by username.
+// Phase 33: a CV the holder has not published is not readable by visitors, so
+// a draft (or a half-written document) can never leak before it is ready.
+// The owner of the record can still preview their own unpublished CV.
+const fetchPublicCv = async (req, res) => {
     try {
-        const user = await User.findOne({ username: req.params.username });
+        const user = await User.findOne({ username: req.params.username }).select('name username avatar role _id');
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            return res.status(404).json({ success: false, message: 'CV not found' });
         }
         const cv = await CurriculumVitae.findOne({ userId: user._id });
         if (!cv) {
             return res.status(404).json({ success: false, message: 'CV not found' });
         }
-        res.json({ success: true, user: { name: user.name, username: user.username, avatar: user.avatar }, cv });
+        const viewerIsHolder = Boolean(req.user) && String(req.user._id) === String(user._id);
+        if (!cv.isPublished && !viewerIsHolder) {
+            return res.status(404).json({ success: false, message: 'CV not found' });
+        }
+        const document = cv.isPublished && cv.publishedSnapshot ? cv.publishedSnapshot : cv;
+        res.json({
+            success: true,
+            user: { name: user.name, username: user.username, avatar: user.avatar },
+            cv: document,
+            meta: {
+                published: Boolean(cv.isPublished),
+                publishedAt: cv.publishedAt || null
+            }
+        });
     } catch (error) {
         console.error('Error fetching public CV:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
-});
+};
+
+router.get('/cv/:username', optionalAuth, interactionLimiter, fetchPublicCv);
+// Same document as JSON download for anyone who wants the raw copy.
+router.get('/cv/:username/export.json', optionalAuth, interactionLimiter, fetchPublicCv);
 
 // Project interactions (public, rate limited)
 router.post('/projects/refresh', refreshProjects);

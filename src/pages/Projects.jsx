@@ -13,6 +13,7 @@ import NexStoreCard from '../components/NexStoreCard';
 import ProjectShowcase from '../components/ProjectShowcase';
 import ProjectsExperience from '../components/ProjectsExperience';
 import ArchiveNote from '../components/ArchiveNote';
+import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
@@ -591,13 +592,13 @@ const Projects = () => {
                 headings must render immediately, never wait on an observer. */}
             <div className="portfolio-hero max-w-7xl mx-auto mb-16">
                 <div className="text-center mb-12 projects-header">
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-textColor mb-4">
-                        Latest <span className="text-mainColor gradient-text">Projects</span>
-                    </h2>
-                    <p className="text-textColor/70 text-base md:text-lg max-w-2xl mx-auto mb-8">
-                        Explore my portfolio of innovative solutions and creative implementations
-                    </p>
-                    <ArchiveNote source={contentSource} />
+                    <SectionHeading
+                        text="Latest Projects"
+                        accent="Projects"
+                        lede="Explore my portfolio of innovative solutions and creative implementations"
+                    >
+                        <ArchiveNote source={contentSource} />
+                    </SectionHeading>
 
                     {/* Enhanced featured link: same destination, real copy/share/QR actions. */}
                     <div className="flex justify-center mb-8 w-full">
