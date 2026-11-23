@@ -251,11 +251,13 @@ check('approved reviews join the page from the reviews system', () => {
 
 check('the three view modes each page correctly', () => {
     const src = read('src/pages/Testimonials.jsx');
-    // Grid/list paginate by PAGE_SIZE; the carousel steps one at a time.
-    assert.match(src, /const gridPages = Math.max\(1, Math\.ceil\(visible\.length \/ PAGE_SIZE\)\)/);
+    // Phase 38 gave each view its own page size: the grid pages by rows, the
+    // list by its own count, and the carousel steps one item at a time.
+    assert.match(src, /const pageSize = viewMode === 'list' \? LIST_PAGE_SIZE : PAGE_SIZE;/);
+    assert.match(src, /const gridPages = Math\.max\(1, Math\.ceil\(visible\.length \/ pageSize\)\)/);
     assert.match(src, /const carouselPages = Math\.max\(1, visible\.length\)/);
     assert.match(src, /const activeSlide = Math\.min\(page, carouselPages\) - 1/);
-    assert.match(src, /const paged = viewMode === 'carousel' \? visible : visible\.slice/);
+    assert.match(src, /const paged = viewMode === 'carousel'/);
     assert.match(src, /setPage\(current => \(current >= carouselPages \? 1 : current \+ 1\)\)/);
     assert.match(src, /gridPages > 1 && \(/);
     // A closed modal and a stopped carousel timer are released.

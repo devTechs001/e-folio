@@ -2700,6 +2700,69 @@ a browser, and the hero photo against the live text overlay.
 
 ---
 
+## 3ak. Phase 38 — centred testimonials heading, four-row scroll viewport with pagination, and category counts
+
+Owner request: *"centre the testimonials heading, the testimonials should be
+scrollable (add pagination) maximum of four rows viewport, add some reviews
+count for each category."* Static and build verification only — **no MongoDB,
+Express runtime or browser was available**, so nothing here is claimed as
+live-tested.
+
+### Heading
+
+The heading was deliberately left-aligned when this page gained the shared
+`SectionHeading` in phase 35 (it sits in a two-column hero). It is now centred,
+along with its eyebrow, lede, archive note and decoration, while the hero's
+score/action panel keeps its own alignment. Centring is scoped to
+`.tst-hero-copy`, never the whole hero.
+
+### Four-row viewport with pagination
+
+`PAGE_SIZE` went from a flat 9 to an explicit expression:
+`ROWS_PER_PAGE (4) × GRID_COLUMNS_WIDE (3) = 12` cards per grid page. Cards are
+`minmax(300px, 1fr)`, so a wide screen lays out three per row and a page is
+exactly four rows.
+
+The grid box is capped at four rows — `max-height: calc(4 × (320px + 1rem))`
+driven by a `--tst-card-est-height` property — and scrolls inside with
+`overscroll-behavior: contain` and a stable scrollbar gutter, so a long feed
+never pushes the footer miles down. The box is focusable (`tabIndex=0`,
+`role="region"`, labelled with the current page) so the scroll is reachable
+from the keyboard.
+
+Existing pagination was kept and now also reports `page N of M` and the
+"4 rows per view" hint next to the result count. Each view keeps its own page
+size (`LIST_PAGE_SIZE` for the list, one item at a time for the carousel), so
+pages can no longer leak between modes. Below 640 px the grid is a single
+column, where four rows *is* the page, so the inner scroll is switched off
+rather than showing a pointless scrollbar.
+
+### Reviews count per category
+
+A new panel above the feed lists every category with its entry count, split
+into reviews vs testimonials, plus the average rating for that category.
+
+The category is derived from data the entries already carry: the person's
+`role`/`position`, falling back to "Visitor reviews" or "Client
+recommendations" by kind. Nothing is hard-coded and no number is invented —
+the counts are computed from the feed and re-computed when search, rating or
+featured filters change, so they always agree with the chips beside them. The
+panel hides itself when there is nothing to count, and the chips wrap to full
+width below 640 px.
+
+### Verification
+
+`node tests/testimonials-layout.test.mjs` — **15 checks**, wired into both
+manifests. One earlier assertion in `tests/cv-system-testimonials.test.mjs`
+pinned the exact phase-35 paging expression; it was rewritten to assert the new
+per-view page-size contract instead of the old single-`PAGE_SIZE` shape, keeping
+what it was protecting (each mode paginates independently).
+
+Not verified: the rendered grid in a browser, the inner scroll on a real
+touch device, and the category counts against a populated production database.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval

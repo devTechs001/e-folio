@@ -87,12 +87,21 @@
     margin-bottom: 0.7rem;
 }
 
-/* Phase 35: the hero title is now the shared SectionHeading, so it inherits
-   the centred decoration but keeps this hero's left alignment. */
+/* Phase 38: the hero title is now CENTRED like the other public sections.
+   The eyebrow, lede and decoration centre with it; the hero's side panel keeps
+   its own alignment so the score and buttons still read cleanly. */
+.tst-hero .tst-hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
 .tst-hero .tst-heading {
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 0.75rem;
-    text-align: left;
+    text-align: center;
+    width: 100%;
 }
 
 .tst-hero .tst-heading .sec-head__title {
@@ -100,10 +109,24 @@
 }
 
 .tst-hero .tst-heading .sec-head__deco {
-    margin-left: 0;
+    margin-left: auto;
     margin-right: auto;
     width: 150px;
     margin-top: 0.9rem;
+}
+
+.tst-hero .tst-lede {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.tst-hero .tst-eyebrow {
+    align-self: center;
+}
+
+.tst-hero .tst-archive {
+    text-align: center;
 }
 
 .tst-lede {
@@ -366,6 +389,179 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
+}
+
+/* ---------------------------------------------------- scroll viewport --- */
+/* Phase 38 — the grid is capped at four rows. A page holds four rows worth of
+   cards; if a viewport is shorter than the content the box scrolls instead of
+   growing without limit. `--tst-card-est-height` is the typical card height;
+   raise it if the copy runs long. */
+.tst-grid--scroll {
+    max-height: var(--tst-viewport-max, calc(4 * (320px + 1rem)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-right: 0.35rem;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent) transparent;
+}
+
+.tst-grid--scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tst-grid--scroll::-webkit-scrollbar-track {
+    background: color-mix(in srgb, var(--textColor, #e8f1ff) 6%, transparent);
+    border-radius: 999px;
+}
+
+.tst-grid--scroll::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent);
+    border-radius: 999px;
+}
+
+.tst-grid--scroll:focus-visible {
+    outline: 2px solid var(--mainColor, #00efff);
+    outline-offset: 4px;
+    border-radius: 18px;
+}
+
+/* Four rows on wide screens, fewer when the columns collapse — the page still
+   paginates, so the cap only limits the scrolling box, not the content. */
+@media (max-width: 1023px) {
+    .tst-grid--scroll {
+        max-height: calc(4 * (var(--tst-card-est-height, 320px) + 1rem));
+    }
+}
+
+@media (max-width: 640px) {
+    .tst-grid--scroll {
+        /* One column: four rows is the whole page, so no inner scroll is needed. */
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+    }
+}
+
+/* --------------------------------------------------- category counts --- */
+
+.tst-cats {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--textColor, #e8f1ff) 12%, transparent);
+    background: color-mix(in srgb, var(--textColor, #e8f1ff) 4%, transparent);
+}
+
+.tst-cats-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+}
+
+.tst-cats-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mainColor, #00efff);
+}
+
+.tst-cats-total {
+    font-size: 0.78rem;
+    color: color-mix(in srgb, var(--textColor, #e8f1ff) 62%, transparent);
+}
+
+.tst-cats-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tst-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--textColor, #e8f1ff) 14%, transparent);
+    background: color-mix(in srgb, var(--bgColor, #0d1524) 70%, transparent);
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+.tst-cat-label {
+    max-width: 16ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--textColor, #e8f1ff);
+}
+
+.tst-cat-count {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--mainColor, #00efff) 18%, transparent);
+    color: var(--mainColor, #00efff);
+    font-weight: 800;
+}
+
+.tst-cat-count-unit {
+    font-size: 0.68rem;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.tst-cat-split {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: color-mix(in srgb, var(--textColor, #e8f1ff) 58%, transparent);
+}
+
+.tst-cat-kind--review {
+    color: #a78bfa;
+}
+
+.tst-cat-kind--testimonial {
+    color: #34d399;
+}
+
+.tst-cat-avg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+@media (max-width: 640px) {
+    .tst-category,
+    .tst-cat {
+        width: 100%;
+        justify-content: space-between;
+        border-radius: 12px;
+    }
+
+    .tst-cat-label {
+        max-width: none;
+    }
 }
 
 .tst-card {

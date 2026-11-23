@@ -27,7 +27,14 @@ const PREVIEW_KEY = 'testimonial_preview';
 // invented testimonial records.
 const CACHE_KEY = 'public_testimonials_v2';
 const LEGACY_CACHE_KEY = 'public_testimonials';
-const PAGE_SIZE = 9;
+// The public grid shows at most FOUR ROWS in its viewport and paginates
+// through the rest. Cards are minmax(300px, 1fr), so a wide screen holds three
+// per row; 12 cards keep the row count stable across breakpoints without a
+// layout-jumping measurement pass.
+const ROWS_PER_PAGE = 4;
+const GRID_COLUMNS_WIDE = 3;
+const PAGE_SIZE = ROWS_PER_PAGE * GRID_COLUMNS_WIDE;
+const LIST_PAGE_SIZE = 8;
 
 const isSampleTestimonial = (item) =>
   Array.isArray(item?.tags) && item.tags.includes(SAMPLE_TAG);
@@ -224,13 +231,21 @@ const Testimonials = () => {
     setPage(1);
   }, [query, kindFilter, ratingFilter, featuredOnly, sortBy]);
 
-  // Grid/list paginate by PAGE_SIZE; the carousel steps one item at a time, so
-  // the two counts must not share a single value.
-  const gridPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  // Each view pages differently: the grid shows four rows, the list a fixed
+  // number of rows, and the carousel one item at a time. They must not share a
+  // single page size or the last page of one mode leaks into another.
+  const pageSize = viewMode === 'list' ? LIST_PAGE_SIZE : PAGE_SIZE;
+  const gridPages = Math.max(1, Math.ceil(visible.length / pageSize));
   const carouselPages = Math.max(1, visible.length);
   const totalPages = viewMode === 'carousel' ? carouselPages : gridPages;
   const activeSlide = Math.min(page, carouselPages) - 1;
-  const paged = viewMode === 'carousel' ? visible : visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paged = viewMode === 'carousel'
+    ? visible
+    : visible.slice((page - 1) * pageSize, page * pageSize);
+
+  // The grid viewport is capped at four rows so a long feed scrolls inside a
+  // predictable box instead of pushing the page footer miles down.
+  const gridViewportMax = `calc(4 * (var(--tst-card-est-height, 320px) + 1rem))`;
 
   const autoAdvance = useCallback(() => {
     setPage(current => (current >= carouselPages ? 1 : current + 1));
@@ -258,6 +273,49 @@ const Testimonials = () => {
     const recent = items.filter(item => item.sortTime >= monthAgo).length;
     return { total, average, reviewCount, testimonialCount, featured, recent };
   }, [items]);
+
+  // Review counts per category. A category is taken from the people who left
+  // the words (their role, falling back to the kind of entry), never invented.
+  // Search and rating still apply so the numbers match what the chips filter.
+  const categoryCounts = useMemo(() => {
+    const scoped = items.filter(item => {
+      if (ratingFilter > 0 && !(item.rating >= ratingFilter)) return false;
+      if (featuredOnly && !item.featured) return false;
+      if (query.trim()) {
+        const needle = query.trim().toLowerCase();
+        const haystack = `${item.name} ${item.role || ''} ${item.company || ''} ${item.content || ''}`.toLowerCase();
+        if (!haystack.includes(needle)) return false;
+      }
+      return true;
+    });
+
+    const labelFor = item => {
+      const role = String(item.role || item.position || '').trim();
+      if (role) return role;
+      return item.kind === FEED_KIND.review ? 'Visitor reviews' : 'Client recommendations';
+    };
+
+    const counts = new Map();
+    for (const item of scoped) {
+      const key = labelFor(item);
+      const entry = counts.get(key) || { label: key, count: 0, reviewCount: 0, testimonialCount: 0, totalRating: 0, rated: 0 };
+      entry.count += 1;
+      if (item.kind === FEED_KIND.review) entry.reviewCount += 1;
+      else entry.testimonialCount += 1;
+      if (Number.isFinite(item.rating)) {
+        entry.totalRating += item.rating;
+        entry.rated += 1;
+      }
+      counts.set(key, entry);
+    }
+
+    return [...counts.values()]
+      .map(entry => ({
+        ...entry,
+        average: entry.rated ? entry.totalRating / entry.rated : 0
+      }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  }, [items, query, ratingFilter, featuredOnly]);
 
   const toggleLike = async item => {
     if (item.kind !== FEED_KIND.review) return;
@@ -526,9 +584,59 @@ const Testimonials = () => {
           </div>
         </div>
 
+        {/* Category review counts — derived from the entries themselves. */}
+        {categoryCounts.length > 0 && (
+          <section className="tst-cats" aria-label="Entries by category">
+            <div className="tst-cats-head">
+              <span className="tst-cats-title">
+                <i className="fas fa-layer-group" aria-hidden="true" /> By category
+              </span>
+              <span className="tst-cats-total">
+                {categoryCounts.reduce((sum, entry) => sum + entry.count, 0)} in {categoryCounts.length}{' '}
+                {categoryCounts.length === 1 ? 'category' : 'categories'}
+              </span>
+            </div>
+            <ul className="tst-cats-list">
+              {categoryCounts.map(entry => (
+                <li key={entry.label} className="tst-cat">
+                  <span className="tst-cat-label" title={entry.label}>{entry.label}</span>
+                  <span className="tst-cat-count">
+                    {entry.count}
+                    <span className="tst-cat-count-unit">{entry.count === 1 ? 'entry' : 'entries'}</span>
+                  </span>
+                  <span className="tst-cat-split">
+                    {entry.reviewCount > 0 && (
+                      <span className="tst-cat-kind tst-cat-kind--review">
+                        {entry.reviewCount} review{entry.reviewCount === 1 ? '' : 's'}
+                      </span>
+                    )}
+                    {entry.testimonialCount > 0 && (
+                      <span className="tst-cat-kind tst-cat-kind--testimonial">
+                        {entry.testimonialCount} testimonial{entry.testimonialCount === 1 ? '' : 's'}
+                      </span>
+                    )}
+                  </span>
+                  {entry.average > 0 && (
+                    <span className="tst-cat-avg">
+                      <i className="fas fa-star" aria-hidden="true" />
+                      {entry.average.toFixed(1)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <div className="tst-resultbar">
           <span>
             Showing {paged.length} of {visible.length}
+            {viewMode !== 'carousel' && gridPages > 1 && (
+              <span className="tst-resultbar-page"> · page {page} of {gridPages}</span>
+            )}
+            {viewMode === 'grid' && (
+              <span className="tst-resultbar-hint"> · {ROWS_PER_PAGE} rows per view, scroll inside the grid</span>
+            )}
             {filterCount > 0 && <button type="button" className="tst-clear" onClick={resetFilters}>Clear {filterCount} filter{filterCount > 1 ? 's' : ''}</button>}
           </span>
           <span className="tst-resultbar-source">
@@ -560,7 +668,13 @@ const Testimonials = () => {
         ) : (
           <>
             {viewMode === 'grid' && (
-              <div className="tst-grid">
+              <div
+                className="tst-grid tst-grid--scroll"
+                style={{ '--tst-viewport-max': gridViewportMax }}
+                tabIndex={0}
+                role="region"
+                aria-label={`Testimonial grid, four rows visible, page ${page} of ${gridPages}`}
+              >
                 {paged.map(item => (
                   <article
                     key={item.id}
