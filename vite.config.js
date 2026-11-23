@@ -75,10 +75,15 @@ export default defineConfig(({ command, mode }) => {
           display: 'standalone',
           scope: isGitHubPages ? '/e-folio/' : '/',
           start_url: isGitHubPages ? '/e-folio/' : '/',
+          // Phase 39: the maskable entry used to point at the any-purpose file,
+          // which Android then cropped through the monogram. Each purpose now
+          // has its own artwork, and the monochrome badge is available for
+          // themed launchers.
           icons: [
-            { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-            { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-            { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+            { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: '/icons/icon-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            { src: '/icons/icon-monochrome-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'monochrome' }
           ]
         }
       })

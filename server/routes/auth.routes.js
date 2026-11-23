@@ -88,6 +88,19 @@ router.post('/register', registerLimiter, async (req, res) => {
             });
         }
 
+        // Phase 39: the bootstrap owner identity cannot be claimed through the
+        // public sign-up form. Without this, anyone could register the owner's
+        // address before the owner first signs in, and the owner-session
+        // bootstrap resolves by email. The reply is generic so it does not
+        // confirm which address is reserved.
+        const ownerEmail = security.getOwnerEmail();
+        if (ownerEmail && email.trim().toLowerCase() === ownerEmail) {
+            return res.status(400).json({
+                success: false,
+                message: 'This account cannot be created. Try a different email address.'
+            });
+        }
+
         const existingUser = await User.findOne({
             $or: [{ email }, { username }]
         });

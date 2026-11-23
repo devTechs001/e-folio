@@ -851,7 +851,7 @@ const Testimonials = () => {
               </div>
             )}
 
-            {viewMode !== 'carousel' && gridPages > 1 && (
+            {viewMode !== 'carousel' && (
               <nav className="tst-pagination" aria-label="Testimonials pages">
                 <button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page === 1}>
                   <i className="fas fa-chevron-left" aria-hidden="true" /> Previous
@@ -874,6 +874,31 @@ const Testimonials = () => {
                 <button type="button" onClick={() => setPage(current => Math.min(gridPages, current + 1))} disabled={page === gridPages}>
                   Next <i className="fas fa-chevron-right" aria-hidden="true" />
                 </button>
+                <button
+                  type="button"
+                  className="tst-page tst-page--edge"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  aria-label="First page"
+                  title="First page"
+                >
+                  <i className="fas fa-angles-left" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="tst-page tst-page--edge"
+                  onClick={() => setPage(gridPages)}
+                  disabled={page === gridPages}
+                  aria-label="Last page"
+                  title="Last page"
+                >
+                  <i className="fas fa-angles-right" aria-hidden="true" />
+                </button>
+                {gridPages === 1 && (
+                  <span className="tst-page-note">
+                    All {visible.length} fit in {ROWS_PER_PAGE} rows
+                  </span>
+                )}
               </nav>
             )}
           </>
