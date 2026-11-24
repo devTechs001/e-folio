@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23",
+  "generatedAt": "2026-11-24",
   "description": "Saved copy of local backup/seed records. Used by public pages only when the live API cannot supply a section. Live data always wins.",
   "sources": [
     "scripts/seed-projects.js",
@@ -213,7 +213,7 @@
             "TypeScript"
           ],
           "category": "Web",
-          "status": "Live",
+          "status": "live",
           "featured": false,
           "tags": [
             "Portfolio",
@@ -260,7 +260,7 @@
             "Chart.js"
           ],
           "category": "Mobile",
-          "status": "Live",
+          "status": "live",
           "featured": false,
           "tags": [
             "Productivity",
@@ -308,7 +308,7 @@
             "Docker"
           ],
           "category": "AI/ML",
-          "status": "Beta",
+          "status": "beta",
           "featured": true,
           "tags": [
             "AI",
@@ -357,7 +357,7 @@
             "Redis"
           ],
           "category": "Web",
-          "status": "Live",
+          "status": "live",
           "featured": true,
           "tags": [
             "Analytics",
@@ -405,7 +405,7 @@
             "TypeScript"
           ],
           "category": "Blockchain",
-          "status": "Live",
+          "status": "live",
           "featured": true,
           "tags": [
             "Web3",
@@ -583,7 +583,7 @@
             "Calendar UI",
             "Netlify"
           ],
-          "category": "Productivity",
+          "category": "Other",
           "status": "completed",
           "featured": true,
           "tags": [
@@ -628,7 +628,7 @@
             "Canvas",
             "Netlify"
           ],
-          "category": "AI",
+          "category": "AI/ML",
           "status": "completed",
           "featured": true,
           "tags": [
@@ -672,7 +672,7 @@
             "Education UI",
             "Netlify"
           ],
-          "category": "Education",
+          "category": "Other",
           "status": "completed",
           "featured": false,
           "tags": [

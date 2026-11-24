@@ -58,8 +58,7 @@ export const canOpenDashboard = (role) => DASHBOARD_ROLES.includes(normalizeRole
  */
 export const rolesForMenu = (role) => {
     const normalized = normalizeRole(role);
-    if (normalized === OWNER_ROLE) return [OWNER_ROLE];
-    if (normalized === ADMIN_ROLE) return [ADMIN_ROLE, USER_ROLE];
+    if (normalized === OWNER_ROLE || normalized === ADMIN_ROLE) return [OWNER_ROLE];
     if (normalized === COLLABORATOR_ROLE) return [COLLABORATOR_ROLE];
     if (normalized === USER_ROLE) return [USER_ROLE];
     return [];

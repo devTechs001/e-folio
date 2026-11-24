@@ -118,9 +118,9 @@ exports.optionalAuth = async (req, res, next) => {
     next();
 };
 
-// Check if user is owner
+// Check if user is owner or admin
 exports.isOwner = (req, res, next) => {
-    if (req.user?.role !== 'owner') {
+    if (!['owner', 'admin'].includes(req.user?.role)) {
         return res.status(403).json({
             success: false,
             message: 'Access denied. Owner privileges required.'
@@ -144,8 +144,8 @@ exports.isAuthorized = (req, res, next) => {
 // Check permissions
 exports.hasPermission = (...permissions) => {
     return (req, res, next) => {
-        if (req.user?.role === 'owner') {
-            return next(); // Owner has all permissions
+        if (['owner', 'admin'].includes(req.user?.role)) {
+            return next(); // Owner/admin have all permissions
         }
 
         const hasRequiredPermission = (req.user?.permissions || []).some(permission =>

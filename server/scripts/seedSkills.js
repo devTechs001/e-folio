@@ -62,9 +62,9 @@ const skills = [
     { name: 'Flutter', level: 70, category: 'Mobile', type: 'technical', color: '#02569b', icon: 'fa-solid fa-mobile-alt' },
     
     // Testing & Quality
-    { name: 'Jest', level: 82, category: 'Testing', type: 'technical', color: '#c21325', icon: 'fa-solid fa-flask' },
-    { name: 'Cypress', level: 75, category: 'Testing', type: 'technical', color: '#17202c', icon: 'fa-solid fa-check-circle' },
-    { name: 'Testing Library', level: 80, category: 'Testing', type: 'technical', color: '#e33332', icon: 'fa-solid fa-vial' },
+    { name: 'Jest', level: 82, category: 'Tools', type: 'technical', color: '#c21325', icon: 'fa-solid fa-flask' },
+    { name: 'Cypress', level: 75, category: 'Tools', type: 'technical', color: '#17202c', icon: 'fa-solid fa-check-circle' },
+    { name: 'Testing Library', level: 80, category: 'Tools', type: 'technical', color: '#e33332', icon: 'fa-solid fa-vial' },
     
     // Professional Skills
     { name: 'Problem Solving', level: 95, type: 'professional' },

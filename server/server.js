@@ -207,6 +207,7 @@ app.get('/api/health', (req, res) => {
 chatHandler(io);
 const settingsHandler = require('./socket/settings.handler');
 settingsHandler(io);
+require('./socket/profile.handler')(io);
 registerTrackingRealtime(io);
 registerNotificationsRealtime(io);
 // Unauthenticated, read-only namespace so public project counts stay in sync

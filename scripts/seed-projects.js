@@ -121,7 +121,7 @@ const projects = [
         fullDescription: "A stunning portfolio website showcasing projects and skills with beautiful animations, dark mode support, and optimal performance. Built with modern React practices and styled with Tailwind CSS for a sleek, professional appearance.",
         technologies: ["React", "Tailwind CSS", "Framer Motion", "TypeScript"],
         category: "Web",
-        status: "Live",
+        status: "live",
         featured: false,
         tags: ["Portfolio", "Animation", "Responsive", "TypeScript"],
         views: 600,
@@ -137,7 +137,7 @@ const projects = [
         ],
         completionDate: "2023-12-20",
         teamSize: 1,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     {
@@ -146,7 +146,7 @@ const projects = [
         fullDescription: "A powerful task management solution with real-time collaboration, drag-and-drop interface, team workspaces, and productivity analytics. Perfect for remote teams and project management.",
         technologies: ["React", "Firebase", "Redux", "Material-UI", "Chart.js"],
         category: "Mobile",
-        status: "Live",
+        status: "live",
         featured: false,
         tags: ["Productivity", "Real-time", "Collaboration", "PWA"],
         views: 600,
@@ -162,7 +162,7 @@ const projects = [
         ],
         completionDate: "2023-11-10",
         teamSize: 2,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     {
@@ -171,7 +171,7 @@ const projects = [
         fullDescription: "Cutting-edge AI image generation platform utilizing stable diffusion technology. Features include text-to-image generation, image editing with AI, style transfer, upscaling, and custom model training capabilities.",
         technologies: ["React", "TensorFlow.js", "Python", "FastAPI", "WebGL", "Docker"],
         category: "AI/ML",
-        status: "Beta",
+        status: "beta",
         featured: true,
         tags: ["AI", "Machine Learning", "Image Processing", "Deep Learning"],
         views: 600,
@@ -187,7 +187,7 @@ const projects = [
         ],
         completionDate: "2024-02-01",
         teamSize: 3,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     {
@@ -196,7 +196,7 @@ const projects = [
         fullDescription: "All-in-one social media analytics dashboard providing insights from multiple platforms. Features real-time metrics, engagement tracking, sentiment analysis, competitor analysis, and automated reporting.",
         technologies: ["React", "D3.js", "Chart.js", "Python", "Flask", "PostgreSQL", "Redis"],
         category: "Web",
-        status: "Live",
+        status: "live",
         featured: true,
         tags: ["Analytics", "Data Visualization", "Dashboard", "API Integration"],
         views: 600,
@@ -212,7 +212,7 @@ const projects = [
         ],
         completionDate: "2023-10-25",
         teamSize: 2,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     {
@@ -221,7 +221,7 @@ const projects = [
         fullDescription: "Next-generation cryptocurrency wallet supporting multiple blockchains. Features include secure key management, token swaps, NFT gallery, staking, DeFi protocol integration, and portfolio tracking.",
         technologies: ["React", "Web3.js", "Ethers.js", "Solidity", "IPFS", "TypeScript"],
         category: "Blockchain",
-        status: "Live",
+        status: "live",
         featured: true,
         tags: ["Web3", "Cryptocurrency", "DeFi", "NFT", "Security"],
         views: 600,
@@ -237,7 +237,7 @@ const projects = [
         ],
         completionDate: "2024-03-05",
         teamSize: 4,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     // Phase 22: the six owner projects below were removed together with the
@@ -322,7 +322,7 @@ const projects = [
         completionDate: "2025-02-20",
         duration: "2 weeks",
         teamSize: 1,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     {
@@ -330,7 +330,7 @@ const projects = [
         description: "Planning and scheduling application for managing tasks, appointments, and daily activity flow.",
         fullDescription: "Schedule Manager is a productivity-focused planner that helps users organize tasks, track appointments, and manage their time efficiently. The experience is built around clear scheduling, quick updates, and a user-friendly workflow.",
         technologies: ["React", "JavaScript", "Calendar UI", "Netlify"],
-        category: "Productivity",
+        category: "Other",
         status: "completed",
         featured: true,
         tags: ["Scheduling", "Planner", "Productivity", "Calendar"],
@@ -356,7 +356,7 @@ const projects = [
         description: "AI-powered image editing platform with fast enhancements, crop tools, and creative transformations.",
         fullDescription: "AI Image Editor Pro gives users a polished editor for adjusting and enhancing images with automated, creative tools. It is built to feel fast, flexible, and modern for both casual and professional editing workflows.",
         technologies: ["React", "JavaScript", "AI Tools", "Canvas", "Netlify"],
-        category: "AI",
+        category: "AI/ML",
         status: "completed",
         featured: true,
         tags: ["AI", "Image Editing", "Design", "Creative Tools"],
@@ -382,7 +382,7 @@ const projects = [
         description: "Learning platform for education, course browsing, and digital student engagement.",
         fullDescription: "Elimu Pro Beta is a modern education experience built to help learners discover resources, track progress, and engage with a streamlined digital learning system. It focuses on clean course presentation and a motivating student experience.",
         technologies: ["React", "JavaScript", "Education UI", "Netlify"],
-        category: "Education",
+        category: "Other",
         status: "completed",
         featured: false,
         tags: ["Education", "Learning", "Courses", "Student Portal"],
@@ -400,7 +400,7 @@ const projects = [
         completionDate: "2025-04-12",
         duration: "2 weeks",
         teamSize: 1,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     // Phase 36 — two projects the owner supplied on 2026-11-03. Descriptions
@@ -430,7 +430,7 @@ const projects = [
         completionDate: "2025-06-20",
         duration: "3 weeks",
         teamSize: 1,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     },
     {
@@ -456,7 +456,7 @@ const projects = [
         completionDate: "2025-07-10",
         duration: "2 weeks",
         teamSize: 1,
-        priority: "standard",
+        priority: "medium",
         visibility: "public"
     }
 ];
