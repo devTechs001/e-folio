@@ -916,8 +916,41 @@
   }
 }
 
+/* Phase 43 — the owner's name is the hero, so it is sized above the global
+   section scale at every breakpoint instead of being overridden down to
+   4.25rem (which was smaller than a normal page heading). Each step stays
+   larger than the matching SectionHeading step: 3.4 > 3, 4.1 > 3.5,
+   5 > 4.25, 5.75 > 4.75. */
+.about-section .about-heading .sec-head__title {
+  font-size: 2.9rem;
+  line-height: 1.08;
+  /* A long surname at this size must wrap rather than push the column wider
+     than the viewport. */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+@media (min-width: 640px) {
+  .about-section .about-heading .sec-head__title {
+    font-size: 3.4rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .about-section .about-heading .sec-head__title {
+    font-size: 4.1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-section .about-heading .sec-head__title {
+    font-size: 5rem;
+  }
+}
+
 @media (min-width: 1280px) {
   .about-section .about-heading .sec-head__title {
-    font-size: 4.25rem;
+    font-size: 5.75rem;
   }
 }
