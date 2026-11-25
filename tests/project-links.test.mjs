@@ -134,7 +134,11 @@ check('the separate project directory was removed from the page and CSS', () => 
 check('the complete front-end catalogue and zero-value fixes are retained', () => {
     const page = read('src/pages/Projects.jsx');
     assert.match(page, /getSnapshotSection\('projects'\)/);
-    assert.match(page, /const additions = savedItems\.filter\(/);
+    // Phase 41 replaced the ad-hoc `savedItems.filter(...)` merge with the shared
+    // dedupe rule. The guarantee this asserted — the saved copy still completes
+    // the catalogue — is unchanged, so assert that instead of the old shape.
+    assert.match(page, /const items = dedupeProjects\(\[\.\.\.liveItems, \.\.\.savedItems\]\)/);
+    assert.match(page, /import \{ dedupeProjects, isLabExperiment \} from '\.\.\/utils\/labClassification'/);
     assert.match(page, /filter\(card => card\.count > 0\)/);
     const lab = read('src/pages/Lab.jsx');
     assert.match(lab, /filter\(card => card\.value > 0\)/);

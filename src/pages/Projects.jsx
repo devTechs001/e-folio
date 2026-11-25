@@ -15,6 +15,7 @@ import ProjectsExperience from '../components/ProjectsExperience';
 import ArchiveNote from '../components/ArchiveNote';
 import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { dedupeProjects, isLabExperiment } from '../utils/labClassification';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import '../styles/Projects.css';
 
@@ -135,16 +136,18 @@ const Projects = () => {
             // and consistent when the backend cannot supply it. No technical
             // detail is ever exposed to visitors.
             const response = await loadPublicSection('projects');
-            const liveItems = Array.isArray(response.projects) ? response.projects : [];
+            // Phase 41: a record the Lab owns must not appear in the portfolio
+            // grid, and a rebuild must not duplicate one that is already there.
+            const isPortfolio = project => !isLabExperiment(project);
+            const liveItems = (Array.isArray(response.projects) ? response.projects : []).filter(isPortfolio);
             // A live API may only publish a few records. Complete the section
             // from the same local saved copy used for offline visits, so the
             // public catalogue is never reduced to a partial live subset.
             const saved = getSnapshotSection('projects');
-            const savedItems = Array.isArray(saved.projects) ? saved.projects : [];
-            const identity = project => String(project.title || '').trim().toLowerCase();
-            const seen = new Set(liveItems.map(identity));
-            const additions = savedItems.filter(project => identity(project) && !seen.has(identity(project)));
-            const items = [...liveItems, ...additions];
+            const savedItems = (Array.isArray(saved.projects) ? saved.projects : []).filter(isPortfolio);
+            // Shared identity rule: id first, then title slug.
+            const items = dedupeProjects([...liveItems, ...savedItems]);
+            const additions = items.length - liveItems.length;
             setProjects(items);
             // Saved records are labelled as the archive, never as live data.
             setContentSource(additions.length ? 'snapshot' : (response.source || ''));

@@ -2962,7 +2962,7 @@ Two layers, because they cover different waits:
 
 ### Verification
 
-`node tests/system-monitor.test.mjs` — **28 checks**, wired into both manifests as
+`node tests/system-monitor.test.mjs` — **26 checks**, wired into both manifests as
 `test:system-monitor`. The shared logic is imported and executed in Node, so the
 alert thresholds, protection rules, scope isolation and summary verdicts are
 real assertions rather than string matches.
@@ -2978,6 +2978,176 @@ Two genuine bugs surfaced while writing those tests and were fixed:
 Not verified: the monitor against a live Express/Mongo process, real alert firing
 under memory pressure, and the splash on a real device. All are static/build
 verified only.
+
+---
+
+## 3an. Phase 41 — duplicate projects, Projects↔Lab conflict, real analytics, profile sync, owner links
+
+Owner request: *"pull, then fix the recent changes — duplicates in projects
+(non-real projects), the projects system conflicting with the lab system, the
+analytics system not being real, the profile system not in sync (real-time data),
+and some portfolio owner dashboard links not well connected; find other issues
+and fix."*
+
+Static and build verification only — **no MongoDB, Express runtime or browser was
+available**, so nothing here is a live-acceptance claim.
+
+### Forced pull (and a correction)
+
+`git pull` failed with *"refusing to merge unrelated histories"*. The checkout was
+**shallow**, with both branch tips grafted, so Git could not find a merge-base.
+After `git fetch --unshallow`, the real merge-base was the branch tip and the pull
+was a clean fast-forward. This is the same trap that produced a wrong conclusion in
+the previous phase; unshallowing first is the fix.
+
+### 0. Security regression in the incoming commit (found, not requested)
+
+Commit `49f6ae5` ("admin access fix") loosened **`isOwner` to accept `admin`**:
+
+```js
+if (!['owner', 'admin'].includes(req.user?.role))   // was: req.user?.role !== 'owner'
+```
+
+That is a privilege escalation: `admin` is a regular-user-equivalent role in this
+repository, so every admin account gained owner-level access to user management,
+the security audit, system metrics and cache purges — all of which are behind
+`isOwner`. The same commit **rewrote the regression tests** to assert the insecure
+behaviour (`rolesForMenu('admin') === [OWNER_ROLE]`, `canSeeMenuItem` owner items
+`=== true`), so the suite reported green while enforcing the regression.
+
+It also mapped admin to the owner menu in `src/utils/authRoles.js`, which made the
+admin sidebar show owner-only panels whose APIs would 403 — the admin saw menu
+items that could never load.
+
+Reverted all three: `isOwner` is literal owner-only again, `rolesForMenu('admin')`
+returns `[ADMIN_ROLE, USER_ROLE]`, and both test files are restored to the strict
+assertions. `hasPermission` legitimately treats admin as elevated and was left
+alone.
+
+### 1. Duplicate / non-real projects
+
+Two independent causes:
+
+- **The seeder only cleared one owner.** `scripts/seed-projects.js` ran
+  `Project.deleteMany({ userId: adminUser._id })`. Records created under a
+  different owner/admin account (or before that account existed) survived, and the
+  seed inserted a second copy. It now clears by **title** as well as by owner and
+  logs both counts.
+- **Merges were title-only.** Both the Projects and Lab pages merged live and saved
+  records by exact lower-cased title, so a rebuilt snapshot (new ids) or a title
+  edit produced duplicates.
+
+`src/utils/labClassification.js` now provides `projectIdentity()` (id first, then a
+title slug), `dedupeProjects()` and `mergeUnique()`. Merging dedupes on identity
+**and** title slug, so a rebuild cannot duplicate a record. Records with neither an
+id nor a usable title are dropped rather than rendered as unnamed ghost cards.
+
+### 2. Projects ↔ Lab conflict
+
+The Lab treated **any** record with status `live`/`beta`/`development`/
+`experimental` as an experiment. Five portfolio projects are legitimately `live`
+or `beta` (Portfolio Website, Task Management App, AI Image Generator, Social Media
+Dashboard, Blockchain Wallet), so the same work appeared on both pages — 9 cards in
+the Lab instead of 4.
+
+Status alone cannot decide this, and category/tag heuristics are unreliable: Lab
+records use ordinary categories (`Other`, `IoT`, `Web`, `DevOps`) and **Task
+Management App carries a `Security` tag**, so keyword matching produced false
+positives in both directions. (An early version of this fix did exactly that — it
+dropped "Network Recon Suite" and pulled in "Task Management App". The real
+dataset boundary is the reliable signal: Lab records live in
+`labSamples.json` and carry a `snapshot-lab-*` id.)
+
+`isLabExperiment()` now keys on the dataset namespace, plus explicit markers, plus
+statuses the portfolio never uses (`development`, `experimental`). Both pages use
+it, so the split is decided in one place. Measured against the real snapshot:
+
+| | before | after |
+| --- | --- | --- |
+| Projects page | 16 (with dupes possible) | 15, 0 duplicates |
+| Lab page | 9 (5 were portfolio leakage) | 4, the real experiments |
+| Title overlap | 5 | 0 |
+
+### 3. Analytics not real
+
+The controller is genuinely Mongo-backed, but three things were fabricated:
+
+- `newVsReturning: { new: 100, returning: 0 }` — hardcoded, so every visitor looked
+  brand new. Now derived from real session history: a visitor with any session
+  before the window is returning. With no sessions it reports `{0, 0}`, and if the
+  query fails it reports `null` rather than inventing a split.
+- `pageSpeed: 0, errorRate: 0, uptime: 100` — invented constants; nothing in this
+  stack measures them. Now `null`.
+- The client rendered a missing duration as `0s` (`|| 0`). Now `formatSeconds()`
+  renders "not measured".
+
+### 4. Profile not in sync
+
+The incoming `server/socket/profile.handler.js` had three defects:
+
+- **No authentication** — unlike its sibling handlers, it never verified a token,
+  so any anonymous socket could emit `profile:update` and every client applied it.
+- **`io.emit` broadcast** — one user's profile and activity went to *every*
+  connected visitor.
+- **Caller-chosen rooms** — `profile:join` trusted a client-supplied `userId`, so a
+  socket could subscribe to someone else's profile room.
+
+Rewritten: the token decides identity (anonymous sockets may connect but cannot
+join a room or publish), events are scoped to `user:<verifiedId>`, and a mismatched
+join is refused with an explicit error.
+
+On the client, `/profile/stats` was read once on mount and never refreshed, so
+counters froze while the rest of the dashboard updated. Added a 60s refresh plus a
+refresh on tab-visibility, which leaves the last known values in place if a request
+fails (it never zeroes them).
+
+### 5. Owner portfolio links
+
+`buildOwnerSession()` returned a user object **without `username`**, so the
+dashboard rendered `/portfolio/undefined` in the Portfolio editor's "Open in New
+Tab" and its preview iframe. The owner session now includes `username` and
+`avatar`, and both call sites use the existing `publicUserLinks()` helper — which
+returns `''` for a missing username — with a guard so an empty href never opens.
+
+### 6. Other issues found while fixing the above
+
+- **The backend could fail to boot.** `server/services/cacheService.js` did
+  `const redis = require('redis')` at module load while `redis` is **not** in
+  `server/package.json`. Any environment without the package installed would throw
+  `MODULE_NOT_FOUND` during startup — for a feature (`REDIS_URL`) that is optional
+  and normally off. The require is now lazy and guarded: Redis is used only when
+  `REDIS_URL` is set *and* the package is present, otherwise the in-memory cache
+  already in the class is used, with one honest warning.
+- **Malformed records crashed a page.** Both surfaces mapped over live *and* saved
+  data, so a single `null` or a record with no id and no title could render an
+  unnamed ghost card or throw. `splitProjects`/`dedupeProjects` now skip
+  unidentifiable records.
+- **The static dependency audit was under-reporting.** It did not know the `v8`
+  (and several other) Node builtins, so `v8` was reported as an undeclared
+  package, while `redis` — genuinely undeclared — was buried in the same finding
+  and easy to dismiss. Both are now classified correctly, and `security-audit.js`
+  reports **0 findings** instead of 1 MEDIUM.
+
+### Verification
+
+`node tests/projects-lab-sync.test.mjs` — **26 checks**, wired into both manifests
+as `test:projects-lab-sync`. The classification and dedupe helpers are imported and
+executed in Node against the **real** snapshot data, so the 16/4 split and the zero
+overlap are measured, not asserted from source text.
+
+Two existing assertions pinned the exact merge implementation I replaced
+(`tests/project-links.test.mjs`, `tests/lab-review.test.mjs`). Both were rewritten
+to assert the new contract while keeping the guarantee they protected (the saved
+copy still completes the catalogue and the Lab still distinguishes fully-live from
+partly-archived content) — documented rather than quietly loosened.
+
+`npm test` — **506 checks, 0 failures**. `npm run check` — exit 0, 683 warnings
+(the unchanged baseline), 0 security findings, 484 endpoints, precache 238.
+The Vite dev server serves `/`, `/projects` and `/lab` with HTTP 200 and no
+compile errors, and the new module is transpiled correctly.
+
+Not verified: the seeded database itself, the analytics aggregates against real
+tracking documents, and the socket flow between two real clients.
 
 ---
 
@@ -3211,6 +3381,18 @@ verified only.
 48. Phase 40 follow-up: check the boot splash on a real device and a throttled
     connection — confirm the fade-out never flashes and that the 9-second
     slow-load message appears only when it should.
+49. Phase 41 follow-up: **run `npm run seed:projects` against the real database**
+    once, so the title-based clear removes the duplicate records that already
+    exist. The code fix prevents new duplicates; it cannot delete existing ones
+    without a database.
+50. Phase 41 follow-up: verify the two-client profile sync with real sockets, and
+    confirm an anonymous socket is refused when it tries to join a profile room.
+51. Phase 41 follow-up: `getProfileStats()` now polls every 60s per open profile
+    tab. If that proves heavy, replace it with a socket push from the same
+    handler rather than shortening the interval.
+52. Phase 41 follow-up: audit other `io.emit` broadcasts for the same leak that
+    `profile:updated` had. `notifications.handler.js` is already room-scoped, but
+    `broadcastHighEngagement()` (item 8) still calls `global.io.emit`.
 
 ---
 

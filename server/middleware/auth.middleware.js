@@ -118,9 +118,13 @@ exports.optionalAuth = async (req, res, next) => {
     next();
 };
 
-// Check if user is owner or admin
+// Check if user is owner.
+// Phase 41: reverted the `admin` allowance introduced by 49f6ae5. The standing
+// rule in this repository is that isOwner is literal owner-only; 'admin' is a
+// regular-user-equivalent role. Loosening this grants every admin account
+// owner-level access to user management, system metrics and cache purges.
 exports.isOwner = (req, res, next) => {
-    if (!['owner', 'admin'].includes(req.user?.role)) {
+    if (req.user?.role !== 'owner') {
         return res.status(403).json({
             success: false,
             message: 'Access denied. Owner privileges required.'

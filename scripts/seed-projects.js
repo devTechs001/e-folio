@@ -481,9 +481,20 @@ async function seedProjects() {
 
         console.log(`Using admin user: ${adminUser.name}`);
 
-        // Clear existing projects (optional - comment out if you want to keep existing)
-        await Project.deleteMany({ userId: adminUser._id });
-        console.log('Cleared existing projects');
+        // Phase 41: clear by TITLE first, then by owner.
+        //
+        // The previous version only deleted `{ userId: adminUser._id }`. If the
+        // canonical records had been created under a different owner/admin
+        // account (or before that account existed), they survived and the seed
+        // inserted a second copy — which is how the public grid ended up with
+        // duplicate, non-real looking projects.
+        const seedTitles = projects.map(project => project.title);
+        const byTitle = await Project.deleteMany({ title: { $in: seedTitles } });
+        const byOwner = await Project.deleteMany({ userId: adminUser._id });
+        console.log(
+            `Cleared ${byTitle.deletedCount} record(s) matching seed titles and ` +
+            `${byOwner.deletedCount} owned record(s)`
+        );
 
         // Add new projects
         for (const projectData of projects) {

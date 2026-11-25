@@ -33,9 +33,13 @@ const lab = () => read('src/pages/Lab.jsx');
 check('the Lab completes live experiment data from its real saved copy', () => {
     const src = lab();
     assert.match(src, /getSnapshotSection\('labProjects'\)/);
-    assert.match(src, /const savedAdditions = savedLabProjects\.filter/);
-    assert.match(src, /const realProjects = \[\.\.\.liveLabProjects, \.\.\.savedAdditions\]/);
-    assert.match(src, /const usedSavedCopy = savedAdditions\.length > 0/);
+    // Phase 41: the ad-hoc savedAdditions merge became the shared
+    // mergeUnique() rule (identity first, then title slug). The guarantees this
+    // asserted are unchanged: real saved records still complete the live list,
+    // and the UI still distinguishes fully-live from partly-archived content.
+    assert.match(src, /const realProjects = mergeUnique\(liveLabProjects, savedLabProjects\)/);
+    assert.match(src, /const usedSavedCopy = realProjects\.length > liveLabProjects\.length/);
+    assert.match(src, /import \{ isLabExperiment, mergeUnique, LAB_STATUSES \} from '\.\.\/utils\/labClassification'/);
     assert.match(src, /const fullyLive = allLive && !usedSavedCopy/);
     assert.match(src, /fullyLive \? 'live' : allLive \? 'partial' : 'archive'/);
     // The original three-section loader is unchanged.

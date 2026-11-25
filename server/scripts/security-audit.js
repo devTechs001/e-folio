@@ -167,7 +167,9 @@ function checkUndeclaredRequires() {
     const declared = new Set([...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.devDependencies || {})]);
     const builtins = new Set(['fs', 'path', 'http', 'https', 'crypto', 'os', 'util', 'stream', 'events',
         'url', 'zlib', 'child_process', 'querystring', 'buffer', 'timers', 'net', 'tls', 'assert',
-        'process', 'module', 'string_decoder', 'readline', 'worker_threads', 'fs/promises', 'timers/promises']);
+        'process', 'module', 'string_decoder', 'readline', 'worker_threads', 'fs/promises', 'timers/promises',
+        // Phase 41: missing builtins that were being reported as undeclared packages.
+        'v8', 'perf_hooks', 'async_hooks', 'dns', 'cluster', 'vm', 'inspector', 'repl']);
     const files = walk(path.join(ROOT, 'server'), ['.js']);
     const set = new Set(files.map(f => path.resolve(f)));
 
@@ -194,7 +196,10 @@ function checkUndeclaredRequires() {
 
     // Provider SDKs that are loaded lazily inside try/catch and only when the
     // corresponding API key is configured. They are optional, not boot blockers.
-    const optionalProviders = new Set(['groq-sdk']);
+    // Phase 41: `redis` belongs here. It is loaded lazily inside a try/catch and
+    // only when REDIS_URL is configured (see services/cacheService.js), so it is
+    // an optional accelerator rather than a boot blocker.
+    const optionalProviders = new Set(['groq-sdk', 'redis']);
     const missing = new Map();
     for (const file of seen) {
         for (const m of stripComments(read(file)).matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)) {

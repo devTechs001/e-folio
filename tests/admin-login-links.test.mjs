@@ -36,15 +36,15 @@ check('legacy admin roles are folded into one canonical vocabulary', () => {
     assert.equal(normalizeRole('custom-role'), 'custom-role');
 });
 
-check('admin is treated as owner for API access (owner-level privileges)', () => {
+check('admin is never silently promoted to owner (no auth bypass)', () => {
     assert.equal(isOwnerRole('owner'), true);
     assert.equal(isOwnerRole('admin'), false);
     assert.equal(isAdminRole('admin'), true);
     assert.equal(isAdminRole('owner'), false);
     const middleware = read('server/middleware/auth.middleware.js');
-    assert.match(middleware, /!\[['"]owner['"],\s*'admin['"]\]\.includes\(req\.user\?\.role\)/);
+    assert.match(middleware, /req\.user\?\.role !== 'owner'/);
     assert.match(middleware, /\['owner', 'admin', 'collaborator', 'user'\]\.includes/);
-    assert.match(middleware, /exports\.isOwner = \(req, res, next\) => \{\s*if \(!\[['"]owner['"],\s*'admin['"]\]\.includes\(req\.user\?\.role\)\)/);
+    assert.match(middleware, /exports\.isOwner = \(req, res, next\) => \{\s*if \(req\.user\?\.role !== 'owner'\)/);
 });
 
 check('every authenticated role can now open the dashboard', () => {
@@ -57,17 +57,17 @@ check('every authenticated role can now open the dashboard', () => {
     assert.doesNotMatch(login, /result\.role === 'owner' \|\| result\.role === 'collaborator'/);
 });
 
-check('existing role visibility is unchanged and admin gets the user + owner menu', () => {
+check('existing role visibility is unchanged and admin gets the user menu', () => {
     assert.deepEqual(rolesForMenu('owner'), ['owner']);
     assert.deepEqual(rolesForMenu('collaborator'), ['collaborator']);
     assert.deepEqual(rolesForMenu('user'), ['user']);
-    assert.deepEqual(rolesForMenu('admin'), [OWNER_ROLE]);
-    assert.ok(rolesForMenu('admin').includes(OWNER_ROLE));
+    assert.deepEqual(rolesForMenu('admin'), [ADMIN_ROLE, USER_ROLE]);
+    assert.ok(!rolesForMenu('admin').includes(OWNER_ROLE));
     assert.equal(canSeeMenuItem({ roles: ['owner', 'user'] }, 'admin'), true);
-    assert.equal(canSeeMenuItem({ roles: ['owner'] }, 'admin'), true);
+    assert.equal(canSeeMenuItem({ roles: ['owner'] }, 'admin'), false);
     assert.equal(canSeeMenuItem({ roles: ['owner'] }, 'owner'), true);
     assert.equal(canSeeMenuItem({ roles: ['owner', 'collaborator'] }, 'collaborator'), true);
-    assert.equal(canSeeMenuItem({ roles: ['owner', 'collaborator'] }, 'admin'), true);
+    assert.equal(canSeeMenuItem({ roles: ['owner', 'collaborator'] }, 'admin'), false);
     assert.equal(canSeeMenuItem({}, 'owner'), false);
 });
 

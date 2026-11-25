@@ -1,11 +1,28 @@
 // services/CacheService.js
-const redis = require('redis');
+// Phase 41: `redis` is optional. It was required unconditionally at module load
+// while being absent from package.json, so the backend would throw
+// MODULE_NOT_FOUND on startup in any environment without it installed. It is now
+// loaded lazily and only when REDIS_URL is actually configured; without it the
+// in-memory cache is used.
 const { promisify } = require('util');
+
+const loadRedis = () => {
+    try {
+        return require('redis');
+    } catch {
+        return null;
+    }
+};
 
 class CacheService {
     constructor() {
-        this.enabled = !!process.env.REDIS_URL;
-        
+        const redis = process.env.REDIS_URL ? loadRedis() : null;
+        this.enabled = Boolean(process.env.REDIS_URL && redis);
+
+        if (process.env.REDIS_URL && !redis) {
+            console.warn('REDIS_URL is set but the `redis` package is not installed; using the in-memory cache.');
+        }
+
         if (this.enabled) {
             this.client = redis.createClient({
                 url: process.env.REDIS_URL

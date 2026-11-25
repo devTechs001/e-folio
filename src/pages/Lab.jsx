@@ -14,13 +14,16 @@ import api from '../services/api.service';
 import ArchiveNote from '../components/ArchiveNote';
 import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
+import { isLabExperiment, mergeUnique, LAB_STATUSES } from '../utils/labClassification';
 import socketService from '../services/socket.service';
 import { subscribeProjectsChanged, publishProjectsChanged } from '../utils/projectSync';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import ProjectModal from './ProjectModal';
 import '../styles/Lab.css';
 
-const LAB_STATUSES = ['live', 'beta', 'development', 'experimental'];
+// Phase 41: the Lab and the Projects page share one classification rule
+// (src/utils/labClassification.js), so a portfolio project that happens to be
+// `live` or `beta` stays on the Projects page instead of appearing here too.
 const LAB_SAMPLE_TAG = 'lab-sample';
 const CACHE_KEY = 'lab_bundle';
 
@@ -131,7 +134,7 @@ const Lab = () => {
       if (token !== loadTokenRef.current) return;
 
       const liveLabProjects = Array.isArray(projectsResponse.projects)
-        ? projectsResponse.projects.filter(p => LAB_STATUSES.includes(String(p.status || '').toLowerCase()))
+        ? projectsResponse.projects.filter(p => isLabExperiment(p))
         : [];
       // Phase 24: a working backend often publishes only `completed`
       // portfolio projects, which the Lab's experiment statuses exclude.
@@ -140,12 +143,11 @@ const Lab = () => {
       // experiments (API down). Both sources are real local records.
       const savedLab = getSnapshotSection('labProjects');
       const savedLabProjects = (Array.isArray(savedLab.projects) ? savedLab.projects : [])
-        .filter(p => LAB_STATUSES.includes(String(p.status || '').toLowerCase()));
-      const identity = project => String(project.title || '').trim().toLowerCase();
-      const seen = new Set(liveLabProjects.map(identity));
-      const savedAdditions = savedLabProjects.filter(p => identity(p) && !seen.has(identity(p)));
-      const realProjects = [...liveLabProjects, ...savedAdditions];
-      const usedSavedCopy = savedAdditions.length > 0;
+        .filter(p => isLabExperiment(p));
+      // Phase 41: dedupe on stable identity first, then title slug — a rebuilt
+      // snapshot changes ids, so id-only or title-only matching both break.
+      const realProjects = mergeUnique(liveLabProjects, savedLabProjects);
+      const usedSavedCopy = realProjects.length > liveLabProjects.length;
       const realSkills = Array.isArray(skillsResponse.skills) ? skillsResponse.skills : [];
       const realHobbies = Array.isArray(hobbiesResponse.interests)
         ? hobbiesResponse.interests

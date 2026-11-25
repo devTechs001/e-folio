@@ -9,6 +9,9 @@
  * Confidential: local checkout only.
  */
 const os = require('os');
+// `v8` is a Node builtin, not an npm package. Declared at the top so static
+// dependency checks can see it rather than flagging an inline require.
+const v8 = require('v8');
 const mongoose = require('mongoose');
 const { clearDashboardCaches, getDashboardCacheStats } = require('./securityDashboard.controller');
 const cacheService = require('../services/cacheService');
@@ -63,6 +66,7 @@ const collectMetrics = async () => {
     const usedMem = totalMem - freeMem;
     const load = os.loadavg();
     const heap = process.memoryUsage();
+    const heapLimit = v8.getHeapStatistics().heap_size_limit;
     const dbState = mongoose.connection.readyState;
 
     // Mongo only reports an estimated document count once connected.
@@ -96,8 +100,8 @@ const collectMetrics = async () => {
             heapUsedBytes: heap.heapUsed,
             heapTotalBytes: heap.heapTotal,
             externalBytes: heap.external,
-            heapLimitBytes: require('v8').getHeapStatistics().heap_size_limit,
-            heapUsagePercent: percent(heap.heapUsed, require('v8').getHeapStatistics().heap_size_limit)
+            heapLimitBytes: heapLimit,
+            heapUsagePercent: percent(heap.heapUsed, heapLimit)
         },
 
         system: {

@@ -21,6 +21,16 @@ import socketService from '../../services/socket.service';
 import { normalizeAnalytics, EMPTY_ANALYTICS } from '../../utils/analyticsData';
 import toast from 'react-hot-toast';
 
+/**
+ * Phase 41 — render a measured duration, or say it was not measured.
+ * `|| 0` used to turn a missing measurement into a confident "0s".
+ */
+const formatSeconds = value => {
+    const numeric = Number(value);
+    if (value == null || !Number.isFinite(numeric)) return 'not measured';
+    return `${numeric}s`;
+};
+
 const Analytics = () => {
   const { user, isOwner } = useAuth();
   
@@ -1507,11 +1517,11 @@ const Analytics = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">Average</span>
-                      <span className="text-cyan-400 font-semibold">{data.technical?.loadTimes?.avg || 0}s</span>
+                      <span className="text-cyan-400 font-semibold">{formatSeconds(data.technical?.loadTimes?.avg)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">Median</span>
-                      <span className="text-blue-400 font-semibold">{data.technical?.loadTimes?.median || 0}s</span>
+                      <span className="text-blue-400 font-semibold">{formatSeconds(data.technical?.loadTimes?.median)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-900/30 rounded">
                       <span className="text-slate-300">95th Percentile</span>
