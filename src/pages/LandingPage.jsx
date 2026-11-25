@@ -250,14 +250,17 @@ const LandingPage = () => {
                 </div>
 
                 <Projects />
-                
+
                 <div className="section-divider">
                     <div className="divider-line"></div>
                     <div className="divider-dot"></div>
                 </div>
 
+                {/* Phase 42: the Lab stays a section of the landing page, but it is
+                    its own module — separate collection, separate endpoint, separate
+                    dashboard. It also has a standalone route at /lab. */}
                 <Lab />
-                
+
                 <div className="section-divider">
                     <div className="divider-line"></div>
                     <div className="divider-dot"></div>
@@ -295,9 +298,9 @@ const LandingPage = () => {
                     <i className="fas fa-project-diagram"></i>
                     <span className="quick-access-tooltip">Projects</span>
                 </a>
-                <a href="#lab" className="quick-access-item" aria-label="Jump to My Lab">
+                <a href="#lab" className="quick-access-item" aria-label="Jump to the Security Lab">
                     <i className="fas fa-flask"></i>
-                    <span className="quick-access-tooltip">My Lab</span>
+                    <span className="quick-access-tooltip">Security Lab</span>
                 </a>
                 <a href="#contact" className="quick-access-item" aria-label="Jump to Contact">
                     <i className="fas fa-envelope"></i>

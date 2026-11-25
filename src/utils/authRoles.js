@@ -58,7 +58,12 @@ export const canOpenDashboard = (role) => DASHBOARD_ROLES.includes(normalizeRole
  */
 export const rolesForMenu = (role) => {
     const normalized = normalizeRole(role);
-    if (normalized === OWNER_ROLE || normalized === ADMIN_ROLE) return [OWNER_ROLE];
+    // Phase 41: reverted. Mapping admin to OWNER_ROLE showed owner-only panels
+    // (Admin Panel, System Monitor, Resources) whose APIs return 403, so the
+    // admin saw menu items that could never load. This module's own contract —
+    // see the header comment — is that an admin is never owner-equivalent.
+    if (normalized === OWNER_ROLE) return [OWNER_ROLE];
+    if (normalized === ADMIN_ROLE) return [ADMIN_ROLE, USER_ROLE];
     if (normalized === COLLABORATOR_ROLE) return [COLLABORATOR_ROLE];
     if (normalized === USER_ROLE) return [USER_ROLE];
     return [];

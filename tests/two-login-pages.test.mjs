@@ -80,7 +80,7 @@ check('the regular user endpoint is users-only and refuses owner credentials', (
 
 check('the identified server-side role gaps are fixed without privilege elevation', () => {
     const middleware = read('server/middleware/auth.middleware.js');
-    assert.match(middleware, /if \(!\[['"]owner['"],\s*'admin'\]\.includes\(req\.user\?\.role\)\)/);
+    assert.match(middleware, /exports\.isOwner = \(req, res, next\) => \{\s*if \(req\.user\?\.role !== 'owner'\)/);
     assert.match(middleware, /\['owner', 'admin', 'collaborator', 'user'\]\.includes\(req\.user\?\.role\)/);
     assert.match(read('server/routes/auth.routes.js'), /\['user', 'admin', 'collaborator'\]\.includes\(decoded\.role\)/);
     assert.match(read('src/components/dashboard/DashboardSideNavbar.jsx'), /owner: \{ icon: Crown/);

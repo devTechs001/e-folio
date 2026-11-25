@@ -42,6 +42,8 @@ const collaboratorsRoutes = require('./routes/collaborators.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const skillsRoutes = require('./routes/skills.routes');
 const projectsRoutes = require('./routes/projects.routes');
+// Phase 42 — the Lab is its own module with its own collection and routes.
+const labRoutes = require('./routes/lab.routes');
 const publicRoutes = require('./routes/public.routes');
 const chatRoutes = require('./routes/chat.routes');
 const aiRoutes = require('./routes/ai.routes');
@@ -153,6 +155,9 @@ app.use('/api/collaborators', collaboratorsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/projects', projectsRoutes);
+// Phase 42: Lab is mounted separately. /api/lab is owner-managed,
+// /api/lab/public is the public grid. Neither touches Project.
+app.use('/api/lab', labRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);

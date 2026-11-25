@@ -103,14 +103,15 @@ check('Lab cards line up: fixed poster, clamped copy, pinned footer', () => {
     assert.match(css, /\.lab-desc \{[\s\S]*?-webkit-line-clamp: 3;/);
 });
 
-check('the Lab card keeps every existing control and the sample badge', () => {
+check('the Lab card keeps every existing control and the maintained badge', () => {
     const src = read('src/pages/Lab.jsx');
     // Status pill, the demo/code/detail/delete actions, and the sample badge.
     for (const token of ['lab-status lab-status-', 'lab-btn lab-btn-demo', 'lab-btn lab-btn-code', 'lab-btn lab-btn-details', 'lab-btn lab-btn-delete']) {
         assert.ok(src.includes(token), `missing ${token}`);
     }
     assert.ok(read('src/styles/Lab.css').includes('.lab-sample-badge'));
-    assert.match(src, /sampleLabel=\{owner && sample/);
+    // Phase 42: lab records are maintained, not disposable samples.
+    assert.match(src, /sampleLabel=\{owner && seedRecord/);
 });
 
 /* --------------------------- dashboard sync ------------------------------- */
@@ -132,29 +133,34 @@ check('the public API resolves one poster for every consumer', () => {
 check('the dashboard preview uses the same poster rule as the public card', () => {
     const manager = read('src/components/dashboard/LabManager.jsx');
     assert.match(manager, /const posterOf = \(project\) =>\s*project\?\.thumbnail \|\| project\?\.imageUrl \|\| project\?\.images\?\.\[0\]\?\.url \|\| '';/);
-    assert.match(manager, /posterOf\(project\)/);
+    // Phase 42: applied to LabEntry records.
+    assert.match(manager, /posterOf\(entry\)/);
 });
 
 check('saving a poster from the dashboard reaches the public page', () => {
     const manager = read('src/components/dashboard/LabManager.jsx');
-    assert.match(manager, /const savePoster = async \(project\) =>/);
-    // The write goes through the real project update endpoint...
-    assert.match(manager, /ApiService\.updateProject\(id, \{[\s\S]*?thumbnail: value/);
+    assert.match(manager, /const savePoster = async \(entry\) =>/);
+    // Phase 42: the write goes through the LAB update endpoint, so saving a Lab
+    // poster can never modify a portfolio project.
+    assert.match(manager, /ApiService\.updateLabEntry\(id, \{ thumbnail: value/);
+    assert.doesNotMatch(manager, /ApiService\.updateProject\(/);
     // ...and then tells every open public page to refresh.
     assert.match(manager, /notifySuccess\('Card image saved — the public Lab card uses it now\.'\)/);
     assert.match(manager, /window\.dispatchEvent\(new CustomEvent\('settingsChanged'\)\);/);
     const saveBlock = manager.slice(manager.indexOf('const savePoster'));
-    assert.match(saveBlock.slice(0, 1400), /publishProjectsChanged\(\)/);
-    // The public page already listens to both channels.
+    assert.match(saveBlock.slice(0, 1600), /publishLabChanged\(\)/);
+    // The public Lab page listens on the Lab's own channel, not the projects one.
     const lab = read('src/pages/Lab.jsx');
-    assert.match(lab, /subscribeProjectsChanged\(refresh\)/);
+    assert.match(lab, /subscribeLabChanged\(refresh\)/);
+    assert.doesNotMatch(lab, /subscribeProjectsChanged/);
     assert.match(lab, /window\.addEventListener\('settingsChanged', refresh\)/);
 });
 
 check('the poster editor is owner-only and labelled', () => {
     const manager = read('src/components/dashboard/LabManager.jsx');
     assert.match(manager, /\{owner && \(\s*<div className="flex flex-wrap items-center gap-2 border-t/);
-    assert.match(manager, /aria-label=\{`Card image URL for \$\{project\.title\}`\}/);
+    // Phase 42: the editor is now a labelled field per LabEntry, not a prompt.
+    assert.match(manager, /aria-label=\{`Card image URL for \$\{entry\.title\}`\}/);
     assert.match(manager, /Save image/);
 });
 
@@ -163,7 +169,10 @@ check('the poster editor is owner-only and labelled', () => {
 check('the snapshot carries derived posters for projects and lab records', () => {
     const builder = read('scripts/build-public-snapshot.mjs');
     assert.match(builder, /thumbnail: project\.thumbnail \|\| project\.images\?\.\[0\]\?\.url \|\| '',/);
-    assert.match(builder, /thumbnail: sample\.thumbnail \|\| sample\.images\?\.\[0\]\?\.url \|\| '',/);
+    // Phase 42: lab records come from labEntries.json and carry their own
+    // poster fields + links, rather than borrowing the labelled sample set.
+    assert.match(builder, /thumbnail: entry\.thumbnail \|\| '',/);
+    assert.match(builder, /links: entry\.links \|\| \{\},/);
 
     const snapshot = json('src/data/publicSnapshot.json');
     const projects = snapshot.sections.projects.projects;

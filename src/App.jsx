@@ -21,6 +21,8 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const AcceptInvite = lazy(() => import('./pages/AcceptInvite'));
 const PublicReviews = lazy(() => import('./components/PublicReviews'));
 const CollaborationRequest = lazy(() => import('./components/CollaborationRequestStyled'));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const LabPage = lazy(() => import('./pages/LabPage'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Sitemap = lazy(() => import('./pages/Sitemap'));
@@ -69,6 +71,18 @@ const AppContent = () => {
                 <Route path="/login/collaborator" element={<LoginPage collaborator={true} />} />
                 <Route path="/collaborate" element={<CollaborationRequest />} />
                 <Route path="/reviews" element={<PublicReviews />} />
+                {/* Phase 42: Projects and the Lab are separate modules, each with
+                    its own page. They were previously two sections of one page. */}
+                <Route path="/projects" element={
+                    <LandingPageThemeProvider>
+                        <ProjectsPage />
+                    </LandingPageThemeProvider>
+                } />
+                <Route path="/lab" element={
+                    <LandingPageThemeProvider>
+                        <LabPage />
+                    </LandingPageThemeProvider>
+                } />
                 <Route path="/workspace" element={
                     <ProtectedRoute>
                         <CollaboratorWorkspace />

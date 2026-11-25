@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { publicUserLinks } from '../../utils/userWorkspace';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   Layout, Edit3, Eye, EyeOff, Save, Plus, Trash2, Settings, Monitor,
@@ -2582,7 +2583,7 @@ const PortfolioEditor = () => {
                     <div className="mb-6 flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-white">Live Preview</h2>
                       <button
-                        onClick={() => window.open(`/portfolio/${user?.username}`, '_blank')}
+                        onClick={() => { const href = publicUserLinks(user?.username).portfolio; if (href) window.open(href, '_blank'); }}
                         className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2"
                       >
                         <ExternalLink size={16} />
@@ -2591,7 +2592,7 @@ const PortfolioEditor = () => {
                     </div>
                     <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
                       <iframe
-                        src={`/portfolio/${user?.username}?preview=true`}
+                        src={publicUserLinks(user?.username).portfolio ? `${publicUserLinks(user?.username).portfolio}?preview=true` : ''}
                         className="w-full h-[800px] border-0"
                         title="Portfolio Preview"
                       />
@@ -3991,7 +3992,7 @@ const PortfolioEditor = () => {
                     <div className="mb-6 flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-white">Live Preview</h2>
                       <button
-                        onClick={() => window.open(`/portfolio/${user?.username}`, '_blank')}
+                        onClick={() => { const href = publicUserLinks(user?.username).portfolio; if (href) window.open(href, '_blank'); }}
                         className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2"
                       >
                         <ExternalLink size={16} />
@@ -4000,7 +4001,7 @@ const PortfolioEditor = () => {
                     </div>
                     <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
                       <iframe
-                        src={`/portfolio/${user?.username}?preview=true`}
+                        src={publicUserLinks(user?.username).portfolio ? `${publicUserLinks(user?.username).portfolio}?preview=true` : ''}
                         className="w-full h-[800px] border-0"
                         title="Portfolio Preview"
                       />

@@ -317,6 +317,38 @@ class AnalyticsController {
         const activeNow = await TrackingSession.countDocuments({
             isActive: true, startTime: { $gte: new Date(Date.now() - 30 * 60 * 1000) }
         });
+
+        // Phase 41: new-vs-returning was hardcoded to { new: 100, returning: 0 },
+        // which made every visitor look brand new. Derive it from real session
+        // history: a visitor who has any session before this window is returning.
+        let newVsReturning = null;
+        try {
+            const windowStart = new Date(rangeStart(req.query.timeRange));
+            const inWindow = { isActive: { $ne: false }, startTime: { $gte: windowStart } };
+            const sessionsInWindow = await TrackingSession.find(inWindow).select('sessionId visitorId userId').lean();
+            const visitorOf = row => String(row.userId || row.visitorId || row.sessionId || '');
+            const visitors = [...new Set(sessionsInWindow.map(visitorOf).filter(Boolean))];
+
+            if (visitors.length) {
+                const priorVisitors = await TrackingSession.distinct('visitorId', {
+                    startTime: { $lt: windowStart },
+                    visitorId: { $in: visitors }
+                }).catch(() => []);
+                const priorUsers = await TrackingSession.distinct('userId', {
+                    startTime: { $lt: windowStart },
+                    userId: { $in: visitors }
+                }).catch(() => []);
+                const seenBefore = new Set([...priorVisitors, ...priorUsers].map(String));
+                const returning = visitors.filter(v => seenBefore.has(v)).length;
+                newVsReturning = { new: visitors.length - returning, returning };
+            } else {
+                // No sessions in the window: report nothing rather than 100% new.
+                newVsReturning = { new: 0, returning: 0 };
+            }
+        } catch {
+            newVsReturning = null; // measured value unavailable
+        }
+
         const change = (a, b) => (b > 0 ? round(((a - b) / b) * 100, 2) : 0);
         const trafficSources = Object.fromEntries(sources.map(s => [s.source.toLowerCase(), s.percentage]));
         send(res, {
@@ -331,7 +363,7 @@ class AnalyticsController {
                     totalRevenue: stats.revenue,
                     realtimeUsers: activeNow,
                     goalCompletions: stats.conversions,
-                    newVsReturning: { new: 100, returning: 0 }
+                    newVsReturning
                 },
                 trends: {
                     viewsChange: change(stats.pageViews, previous.pageViews),
@@ -469,7 +501,10 @@ class AnalyticsController {
         send(res, {
             technical: {
                 avgLoadTime: round(loads.reduce((a, b) => a + b, 0) / (loads.length || 1), 2),
-                pageSpeed: 0, errorRate: 0, uptime: 100,
+                // Phase 41: these three were invented constants (0 / 0 / 100).
+                // Nothing in this stack measures them, so report null and let
+                // the client render "not measured" instead of a fake 100%.
+                pageSpeed: null, errorRate: null, uptime: null,
                 topPerformingPages: loadRows.slice(0, 5).map(r => ({ path: r._id, loadTime: round(r.load) })),
                 slowestPages: loadRows.slice(-5).reverse().map(r => ({ path: r._id, loadTime: round(r.load) })),
                 browsers,

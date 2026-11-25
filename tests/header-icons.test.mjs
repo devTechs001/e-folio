@@ -52,8 +52,9 @@ check('no font-glyph icons remain in the header', () => {
     assert.doesNotMatch(code, /fa-sparkles|fa-grip-horizontal/);
     // The old NAV_SECTIONS string icons are gone; every entry has a component.
     const nav = src.slice(src.indexOf('const NAV_SECTIONS'), src.indexOf('const getIsMobile'));
-    assert.equal((nav.match(/Icon: [A-Z][A-Za-z0-9]*/g) || []).length, 7);
-    for (const id of ['about', 'skills', 'education', 'interests', 'projects', 'testimonials', 'contact']) {
+    // Phase 42: the Lab gained its own header entry, so it is 8 sections.
+    assert.equal((nav.match(/Icon: [A-Z][A-Za-z0-9]*/g) || []).length, 8);
+    for (const id of ['about', 'skills', 'education', 'interests', 'projects', 'lab', 'testimonials', 'contact']) {
         assert.ok(nav.includes(`id: '${id}'`), `missing nav section ${id}`);
     }
 });

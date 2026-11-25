@@ -49,14 +49,18 @@ check('public data pages stay populated with saved copies and friendly copy', ()
     }
 });
 
-check('Lab page reads the three real dashboard-backed endpoints', () => {
+check('Lab page reads its OWN endpoint, plus skills and hobbies', () => {
     const src = read('src/pages/Lab.jsx');
     assert.match(src, /Promise\.all\(\[/);
-    assert.match(src, /loadPublicSection\('projects', \{ fallbackSection: 'labProjects' \}\)/);
+    // Phase 42: the Lab is a separate module. It must NOT read the projects
+    // feed and filter it — that is what made the two modules share records.
+    assert.match(src, /loadPublicSection\('lab', \{ fallbackSection: 'labProjects', key: 'experiments' \}\)/);
+    assert.doesNotMatch(src, /loadPublicSection\('projects'/);
+    // It still legitimately shows skills and hobbies from their own endpoints.
     assert.match(src, /loadPublicSection\('skills'\)/);
     assert.match(src, /loadPublicSection\('interests'\)/);
     const loader = read('src/services/publicContent.js');
-    assert.match(loader, /\/public\/projects\?status=all&limit=100/);
+    assert.match(loader, /\/public\/lab\?limit=100/);
     assert.match(loader, /\/public\/skills/);
     assert.match(loader, /\/public\/interests/);
     assert.match(src, /setDataStatus/);
@@ -91,21 +95,29 @@ check('shared sample dataset is clearly labelled and disposable', () => {
     }
 });
 
-check('Lab page marks samples and lets the owner delete them', () => {
+check('Lab page deletes LAB entries, never portfolio projects', () => {
     const src = read('src/pages/Lab.jsx');
-    assert.match(src, /LAB_SAMPLE_TAG = 'lab-sample'/);
+    // Phase 42: the Lab has its own records and its own delete call. Deleting
+    // from the Lab must not touch the Project collection.
+    assert.match(src, /api\.deleteLabEntry\(id\)/);
+    assert.doesNotMatch(src, /api\.deleteProject\(id\)/);
     assert.match(src, /lab-sample-badge/);
-    assert.match(src, /api\.deleteProject\(id\)/);
-    assert.match(src, /Delete sample/);
+    assert.match(src, /Delete experiment/);
+    assert.doesNotMatch(src, /Delete sample/);
     assert.doesNotMatch(src, /FALLBACK_LAB/);
 });
 
-check('seed script creates only tagged samples and can remove exactly those', () => {
-    const src = read('server/scripts/seedLabSamples.js');
-    assert.match(src, /require\('..\/..\/src\/data\/labSamples\.json'\)/);
+check('lab seeder writes only LabEntry records and can remove exactly those', () => {
+    const src = read('server/scripts/seedLabEntries.js');
+    assert.match(src, /require\('..\/..\/src\/data\/labEntries\.json'\)/);
+    assert.match(src, /require\('\.\.\/models\/LabEntry\.model'\)/);
+    // The whole point: seeding the Lab must never create a Project document.
+    assert.doesNotMatch(src, /Project\./);
     assert.match(src, /--remove/);
-    assert.match(src, /Project\.deleteMany\(\{ tags: LAB_SAMPLE_TAG \}\)/);
-    assert.match(src, /tags: \[LAB_SAMPLE_TAG, \.\.\.sample\.tags\]/);
+    assert.match(src, /LabEntry\.deleteMany\(\{ seedKey: SEED_KEY \}\)/);
+    // Idempotent by slug, so a reseed cannot duplicate a record.
+    assert.match(src, /\{ userId, slug: entry\.slug \}/);
+    assert.match(src, /upsert: true/);
     assert.doesNotMatch(src, /507f1f77bcf86cd799439011/);
     assert.doesNotMatch(src, /process\.env\.MONGODB_URI\s*\|\|\s*['"][^'"]*:[^'"]*@/);
 });
@@ -113,8 +125,8 @@ check('seed script creates only tagged samples and can remove exactly those', ()
 check('sample seeding/removal is exposed as npm scripts', () => {
     for (const file of ['package.json', 'server/package.json']) {
         const scripts = JSON.parse(read(file)).scripts;
-        assert.match(scripts['seed:lab'] || '', /seedLabSamples\.js/);
-        assert.match(scripts['seed:lab:remove'] || '', /seedLabSamples\.js --remove/);
+        assert.match(scripts['seed:lab'] || '', /seedLabEntries\.js/);
+        assert.match(scripts['seed:lab:remove'] || '', /seedLabEntries\.js --remove/);
     }
 });
 
@@ -133,16 +145,23 @@ check('Lab dashboard page is registered in the dashboard menu', () => {
     assert.ok(exists('src/components/dashboard/LabManager.jsx'));
 });
 
-check('Lab dashboard can add and delete only sample experiments', () => {
+check('Lab dashboard manages LabEntry records only, not projects', () => {
     const src = read('src/components/dashboard/LabManager.jsx');
-    assert.match(src, /ApiService\.createProject\(/);
-    assert.match(src, /ApiService\.deleteProject\(/);
-    assert.match(src, /Add sample experiments/);
-    assert.match(src, /Delete all samples/);
-    assert.match(src, /const isSample = /);
-    assert.match(src, /dashboard\/skills/);
-    assert.match(src, /dashboard\/hobbies/);
+    // Phase 42: the Lab dashboard reads and writes its own collection through
+    // its own API. It must not list, count or delete portfolio projects.
+    assert.match(src, /ApiService\.getLabEntries\(\)/);
+    assert.match(src, /ApiService\.getLabStats\(\)/);
+    assert.match(src, /ApiService\.createLabEntry\(/);
+    assert.match(src, /ApiService\.deleteLabEntry\(/);
+    assert.doesNotMatch(src, /ApiService\.createProject\(/);
+    assert.doesNotMatch(src, /ApiService\.deleteProject\(/);
+    // The misleading "Real projects" counter is gone — projects are not this
+    // dashboard's data.
+    assert.doesNotMatch(src, /Real projects/);
+    assert.doesNotMatch(src, /labSampleData/);
+    // Navigation to the separate Projects module is still offered.
     assert.match(src, /dashboard\/projects/);
+    assert.match(src, /to="\/lab"/);
 });
 
 check('Lab page links back to its dashboard', () => {

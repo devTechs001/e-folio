@@ -33,29 +33,45 @@ const lab = () => read('src/pages/Lab.jsx');
 check('the Lab completes live experiment data from its real saved copy', () => {
     const src = lab();
     assert.match(src, /getSnapshotSection\('labProjects'\)/);
-    assert.match(src, /const savedAdditions = savedLabProjects\.filter/);
-    assert.match(src, /const realProjects = \[\.\.\.liveLabProjects, \.\.\.savedAdditions\]/);
-    assert.match(src, /const usedSavedCopy = savedAdditions\.length > 0/);
+    // Phase 41: the ad-hoc savedAdditions merge became the shared
+    // mergeUnique() rule (identity first, then title slug). The guarantees this
+    // asserted are unchanged: real saved records still complete the live list,
+    // and the UI still distinguishes fully-live from partly-archived content.
+    assert.match(src, /const realProjects = mergeUnique\(liveLabProjects, savedLabProjects\)/);
+    assert.match(src, /const usedSavedCopy = realProjects\.length > liveLabProjects\.length/);
+    // Phase 42: the Lab is its own module, so it no longer imports the
+    // Projects/Lab splitter at all — there is nothing to split.
+    assert.match(src, /import \{ mergeUnique, LAB_STATUSES \} from '\.\.\/utils\/labClassification'/);
+    assert.doesNotMatch(src, /isLabExperiment/);
     assert.match(src, /const fullyLive = allLive && !usedSavedCopy/);
     assert.match(src, /fullyLive \? 'live' : allLive \? 'partial' : 'archive'/);
-    // The original three-section loader is unchanged.
-    assert.match(src, /loadPublicSection\('projects', \{ fallbackSection: 'labProjects' \}\)/);
+    // The loader now reads the Lab's own endpoint instead of the projects feed.
+    assert.match(src, /loadPublicSection\('lab', \{ fallbackSection: 'labProjects', key: 'experiments' \}\)/);
     assert.match(src, /loadPublicSection\('skills'\)/);
     assert.match(src, /loadPublicSection\('interests'\)/);
     assert.match(src, /Promise\.all\(\[/);
 });
 
-check('the saved Lab copy is derived from real local sample records', () => {
+check('the saved Lab copy is derived from the Lab\'s own records', () => {
     const builder = read('scripts/build-public-snapshot.mjs');
-    assert.match(builder, /const labProjects = labSamples\.map/);
-    assert.match(builder, /sample\.title\.replace\(\/\^\\\[SAMPLE\\\]/);
-    assert.match(read('server/controllers/public.controller.js'), /createdAt updatedAt images/);
+    // Phase 42: built from labEntries.json, not from the labelled sample set.
+    assert.match(builder, /const labProjects = labEntriesSource\.entries\.map/);
+    assert.doesNotMatch(builder, /labSamples\.map/);
     const snapshot = json('src/data/publicSnapshot.json');
     const records = snapshot.sections.labProjects.projects;
     assert.equal(records.length, 4);
     for (const record of records) {
         assert.ok(['live', 'beta', 'development', 'experimental'].includes(record.status));
-        assert.ok(record.title && record.description && record.technologies.length > 0);
+        assert.ok(record.title && record.summary && record.tools.length > 0);
+        // These are real, properly-named records now — no placeholder markers.
+        assert.doesNotMatch(record.title, /\[SAMPLE\]/);
+        assert.ok(record.domain, `${record.title} has no cybersecurity domain`);
+        assert.ok(!JSON.stringify(record).includes('[SAMPLE]'), 'placeholder marker leaked');
+    }
+    // They must not be portfolio projects either.
+    const projectTitles = snapshot.sections.projects.projects.map(p => p.title);
+    for (const record of records) {
+        assert.ok(!projectTitles.includes(record.title), `${record.title} is also a project`);
     }
 });
 
@@ -66,7 +82,7 @@ check('anonymous visitors receive namespace, cross-tab and polling refresh signa
     for (const token of [
         'socketService.subscribePublicProjects(refresh)',
         'socketService.subscribePublicLab(refresh)',
-        'subscribeProjectsChanged(refresh)',
+        'subscribeLabChanged(refresh)',
         "window.addEventListener('settingsChanged', refresh)",
         'document.hidden', 'visibilitychange', '30000'
     ]) assert.ok(src.includes(token), `missing Lab sync: ${token}`);
@@ -101,14 +117,20 @@ check('skills and interests writes publish only a section name and timestamp', (
     assert.match(read('server/routes/interests.routes.js'), /router\.use\(labSync\('interests'\)\)/);
 });
 
-check('dashboard Lab edits publish cross-tab notices and no longer claim instant delivery', () => {
+check('dashboard Lab edits publish on the Lab channel, not the projects one', () => {
     const src = read('src/components/dashboard/LabManager.jsx');
-    assert.match(src, /publishProjectsChanged/);
-    // Add samples, delete one, delete all — plus the phase-37 poster save.
-    assert.equal((src.match(/publishProjectsChanged\(\)/g) || []).length, 4);
-    assert.match(src, /live signals, cross-tab notices and its 30-second refresh/);
-    assert.doesNotMatch(src, /appear there immediately/);
-    assert.match(lab(), /publishProjectsChanged\(\)/);
+    // Phase 42: the Lab has its own cross-tab signal, so a lab edit cannot make
+    // every open Projects page refresh (and vice versa).
+    assert.match(src, /publishLabChanged\(\)/);
+    assert.doesNotMatch(src, /publishProjectsChanged/);
+    // Every mutation publishes: create and delete.
+    assert.ok((src.match(/publishLabChanged\(\)/g) || []).length >= 2);
+    assert.match(lab(), /publishLabChanged\(\)/);
+    assert.doesNotMatch(lab(), /publishProjectsChanged/);
+    const sync = read('src/utils/projectSync.js');
+    assert.match(sync, /export const publishLabChanged/);
+    assert.match(sync, /export const subscribeLabChanged/);
+    assert.match(sync, /e-folio:lab-changed/);
 });
 
 /* --------------------------- copy / data integrity -------------------------- */
@@ -117,9 +139,11 @@ check('sample wording is owner-only and zero values stay hidden', () => {
     const src = lab();
     // Phase 37 moved the badge into the LabThumb component's `sampleLabel`
     // prop; it is still rendered for the owner on sample cards only.
-    assert.match(src, /sampleLabel=\{owner && sample/);
+    assert.match(src, /sampleLabel=\{owner && seedRecord/);
     assert.match(src, /className="lab-sample-badge"/);
-    assert.match(src, /value: owner \? sampleCount : 0/);
+    // Phase 42: lab records are maintained, not disposable samples, so the
+    // counter is "maintained experiments" — and it is still owner-only.
+    assert.match(src, /value: owner \? seededCount : 0/);
     assert.match(src, /\.filter\(card => card\.value > 0\)\)/);
     assert.match(src, /project\.views > 0/);
     assert.match(src, /Number\(skill\.level\) > 0/);

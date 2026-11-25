@@ -269,6 +269,44 @@ const Profile = () => {
         generateQRCode();
     }, []);
 
+    // Phase 41 — keep the profile counters live.
+    //
+    // The stats block was only read once on mount, so view/like/visitor counts
+    // stayed frozen while the rest of the dashboard updated. This refreshes the
+    // measured stats periodically and whenever the tab becomes visible again,
+    // and never fabricates a number if the request fails.
+    useEffect(() => {
+        let cancelled = false;
+
+        const refreshStats = async () => {
+            try {
+                const res = await apiService.getProfileStats();
+                if (cancelled) return;
+                if (res?.success && res.data) setProfileStats(res.data);
+            } catch {
+                // Leave the last known values in place; do not zero them out.
+            }
+        };
+
+        const onVisible = () => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                refreshStats();
+            }
+        };
+
+        const timer = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
+            refreshStats();
+        }, 60000);
+
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+            document.removeEventListener('visibilitychange', onVisible);
+        };
+    }, []);
+
     const loadProfileData = async () => {
         setLoading(true);
         setLoadError('');

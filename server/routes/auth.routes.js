@@ -179,7 +179,12 @@ async function buildOwnerSession(ownerEmail) {
             id: ownerId,
             name: ownerUser?.name || process.env.OWNER_NAME || 'Portfolio Owner',
             email: ownerEmail,
-            role: 'owner'
+            role: 'owner',
+            // Phase 41: the owner session used to omit `username`, so the
+            // dashboard's public links rendered `/portfolio/undefined`. The
+            // record is already loaded and its username is ensured above.
+            username: ownerUser?.username || '',
+            avatar: ownerUser?.avatar || ''
         }
     };
 }
