@@ -14,7 +14,7 @@ const {
     refreshProjects
 } = require('../controllers/public.controller');
 const { getPublicTestimonials } = require('../controllers/public-testimonials.controller');
-const { optionalAuth } = require('../middleware/auth.middleware');
+const { optionalAuth, auth, isOwner } = require('../middleware/auth.middleware');
 const { getPublicEducation } = require('../controllers/education.controller');
 const { getPublicInterests } = require('../controllers/interests.controller');
 
@@ -89,7 +89,10 @@ router.get('/cv/:username', optionalAuth, interactionLimiter, fetchPublicCv);
 router.get('/cv/:username/export.json', optionalAuth, interactionLimiter, fetchPublicCv);
 
 // Project interactions (public, rate limited)
-router.post('/projects/refresh', refreshProjects);
+// Recomputes published-project counters. Only the dashboard triggers this, so
+// it is owner-guarded: an unauthenticated POST that runs two database counts is
+// needless surface, even though it writes nothing.
+router.post('/projects/refresh', auth, isOwner, refreshProjects);
 router.post('/projects/:id/view', interactionLimiter, incrementProjectView);
 router.post('/projects/:id/like', interactionLimiter, toggleProjectLike);
 

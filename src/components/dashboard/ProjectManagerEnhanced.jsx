@@ -576,6 +576,12 @@ const ProjectFormModal = ({ show, onClose, project, setProject, onSave, title, u
 
 const ProjectManagerEnhanced = () => {
     const { user } = useAuth();
+    // Phase 44: every project write is owner-guarded on the server
+    // (projects.routes.js uses isOwner for create/update/delete/bulk-delete), yet
+    // this panel is offered to collaborators and used to show them the full
+    // Add/Edit/Delete controls. They could fill in a form and only then get a
+    // 403. A collaborator now gets the read-only view the API actually allows.
+    const canManage = String(user?.role || '').toLowerCase() === 'owner';
     const { theme } = useTheme();
     const { success, error, warning } = useNotifications();
     const fileInputRef = useRef(null);
@@ -1289,14 +1295,16 @@ const ProjectManagerEnhanced = () => {
                         <BarChart3 size={16} /> Analytics
                     </button>
 
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="px-5 py-3 sm:px-6 sm:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 
-                                 hover:to-purple-700 rounded-lg font-semibold transition-all shadow-lg 
-                                 shadow-indigo-500/25 flex items-center gap-2"
-                    >
-                        <Plus size={18} /> New Project
-                    </button>
+                    {canManage && (
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="px-5 py-3 sm:px-6 sm:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600
+                                     hover:to-purple-700 rounded-lg font-semibold transition-all shadow-lg
+                                     shadow-indigo-500/25 flex items-center gap-2"
+                        >
+                            <Plus size={18} /> New Project
+                        </button>
+                    )}
                 </div>
             }
         >
@@ -1584,14 +1592,16 @@ const ProjectManagerEnhanced = () => {
                                 ? 'Try adjusting your filters'
                                 : 'Create your first project to get started'}
                         </p>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-semibold 
-                                     hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25"
-                        >
-                            <Plus size={18} className="inline mr-2" />
-                            Create Project
-                        </button>
+                        {canManage && (
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-semibold
+                                         hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25"
+                            >
+                                <Plus size={18} className="inline mr-2" />
+                                Create Project
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <>

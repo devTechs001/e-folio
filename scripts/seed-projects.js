@@ -464,7 +464,10 @@ const projects = [
 async function seedProjects() {
     try {
         // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/e-folio');
+        // Default database name matches the server (server/config/database.js) and every
+        // other seeder. It used to be `e-folio`, so a local seed and the running API
+        // could address two different databases with no error.
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/efolio');
         console.log('Connected to MongoDB');
 
         // Phase 32: this ESM seed never creates accounts and never contains

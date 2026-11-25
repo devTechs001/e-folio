@@ -115,13 +115,15 @@ const labEntrySchema = new mongoose.Schema({
     startedAt: Date,
     completedAt: Date,
     /** Provenance for seeded records, so `--remove` can target exactly them. */
-    seedKey: { type: String, trim: true, index: true, default: '' }
+    seedKey: { type: String, trim: true, default: '' }
 }, {
     timestamps: true
 });
 
 // Public listing and the dashboard both filter on these.
 labEntrySchema.index({ visibility: 1, hidden: 1, status: 1 });
+// Declared once, here. `index: true` on the path plus this line produced a
+// duplicate-index warning at connect time.
 labEntrySchema.index({ seedKey: 1 }, { sparse: true });
 
 /** One record per (owner, slug): a reseed updates instead of duplicating. */
