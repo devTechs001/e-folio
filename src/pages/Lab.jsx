@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Flame, Rocket, Wrench, FlaskConical, Globe, Github, RefreshCw,
   Search, Terminal, ExternalLink, Filter, X, Trash2,
-  Wrench as ToolkitIcon, Heart, ArrowUpRight
+  Wrench as ToolkitIcon, Heart, ArrowUpRight, FolderGit2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,9 +14,9 @@ import api from '../services/api.service';
 import ArchiveNote from '../components/ArchiveNote';
 import SectionHeading from '../components/SectionHeading';
 import { loadPublicSection, isLiveContent, getSnapshotSection, PUBLIC_ENDPOINTS } from '../services/publicContent';
-import { isLabExperiment, mergeUnique, LAB_STATUSES } from '../utils/labClassification';
+import { mergeUnique, LAB_STATUSES } from '../utils/labClassification';
 import socketService from '../services/socket.service';
-import { subscribeProjectsChanged, publishProjectsChanged } from '../utils/projectSync';
+import { subscribeLabChanged, publishLabChanged } from '../utils/projectSync';
 import { recordDevIssue, publicEmptyCopy } from '../utils/publicMessaging';
 import ProjectModal from './ProjectModal';
 import '../styles/Lab.css';
@@ -24,7 +24,10 @@ import '../styles/Lab.css';
 // Phase 41: the Lab and the Projects page share one classification rule
 // (src/utils/labClassification.js), so a portfolio project that happens to be
 // `live` or `beta` stays on the Projects page instead of appearing here too.
-const LAB_SAMPLE_TAG = 'lab-sample';
+// Phase 42: the Lab stores real LabEntry records in their own collection.
+// The old `lab-sample` tag concept is gone — these are genuine experiments the
+// owner maintains, not disposable placeholders.
+const LAB_SEED_KEY = 'lab-core';
 const CACHE_KEY = 'lab_bundle';
 
 /**
@@ -81,8 +84,9 @@ const STATUS_ICONS = {
   experimental: Flame
 };
 
-const isSample = (project) =>
-  Array.isArray(project?.tags) && project.tags.includes(LAB_SAMPLE_TAG);
+// A seeded record is still a real experiment, but it is the one dataset the
+// seeder can refresh. Nothing here is a placeholder.
+const isSeeded = (project) => Boolean(project?.seedKey);
 
 const getDemoLink = (links) => {
   const l = links || {};
@@ -91,7 +95,12 @@ const getDemoLink = (links) => {
 
 const getCodeLink = (links) => (links || {}).github || null;
 
-const Lab = () => {
+/**
+ * Phase 42 — `embedded` distinguishes the two places this component renders:
+ *   - the landing page section (default): no page chrome, no duplicate header;
+ *   - the standalone /lab route: shows its own page-level link to Projects.
+ */
+const Lab = ({ embedded = true }) => {
   const { isOwner: checkOwner } = useAuth();
   const { connected, on, off } = useSocket();
   const owner = typeof checkOwner === 'function' ? checkOwner() : false;
@@ -126,26 +135,24 @@ const Lab = () => {
       // Each section tries the live API first and falls back to its saved
       // local copy. Visitors always see a complete, consistent page; all
       // technical failures are recorded for the dev diagnostics panel.
-      const [projectsResponse, skillsResponse, hobbiesResponse] = await Promise.all([
-        loadPublicSection('projects', { fallbackSection: 'labProjects' }),
+      // Phase 42: the Lab reads its OWN endpoint. It used to read the projects
+      // feed and filter, which meant a lab entry was still a Project document
+      // and the two modules could never be cleanly separated.
+      const [labResponse, skillsResponse, hobbiesResponse] = await Promise.all([
+        loadPublicSection('lab', { fallbackSection: 'labProjects', key: 'experiments' }),
         loadPublicSection('skills'),
         loadPublicSection('interests')
       ]);
       if (token !== loadTokenRef.current) return;
 
-      const liveLabProjects = Array.isArray(projectsResponse.projects)
-        ? projectsResponse.projects.filter(p => isLabExperiment(p))
-        : [];
-      // Phase 24: a working backend often publishes only `completed`
-      // portfolio projects, which the Lab's experiment statuses exclude.
+      const liveLabProjects = Array.isArray(labResponse.experiments) ? labResponse.experiments : [];
       // Complete the section from the SAME local saved copy used for offline
       // visits, so the Lab never flips between empty (API up) and four
       // experiments (API down). Both sources are real local records.
       const savedLab = getSnapshotSection('labProjects');
-      const savedLabProjects = (Array.isArray(savedLab.projects) ? savedLab.projects : [])
-        .filter(p => isLabExperiment(p));
-      // Phase 41: dedupe on stable identity first, then title slug — a rebuilt
-      // snapshot changes ids, so id-only or title-only matching both break.
+      const savedLabProjects = Array.isArray(savedLab.projects) ? savedLab.projects : [];
+      // Dedupe on stable identity first, then title slug — a rebuilt snapshot
+      // changes ids, so id-only or title-only matching both break.
       const realProjects = mergeUnique(liveLabProjects, savedLabProjects);
       const usedSavedCopy = realProjects.length > liveLabProjects.length;
       const realSkills = Array.isArray(skillsResponse.skills) ? skillsResponse.skills : [];
@@ -157,7 +164,7 @@ const Lab = () => {
       setSkills(realSkills);
       setHobbies(realHobbies);
 
-      const allLive = [projectsResponse, skillsResponse, hobbiesResponse].every(isLiveContent);
+      const allLive = [labResponse, skillsResponse, hobbiesResponse].every(isLiveContent);
       const fullyLive = allLive && !usedSavedCopy;
       // `partial` = live endpoints answered, but saved experiment records
       // completed the grid. Never label a healthy backend as an archive.
@@ -172,7 +179,7 @@ const Lab = () => {
       }
     } catch (error) {
       if (token !== loadTokenRef.current) return;
-      recordDevIssue({ section: 'lab', endpoint: PUBLIC_ENDPOINTS.projects, error });
+      recordDevIssue({ section: 'lab', endpoint: PUBLIC_ENDPOINTS.lab, error });
       setProjects([]);
       setSkills([]);
       setHobbies([]);
@@ -213,7 +220,7 @@ const Lab = () => {
   // keep every public Lab page in sync with dashboard edits.
   useEffect(() => socketService.subscribePublicProjects(refresh), [refresh]);
   useEffect(() => socketService.subscribePublicLab(refresh), [refresh]);
-  useEffect(() => subscribeProjectsChanged(refresh), [refresh]);
+  useEffect(() => subscribeLabChanged(refresh), [refresh]);
   useEffect(() => {
     window.addEventListener('settingsChanged', refresh);
     return () => window.removeEventListener('settingsChanged', refresh);
@@ -237,7 +244,7 @@ const Lab = () => {
     return acc;
   }, {}), [projects]);
 
-  const sampleCount = useMemo(() => projects.filter(isSample).length, [projects]);
+  const seededCount = useMemo(() => projects.filter(isSeeded).length, [projects]);
 
   // A zero metric is not useful public information: only populated values
   // become cards, so the page never prints a bare 0.
@@ -246,8 +253,8 @@ const Lab = () => {
     { key: 'live', icon: Rocket, value: metrics.live || 0, label: 'Live' },
     { key: 'beta', icon: Wrench, value: metrics.beta || 0, label: 'Beta' },
     { key: 'development', icon: Globe, value: metrics.development || 0, label: 'In Development' },
-    { key: 'samples', icon: Trash2, value: owner ? sampleCount : 0, label: 'Samples' }
-  ].filter(card => card.value > 0)), [projects.length, metrics, sampleCount, owner]);
+    { key: 'seeded', icon: FlaskConical, value: owner ? seededCount : 0, label: 'Maintained' }
+  ].filter(card => card.value > 0)), [projects.length, metrics, seededCount, owner]);
 
   const skillGroups = useMemo(() => skills.reduce((acc, skill) => {
     const key = skill.category || skill.type || 'Other';
@@ -272,22 +279,22 @@ const Lab = () => {
     ...LAB_STATUSES.map(s => ({ key: s, label: STATUS_LABELS[s], count: metrics[s] || 0 }))
   ];
 
-  const removeSample = async (project) => {
+  const removeExperiment = async (project) => {
     const id = project.id || project._id;
     if (!id) return;
-    if (!window.confirm(`Delete the sample experiment "${project.title}"?`)) return;
+    if (!window.confirm(`Delete the experiment "${project.title}"?\n\nThis removes the Lab entry only. No portfolio project is affected.`)) return;
     setDeletingId(id);
     try {
-      const response = await api.deleteProject(id);
+      const response = await api.deleteLabEntry(id);
       if (response?.success === false) throw new Error(response.message || 'Delete failed');
       setProjects(prev => prev.filter(p => (p.id || p._id) !== id));
       cacheService.delete(CACHE_KEY);
       cacheService.delete('public_projects');
       window.dispatchEvent(new CustomEvent('settingsChanged'));
-      publishProjectsChanged();
+      publishLabChanged();
       if (selectedProject && (selectedProject.id || selectedProject._id) === id) setSelectedProject(null);
     } catch (error) {
-      window.alert(error?.message || 'Could not delete the sample. Open the Lab dashboard and try again.');
+      window.alert(error?.message || 'Could not delete this experiment. Open the Lab dashboard and try again.');
     } finally {
       setDeletingId(null);
     }
@@ -337,9 +344,9 @@ const Lab = () => {
                 <span className="lab-live-dot"></span> Live socket synced
               </motion.span>
             )}
-            {owner && sampleCount > 0 && (
+            {owner && seededCount > 0 && (
               <span className="lab-source lab-source-sample">
-                <FlaskConical size={12} /> {sampleCount} deletable sample{sampleCount !== 1 ? 's' : ''}
+                <FlaskConical size={12} /> {seededCount} maintained experiment{seededCount !== 1 ? 's' : ''}
               </span>
             )}
             {owner && liveUpdate && (
@@ -354,7 +361,12 @@ const Lab = () => {
               <Link to="/dashboard/lab" className="lab-dashboard-link">
                 <FlaskConical size={14} /> Lab dashboard <ArrowUpRight size={13} />
               </Link>
-              <Link to="/dashboard/projects" className="lab-dashboard-link">Projects</Link>
+              <Link to="/dashboard/projects" className="lab-dashboard-link">Projects dashboard</Link>
+              {!embedded && (
+                <Link to="/projects" className="lab-dashboard-link">
+                  <FolderGit2 size={14} /> Projects page
+                </Link>
+              )}
               <Link to="/dashboard/skills" className="lab-dashboard-link">Skills</Link>
               <Link to="/dashboard/hobbies" className="lab-dashboard-link">Hobbies</Link>
             </div>
@@ -423,14 +435,14 @@ const Lab = () => {
                 ? formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })
                 : null;
               const cardKey = project._id || project.id || `lab-${index}`;
-              const sample = isSample(project);
+              const seedRecord = isSeeded(project);
               const deleting = deletingId === (project.id || project._id);
 
               return (
                 <motion.article
                   layout
                   key={cardKey}
-                  className={`lab-card group cursor-pointer hover:border-cyan-500/50 ${sample ? 'lab-card-sample' : ''}`}
+                  className={`lab-card group cursor-pointer hover:border-cyan-500/50 ${seedRecord ? 'lab-card-sample' : ''}`}
                   initial={{ opacity: 0, y: 24, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.2 } }}
@@ -442,8 +454,8 @@ const Lab = () => {
                     statusClass={statusClass}
                     statusLabel={statusLabel}
                     StatusIcon={StatusIcon}
-                    sampleLabel={owner && sample
-                      ? <span className="lab-sample-badge">Sample · deletable</span>
+                    sampleLabel={owner && seedRecord
+                      ? <span className="lab-sample-badge">Lab · maintained</span>
                       : null}
                   />
                   <div className="lab-body">
@@ -481,14 +493,14 @@ const Lab = () => {
                       >
                         Inspect Details
                       </button>
-                      {owner && sample && (
+                      {owner && seedRecord && (
                         <button
                           className="lab-btn lab-btn-delete"
                           disabled={deleting}
-                          onClick={() => removeSample(project)}
-                          title="Delete this sample record from the database"
+                          onClick={() => removeExperiment(project)}
+                          title="Delete this experiment from the Lab"
                         >
-                          <Trash2 size={13} /> {deleting ? 'Deleting…' : 'Delete sample'}
+                          <Trash2 size={13} /> {deleting ? 'Deleting…' : 'Delete experiment'}
                         </button>
                       )}
                     </div>
@@ -595,7 +607,7 @@ const Lab = () => {
           {owner ? (
             <span>
               Projects, skills and hobbies are live database records. Items tagged
-              <code>{LAB_SAMPLE_TAG}</code> are sample entries that an owner can delete here or in the Lab dashboard.
+              the Lab dashboard holds the experiments shown here. They live in their own collection, separate from portfolio projects.
             </span>
           ) : (
             <span>Experiments, tools and interests from the portfolio. New entries are added regularly.</span>

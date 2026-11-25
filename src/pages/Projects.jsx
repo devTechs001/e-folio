@@ -136,8 +136,14 @@ const Projects = () => {
             // and consistent when the backend cannot supply it. No technical
             // detail is ever exposed to visitors.
             const response = await loadPublicSection('projects');
-            // Phase 41: a record the Lab owns must not appear in the portfolio
-            // grid, and a rebuild must not duplicate one that is already there.
+            // Phase 42: the Lab is a separate module with its own collection, so
+            // this grid no longer has to filter lab records out — a lab entry
+            // cannot appear in the projects endpoint at all. The only remaining
+            // concern is a rebuild duplicating a record already present.
+            //
+            // Any legacy lab record still sitting in the Project collection is
+            // still excluded here, so an un-migrated database cannot leak an
+            // experiment into the portfolio grid.
             const isPortfolio = project => !isLabExperiment(project);
             const liveItems = (Array.isArray(response.projects) ? response.projects : []).filter(isPortfolio);
             // A live API may only publish a few records. Complete the section

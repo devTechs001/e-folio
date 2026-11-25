@@ -1,0 +1,127 @@
+{
+  "seedKey": "lab-core",
+  "description": "Phase 42 — the Lab's real seeded records. These replaced the four '[SAMPLE]' placeholders. They are ordinary LabEntry documents in the dedicated labentries collection; no Project record is created from this file, so nothing here can appear on the Projects page.",
+  "entries": [
+    {
+      "slug": "network-recon-suite",
+      "title": "Network Recon Suite",
+      "summary": "A self-hosted reconnaissance pipeline that maps lab VLANs end to end — discovery, port profiling, service fingerprinting and diffing successive scans.",
+      "description": "Reconnaissance work is repetitive and easy to do inconsistently, so this suite automates the boring half: sweep, profile, fingerprint, then diff against the previous run so only genuine changes surface.\n\nIt runs exclusively against an isolated lab VLAN and disposable virtual targets. No external host is ever scanned, and the suite refuses to start against anything outside the configured lab CIDR.\n\nIt is previewed through the NetGate captive portal: https://net-gate-portal.netlify.app/",
+      "domain": "Reconnaissance",
+      "status": "beta",
+      "environment": "Isolated lab VLAN with disposable VMs",
+      "scope": "Lab CIDR only — egress blocked and enforced in code",
+      "tools": [
+        "Nmap",
+        "Masscan",
+        "Python",
+        "Docker",
+        "SQLite"
+      ],
+      "findings": "Baseline-diffing cut review time from roughly an hour of manual comparison to a single readable report. The recurring false positives turned out to be services that rotate ports on restart, now tracked and annotated rather than flagged.",
+      "tags": [
+        "recon",
+        "automation",
+        "lab-only",
+        "nmap"
+      ],
+      "difficulty": "intermediate",
+      "statusNote": "usable end to end, still tuning the fingerprint corpus",
+      "featured": true,
+      "links": {
+        "live": "https://net-gate-portal.netlify.app/",
+        "demo": "https://net-gate-portal.netlify.app/"
+      }
+    },
+    {
+      "slug": "wifi-security-playground",
+      "title": "Wi-Fi Security Playground",
+      "summary": "A wireless test bench of deliberately misconfigured access points, used to compare how each encryption mode actually holds up under audit.",
+      "description": "Built to make wireless weaknesses visible instead of theoretical. A small fleet of access points is configured — deliberately badly — to cover the usual failure modes: obsolete encryption, weak passphrases, WPS left enabled, and assorted authentication downgrade paths.\n\nEach access point is captured in a documented profile: what was misconfigured, how it presents on the air, and what a correct configuration looks like instead. The point is the remediation write-up, not the capture.",
+      "domain": "Wireless Security",
+      "status": "development",
+      "environment": "Isolated bench APs on dedicated hardware",
+      "scope": "Own hardware, own spectrum, laboratory conditions",
+      "tools": [
+        "Aircrack-ng",
+        "Kismet",
+        "Hostapd",
+        "Wireshark",
+        "Raspberry Pi"
+      ],
+      "findings": "WPS remains the fastest path to a compromised pre-shared key in every configuration tested. The profiles now double as a checklist that gets applied before any wireless deployment.",
+      "tags": [
+        "wireless",
+        "802.11",
+        "lab-only",
+        "hardening"
+      ],
+      "difficulty": "intermediate",
+      "statusNote": "bench assembled, write-ups still being added",
+      "featured": false,
+      "links": {
+        "github": "https://github.com/devTechs001/wifi-security-lab"
+      }
+    },
+    {
+      "slug": "web-pentest-lab-owasp",
+      "title": "Web Pentest Lab (OWASP)",
+      "summary": "A containerised deliberately-vulnerable web stack built to rehearse the OWASP Top 10 and, more importantly, to practise writing the remediation.",
+      "description": "A reproducible Docker stack of intentionally vulnerable training applications. Each container targets a distinct OWASP Top 10 category so a session can be scoped to one weakness at a time rather than mixing everything together.\n\nThe value is in the paired write-ups: for every issue rehearsed there is a short remediation note describing the actual fix — parameterised queries, output encoding, server-side authorisation checks — because finding an issue is the cheap half.",
+      "domain": "Web Security",
+      "status": "experimental",
+      "environment": "Docker Compose, one container per weakness",
+      "scope": "Local containers only, never a public endpoint",
+      "tools": [
+        "Docker",
+        "Burp Suite Community",
+        "OWASP ZAP",
+        "Node.js",
+        "PostgreSQL"
+      ],
+      "findings": "Rehearsing the fix immediately after the exploit changes how the issue is understood. Broken access control consistently proves harder to demonstrate than injection and easier to get wrong in the remediation.",
+      "tags": [
+        "owasp",
+        "web-security",
+        "docker",
+        "appsec"
+      ],
+      "difficulty": "introductory",
+      "statusNote": "six of ten categories covered",
+      "featured": true,
+      "links": {
+        "github": "https://github.com/devTechs001/web-pentest-lab"
+      }
+    },
+    {
+      "slug": "cloud-iam-misconfig-sentinel",
+      "title": "Cloud IAM Misconfig Sentinel",
+      "summary": "An automated audit that flags the cloud IAM mistakes that matter — wildcard actions, unconstrained trust policies, stale keys with live permissions.",
+      "description": "Most cloud breaches begin with an identity misconfiguration rather than an exploit. This audit crawls IAM policy documents and trust relationships in a sandbox account and reports a prioritised list: wildcard action grants, principals that can assume a role without a condition, keys that outlived their purpose.\n\nIt is read-only against a dedicated sandbox account, with credentials scoped to policy-read permissions only, so the audit tool cannot itself become the exposure it is looking for.",
+      "domain": "Cloud Security",
+      "status": "live",
+      "environment": "Dedicated sandbox cloud account",
+      "scope": "Read-only policy inspection; no write or assume actions",
+      "tools": [
+        "AWS IAM",
+        "Boto3",
+        "Python",
+        "Terraform",
+        "Prowler"
+      ],
+      "findings": "Wildcard `Action` grants were by far the most common finding, and the ones hardest to argue were intentional once a reviewer saw them listed next to their actual usage. The report now ranks by reachable privilege rather than by count.",
+      "tags": [
+        "cloud",
+        "iam",
+        "devsecops",
+        "audit"
+      ],
+      "difficulty": "advanced",
+      "statusNote": "running on a schedule against the sandbox",
+      "featured": true,
+      "links": {
+        "github": "https://github.com/devTechs001/cloud-iam-sentinel"
+      }
+    }
+  ]
+}

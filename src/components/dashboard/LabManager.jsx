@@ -1,22 +1,43 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    FlaskConical, Rocket, RefreshCw, Trash2, Plus, Database,
-    ExternalLink, AlertCircle, CheckCircle2, Terminal, ArrowUpRight,
-    ImageIcon, Save, Link2
+    FlaskConical, RefreshCw, Trash2, Plus, AlertCircle, CheckCircle2,
+    Terminal, ArrowUpRight, Save, FolderGit2, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../NotificationSystem';
 import ApiService from '../../services/api.service';
+import { publishLabChanged } from '../../utils/projectSync';
 import DashboardLayout from './DashboardLayout';
-import labSampleData from '../../data/labSamples.json';
-import { publishProjectsChanged } from '../../utils/projectSync';
 
-const LAB_SAMPLE_TAG = labSampleData.tag;
-const LAB_STATUSES = ['live', 'beta', 'development', 'experimental'];
+/**
+ * Phase 42 — Lab dashboard.
+ *
+ * The Lab is its own module: it reads and writes `LabEntry` records through
+ * `/api/lab` and never touches the Project collection. Before this it listed
+ * portfolio projects and filtered them by status, so it effectively *was* the
+ * Projects dashboard with a different filter — the source of the two modules
+ * fighting over the same records.
+ *
+ * The "real projects" counter is gone on purpose: portfolio projects are not
+ * this dashboard's business. The link to /dashboard/projects is a navigation
+ * aid, not a shared data source.
+ */
 
-const isSample = (project) =>
-    Array.isArray(project?.tags) && project.tags.includes(LAB_SAMPLE_TAG);
+const LAB_STATUSES = ['development', 'experimental', 'beta', 'live', 'archived'];
+const LAB_DOMAINS = [
+    'Reconnaissance', 'Network Security', 'Web Security', 'Cloud Security',
+    'Wireless Security', 'Systems & Active Directory', 'Malware Analysis',
+    'Digital Forensics', 'Blue Team', 'Tooling'
+];
+
+const STATUS_LABELS = {
+    development: 'In development',
+    experimental: 'Experimental',
+    beta: 'Beta',
+    live: 'Running',
+    archived: 'Archived'
+};
 
 /**
  * Resolve the poster a Lab card will show, exactly the way the public page and
@@ -26,47 +47,45 @@ const isSample = (project) =>
 const posterOf = (project) =>
     project?.thumbnail || project?.imageUrl || project?.images?.[0]?.url || '';
 
-const settled = (result) =>
-    result.status === 'fulfilled' && result.value?.success ? result.value : null;
+const blankDraft = () => ({
+    title: '',
+    summary: '',
+    domain: 'Tooling',
+    status: 'development',
+    environment: '',
+    scope: '',
+    tools: '',
+    description: ''
+});
 
 const LabManager = () => {
     const { isOwner: checkOwner } = useAuth();
     const owner = typeof checkOwner === 'function' ? checkOwner() : false;
     const { success: notifySuccess, error: notifyError } = useNotifications();
 
-    const [projects, setProjects] = useState([]);
-    const [skills, setSkills] = useState([]);
-    const [hobbies, setHobbies] = useState([]);
+    const [entries, setEntries] = useState([]);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState('');
+    const [draft, setDraft] = useState(blankDraft);
+    const [showForm, setShowForm] = useState(false);
+    const [posterDrafts, setPosterDrafts] = useState({});
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [p, s, h] = await Promise.allSettled([
-                ApiService.request('/public/projects?status=all&limit=100'),
-                ApiService.request('/public/skills'),
-                ApiService.request('/public/interests')
+            const [list, statsResponse] = await Promise.all([
+                ApiService.getLabEntries(),
+                ApiService.getLabStats()
             ]);
-            const projectData = settled(p);
-            const skillsData = settled(s);
-            const hobbiesData = settled(h);
-            const allProjects = Array.isArray(projectData?.projects) ? projectData.projects : [];
-            setProjects(allProjects.filter(item =>
-                LAB_STATUSES.includes(String(item.status || '').toLowerCase())
-            ));
-            setSkills(Array.isArray(skillsData?.skills) ? skillsData.skills : []);
-            setHobbies(Array.isArray(hobbiesData?.interests)
-                ? hobbiesData.interests
-                : (Array.isArray(hobbiesData?.data) ? hobbiesData.data : []));
-            if (!projectData || !skillsData || !hobbiesData) {
-                setNotice('Some dashboard data is temporarily unavailable. Only loaded records are shown.');
-            } else {
-                setNotice('');
-            }
-        } catch (error) {
-            setNotice('Could not load lab data. Check the API connection and retry.');
+            setEntries(Array.isArray(list?.experiments) ? list.experiments : []);
+            setStats(statsResponse?.success ? statsResponse : null);
+            setNotice(list?.success === false
+                ? 'Lab entries could not be loaded. Check the API connection and retry.'
+                : '');
+        } catch {
+            setNotice('Lab entries could not be loaded. Check the API connection and retry.');
         } finally {
             setLoading(false);
         }
@@ -74,339 +93,353 @@ const LabManager = () => {
 
     useEffect(() => { load(); }, [load]);
 
-    const samples = useMemo(() => projects.filter(isSample), [projects]);
-    const realProjects = useMemo(() => projects.filter(p => !isSample(p)), [projects]);
+    const seededCount = useMemo(() => entries.filter(entry => entry.seedKey).length, [entries]);
 
-    const addSamples = async () => {
+    const createEntry = async (event) => {
+        event.preventDefault();
         if (!owner) return;
-        if (!window.confirm(`Add ${labSampleData.samples.length} clearly-labelled SAMPLE experiments? They can be deleted at any time.`)) return;
+        if (!draft.title.trim() || !draft.summary.trim()) {
+            notifyError?.('A title and a short summary are required.');
+            return;
+        }
         setBusy(true);
-        let created = 0;
-        let skipped = 0;
         try {
-            for (const sample of labSampleData.samples) {
-                if (projects.some(p => p.title === sample.title)) { skipped += 1; continue; }
-                const response = await ApiService.createProject({
-                    ...sample,
-                    tags: [LAB_SAMPLE_TAG, ...sample.tags],
-                    visibility: 'public'
-                });
-                if (response?.success === false) throw new Error(response.message || 'Create failed');
-                created += 1;
-            }
-            notifySuccess(`Added ${created} sample experiment(s)${skipped ? `, ${skipped} already present` : ''}.`);
-            window.dispatchEvent(new CustomEvent('settingsChanged'));
-            publishProjectsChanged();
+            const response = await ApiService.createLabEntry({
+                ...draft,
+                tools: draft.tools.split(',').map(t => t.trim()).filter(Boolean)
+            });
+            if (response?.success === false) throw new Error(response.message || 'Could not create the entry');
+            publishLabChanged();
+            notifySuccess?.('Lab experiment added.');
+            setDraft(blankDraft());
+            setShowForm(false);
             await load();
         } catch (error) {
-            notifyError(error?.message || 'Could not add the sample experiments.');
-            await load();
+            notifyError?.(error?.message || 'Could not create the entry.');
         } finally {
             setBusy(false);
         }
     };
 
-    const deleteSample = async (project) => {
+    const removeEntry = async (entry) => {
         if (!owner) return;
-        const id = project.id || project._id;
-        if (!id || !window.confirm(`Delete "${project.title}"?`)) return;
+        if (!window.confirm(`Delete "${entry.title}" from the Lab?\n\nThis removes the lab entry only — no portfolio project is affected.`)) return;
         setBusy(true);
         try {
-            const response = await ApiService.deleteProject(id);
+            const response = await ApiService.deleteLabEntry(entry._id || entry.id);
             if (response?.success === false) throw new Error(response.message || 'Delete failed');
-            setProjects(prev => prev.filter(p => (p.id || p._id) !== id));
-            notifySuccess('Sample experiment deleted.');
-            window.dispatchEvent(new CustomEvent('settingsChanged'));
-            publishProjectsChanged();
+            publishLabChanged();
+            notifySuccess?.('Lab experiment deleted.');
+            await load();
         } catch (error) {
-            notifyError(error?.message || 'Could not delete the sample experiment.');
+            notifyError?.(error?.message || 'Could not delete the entry.');
         } finally {
             setBusy(false);
         }
     };
 
-    const deleteAllSamples = async () => {
-        if (!owner || samples.length === 0) return;
-        if (!window.confirm(`Delete all ${samples.length} sample experiments? Real projects are untouched.`)) return;
-        setBusy(true);
-        let removed = 0;
-        try {
-            for (const project of samples) {
-                const id = project.id || project._id;
-                if (!id) continue;
-                const response = await ApiService.deleteProject(id);
-                if (response?.success === false) throw new Error(response.message || 'Delete failed');
-                removed += 1;
-            }
-            notifySuccess(`Deleted ${removed} sample experiment(s).`);
-            window.dispatchEvent(new CustomEvent('settingsChanged'));
-            publishProjectsChanged();
-            await load();
-        } catch (error) {
-            notifyError(error?.message || 'Could not delete all samples.');
-            await load();
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    // Phase 37 — set the card poster from the dashboard. The URL is written to
-    // `thumbnail`, which the public API and card both resolve first, so saving
-    // here is what the public Lab page shows on its next refresh.
-    const [posterEdits, setPosterEdits] = useState({});
-    const [savingPoster, setSavingPoster] = useState(null);
-
-    const savePoster = async (project) => {
-        const id = project.id || project._id;
-        const value = (posterEdits[id] ?? posterOf(project)).trim();
+    /**
+     * Set the poster image a Lab card renders. Phase 42: this writes to the
+     * LabEntry's own `thumbnail` through the Lab API — it used to write to a
+     * Project document, which is exactly the coupling this phase removed.
+     */
+    const savePoster = async (entry) => {
+        if (!owner) return;
+        const id = entry._id || entry.id;
         if (!id) return;
-        setSavingPoster(id);
+        const value = String(posterDrafts[id] ?? posterOf(entry));
+        setBusy(true);
         try {
-            const response = await ApiService.updateProject(id, {
-                title: project.title,
-                description: project.description,
-                thumbnail: value
-            });
-            if (response?.success === false) throw new Error(response.message || 'Save failed');
-            setProjects(prev => prev.map(p =>
-                (p.id || p._id) === id ? { ...p, thumbnail: value, imageUrl: value } : p
-            ));
-            setPosterEdits(prev => {
-                const next = { ...prev };
-                delete next[id];
-                return next;
-            });
+            const response = await ApiService.updateLabEntry(id, { thumbnail: value.trim() });
+            if (response?.success === false) throw new Error(response.message || 'Could not save the image');
             notifySuccess('Card image saved — the public Lab card uses it now.');
             window.dispatchEvent(new CustomEvent('settingsChanged'));
-            publishProjectsChanged();
+            publishLabChanged();
+            await load();
         } catch (error) {
-            notifyError(error?.message || 'Could not save the card image.');
+            notifyError?.(error?.message || 'Could not save the image.');
         } finally {
-            setSavingPoster(null);
+            setBusy(false);
         }
     };
 
-    const panel = 'rounded-2xl border border-slate-700/60 bg-slate-900/50 p-5';
+    const statusCounts = useMemo(() => {
+        const counts = Object.fromEntries(LAB_STATUSES.map(status => [status, 0]));
+        for (const entry of entries) {
+            const status = String(entry.status || '').toLowerCase();
+            if (counts[status] !== undefined) counts[status] += 1;
+        }
+        return counts;
+    }, [entries]);
+
+    const statCards = [
+        { label: 'Lab experiments', value: entries.length, icon: FlaskConical },
+        { label: 'Running', value: statusCounts.live, icon: CheckCircle2 },
+        { label: 'In progress', value: statusCounts.development + statusCounts.experimental, icon: Terminal },
+        { label: 'Seeded records', value: seededCount, icon: Save }
+    ];
 
     return (
         <DashboardLayout
             title="Lab"
-            subtitle="Experiments, toolkit and hobbies behind the public Lab page"
-            actions={
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        onClick={load}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600 text-slate-200 text-sm hover:border-cyan-400 transition"
-                    >
-                        <RefreshCw size={15} /> Refresh
-                    </button>
-                    <Link
-                        to="/#lab"
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600 text-slate-200 text-sm hover:border-cyan-400 transition"
-                    >
-                        <ExternalLink size={15} /> View public Lab
-                    </Link>
-                </div>
-            }
+            description="Cybersecurity operations — experiments, builds and research."
         >
             <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <FlaskConical size={22} className="text-cyan-400" />
+                            Security Lab
+                        </h1>
+                        <p className="text-sm text-slate-400 mt-1">
+                            A separate module from portfolio projects, with its own records.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            to="/lab"
+                            className="inline-flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300"
+                        >
+                            <ExternalLink size={14} /> View public page
+                        </Link>
+                        <button
+                            onClick={load}
+                            disabled={loading}
+                            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-cyan-500 transition"
+                        >
+                            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+                        </button>
+                        <button
+                            onClick={() => setShowForm(v => !v)}
+                            disabled={!owner || busy}
+                            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 transition disabled:opacity-50"
+                        >
+                            <Plus size={14} /> New experiment
+                        </button>
+                    </div>
+                </div>
+
                 {notice && (
-                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-                        <AlertCircle size={16} /> {notice}
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                        <span>{notice}</span>
                     </div>
                 )}
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                        { label: 'Lab experiments', value: projects.length, icon: FlaskConical },
-                        { label: 'Real projects', value: realProjects.length, icon: Rocket },
-                        { label: 'Deletable samples', value: samples.length, icon: Trash2 },
-                        { label: 'Skills / hobbies', value: `${skills.length} / ${hobbies.length}`, icon: Database }
-                    ].map(({ label, value, icon: Icon }) => (
-                        <div key={label} className={panel}>
-                            <div className="flex items-center gap-2 text-cyan-400 mb-2"><Icon size={16} /></div>
-                            <div className="text-2xl font-bold text-slate-100">{value}</div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {statCards.map(({ label, value, icon }) => (
+                        <div key={label} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+                            {React.createElement(icon, { size: 16, className: 'text-cyan-400' })}
+                            <div className="mt-2 text-xl font-semibold text-white">{value}</div>
                             <div className="text-xs text-slate-400 mt-1">{label}</div>
                         </div>
                     ))}
                 </div>
 
-                {/* Sample data controls */}
-                <div className={panel}>
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                                <FlaskConical size={18} className="text-amber-400" /> Sample data (you can delete this)
-                            </h2>
-                            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-                                These are clearly labelled starter experiments tagged
-                                <code className="mx-1 px-1.5 py-0.5 rounded bg-slate-800 text-amber-300">{LAB_SAMPLE_TAG}</code>.
-                                Projects, skills and hobbies are real records from the database — the samples are
-                                the only disposable content.
-                            </p>
+                {showForm && owner && (
+                    <form onSubmit={createEntry} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+                        <div className="grid md:grid-cols-2 gap-3">
+                            <label className="text-sm text-slate-300">
+                                Title
+                                <input
+                                    value={draft.title}
+                                    onChange={e => setDraft({ ...draft, title: e.target.value })}
+                                    maxLength={120}
+                                    className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                                    required
+                                />
+                            </label>
+                            <label className="text-sm text-slate-300">
+                                Domain
+                                <select
+                                    value={draft.domain}
+                                    onChange={e => setDraft({ ...draft, domain: e.target.value })}
+                                    className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                                >
+                                    {LAB_DOMAINS.map(domain => <option key={domain}>{domain}</option>)}
+                                </select>
+                            </label>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <label className="block text-sm text-slate-300">
+                            Summary
+                            <input
+                                value={draft.summary}
+                                onChange={e => setDraft({ ...draft, summary: e.target.value })}
+                                maxLength={240}
+                                className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                                required
+                            />
+                        </label>
+                        <div className="grid md:grid-cols-3 gap-3">
+                            <label className="text-sm text-slate-300">
+                                Status
+                                <select
+                                    value={draft.status}
+                                    onChange={e => setDraft({ ...draft, status: e.target.value })}
+                                    className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                                >
+                                    {LAB_STATUSES.map(status => (
+                                        <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="text-sm text-slate-300">
+                                Environment
+                                <input
+                                    value={draft.environment}
+                                    onChange={e => setDraft({ ...draft, environment: e.target.value })}
+                                    className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                                />
+                            </label>
+                            <label className="text-sm text-slate-300">
+                                Scope
+                                <input
+                                    value={draft.scope}
+                                    onChange={e => setDraft({ ...draft, scope: e.target.value })}
+                                    className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                                />
+                            </label>
+                        </div>
+                        <label className="block text-sm text-slate-300">
+                            Tools (comma separated)
+                            <input
+                                value={draft.tools}
+                                onChange={e => setDraft({ ...draft, tools: e.target.value })}
+                                className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                            />
+                        </label>
+                        <div className="flex items-center gap-2">
                             <button
-                                onClick={addSamples}
-                                disabled={!owner || busy}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/15 border border-cyan-500/50 text-cyan-300 text-sm font-semibold hover:bg-cyan-500/25 disabled:opacity-50 transition"
+                                type="submit"
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 disabled:opacity-50"
                             >
-                                <Plus size={15} /> Add sample experiments
+                                <Plus size={14} /> Add experiment
                             </button>
                             <button
-                                onClick={deleteAllSamples}
-                                disabled={!owner || busy || samples.length === 0}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500/10 border border-rose-500/40 text-rose-300 text-sm font-semibold hover:bg-rose-500/20 disabled:opacity-50 transition"
+                                type="button"
+                                onClick={() => { setShowForm(false); setDraft(blankDraft()); }}
+                                className="text-sm px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300"
                             >
-                                <Trash2 size={15} /> Delete all samples
+                                Cancel
                             </button>
                         </div>
+                    </form>
+                )}
+
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                        <h2 className="text-sm font-semibold text-white">Experiments</h2>
+                        <span className="text-xs text-slate-500">
+                            {stats?.total !== undefined ? `${stats.total} in the collection` : '—'}
+                        </span>
                     </div>
 
-                    {!owner && (
-                        <p className="mt-3 text-xs text-amber-300 flex items-center gap-2">
-                            <AlertCircle size={13} /> Owner access is required to add or delete samples.
-                        </p>
-                    )}
-
-                    <div className="mt-4 rounded-xl border border-slate-700/60 bg-slate-950/50 p-4 text-xs text-slate-400">
-                        <div className="flex items-center gap-2 text-slate-300 font-semibold mb-2"><Terminal size={14} /> CLI alternative</div>
-                        <code className="block text-cyan-300">npm run seed:lab</code>
-                        <code className="block text-cyan-300">npm run seed:lab:remove</code>
-                        <p className="mt-2 leading-relaxed">
-                            The CLI only creates or removes documents carrying the sample tag. It never
-                            modifies real projects, skills or hobbies.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Experiment list */}
-                <div className={panel}>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-slate-100">Lab experiments</h2>
-                        <span className="text-xs text-slate-400">{loading ? 'Loading…' : `${projects.length} records`}</span>
-                    </div>
-
-                    {projects.length === 0 ? (
-                        <div className="rounded-xl border border-dashed border-slate-700 p-8 text-center text-sm text-slate-400">
-                            No lab experiments yet. Add the samples above, or set a project status to
-                            live / beta / development / experimental in the{' '}
-                            <Link to="/dashboard/projects" className="text-cyan-400 underline">Projects manager</Link>.
+                    {loading ? (
+                        <div className="px-4 py-8 text-center text-sm text-slate-400">Loading experiments…</div>
+                    ) : entries.length === 0 ? (
+                        <div className="px-4 py-8 text-center text-sm text-slate-400">
+                            No lab experiments yet. Add one, or run{' '}
+                            <code className="text-cyan-300">npm run seed:lab</code>.
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            {projects.map(project => {
-                                const sample = isSample(project);
-                                return (
-                                    <div
-                                        key={project.id || project._id || project.title}
-                                        className={`rounded-xl border ${sample ? 'border-amber-500/40 bg-amber-500/5' : 'border-slate-700/60 bg-slate-950/30'}`}
-                                    >
-                                        <div className="flex flex-wrap items-center gap-3 p-3">
-                                            {/* Same poster rule as the public card, so this
-                                                preview cannot drift from what visitors see. */}
-                                            <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-700/60 bg-slate-800">
-                                                {posterOf(project) ? (
-                                                    <img
-                                                        src={posterOf(project)}
-                                                        alt=""
-                                                        loading="lazy"
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-full w-full items-center justify-center text-slate-500">
-                                                        <ImageIcon size={18} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-semibold text-slate-100 truncate">{project.title}</span>
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-                                                        {project.status}
-                                                    </span>
-                                                    {sample && (
-                                                        <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
-                                                            Sample · deletable
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-slate-400 mt-1 line-clamp-1 max-w-2xl">{project.description}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Link
-                                                    to="/dashboard/projects"
-                                                    className="text-xs text-cyan-400 hover:underline inline-flex items-center gap-1"
-                                                >
-                                                    Edit <ArrowUpRight size={12} />
-                                                </Link>
-                                                {owner && sample && (
-                                                    <button
-                                                        onClick={() => deleteSample(project)}
-                                                        disabled={busy}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-500/40 text-rose-300 text-xs hover:bg-rose-500/15 disabled:opacity-50 transition"
-                                                    >
-                                                        <Trash2 size={13} /> Delete
-                                                    </button>
-                                                )}
-                                            </div>
+                        <ul className="divide-y divide-slate-800">
+                            {entries.map(entry => (
+                                <li key={entry._id || entry.id} className="flex items-start justify-between gap-4 px-4 py-3">
+                                    {posterOf(entry) ? (
+                                        <img
+                                            src={posterOf(entry)}
+                                            alt=""
+                                            className="h-12 w-16 shrink-0 rounded object-cover border border-slate-800"
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div className="h-12 w-16 shrink-0 rounded border border-slate-800 bg-slate-950 flex items-center justify-center text-slate-600">
+                                            <FlaskConical size={16} />
                                         </div>
-
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="text-sm font-medium text-white truncate">{entry.title}</span>
+                                            <span className="text-[11px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-slate-800 text-cyan-300">
+                                                {STATUS_LABELS[entry.status] || entry.status}
+                                            </span>
+                                            {entry.seedKey && (
+                                                <span className="text-[11px] rounded px-1.5 py-0.5 bg-slate-800 text-slate-400">
+                                                    seeded
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="mt-1 text-xs text-slate-400 line-clamp-2">{entry.summary}</p>
+                                        <div className="mt-1 text-[11px] text-slate-500">
+                                            {entry.domain}
+                                            {entry.environment ? ` · ${entry.environment}` : ''}
+                                        </div>
                                         {owner && (
-                                            <div className="flex flex-wrap items-center gap-2 border-t border-slate-700/50 px-3 py-2">
-                                                <Link2 size={13} className="text-slate-500" />
+                                            <div className="flex flex-wrap items-center gap-2 border-t border-slate-800 mt-2 pt-2">
+                                                <label className="sr-only" htmlFor={`poster-${entry._id || entry.id}`}>
+                                                    Card image URL for {entry.title}
+                                                </label>
                                                 <input
-                                                    type="url"
-                                                    inputMode="url"
-                                                    placeholder="Card image URL (https://… or /assets/images/…)"
-                                                    aria-label={`Card image URL for ${project.title}`}
-                                                    value={posterEdits[project.id || project._id] ?? posterOf(project)}
-                                                    onChange={(e) => setPosterEdits(prev => ({
+                                                    id={`poster-${entry._id || entry.id}`}
+                                                    aria-label={`Card image URL for ${entry.title}`}
+                                                    value={posterDrafts[entry._id || entry.id] ?? posterOf(entry)}
+                                                    onChange={e => setPosterDrafts(prev => ({
                                                         ...prev,
-                                                        [project.id || project._id]: e.target.value
+                                                        [entry._id || entry.id]: e.target.value
                                                     }))}
-                                                    className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                                                    placeholder="https://… card image URL"
+                                                    className="flex-1 min-w-0 rounded bg-slate-950 border border-slate-700 px-2 py-1 text-xs text-white"
                                                 />
                                                 <button
-                                                    onClick={() => savePoster(project)}
-                                                    disabled={savingPoster === (project.id || project._id)}
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1.5 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-50"
+                                                    type="button"
+                                                    onClick={() => savePoster(entry)}
+                                                    disabled={busy}
+                                                    className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-300 hover:border-cyan-500 disabled:opacity-50"
                                                 >
-                                                    {savingPoster === (project.id || project._id)
-                                                        ? <RefreshCw size={12} className="animate-spin" />
-                                                        : <Save size={12} />}
                                                     Save image
                                                 </button>
                                             </div>
                                         )}
                                     </div>
-                                );
-                            })}
-                        </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <Link
+                                            to="/lab"
+                                            className="p-1.5 rounded text-slate-400 hover:text-cyan-300"
+                                            title="View on the public page"
+                                        >
+                                            <ArrowUpRight size={15} />
+                                        </Link>
+                                        <button
+                                            onClick={() => removeEntry(entry)}
+                                            disabled={!owner || busy}
+                                            className="p-1.5 rounded text-slate-400 hover:text-red-400 disabled:opacity-40"
+                                            title={owner ? 'Delete this experiment' : 'Owner access required'}
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </div>
 
-                {/* Related real data */}
-                <div className="grid md:grid-cols-3 gap-4">
-                    {[
-                        { to: '/dashboard/projects', title: 'Projects', detail: 'Real project records', count: realProjects.length },
-                        { to: '/dashboard/skills', title: 'Skills', detail: 'Real published skills', count: skills.length },
-                        { to: '/dashboard/hobbies', title: 'Hobbies', detail: 'Real interests', count: hobbies.length }
-                    ].map(item => (
-                        <Link key={item.title} to={item.to} className={`${panel} hover:border-cyan-500/50 transition block`}>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-semibold text-slate-100">{item.title}</span>
-                                <ArrowUpRight size={14} className="text-cyan-400" />
-                            </div>
-                            <div className="text-2xl font-bold text-cyan-400 mt-2">{item.count}</div>
-                            <div className="text-xs text-slate-400 mt-1">{item.detail}</div>
-                        </Link>
-                    ))}
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-emerald-300">
-                    <CheckCircle2 size={14} /> The public Lab page reads these same endpoints; edits reach it through live signals, cross-tab notices and its 30-second refresh.
+                <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400 space-y-2">
+                    <p className="flex items-start gap-2">
+                        <FolderGit2 size={14} className="mt-0.5 shrink-0 text-slate-500" />
+                        <span>
+                            Portfolio projects are a separate module with their own records —
+                            see <Link to="/dashboard/projects" className="text-cyan-400 hover:text-cyan-300">Projects</Link>.
+                            Nothing here is a project and nothing here affects that list.
+                        </span>
+                    </p>
+                    {!owner && (
+                        <p className="flex items-start gap-2 text-amber-300/80">
+                            <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                            <span>Owner access is required to add or delete experiments.</span>
+                        </p>
+                    )}
                 </div>
             </div>
         </DashboardLayout>

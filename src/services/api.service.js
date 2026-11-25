@@ -293,6 +293,64 @@ class ApiService {
         });
     }
 
+    // ---------------------------------------------------------------------
+    // Lab APIs (Phase 42)
+    //
+    // The Lab is a separate module backed by its own collection and its own
+    // endpoints. Nothing below can read or write a portfolio project, so the
+    // two dashboards can no longer interfere with each other.
+    // ---------------------------------------------------------------------
+
+    async getLabEntries() {
+        try {
+            const response = await this.request('/lab');
+            if (response.success && Array.isArray(response.experiments)) {
+                response.experiments = response.experiments.map(e => this.processProjectImages(e));
+            }
+            return response;
+        } catch (error) {
+            console.error('Error fetching lab entries:', error);
+            return { success: false, experiments: [], message: error.message };
+        }
+    }
+
+    async getLabStats() {
+        try {
+            return await this.request('/lab/stats');
+        } catch (error) {
+            console.error('Error fetching lab stats:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async createLabEntry(payload) {
+        return this.request('/lab', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    }
+
+    async updateLabEntry(id, payload) {
+        return this.request(`/lab/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+    }
+
+    async deleteLabEntry(id) {
+        return this.request(`/lab/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async viewLabEntry(id) {
+        return this.request(`/lab/${id}/view`, { method: 'POST' });
+    }
+
+    async likeLabEntry(id) {
+        return this.request(`/lab/${id}/like`, { method: 'POST' });
+    }
+
     // Project interaction APIs
     async likeProject(projectId) {
         return this.request(`/projects/${projectId}/like`, {

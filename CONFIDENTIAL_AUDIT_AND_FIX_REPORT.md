@@ -3151,6 +3151,113 @@ tracking documents, and the socket flow between two real clients.
 
 ---
 
+## 3ao. Phase 42 — Labs and Projects become separate modules
+
+Owner direction: *"labs and projects are different — labs is for my cybersec ops,
+projects a different thing (two different modules/dashboards/pages) … then owner
+is the admin of the system (same person)"*, followed by *"maintain the lab section
+in the landing page"*.
+
+Static and build verification only — **no MongoDB, Express runtime or browser was
+available**, so nothing here is a live-acceptance claim.
+
+### What was actually wrong
+
+Phase 41 filtered lab records out of the projects feed at render time. That fixed
+the visible overlap but not the cause: **an "experiment" was a `Project`
+document**. There was no Lab model, no Lab routes and no Lab controller — the Lab
+was a filtered view of the projects collection, and `/dashboard/lab` and
+`/dashboard/projects` both read and wrote that same collection. The two modules
+could therefore never be separated by anything stronger than a client-side filter.
+
+The user's framing matches the code exactly: the `owner` role is the single
+top-level role, and every admin surface (`admin.routes.js`, `analytics.routes.js`,
+`collaboration-requests.routes.js`) is gated on `isOwner`. The owner *is* the
+administrator; there is no second admin identity to reconcile.
+
+### 1. A real Lab module
+
+| Layer | Added |
+| --- | --- |
+| Model | `server/models/LabEntry.model.js` — own schema, own collection |
+| Controller | `server/controllers/lab.controller.js` — reads/writes `LabEntry` only |
+| Routes | `server/routes/lab.routes.js` — `/api/lab` (owner) and `/api/lab/public` |
+| Client API | `getLabEntries`, `getLabStats`, `createLabEntry`, `updateLabEntry`, `deleteLabEntry`, `viewLabEntry`, `likeLabEntry` |
+| Data | `src/data/labEntries.json` |
+| Seeder | `server/scripts/seedLabEntries.js` (`seed:lab`, `seed:lab:remove`) |
+
+The model is domain-appropriate rather than a renamed project: experiments carry a
+cybersecurity `domain` (`Reconnaissance`, `Network Security`, `Web Security`,
+`Cloud Security`, `Wireless Security`, …), an `environment`, a declared `scope`, a
+`tools` list, `findings`, and a `difficulty`. A `seedKey` marks seeded records so
+`--remove` can target exactly them, and a unique `(userId, slug)` index plus
+slug-keyed upserts make reseeding idempotent — the mechanism that produced
+duplicate projects cannot reproduce itself here.
+
+### 2. The four records are now real lab work
+
+The `[SAMPLE]` placeholders were renamed to properly-titled records and given real
+detail — environmental context, declared scope, tooling and findings. They remain
+maintained (and removable) rather than disposable, and every one of them states
+its scope on the record itself, for example *"Lab CIDR only — egress blocked and
+enforced in code"* and *"Read-only policy inspection; no write or assume actions"*.
+
+| Record | Domain | Status |
+| --- | --- | --- |
+| Network Recon Suite | Reconnaissance | beta |
+| Wi-Fi Security Playground | Wireless Security | development |
+| Web Pentest Lab (OWASP) | Web Security | experimental |
+| Cloud IAM Misconfig Sentinel | Cloud Security | live |
+
+Renaming a record must not drop a link that was already published, so the original
+`links` were carried across — including the protected NetGate captive-portal URL on
+Network Recon Suite, which a regression test caught when the first draft lost it.
+
+### 3. Two dashboards, two pages, no shared data
+
+- `/dashboard/lab` now reads only `/api/lab`. It lists lab entries, creates and
+  deletes them, and provides the labelled per-record card-image editor (now writing
+  `thumbnail` through the Lab API rather than a Project update). The misleading
+  "Real projects" counter and the project/skill/hobby aggregations are gone —
+  portfolio projects are not this dashboard's data. A link to
+  `/dashboard/projects` remains as navigation, not as a data source.
+- `/dashboard/projects` continues to manage only projects.
+- `/lab` and `/projects` are now their own routes with their own page shells, and
+  each cross-links to the other module.
+- **The Lab keeps its section on the landing page**, as directed. It renders there
+  as `<Lab />` and also standalone at `/lab` via `<Lab embedded={false} />`.
+- Cross-tab sync was split: the Lab publishes on `e-folio:lab-changed` and its own
+  `BroadcastChannel`, so a lab edit can no longer tell every open Projects page to
+  refresh. This was a real coupling at the event layer even after the data was
+  separated.
+
+### 4. Verification
+
+`node tests/lab-projects-separation.test.mjs` — **14 checks**, wired into both
+manifests as `test:lab-separation`. It asserts the structure rather than the
+wording: the LabEntry model is not a Project discriminator, the controller never
+imports Project, the routes mount separately, the seeder never writes a Project,
+the public Lab page never calls `loadPublicSection('projects')`, the dashboard
+never calls a project API, and the two modules hold distinct sync channels. It
+also runs the real datasets: 16 projects, 4 lab entries, zero shared titles, no
+`[SAMPLE]` marker anywhere in the public snapshot.
+
+Existing suites that pinned the *old* coupling were rewritten to the new contract
+rather than deleted: `lab-page`, `lab-review`, `hero-lab-cards`, `header-icons`.
+In each case the guarantee they protected was preserved — saved-copy fallback,
+owner-only badge, poster resolution, cross-tab refresh — while the mechanism
+changed.
+
+Measured: `npm test` **520 checks, 0 failures**; `npm run check` exit 0, 681
+warnings (down from 683), **0 security findings**, precache 252; `/`, `/projects`
+and `/lab` all serve and both page modules transpile cleanly.
+
+Not verified: the seeded database, the Lab endpoints against a running Express
+instance, and the two-client realtime flow. **The migration has not been run** —
+see backlog 53.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3393,6 +3500,20 @@ tracking documents, and the socket flow between two real clients.
 52. Phase 41 follow-up: audit other `io.emit` broadcasts for the same leak that
     `profile:updated` had. `notifications.handler.js` is already room-scoped, but
     `broadcastHighEngagement()` (item 8) still calls `global.io.emit`.
+53. Phase 42 follow-up — **run the migration, in this order**, against the real
+    database:
+    - `npm run seed:lab` to create the four `LabEntry` records;
+    - then delete the legacy lab records still sitting in the `projects`
+      collection (the four `lab-sample`-tagged documents). Until that happens the
+      Projects page still filters them out client-side, so they are invisible but
+      not gone.
+    This cannot be done from the checkout: there is no database here.
+54. Phase 42 follow-up: the Lab UI exposes create and delete, but not full edit of
+    an existing entry. `PUT /api/lab/:id` exists and is owner-guarded; the admin
+    form still needs wiring to it.
+55. Phase 42 follow-up: add view/like endpoints to the public Lab page UI. The
+    counters and routes exist and are real, but no control calls them yet, so they
+    stay at zero — which is honest, and should stay that way until wired.
 
 ---
 

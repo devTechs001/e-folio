@@ -13,6 +13,9 @@ import { recordDevIssue } from '../utils/publicMessaging';
 
 export const PUBLIC_ENDPOINTS = Object.freeze({
     projects: '/public/projects?status=all&limit=100',
+    // Phase 42: the Lab is its own module backed by its own collection. It has
+    // a dedicated endpoint and never reads the projects feed.
+    lab: '/public/lab?limit=100',
     skills: '/public/skills',
     interests: '/public/interests',
     education: '/public/education',
@@ -21,10 +24,12 @@ export const PUBLIC_ENDPOINTS = Object.freeze({
 
 const ARRAY_KEYS = Object.freeze({
     projects: 'projects',
+    lab: 'experiments',
     skills: 'skills',
     interests: 'interests',
     education: 'education',
     testimonials: 'testimonials',
+    // Legacy: retained so older snapshots still resolve. New code uses `lab`.
     labProjects: 'projects'
 });
 

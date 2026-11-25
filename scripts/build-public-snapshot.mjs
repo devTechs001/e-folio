@@ -116,24 +116,31 @@ const education = extractArray(read('src/pages/Education.jsx'), 'getFallbackEduc
 const testimonials = readJson('server/backups/testimonials/original-fallback-testimonials.json')
     .map((item, index) => ({ ...item, id: `snapshot-testimonial-${index + 1}` }));
 
-// 6. Lab experiments — the repository's own labelled sample records. The
-// "[SAMPLE]" marker is presentation-only and removed for the public snapshot.
-const labSamples = readJson('src/data/labSamples.json').samples;
-const labProjects = labSamples.map((sample, index) => ({
+// 6. Lab experiments (Phase 42) — the Lab is its own module with its own
+// records, so this section is built from src/data/labEntries.json and mirrors
+// the LabEntry shape the public API returns. It no longer borrows the "[SAMPLE]"
+// placeholder set, and it deliberately does NOT reuse the projects array: a
+// lab record is not a project.
+const labEntriesSource = readJson('src/data/labEntries.json');
+const labProjects = labEntriesSource.entries.map((entry, index) => ({
     id: `snapshot-lab-${index + 1}`,
-    title: sample.title.replace(/^\[SAMPLE\]\s*/, ''),
-    description: sample.description.replace(/^Sample lab experiment:\s*/, ''),
-    status: sample.status,
-    category: sample.category,
-    technologies: sample.technologies || [],
-    tags: sample.tags || [],
-    links: sample.links || {},
-    // Phase 37: lab cards now render a real image. The sample records carry
-    // their own local assets; the derived fields match what the DB record and
-    // the public page expect, so the card and its dashboard preview agree.
-    images: sample.images || [],
-    thumbnail: sample.thumbnail || sample.images?.[0]?.url || '',
-    imageUrl: sample.imageUrl || sample.images?.[0]?.url || '',
+    slug: entry.slug,
+    title: entry.title,
+    summary: entry.summary,
+    description: entry.description || '',
+    status: entry.status,
+    domain: entry.domain,
+    environment: entry.environment || '',
+    scope: entry.scope || '',
+    tools: entry.tools || [],
+    findings: entry.findings || '',
+    tags: entry.tags || [],
+    links: entry.links || {},
+    difficulty: entry.difficulty || 'intermediate',
+    featured: Boolean(entry.featured),
+    seedKey: labEntriesSource.seedKey,
+    images: [],
+    thumbnail: entry.thumbnail || '',
     views: 0,
     likes: 0,
     updatedAt: null
@@ -147,7 +154,7 @@ const snapshot = {
         'server/seed-data.js',
         'src/pages/Education.jsx',
         'server/backups/testimonials/original-fallback-testimonials.json',
-        'src/data/labSamples.json'
+        'src/data/labEntries.json'
     ],
     sections: {
         projects: { success: true, projects, count: projects.length },

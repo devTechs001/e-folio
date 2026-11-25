@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Code2, User, Settings2, GraduationCap, Heart, FolderGit2, MessageSquare, Mail,
+    Code2, User, Settings2, GraduationCap, Heart, FolderGit2, FlaskConical, MessageSquare, Mail,
     LayoutDashboard, Handshake, Sparkles, Sun, Moon, Maximize2, Minimize2,
     ArrowRight, Menu, X
 } from 'lucide-react';
@@ -20,6 +20,7 @@ const NAV_SECTIONS = [
     { id: 'education', label: 'Education', Icon: GraduationCap },
     { id: 'interests', label: 'Interests', Icon: Heart },
     { id: 'projects', label: 'Projects', Icon: FolderGit2 },
+    { id: 'lab', label: 'Lab', Icon: FlaskConical },
     { id: 'testimonials', label: 'Testimonials', Icon: MessageSquare },
     { id: 'contact', label: 'Contact', Icon: Mail }
 ];
@@ -43,6 +44,7 @@ const getIsMobile = () => {
 const Header = () => {
     const { isDarkMode, toggleTheme } = useTheme();
     const location = useLocation();
+    const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [visible, setVisible] = useState(true);
     const [isMobile, setIsMobile] = useState(getIsMobile);
@@ -201,6 +203,15 @@ const Header = () => {
 
     const handleSectionClick = (event, sectionId) => {
         event.preventDefault();
+        // Phase 42: the Lab keeps its section on the landing page, so its nav
+        // entry scrolls like the others. Projects does the same on `/`, and both
+        // fall back to their standalone routes when opened from another page.
+        const hasOnPageSection = Boolean(document.getElementById(sectionId));
+        if (!hasOnPageSection && (sectionId === 'projects' || sectionId === 'lab')) {
+            closeMenu();
+            navigate(`/${sectionId}`);
+            return;
+        }
         const element = document.getElementById(sectionId);
         if (element) {
             const headerOffset = 80;
