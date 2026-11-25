@@ -3315,6 +3315,108 @@ Not verified: rendered appearance in a real browser at each breakpoint.
 
 ---
 
+## 3aq. Phase 44 — sample seeding pipeline and a dashboard↔endpoint audit
+
+Owner request: *"add the samples to databases, merge, push, review endpoints
+connections to dashboards all round."*
+
+**The seeding was not executed.** There is no MongoDB in this environment, no
+`mongosh`, no Docker, and MongoDB's binary host is unreachable from the sandbox
+(only GitHub, npm and PyPI are). A claim that the database was written would be
+false. What was delivered instead is a one-command pipeline that is safe to run
+against the real database, plus a verification step, and the defects that would
+have blocked or corrupted that run were fixed.
+
+### 1. One command for every dataset
+
+`npm run seed:samples` (`server/scripts/seedAllSamples.js`) runs all four seeders
+in dependency order — Lab entries, projects, showcase records, testimonials — each
+idempotent, each reporting its own counts.
+
+| Mode | Effect |
+| --- | --- |
+| *(none)* | seed everything |
+| `--dry-run` | list the steps, contact nothing |
+| `--verify` | read-only counts per dataset |
+| `--remove` | delete only records that a seed step created |
+
+`--remove` deliberately **skips projects**: that seeder deletes by owner and by
+title, so there is no subset it can safely remove. Silently deleting real projects
+would be worse than refusing.
+
+Seeding was blocked in three ways, all now fixed:
+
+- **The root seeder could not resolve `mongoose`.** It is declared only in
+  `server/package.json`, and there are no workspaces, so `npm run seed:projects`
+  from the repo root fails with `MODULE_NOT_FOUND` unless `server/npm install` has
+  run. The pipeline now checks this up front and prints the fix instead of a stack
+  trace.
+- **Two default databases.** `scripts/seed-projects.js` defaulted to
+  `mongodb://localhost:27017/e-folio` while `server/config/database.js` and every
+  other seeder use `efolio`. Without `MONGODB_URI` set — which is exactly the local
+  case — the seed wrote to one database and the dashboard read the other, with no
+  error. Aligned to `efolio`.
+- **A duplicate index on `LabEntry.seedKey`**, from declaring `index: true` on the
+  path *and* `schema.index()`. Mongoose warned about it on every connect.
+
+### 2. Endpoint ↔ dashboard audit
+
+`check-endpoint-parity.js` already reported **0 live code gaps** (543 server routes,
+637 frontend calls, 491 exact matches; all 146 unmatched calls are in orphaned
+files the app never imports). But path+method parity cannot catch the failure that
+actually breaks a dashboard: **a panel shown to a role whose API rejects that
+role.** That is how the admin-menu regression happened in the first place.
+
+`tests/dashboard-endpoint-audit.test.mjs` closes that gap. It resolves all 28
+dashboard menu entries to their real components (following the `lazy()` and
+wrapper indirection), collects the endpoints each panel calls, resolves each call
+to the Express route that serves it — including router-wide guards — and compares
+the guard against the roles allowed to see the panel. It also checks the reverse:
+no panel may write through an unguarded route.
+
+**The audit found two real problems:**
+
+- **Collaborators were offered full edit controls on the Projects dashboard.**
+  `projects.routes.js` guards create/update/delete/bulk-delete with `isOwner`, but
+  `ProjectManagerEnhanced` destructured `user` from `useAuth()` and never used it,
+  and the panel is offered to `owner` and `collaborator`. A collaborator could open
+  the Add Project form, fill it in, submit, and only then get a 403. It now gates
+  on the role the server actually enforces and shows a read-only view otherwise.
+- **`POST /api/public/projects/refresh` was unauthenticated.** It runs two database
+  counts and is only ever called by the owner's dashboard. Now behind
+  `auth, isOwner`.
+
+Three defects were found **in the audit itself** while validating it, and are
+worth recording because each would have made it useless:
+
+1. Route guards were only promoted from `router.use` when the per-route guard was
+   `public`, so a route under `router.use(isOwner)` was recorded as merely `auth`.
+2. The role check answered "any role list is fine" for non-owner guards, making the
+   panel-visibility check vacuous.
+3. Its write check flagged `/public/skills` reads inside the owner's Skills editor
+   — legitimate preview of published data — so it now targets writes only, and
+   exempts the anonymous view/like counters, which are anonymous by design.
+
+The audit was then **tamper-tested**: widening System Monitor from `owner` to
+`owner, collaborator` makes it fail with the three owner-only `/admin/*` endpoints
+named. With the tamper reverted it passes. A check that cannot fail is not a check.
+
+### 3. Verification
+
+`npm test` — **544 checks, 0 failures**, including the two new suites
+(`test:dashboard-endpoints`, `test:seed-pipeline`). `npm run check` — exit 0,
+**0 security findings**, 680 warnings (down from 681), build succeeds.
+
+`test:seed-pipeline` validates the real seed documents against the actual Mongoose
+schema using `validateSync()`, which needs no connection — so the records the
+seeder will write are proven acceptable before it runs. It also asserts the
+idempotency index, the absence of duplicate indexes, the step order, the
+database-name agreement, and that the verifier performs no writes.
+
+Not verified: the seeding itself, and any endpoint against a running database.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3574,6 +3676,18 @@ Not verified: rendered appearance in a real browser at each breakpoint.
 56. Phase 43 follow-up: confirm the enlarged hero in a real browser at 360, 768,
     1024 and 1440 px. The CSS is internally consistent and wraps safely, but the
     actual glyph rendering was not observed — there is no browser here.
+57. Phase 44 — **run `npm run seed:samples`, then `npm run seed:samples --
+    --verify`**, against the real database. The pipeline is tested and the seed
+    documents validate against the schema, but no database was reachable from the
+    build environment, so the write itself is unproven.
+58. Phase 44 follow-up: `ProjectManagerEnhanced` now hides write controls from
+    collaborators, but the panel still lists every project. If collaborators
+    should only see projects they are assigned to, that needs a scoping decision
+    and a server-side filter — not a UI change.
+59. Phase 44 follow-up: `server/api/api.service.js` (72 unmatched calls) and
+    `src/services/apiProxy.js` still carry legacy endpoints that have no route.
+    They are unreachable today, but nothing stops a future import from reviving
+    them; consider deleting them rather than leaving them as a trap.
 
 ---
 
