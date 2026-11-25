@@ -2,7 +2,10 @@
    Scoped to `.welcome-3d`; no project card or grid selector is touched. */
 
 .welcome-3d {
-  --welcome-size: clamp(1.35rem, 3.6vw, 2.15rem);
+  /* Phase 43 — raised so the welcome line reads as a hero label rather than
+     a caption. The vw term keeps it proportional on medium screens and the
+     ceiling stops it overwhelming the name below it. */
+  --welcome-size: clamp(1.85rem, 4.6vw, 3.1rem);
   --welcome-depth: 0.09em;
   --welcome-accent: var(--mainColor, #00efff);
   --welcome-accent-2: #8b5cf6;
@@ -180,7 +183,9 @@
 /* Narrow phones: keep the phrase on one or two comfortable lines. */
 @media (max-width: 420px) {
   .welcome-3d {
-    --welcome-size: clamp(1.2rem, 6.2vw, 1.6rem);
+    /* Narrow phones: still larger than before, but the phrase has to stay on
+       one or two comfortable lines. */
+    --welcome-size: clamp(1.55rem, 7.4vw, 2rem);
   }
   .welcome-3d__text {
     gap: 0.02em 0.26em;

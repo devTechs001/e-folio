@@ -3258,6 +3258,63 @@ see backlog 53.
 
 ---
 
+## 3ap. Phase 43 — the hero name and welcome tags were too small
+
+Owner request: *"increase the font of name tag nd the welcome tag"*.
+
+### What was wrong
+
+Both live on the About hero (rendered on the landing page and the About page):
+
+- **The name** used the shared `SectionHeading`, and `About.css` then overrode it
+  *down* to `4.25rem` at 1280px+ — smaller than a normal page heading on the very
+  section that is meant to introduce the owner.
+- **The welcome wordmark** (`WelcomeTag3D`) topped out at `2.15rem`, so it read as
+  a caption rather than a hero label.
+
+### Change
+
+The name now has its own scale that exceeds the global section scale at every
+breakpoint rather than fighting it:
+
+| Breakpoint | Name | Global heading | Welcome |
+| --- | --- | --- | --- |
+| base | 2.9rem | 2.5rem | clamp(1.85rem, 4.6vw, 3.1rem) |
+| 640 | 3.4rem | 3rem | — |
+| 768 | 4.1rem | 3.5rem | — |
+| 1024 | 5rem | 4.25rem | — |
+| 1280 | 5.75rem | 4.75rem | — |
+
+The welcome line was raised from `clamp(1.35rem, 3.6vw, 2.15rem)` to
+`clamp(1.85rem, 4.6vw, 3.1rem)`, and the narrow-phone step from
+`clamp(1.2rem, 6.2vw, 1.6rem)` to `clamp(1.55rem, 7.4vw, 2rem)` so it stays on one
+or two comfortable lines. It deliberately remains smaller than the name, so the
+hierarchy holds.
+
+Because a long surname at 5.75rem is materially wider than at 4.25rem, the heading
+also gained `overflow-wrap`/`word-break` and `hyphens` — it now wraps instead of
+pushing the column past the viewport. The availability pill was left at its
+contained size on purpose: enlarging it is what made it overflow its rounded
+container in an earlier phase.
+
+The shared `--sec-head-size` scale was **not** touched, so every other public
+heading is unchanged; only the About override moved.
+
+### Verification
+
+`node tests/hero-typography.test.mjs` — **8 checks**, wired as
+`test:hero-typography`. It parses the real CSS and asserts the new sizes exceed the
+previous ones at every breakpoint, that each name step exceeds its global peer
+(the actual regression), that the old downward override cannot return, that long
+names wrap, and that the wordmark still reads smaller than the name.
+
+`npm test` **528 checks, 0 failures**; `npm run check` exit 0, 0 security findings,
+681 warnings (unchanged), build succeeds.
+
+Not verified: rendered appearance in a real browser at each breakpoint.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3514,6 +3571,9 @@ see backlog 53.
 55. Phase 42 follow-up: add view/like endpoints to the public Lab page UI. The
     counters and routes exist and are real, but no control calls them yet, so they
     stay at zero — which is honest, and should stay that way until wired.
+56. Phase 43 follow-up: confirm the enlarged hero in a real browser at 360, 768,
+    1024 and 1440 px. The CSS is internally consistent and wraps safely, but the
+    actual glyph rendering was not observed — there is no browser here.
 
 ---
 
