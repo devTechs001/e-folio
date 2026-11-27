@@ -650,10 +650,59 @@
   display: grid;
   gap: 2rem;
   animation: fadeInUp 0.5s ease;
-  max-height: none;
-  overflow: visible;
-  padding-right: 0;
   contain: layout paint;
+}
+
+/* Phase 46 — scrollable grid viewport.
+ *
+ * The catalogue only grows: every new project pushes the page footer further
+ * down, and a visitor who wants the footer has to scroll past the whole grid.
+ * Capping the box at FIVE ROWS keeps the page a predictable height however many
+ * projects are added, while every record stays reachable by scrolling inside it.
+ *
+ * This mirrors the testimonial grid (`TestimonialsPage.css`): a CSS variable
+ * holds the height so the JSX does not bury a magic number, the box is a
+ * labelled, focusable region, and narrow screens drop the cap entirely because
+ * one column is the whole grid anyway.
+ */
+.projects-grid--scroll {
+  max-height: var(--projects-viewport-max, calc(5 * (var(--project-card-est-height, 420px) + 2rem)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent) transparent;
+}
+
+.projects-grid--scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.projects-grid--scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--textColor, #e8f1ff) 6%, transparent);
+  border-radius: 999px;
+}
+
+.projects-grid--scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--mainColor, #00efff) 45%, transparent);
+  border-radius: 999px;
+}
+
+.projects-grid--scroll:focus-visible {
+  outline: 2px solid var(--mainColor, #00efff);
+  outline-offset: 4px;
+  border-radius: 18px;
+}
+
+/* One column (list view and narrow screens): five rows would be the entire
+   catalogue, so an inner scroll box only traps the visitor's wheel. */
+@media (max-width: 640px) {
+  .projects-grid--scroll {
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
 }
 
 /* Grid View */

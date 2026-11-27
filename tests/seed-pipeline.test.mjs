@@ -111,12 +111,31 @@ check('one command seeds every dataset in dependency order', () => {
         'server/scripts/seedLabEntries.js',
         'scripts/seed-projects.js',
         'server/scripts/seedProjectShowcase.js',
-        'server/scripts/seedTestimonialSamples.js'
+        'server/scripts/seedTestimonialSamples.js',
+        // Phase 46 — cleanup-only step, never seeds (see the check below).
+        'server/scripts/seedLabSamples.js'
     ]);
     // Lab first (no dependencies), projects after it.
     assert.ok(order[0].includes('LabEntries'));
     // Every referenced script must exist.
     for (const script of order) assert.ok(exists(script), `${script} is missing`);
+});
+
+check('the legacy sample cleanup deletes but never re-seeds', () => {
+    const src = read('server/scripts/seedAllSamples.js');
+    const step = src.slice(src.indexOf("name: 'Legacy sample-tagged projects'"));
+    const body = step.slice(0, step.indexOf('}'));
+    // Marked remove-only, and it deletes only its own tagged records.
+    assert.match(body, /removeMode: 'flag'/);
+    assert.match(body, /seed: 'never'/);
+    // The normal seed path must skip it, or the samples would come straight back.
+    assert.match(src, /if \(!remove && step\.seed === 'never'\)/);
+    assert.match(src, /cleanup step, only runs with --remove/);
+    // And the seeder it calls can only delete records carrying its own tag.
+    const seeder = read('server/scripts/seedLabSamples.js');
+    assert.match(seeder, /Project\.deleteMany\(\{ tags: LAB_SAMPLE_TAG \}\)/);
+    // The tag is shared with verification, so the check and the delete agree.
+    assert.match(read('server/scripts/verifySeedData.js'), /sampleTaggedProjects/);
 });
 
 check('the pipeline supports dry-run, verify and remove', () => {

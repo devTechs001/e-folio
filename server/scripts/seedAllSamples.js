@@ -59,7 +59,7 @@ const STEPS = [
         name: 'Projects',
         script: 'scripts/seed-projects.js',
         removeMode: 'unsupported',
-        detail: '16 portfolio projects (+2 showcase records)'
+        detail: '16 portfolio projects (+3 showcase records)'
     },
     {
         name: 'Project showcase',
@@ -72,6 +72,20 @@ const STEPS = [
         script: 'server/scripts/seedTestimonialSamples.js',
         removeMode: 'flag',
         detail: 'sample testimonials, tagged and removable'
+    },
+    {
+        // Phase 46 — remove-only. `lab-sample` records belonged to the old Lab
+        // model, before Phase 42 gave experiments their own collection. They can
+        // still be sitting in a long-lived database wearing a sample tag, which
+        // is exactly the "sample tagged projects" the owner asked to clear out.
+        //
+        // `seed: 'never'` means a normal run skips it: seeding them again would
+        // reintroduce the problem. Only `--remove` acts on it.
+        name: 'Legacy sample-tagged projects',
+        script: 'server/scripts/seedLabSamples.js',
+        removeMode: 'flag',
+        seed: 'never',
+        detail: 'cleanup only — deletes leftover `lab-sample` projects'
     }
 ];
 
@@ -158,6 +172,12 @@ function main() {
     const failures = [];
     for (const [index, step] of STEPS.entries()) {
         console.log(`${index + 1}. ${step.name} — ${step.detail}`);
+
+        // A remove-only step has nothing to create.
+        if (!remove && step.seed === 'never') {
+            console.log('    skipped: cleanup step, only runs with --remove\n');
+            continue;
+        }
 
         let args = [];
         if (remove) {
