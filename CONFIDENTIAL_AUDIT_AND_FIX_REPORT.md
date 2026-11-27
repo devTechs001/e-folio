@@ -3484,6 +3484,89 @@ Not verified: how the third card looks beside the other two in a real browser.
 
 ---
 
+## 3as. Phase 46 — scrollable projects grid, newest-first render, sample cleanup
+
+Owner request: *"the projects should be in a scrollable container … viewport of
+5 rows … update the render to display the latest real as the system has … add
+this sample projects to databases in render, testimonials as well … update all
+scripts … remove the sample tagged projects … review errors"*.
+
+### 1. The grid scrolls inside a five-row viewport
+
+The catalogue only grows, and every addition pushed the page footer further down.
+`.projects-grid--scroll` caps the box at five rows:
+
+```
+max-height: var(--projects-viewport-max, calc(5 * (var(--project-card-est-height, 420px) + 2rem)));
+```
+
+The height lives in a variable set from JSX, not a buried number, and it mirrors
+the testimonial grid that already did this (`TestimonialsPage.css`). The box is a
+labelled `role="region"` with `tabIndex={0}` so a keyboard user can scroll it, and
+narrow screens drop the cap entirely — at one column, five rows *is* the whole
+catalogue, and an inner scroll box there would only trap the visitor's wheel.
+
+**Scope decision:** the cap applies to grid view only. List and masonry views
+keep their natural height; a five-row cap on list view would hide eleven of the
+sixteen projects behind a scrollbar.
+
+The rule is additive, so the protected `.projects-grid` base rule, the three view
+modes and every card style are untouched.
+
+### 2. The render now leads with the newest real work
+
+This was a real defect, not a preference. The saved catalogue is stored in
+authoring order — its first record is the *oldest* of the featured set — so the
+page was rendering whatever order the API or snapshot happened to return.
+
+Featured work still sorts to the front (that is a deliberate curation signal),
+then newest, then title. `completionDate` is the sort key, which is why ordering
+had to be fixed alongside the seeder check: 16/16 records carry one.
+
+Every comparator is now deterministic — `popular`, `views` and `stack` falls back
+to date and then title, so cards with equal rank cannot swap places between
+renders.
+
+### 3. Sample records reach the render; sample-tagged projects are deleted
+
+Two different things were tangled under "samples", so they are separated:
+
+- **Sample testimonials** were seeded, tagged `testimonial-sample`, and labelled
+  on the card — but the public page forced its sample count to zero and only
+  showed them behind the owner's `?preview=1`. The count now derives from what is
+  actually displayed, so seeded samples render for everyone and stay marked
+  `is-sample`. A visitor is never led to read one as a customer quote.
+
+- **Sample-tagged projects** are the legacy `lab-sample` records from before
+  Phase 42 gave the Lab its own collection. `seedLabSamples.js` was the only
+  writer and it was orphaned — not in the pipeline — so nothing created them, but
+  nothing removed them either. It is now a **remove-only** pipeline step:
+  `seed: 'never'` means a normal run skips it, because seeding them again would
+  recreate the problem, and only `--remove` acts on it.
+
+`verifySeedData.js` now counts sample-tagged projects and reports a non-zero
+count as a problem with the exact command to fix it. The check and the delete
+read the same tag from the same JSON, so they cannot disagree.
+
+The pipeline detail line was also wrong — it said "+2 showcase records" after
+Phase 45 made it three.
+
+### Verification
+
+`tests/projects-viewport.test.mjs` — **13 checks**, wired as `test:projects-viewport`.
+`tests/seed-pipeline.test.mjs` was updated for the new step and gained a check
+that the cleanup deletes but never re-seeds.
+
+`npm test` — **570 checks, 0 failures**. `npm run check` — exit 0, **0 security
+findings**, 680 warnings (unchanged), build 27.92s. Dev server serves `/projects`
+and `/testimonials` with no transform errors.
+
+Not verified: the scroll box rendered in a real browser, and the seeders were not
+run — there is no database in this environment. Every step fails only with
+`ECONNREFUSED`, which is what proves nothing was written.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3762,6 +3845,15 @@ Not verified: how the third card looks beside the other two in a real browser.
 61. Phase 45 follow-up: if the owner wants external links to appear *inside* the
     16-card grid rather than above it, that is a product decision that collides
     with the phase-36 grid target. Raise it before changing the grid.
+62. Phase 46 follow-up: **run the seeding** — `npm run seed:samples`, then
+    `npm run seed:samples -- --verify`. The cleanup half needs
+    `npm run seed:samples -- --remove`. None of it ran here; no database.
+63. Phase 46 follow-up: confirm the five-row cap in a real browser. `420px` per
+    card is an estimate; if the real card is taller the box will show fewer than
+    five rows, and `--project-card-est-height` is the one value to change.
+64. Phase 46 follow-up: list and masonry views are uncapped. If they should
+    scroll too, that is a separate decision — capping list view would hide
+    most of the catalogue behind a scrollbar.
 
 ---
 

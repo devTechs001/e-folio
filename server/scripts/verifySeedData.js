@@ -20,6 +20,9 @@ const mongoose = require('mongoose');
 
 const LabEntry = require('../models/LabEntry.model');
 const Project = require('../models/Project.model');
+// Same source of truth the cleanup seeder uses, so the check and the delete
+// can never disagree about what counts as a sample.
+const { tag: SAMPLE_TAG } = require('../../src/data/labSamples.json');
 
 async function countTestimonials() {
     // The model name has changed shape before; never let a missing model make
@@ -48,6 +51,10 @@ async function main() {
             labEntries: await LabEntry.countDocuments({}),
             seededLabEntries: await LabEntry.countDocuments({ seedKey: { $ne: '' } }),
             projects: await Project.countDocuments({}),
+            // Phase 46 — leftover placeholders from the pre-Phase-42 Lab model.
+            // These are what "sample tagged projects" means in practice; a clean
+            // database has zero, and `npm run seed:samples -- --remove` clears them.
+            sampleTaggedProjects: await Project.countDocuments({ tags: SAMPLE_TAG }),
             publicProjects: await Project.countDocuments({
                 visibility: 'public',
                 hidden: { $ne: true },
@@ -69,6 +76,12 @@ async function main() {
         const problems = [];
         if (counts.labEntries === 0) problems.push('no Lab entries — run: npm run seed:lab');
         if (counts.projects === 0) problems.push('no projects — run: npm run seed:samples');
+        if (counts.sampleTaggedProjects > 0) {
+            problems.push(
+                `${counts.sampleTaggedProjects} sample-tagged project(s) still present — `
+                + 'run: npm run seed:samples -- --remove'
+            );
+        }
 
         if (problems.length) {
             console.log('\nMissing:');

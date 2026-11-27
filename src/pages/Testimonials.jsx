@@ -119,7 +119,17 @@ const Testimonials = () => {
 
       let display = combineFeed(curated, reviewFeed.items);
 
-      // 3. Owner preview appends the labelled mock samples (unchanged).
+      // 3. Sample testimonials.
+      //
+      // Phase 46 — the seeded samples are real records in the database, tagged
+      // `testimonial-sample`, and they must reach the normal render rather than
+      // existing only behind the owner's preview toggle. They are still labelled
+      // as samples by `is-sample` on the card, so a visitor is never misled into
+      // reading one as a customer quote.
+      //
+      // Owner preview keeps its old behaviour of pulling every sample from the
+      // admin endpoint; reviewers and visitors see the approved sample records
+      // that the public feed already returned.
       if (previewMode && owner) {
         const admin = await apiService.getAllTestimonials({ limit: 100 });
         const all = admin?.success && Array.isArray(admin.testimonials) ? admin.testimonials : [];
@@ -133,7 +143,7 @@ const Testimonials = () => {
             .map(fromTestimonial)
         ];
       } else {
-        setSampleCount(0);
+        setSampleCount(display.filter(item => isSampleTestimonial(item.raw)).length);
       }
 
       // A public page with no live records keeps its saved copy, so the

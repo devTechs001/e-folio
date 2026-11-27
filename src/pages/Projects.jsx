@@ -393,6 +393,11 @@ const Projects = () => {
         return () => window.removeEventListener('settingsChanged', handleSettingsChange);
     }, [loadProjects]);
 
+    // Phase 46 — the grid viewport is capped at five rows. `--project-card-est-height`
+    // is the typical card height; raise it if the card copy runs long. Narrow
+    // screens drop the cap in CSS, because one column is the whole grid there.
+    const projectsViewportMax = 'calc(5 * (var(--project-card-est-height, 420px) + 2rem))';
+
     // Enhanced filtering and sorting logic
     const filteredAndSortedProjects = useMemo(() => {
         let result = [...projects];
@@ -435,22 +440,39 @@ const Projects = () => {
         }
 
         // Sorting
+        //
+        // Phase 46 — newest first by default. The grid is meant to lead with the
+        // work the system most recently published, not with whatever order the
+        // API or the saved snapshot happened to return. Every comparator falls
+        // back to completion date and then to title, so two cards with equal
+        // rank never swap places between renders.
+        const byNewest = (a, b) =>
+            new Date(b.completionDate || 0) - new Date(a.completionDate || 0);
+        const byTitle = (a, b) => String(a.title || '').localeCompare(String(b.title || ''));
+        const settle = (primary, a, b) => primary(a, b) || byNewest(a, b) || byTitle(a, b);
+
         result.sort((a, b) => {
             switch (sortBy) {
                 case 'featured':
-                    return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+                    return settle(
+                        (x, y) => (y.featured ? 1 : 0) - (x.featured ? 1 : 0),
+                        a, b
+                    );
                 case 'newest':
-                    return new Date(b.completionDate || 0) - new Date(a.completionDate || 0);
+                    return byNewest(a, b) || byTitle(a, b);
                 case 'popular':
-                    return (b.likes || 0) - (a.likes || 0);
+                    return settle((x, y) => (y.likes || 0) - (x.likes || 0), a, b);
                 case 'views':
-                    return (b.views || 0) - (a.views || 0);
+                    return settle((x, y) => (y.views || 0) - (x.views || 0), a, b);
                 case 'alphabetical':
-                    return a.title.localeCompare(b.title);
+                    return byTitle(a, b);
                 case 'oldest':
-                    return new Date(a.completionDate || 0) - new Date(b.completionDate || 0);
+                    return -byNewest(a, b) || byTitle(a, b);
                 case 'stack':
-                    return (b.technologies || []).length - (a.technologies || []).length;
+                    return settle(
+                        (x, y) => (y.technologies || []).length - (x.technologies || []).length,
+                        a, b
+                    );
                 default:
                     return 0;
             }
@@ -915,7 +937,18 @@ const Projects = () => {
                             Showing <span className="text-mainColor font-semibold">{filteredAndSortedProjects.length}</span> {filteredAndSortedProjects.length === 1 ? 'project' : 'projects'}
                         </div>
 
-                        <div className={`projects-grid view-mode-${viewMode}`}>
+                        {/* Phase 46 — grid view scrolls inside a five-row box so the
+                            page height stays predictable as the catalogue grows.
+                            List and masonry views keep their natural height. */}
+                        <div
+                            className={`projects-grid view-mode-${viewMode}${viewMode === 'grid' ? ' projects-grid--scroll' : ''}`}
+                            {...(viewMode === 'grid' ? {
+                                style: { '--projects-viewport-max': projectsViewportMax },
+                                tabIndex: 0,
+                                role: 'region',
+                                'aria-label': `Projects grid, five rows visible, ${filteredAndSortedProjects.length} ${filteredAndSortedProjects.length === 1 ? 'project' : 'projects'}`
+                            } : {})}
+                        >
                             {filteredAndSortedProjects.map((project, index) => (
                                 <ProjectCard
                                     key={project.id}
