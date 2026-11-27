@@ -12,6 +12,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const { auth: protect, isOwner } = require('../middleware/auth.middleware');
+const { rateLimiter } = require('../middleware/rateLimitMiddleware');
 const {
     getLabEntries,
     getPublicLabEntries,
@@ -24,6 +25,7 @@ const {
     likeLabEntry
 } = require('../controllers/lab.controller');
 const { LAB_STATUSES, LAB_DOMAINS } = require('../models/LabEntry.model');
+const { uploadLabPoster, uploadPosterImage } = require('../controllers/lab.controller');
 
 const entryValidation = [
     body('title').trim().isLength({ min: 1, max: 120 }).withMessage('Title is required'),
@@ -48,6 +50,18 @@ router.post('/:id/like', protect, likeLabEntry);
 
 router.post('/', protect, isOwner, entryValidation, createLabEntry);
 router.put('/:id', protect, isOwner, entryValidation, updateLabEntry);
+
+// Phase 47 — card poster upload. Owner-only, image-only, and rate limited the
+// same way the media routes are. Declared before `/:id` reads so the path
+// cannot be swallowed by the parameterised routes above.
+router.post(
+    '/:id/poster',
+    protect,
+    isOwner,
+    rateLimiter(20),
+    uploadLabPoster,
+    uploadPosterImage
+);
 router.delete('/:id', protect, isOwner, deleteLabEntry);
 router.get('/:id', protect, getLabEntry);
 

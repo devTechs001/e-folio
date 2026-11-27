@@ -77,6 +77,29 @@ async function seedEntries() {
         );
         if (result.upsertedCount) created += 1;
         else updated += 1;
+
+        // Phase 47 — the bundled poster, applied only where there is none.
+        //
+        // It is deliberately NOT part of the `$set` above: re-running the seeder
+        // must never revert a card image the owner uploaded from the dashboard.
+        // This fills the gap on records seeded before the artwork existed, and
+        // leaves a custom poster alone.
+        if (entry.thumbnail || entry.images?.length) {
+            await LabEntry.updateOne(
+                {
+                    userId,
+                    slug: entry.slug,
+                    $or: [{ thumbnail: '' }, { thumbnail: { $exists: false } }]
+                },
+                {
+                    $set: {
+                        ...(entry.thumbnail ? { thumbnail: entry.thumbnail } : {}),
+                        ...(entry.images?.length ? { images: entry.images } : {})
+                    }
+                },
+                { runValidators: true }
+            );
+        }
     }
 
     console.log(`Lab experiments: ${created} created, ${updated} updated.`);
