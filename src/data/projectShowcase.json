@@ -62,6 +62,46 @@
         "saved-properties"
       ],
       "verifiedAt": "2026-11-03"
+    },
+    {
+      "slug": "pro-studio-master",
+      "title": "Pro-Studio-Master — Music Studio",
+      "label": "Featured · Open-source DAW",
+      "url": "https://pro-studio-master.netlify.app/",
+      "description": "A full music studio that runs on your own computer: a multi-track DAW with a piano roll, a 3D mixer, built-in instruments, live effects and beat tools. Open source, and your projects stay on your machine.",
+      "features": [
+        "Multi-track DAW timeline with clips, tempo, swing and a piano roll with quantise and sustain",
+        "3D mixer with rotary group racks for level, pan and width, plus master processing",
+        "Built-in synths, a performance keyboard with scales, scale lock and an arpeggiator",
+        "Multi-track recording with stereo and mic routing per track",
+        "CLAP plugin scanning in a sandbox, with audio time-warp and pitch shifting"
+      ],
+      "securityNotes": [
+        "Projects are saved on your computer, in apps/studio-server/data inside the project folder",
+        "The studio listens on 127.0.0.1 only — native builds on :8787, Docker on :8000",
+        "Installs to ~/pro-studio-master, with the folder overrideable via PSM_DIR",
+        "Only deliberate internet features: online beat search, update checks, and downloading the build",
+        "The setup script checks for the required tools and reports anything missing before building"
+      ],
+      "category": "Desktop",
+      "status": "live",
+      "technologies": [
+        "Python",
+        "Node.js",
+        "C++",
+        "Docker",
+        "CLAP"
+      ],
+      "tags": [
+        "music",
+        "daw",
+        "audio",
+        "open-source",
+        "local-first",
+        "desktop"
+      ],
+      "verifiedAt": "2026-11-03",
+      "linkLabel": "Open the studio site"
     }
   ]
 }

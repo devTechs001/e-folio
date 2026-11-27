@@ -32,15 +32,21 @@ const showcase = () => json('src/data/projectShowcase.json').projects;
 
 /* ------------------------------ the 18 projects ---------------------------- */
 
-check('all sixteen grid records are published, plus two featured cards', () => {
+check('all sixteen grid records are published, plus the featured cards', () => {
     // Phase 36 added SokoMesh and Nexus SaaS Platform on top of the fourteen
-    // original records; the two featured showcase cards are separate.
+    // original records; the featured showcase cards are separate, additional
+    // records. Phase 45 appended Pro-Studio-Master to that showcase set.
     const projects = snapshotProjects();
     assert.equal(projects.length, 16);
     for (const title of RESTORED) assert.ok(projects.some(p => p.title === title), `${title} is missing`);
-    assert.equal(showcase().length, 2);
-    assert.equal(projects.length + showcase().length, 18, 'the page must show 18 projects in total');
+    assert.equal(showcase().length, 3);
+    assert.equal(projects.length + showcase().length, 19, 'the page must show 19 projects in total');
     assert.equal(new Set(projects.map(p => p.title)).size, projects.length);
+    // A showcase record must never duplicate a grid record.
+    const gridTitles = new Set(projects.map(p => p.title));
+    for (const card of showcase()) {
+        assert.ok(!gridTitles.has(card.title), `${card.title} is also a grid project`);
+    }
 });
 
 check('the restored records come from the local seed file, not invented data', () => {
