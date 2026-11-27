@@ -129,7 +129,7 @@ check('other project datasets and every other seed file are left alone', () => {
     );
     assert.match(read('server/scripts/seedProjectShowcase.js'), /likes: 0/);
     const showcase = json('src/data/projectShowcase.json');
-    assert.equal(showcase.projects.length, 2);
+    assert.equal(showcase.projects.length, 3);
     for (const project of showcase.projects) assert.equal(project.likes, undefined);
 });
 

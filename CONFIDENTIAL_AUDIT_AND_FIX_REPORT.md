@@ -3417,6 +3417,73 @@ Not verified: the seeding itself, and any endpoint against a running database.
 
 ---
 
+## 3ar. Phase 45 — Pro-Studio-Master added to the public projects
+
+Owner request: *"https://pro-studio-master.netlify.app/ add this"*, then
+*"continue, add to projects"*.
+
+### What the link is
+
+Fetched and read before anything was written, so the card describes the real
+site rather than a guessed one. **Pro-Studio-Master** is a live, open-source
+music studio that runs on the user's own machine: a multi-track DAW with a piano
+roll, a 3D mixer with group racks, built-in synths and a performance keyboard,
+CLAP plugin scanning with time-warp, and local project storage. Its download page
+documents a one-command install, a native path (`127.0.0.1:8787`) and a Docker
+path (`127.0.0.1:8000`).
+
+### Where it went, and why
+
+Added to `src/data/projectShowcase.json` — the append-only set the file itself
+describes as *"add an object here to publish another link"*. That file is read by
+both the Projects page UI and the MongoDB seeder, so the card and the database
+cannot drift apart.
+
+The showcase is **how this repository adds an external link**, and it is what
+these cards always were: the two existing records are an external client portal
+and an external property marketplace. It is also the right boundary. The 16-record
+grid is a fixed catalogue whose count is asserted by several suites associated
+with the phase-36 target; adding a 17th external link to that grid would mean
+inventing a seeded "project" record for work that lives elsewhere, which is the
+kind of non-real record this report has been removing.
+
+The Projects page already renders the showcase above the grid and its layout
+auto-fits, so a third card needed no CSS change.
+
+### The card claims nothing it cannot support
+
+The detail was drawn only from the published pages: the DAW and piano roll, the
+3D mixer, the SYNTHs and performance keyboard, multi-track recording, sandboxed
+CLAP scanning and time-warp. The notes block states what the site itself states —
+projects saved on the machine, the server bound to loopback only, the install
+location, and the short list of features that deliberately use the internet.
+
+Deliberately **not** claimed: any uptime or user figure, any download count, and
+anything resembling a pentest, vulnerability assessment or security audit. This is
+a music application; implying an offensive-security scope would be a fabricated
+achievement of exactly the kind this project has been cleaning up.
+
+### Verification
+
+`tests/pro-studio-link.test.mjs` — **12 checks**, wired as `test:pro-studio-link`.
+It asserts the URL is stored verbatim and exactly once, that the two previously
+published showcase links are unchanged and the new record is appended last, that
+the record carries every field the card renders, that the copy restates only what
+the live site says, and that no pentest or metric claim was introduced.
+
+Six existing suites pinned the showcase total at two. Each was updated to assert
+the *invariant* rather than the count — the first two entries unchanged, slugs and
+URLs still unique, additional records allowed — so the next append does not have
+to touch them again.
+
+`npm test` — **556 checks, 0 failures**. `npm run check` — exit 0, **0 security
+findings**, 680 warnings (unchanged), build succeeds. The dev server serves
+`/projects` and all three showcase records resolve.
+
+Not verified: how the third card looks beside the other two in a real browser.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3688,6 +3755,13 @@ Not verified: the seeding itself, and any endpoint against a running database.
     `src/services/apiProxy.js` still carry legacy endpoints that have no route.
     They are unreachable today, but nothing stops a future import from reviving
     them; consider deleting them rather than leaving them as a trap.
+60. Phase 45 follow-up: **run `npm run seed:showcase`** so the new showcase record
+    exists in the database as well as on the page. The seeder reads the same JSON,
+    so it is picked up automatically — but it has to be run, and no database was
+    reachable here.
+61. Phase 45 follow-up: if the owner wants external links to appear *inside* the
+    16-card grid rather than above it, that is a product decision that collides
+    with the phase-36 grid target. Raise it before changing the grid.
 
 ---
 

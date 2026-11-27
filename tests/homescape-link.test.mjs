@@ -33,13 +33,15 @@ const homescape = () => showcase().projects.find(p => p.slug === 'homescape-prop
 
 check('the supplied URL is stored verbatim, once, as a second entry', () => {
     const data = showcase();
-    assert.equal(data.projects.length, 2);
+    // Phase 45: further entries may be appended (Pro-Studio-Master), so this
+    // asserts position and uniqueness rather than a fixed total.
+    assert.ok(data.projects.length >= 2);
     assert.equal(data.projects[0].slug, 'cellarkeep-client-portal');
     assert.equal(data.projects[1].slug, 'homescape-property-marketplace');
     assert.equal(data.projects[1].url, HOMESCAPE);
     assert.equal((read('src/data/projectShowcase.json').match(/homescape-pro\.netlify\.app\//g) || []).length, 1);
-    assert.equal(new Set(data.projects.map(p => p.slug)).size, 2);
-    assert.equal(new Set(data.projects.map(p => p.url)).size, 2);
+    assert.equal(new Set(data.projects.map(p => p.slug)).size, data.projects.length);
+    assert.equal(new Set(data.projects.map(p => p.url)).size, data.projects.length);
 });
 
 check('the link is a plain HTTPS URL with no credentials or query', () => {

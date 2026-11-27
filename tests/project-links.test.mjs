@@ -108,11 +108,19 @@ check('the three already-working project links are unchanged', () => {
     assert.equal(byTitle['E-Commerce Platform'].links.netlify, KEPT[0]);
 });
 
-check('the two featured showcase links are unchanged', () => {
+check('the previously published showcase links are unchanged', () => {
     const showcase = json('src/data/projectShowcase.json').projects;
-    assert.equal(showcase.length, 2);
+    // Phase 45 appended a third record; the existing two must not move or change.
+    assert.ok(showcase.length >= 2);
     assert.equal(showcase[0].url, 'https://liqourstor.netlify.app/client');
     assert.equal(showcase[1].url, 'https://homescape-pro.netlify.app/');
+    // Every showcase entry must remain a plain HTTPS link.
+    for (const project of showcase) {
+        const parsed = new URL(project.url);
+        assert.equal(parsed.protocol, 'https:');
+        assert.equal(parsed.username, '');
+        assert.equal(parsed.password, '');
+    }
 });
 
 /* ------------------------- no separate directory UI ----------------------- */

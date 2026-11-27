@@ -25,7 +25,7 @@ const check = (name, fn) => {
 
 check('the CellarKeep project link is stored exactly once in the shared JSON', () => {
     const data = json('src/data/projectShowcase.json');
-    assert.equal(data.projects.length, 2);
+    assert.equal(data.projects.length, 3);
     assert.equal(data.projects[0].url, URL);
     assert.equal(data.projects[0].slug, 'cellarkeep-client-portal');
     assert.equal(data.projects[0].title, 'CellarKeep — Client Portal');
