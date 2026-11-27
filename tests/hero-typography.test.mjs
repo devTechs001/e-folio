@@ -1,5 +1,9 @@
 /**
  * Phase 43 — the About hero name tag and the welcome wordmark were too small.
+ * Phase 48 — the owner asked for both to be larger again, so the scale was
+ * raised ~13%. The guarantees below are unchanged in kind: every step still has
+ * to grow across breakpoints, the name still has to outrank the global section
+ * scale, and the welcome line still has to stay smaller than the name.
  *
  * The name inherited the global section-heading scale and was then overridden
  * *down* to 4.25rem at 1280px+, so the owner's own name rendered smaller than an
@@ -45,9 +49,11 @@ check('the name is larger than before at every breakpoint', () => {
     const sizes = nameSizes(read('src/styles/About.css'));
     // base, 640, 768, 1024, 1280
     assert.equal(sizes.length, 5, `expected 5 steps, found ${sizes.length}: ${sizes}`);
-    // It used to inherit 2.5rem at the base breakpoint and 4.25rem above 1280.
+    // Phase 43 baseline was 2.5rem / 4.25rem; Phase 48 raised it again.
     assert.ok(sizes[0] > 2.5, `${sizes[0]}rem is not larger than the old 2.5rem`);
     assert.ok(sizes[4] > 4.25, `${sizes[4]}rem is not larger than the old 4.25rem`);
+    // The Phase 48 values, pinned so a later edit cannot quietly shrink them back.
+    assert.deepEqual(sizes, [3.3, 3.9, 4.6, 5.6, 6.4]);
     // Every step must grow as the viewport grows.
     for (let i = 1; i < sizes.length; i += 1) {
         assert.ok(sizes[i] > sizes[i - 1], `step ${i + 1} (${sizes[i]}) does not grow`);
@@ -87,6 +93,9 @@ check('a long name wraps instead of widening the column', () => {
     assert.match(block, /word-break: break-word;/);
     // Tight leading prevents the larger glyphs from crashing into the next line.
     assert.match(block, /line-height: 1\.08;/);
+    // Phase 48 — larger type needs the flex column to be allowed to shrink.
+    const heading = read('src/styles/About.css');
+    assert.match(heading, /\.about-section \.about-heading \{[^}]*min-width: 0;/);
 });
 
 /* ------------------------------- welcome tag ------------------------------- */
@@ -99,6 +108,8 @@ check('the welcome wordmark is larger at every breakpoint', () => {
     assert.ok(rem(main[1]) > 1.35, `floor ${main[1]}rem did not grow`);
     assert.ok(rem(main[2]) > 3.6, `mid ${main[2]}vw did not grow`);
     assert.ok(rem(main[3]) > 2.15, `ceiling ${main[3]}rem did not grow`);
+    // Phase 48: was clamp(1.85rem, 4.6vw, 3.1rem).
+    assert.deepEqual([rem(main[1]), rem(main[2]), rem(main[3])], [2.1, 5.2, 3.7]);
 
     // Narrow phones: was clamp(1.2rem, 6.2vw, 1.6rem).
     const narrow = css.slice(css.indexOf('@media (max-width: 420px)'));
@@ -106,6 +117,8 @@ check('the welcome wordmark is larger at every breakpoint', () => {
     assert.ok(phone, 'the narrow-phone clamp is missing');
     assert.ok(rem(phone[1]) > 1.2, `phone floor ${phone[1]}rem did not grow`);
     assert.ok(rem(phone[3]) > 1.6, `phone ceiling ${phone[3]}rem did not grow`);
+    // Phase 48: was clamp(1.55rem, 7.4vw, 2rem).
+    assert.deepEqual([rem(phone[1]), rem(phone[2]), rem(phone[3])], [1.75, 8.2, 2.3]);
 });
 
 check('the welcome wordmark still reads smaller than the name', () => {

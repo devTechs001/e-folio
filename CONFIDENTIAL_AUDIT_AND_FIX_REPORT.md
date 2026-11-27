@@ -3659,6 +3659,39 @@ path is covered by static and contract checks only.
 
 ---
 
+## 3au. Phase 48 — larger welcome tag and hero name
+
+Owner request: *"increase the font size of the welcome tag and the user name
+(Dev Techs)"*.
+
+Both were raised roughly 13% above the Phase 43 scale:
+
+| Element | Before | After |
+| --- | --- | --- |
+| Welcome tag (main) | `clamp(1.85rem, 4.6vw, 3.1rem)` | `clamp(2.1rem, 5.2vw, 3.7rem)` |
+| Welcome tag (≤420px) | `clamp(1.55rem, 7.4vw, 2rem)` | `clamp(1.75rem, 8.2vw, 2.3rem)` |
+| Name | 2.9 / 3.4 / 4.1 / 5 / 5.75 rem | 3.3 / 3.9 / 4.6 / 5.6 / 6.4 rem |
+
+The Phase 43 hierarchy is preserved and still enforced: each step grows across
+breakpoints, the name outranks the global section-heading scale at every step
+(`2.5 / 3 / 3.5 / 4.25 / 4.75rem`), and the welcome line stays smaller than the
+name.
+
+One guard was added rather than left to chance. The hero copy sits in a `.flex-1`
+column with no `min-width: 0`; at the larger size a long word can set the column's
+minimum width and push the hero wider than the viewport. `.about-heading` now sets
+`min-width: 0` and `max-width: 100%`, and a check covers it.
+
+`tests/hero-typography.test.mjs` pinned the old numbers, so it was updated to pin
+the new ones — the guarantees are unchanged in kind, only their expected values
+moved.
+
+Verification: `npm test` — 590 checks, 0 failures. `npm run check` — exit 0, 0
+security findings, 679 warnings, build 19.95s. `/` and `/about` both serve 200,
+and the compiled CSS carries the new values.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3957,6 +3990,9 @@ path is covered by static and contract checks only.
 68. Phase 47 follow-up: uploads live on the server's local disk. On an
     ephemeral host they do not survive a redeploy; moving posters to object
     storage is a deployment decision, not a code one.
+69. Phase 48 follow-up: the 6.4rem name at 1280px+ has not been eyeballed in a
+    browser. If it crowds the availability pill or the typed line, reduce the
+    top step only — the test pins all five values, so change them together.
 
 ---
 

@@ -5,7 +5,7 @@
   /* Phase 43 — raised so the welcome line reads as a hero label rather than
      a caption. The vw term keeps it proportional on medium screens and the
      ceiling stops it overwhelming the name below it. */
-  --welcome-size: clamp(1.85rem, 4.6vw, 3.1rem);
+  --welcome-size: clamp(2.1rem, 5.2vw, 3.7rem);
   --welcome-depth: 0.09em;
   --welcome-accent: var(--mainColor, #00efff);
   --welcome-accent-2: #8b5cf6;
@@ -185,7 +185,7 @@
   .welcome-3d {
     /* Narrow phones: still larger than before, but the phrase has to stay on
        one or two comfortable lines. */
-    --welcome-size: clamp(1.55rem, 7.4vw, 2rem);
+    --welcome-size: clamp(1.75rem, 8.2vw, 2.3rem);
   }
   .welcome-3d__text {
     gap: 0.02em 0.26em;
