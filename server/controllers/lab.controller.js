@@ -207,3 +207,87 @@ exports.likeLabEntry = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to record like' });
     }
 };
+
+/* ------------------------------------------------- poster upload (47) --- */
+
+/**
+ * Multer for Lab card posters.
+ *
+ * Memory storage, like the avatar flow: the buffer goes to sharp for a fixed
+ * resize, so an owner can never park an arbitrary 5 MB file in the repo and a
+ * hostile filename never reaches the filesystem.
+ */
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+const sharp = require('sharp');
+
+const POSTER_TYPES = /^image\/(jpeg|jpg|png|webp|gif)$/i;
+
+exports.uploadLabPoster = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, cb) => {
+        if (!POSTER_TYPES.test(file.mimetype)) {
+            return cb(new Error('Only JPEG, PNG, WebP or GIF images are accepted'));
+        }
+        cb(null, true);
+    }
+}).single('image');
+
+/**
+ * POST /api/lab/:id/poster — store an uploaded card poster.
+ *
+ * The card is 196px tall in a card of at least 300px wide, so 1200x800 covers
+ * a 2x display with room for the hover zoom. Output is always JPEG at a fixed
+ * width, which also strips any metadata the original carried.
+ */
+exports.uploadPosterImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image was uploaded' });
+        }
+
+        const entry = await LabEntry.findById(req.params.id).select('_id title slug');
+        if (!entry) {
+            return res.status(404).json({ success: false, message: 'Lab entry not found' });
+        }
+
+        const dir = path.join(__dirname, '../uploads/lab');
+        await fs.mkdir(dir, { recursive: true });
+
+        const filename = `lab_${entry._id}_${Date.now()}.jpg`;
+        await sharp(req.file.buffer)
+            .resize(1200, 800, { fit: 'cover', position: 'center' })
+            .jpeg({ quality: 88, progressive: true })
+            .toFile(path.join(dir, filename));
+
+        const url = `/uploads/lab/${filename}`;
+
+        // Replace, never append: a card shows one poster, and leaving the old
+        // file in `images[]` would grow the array on every re-upload.
+        const previous = entry.thumbnail;
+        await LabEntry.updateOne(
+            { _id: entry._id },
+            { $set: { thumbnail: url, images: [{ url, caption: entry.title || '' }] } },
+            { runValidators: true }
+        );
+
+        // Best-effort cleanup of the poster this one replaced. Only files this
+        // endpoint wrote are touched — never a bundled or remote URL.
+        if (typeof previous === 'string' && previous.startsWith('/uploads/lab/')) {
+            const stale = path.join(__dirname, '..', previous.replace(/^\/uploads\//, 'uploads/'));
+            fs.unlink(stale).catch(() => {});
+        }
+
+        res.json({
+            success: true,
+            message: 'Card image updated',
+            thumbnail: url,
+            project: await LabEntry.findById(entry._id).select(PUBLIC_FIELDS).lean()
+        });
+    } catch (error) {
+        console.error('Error uploading lab poster:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to save the card image' });
+    }
+};

@@ -31,7 +31,14 @@
       "links": {
         "live": "https://net-gate-portal.netlify.app/",
         "demo": "https://net-gate-portal.netlify.app/"
-      }
+      },
+      "thumbnail": "/images/lab/network-recon-suite.jpg",
+      "images": [
+        {
+          "url": "/images/lab/network-recon-suite.jpg",
+          "caption": "Network reconnaissance workbench, glowing node map"
+        }
+      ]
     },
     {
       "slug": "wifi-security-playground",
@@ -61,7 +68,14 @@
       "featured": false,
       "links": {
         "github": "https://github.com/devTechs001/wifi-security-lab"
-      }
+      },
+      "thumbnail": "/images/lab/wifi-security-playground.jpg",
+      "images": [
+        {
+          "url": "/images/lab/wifi-security-playground.jpg",
+          "caption": "Wi-Fi signal analysis, shielded access point"
+        }
+      ]
     },
     {
       "slug": "web-pentest-lab-owasp",
@@ -91,7 +105,14 @@
       "featured": true,
       "links": {
         "github": "https://github.com/devTechs001/web-pentest-lab"
-      }
+      },
+      "thumbnail": "/images/lab/web-pentest-lab-owasp.jpg",
+      "images": [
+        {
+          "url": "/images/lab/web-pentest-lab-owasp.jpg",
+          "caption": "Web application pentest harness"
+        }
+      ]
     },
     {
       "slug": "cloud-iam-misconfig-sentinel",
@@ -121,7 +142,14 @@
       "featured": true,
       "links": {
         "github": "https://github.com/devTechs001/cloud-iam-sentinel"
-      }
+      },
+      "thumbnail": "/images/lab/cloud-iam-misconfig-sentinel.jpg",
+      "images": [
+        {
+          "url": "/images/lab/cloud-iam-misconfig-sentinel.jpg",
+          "caption": "Cloud IAM configuration sentinel"
+        }
+      ]
     }
   ]
 }

@@ -71,6 +71,9 @@ const LabManager = () => {
     const [draft, setDraft] = useState(blankDraft);
     const [showForm, setShowForm] = useState(false);
     const [posterDrafts, setPosterDrafts] = useState({});
+    // Phase 47 — per-entry upload progress, so two cards never share a spinner
+    // and a failed upload leaves the click target usable.
+    const [uploadingId, setUploadingId] = useState('');
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -160,6 +163,48 @@ const LabManager = () => {
             notifyError?.(error?.message || 'Could not save the image.');
         } finally {
             setBusy(false);
+        }
+    };
+
+    /**
+     * Phase 47 — upload a real file instead of pasting a URL.
+     *
+     * Client-side guards mirror the server's, but exist to fail fast with a
+     * clear message rather than to be the only check: the server re-validates
+     * type and size, and only ever writes a re-encoded JPEG.
+     */
+    const uploadPoster = async (entry, file) => {
+        if (!owner || !file) return;
+        const id = entry._id || entry.id;
+        if (!id) return;
+
+        if (!/^image\/(jpeg|jpg|png|webp|gif)$/i.test(file.type)) {
+            notifyError?.('Choose a JPEG, PNG, WebP or GIF image.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            notifyError?.('That image is over 5 MB. Use a smaller one.');
+            return;
+        }
+
+        setUploadingId(id);
+        try {
+            const response = await ApiService.uploadLabPoster(id, file);
+            if (response?.success === false) throw new Error(response.message || 'Could not upload the image');
+            // Drop any stale URL the owner had typed for this card.
+            setPosterDrafts(prev => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            notifySuccess('Card image uploaded — the public Lab card uses it now.');
+            window.dispatchEvent(new CustomEvent('settingsChanged'));
+            publishLabChanged();
+            await load();
+        } catch (error) {
+            notifyError?.(error?.message || 'Could not upload the image.');
+        } finally {
+            setUploadingId('');
         }
     };
 
@@ -377,6 +422,45 @@ const LabManager = () => {
                                         </div>
                                         {owner && (
                                             <div className="flex flex-wrap items-center gap-2 border-t border-slate-800 mt-2 pt-2">
+                                                {/* Phase 47 — the poster this card will actually publish. */}
+                                                <div className="flex items-center gap-2 w-full">
+                                                    {posterOf(entry) ? (
+                                                        <img
+                                                            src={posterOf(entry)}
+                                                            alt={`Card image for ${entry.title}`}
+                                                            className="h-10 w-16 rounded object-cover border border-slate-700 shrink-0"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-10 w-16 rounded border border-dashed border-slate-700 shrink-0 grid place-items-center text-[10px] text-slate-500">
+                                                            No image
+                                                        </div>
+                                                    )}
+                                                    <label
+                                                        className={`text-xs px-2 py-1 rounded border cursor-pointer ${
+                                                            uploadingId === (entry._id || entry.id)
+                                                                ? 'border-slate-800 text-slate-500'
+                                                                : 'border-slate-700 text-slate-300 hover:border-cyan-500'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="file"
+                                                            accept="image/jpeg,image/png,image/webp,image/gif"
+                                                            className="sr-only"
+                                                            disabled={uploadingId === (entry._id || entry.id)}
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                // Reset so choosing the same file twice still fires.
+                                                                e.target.value = '';
+                                                                if (file) uploadPoster(entry, file);
+                                                            }}
+                                                        />
+                                                        {uploadingId === (entry._id || entry.id)
+                                                            ? 'Uploading…'
+                                                            : posterOf(entry) ? 'Replace image' : 'Upload image'}
+                                                    </label>
+                                                    <span className="text-[11px] text-slate-500">JPEG, PNG, WebP or GIF · max 5 MB</span>
+                                                </div>
                                                 <label className="sr-only" htmlFor={`poster-${entry._id || entry.id}`}>
                                                     Card image URL for {entry.title}
                                                 </label>

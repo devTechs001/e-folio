@@ -337,6 +337,21 @@ class ApiService {
         });
     }
 
+    /**
+     * Phase 47 — upload a real image file as a Lab card poster.
+     * FormData goes through untouched; the client sets the multipart boundary.
+     */
+    async uploadLabPoster(id, file) {
+        if (!file) throw new Error('Choose an image first');
+        const form = new FormData();
+        form.append('image', file);
+        return this.request(`/lab/${id}/poster`, {
+            method: 'POST',
+            body: form,
+            timeout: 60000
+        });
+    }
+
     async deleteLabEntry(id) {
         return this.request(`/lab/${id}`, {
             method: 'DELETE'

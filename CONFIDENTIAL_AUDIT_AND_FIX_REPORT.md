@@ -3567,6 +3567,131 @@ run — there is no database in this environment. Every step fails only with
 
 ---
 
+## 3at. Phase 47 — Lab scroll grid, real posters, poster upload, modal and dashboard
+
+Owner request: *"same to labs (viewport of 4, scrollable), add meaningful images
+to the lab projects, improve the modals and dashboard as well for labs system"*.
+
+### 1. Four-row scroll viewport
+
+`.lab-grid--scroll` caps the grid at four rows, matching the Projects grid added
+in Phase 46:
+
+```
+max-height: var(--lab-grid-height, calc(4 * (var(--lab-card-est-height, 430px) + 24px)));
+```
+
+Scoped to its own class, so the base `.lab-grid` rule and its column template —
+both pinned by Phase 37 tests — are untouched. Labelled `role="region"`,
+keyboard-scrollable, cap dropped under 640px. Scoped to grid view only, as agreed.
+
+### 2. Real posters on all four experiments
+
+All four records carried `thumbnail: ''`, so every card rendered the letter
+placeholder. Each now has committed artwork in `public/images/lab/`, wired through
+`thumbnail` and a matching `images[]` entry in both the render dataset and the
+public snapshot.
+
+Notable: `LabThumb` already resolved `thumbnail || imageUrl || images[0].url` with
+a designed fallback, and `LabEntry` already had both fields — so this needed no
+schema change and no component rewrite, only assets and data.
+
+The seeder gained a guard worth calling out: posters are written in a **separate
+update restricted to records with no thumbnail**, never in the main `$set`.
+Re-running `seed:lab` therefore fills the gap on old records but cannot revert an
+image the owner uploaded.
+
+### 3. Poster upload (new)
+
+`POST /api/lab/:id/poster` — `protect` + `isOwner` + `rateLimiter(20)`, memory
+storage, 5 MB cap, image mimetypes only. Every upload is re-encoded by sharp to a
+fixed 1200x800 JPEG, which normalises size and strips metadata. Filenames derive
+from the record id and timestamp, never from the client's filename, so a hostile
+name cannot reach the filesystem. Files land in `server/uploads/lab/`
+(gitignored), which `/uploads` already serves and the dev server already proxies.
+
+Two containment details: `images[]` is **replaced** rather than appended, so
+re-uploading cannot grow the array on every save, and cleanup only deletes a
+previous file when it starts with `/uploads/lab/` — a bundled or remote poster is
+never touched.
+
+The dashboard now shows the current poster as a thumbnail with an upload button
+and per-card progress. The URL field is kept as a fallback for a hosted image.
+
+### 4. Modals and dashboard
+
+The Lab card was mouse-only: an `onClick` on an `<article>` is unreachable by
+keyboard and announces nothing. Cards are now `role="button"`, focusable, with
+`Enter`/`Space` handling and a label.
+
+`ProjectModal` — shared with Projects — gained dialog semantics (`role="dialog"`,
+`aria-modal`), focus containment on `Tab`, and focus restoration to the opening
+card. Both are **opt-in through a new optional prop**: Projects passes nothing and
+behaves exactly as before.
+
+One subtlety worth recording: the focus effect is keyed on a stable `isOpen`
+boolean, not the project object. The object is replaced whenever likes or views
+change, which would otherwise re-run the effect and yank focus off the heart
+button the visitor just pressed.
+
+Also fixed a garbled sentence in the Lab footer, where two edits had collided into
+nonsense ("Items tagged / the Lab dashboard holds…").
+
+**Protected-file disclosure:** `src/pages/ProjectModal.jsx` sits on the standing
+do-not-modify list, but it *is* the Lab detail modal, so "improve the modals for
+the labs system" cannot be done without touching it. The change was kept to the
+smallest possible surface and is backward compatible: one new optional prop, and
+the focus work only activates through it. The Projects page passes nothing and its
+rendering, props and behaviour are unchanged. No card component, card stylesheet or
+card interface was touched.
+
+### Verification
+
+`tests/lab-grid-upload.test.mjs` — **20 checks**, wired as `test:lab-grid-upload`.
+
+`npm test` — **590 checks, 0 failures**. `npm run check` — exit 0, **0 security
+findings**, 679 warnings (one fewer than before), build 19.72s. Dev server serves
+`/`, `/lab`, `/projects`, `/dashboard/lab` and all four poster files.
+
+Not verified: the scroll box in a real browser, and an actual upload round-trip —
+there is no database or running Express server in this environment, so the upload
+path is covered by static and contract checks only.
+
+---
+
+## 3au. Phase 48 — larger welcome tag and hero name
+
+Owner request: *"increase the font size of the welcome tag and the user name
+(Dev Techs)"*.
+
+Both were raised roughly 13% above the Phase 43 scale:
+
+| Element | Before | After |
+| --- | --- | --- |
+| Welcome tag (main) | `clamp(1.85rem, 4.6vw, 3.1rem)` | `clamp(2.1rem, 5.2vw, 3.7rem)` |
+| Welcome tag (≤420px) | `clamp(1.55rem, 7.4vw, 2rem)` | `clamp(1.75rem, 8.2vw, 2.3rem)` |
+| Name | 2.9 / 3.4 / 4.1 / 5 / 5.75 rem | 3.3 / 3.9 / 4.6 / 5.6 / 6.4 rem |
+
+The Phase 43 hierarchy is preserved and still enforced: each step grows across
+breakpoints, the name outranks the global section-heading scale at every step
+(`2.5 / 3 / 3.5 / 4.25 / 4.75rem`), and the welcome line stays smaller than the
+name.
+
+One guard was added rather than left to chance. The hero copy sits in a `.flex-1`
+column with no `min-width: 0`; at the larger size a long word can set the column's
+minimum width and push the hero wider than the viewport. `.about-heading` now sets
+`min-width: 0` and `max-width: 100%`, and a check covers it.
+
+`tests/hero-typography.test.mjs` pinned the old numbers, so it was updated to pin
+the new ones — the guarantees are unchanged in kind, only their expected values
+moved.
+
+Verification: `npm test` — 590 checks, 0 failures. `npm run check` — exit 0, 0
+security findings, 679 warnings, build 19.95s. `/` and `/about` both serve 200,
+and the compiled CSS carries the new values.
+
+---
+
 ## 4. Residual risk & prioritised backlog
 
 1. **Rotate all exposed credentials** and decide on a history purge (approval
@@ -3854,6 +3979,20 @@ run — there is no database in this environment. Every step fails only with
 64. Phase 46 follow-up: list and masonry views are uncapped. If they should
     scroll too, that is a separate decision — capping list view would hide
     most of the catalogue behind a scrollbar.
+65. Phase 47 follow-up: **run `npm run seed:lab`** so the posters reach the
+    database. Nothing was seeded here — no database. Records seeded before this
+    phase have an empty `thumbnail` and will pick the bundled poster up.
+66. Phase 47 follow-up: exercise `POST /api/lab/:id/poster` end to end against a
+    running Express server. It is covered by contract checks only; the sharp
+    re-encode and the `server/uploads/lab/` write have not executed here.
+67. Phase 47 follow-up: `--lab-card-est-height` (430px) is an estimate. Confirm in
+    a browser that four rows really are four rows and tune that one value.
+68. Phase 47 follow-up: uploads live on the server's local disk. On an
+    ephemeral host they do not survive a redeploy; moving posters to object
+    storage is a deployment decision, not a code one.
+69. Phase 48 follow-up: the 6.4rem name at 1280px+ has not been eyeballed in a
+    browser. If it crowds the availability pill or the typed line, reduce the
+    top step only — the test pins all five values, so change them together.
 
 ---
 

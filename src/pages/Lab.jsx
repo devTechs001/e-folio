@@ -28,6 +28,10 @@ import '../styles/Lab.css';
 // The old `lab-sample` tag concept is gone — these are genuine experiments the
 // owner maintains, not disposable placeholders.
 const LAB_SEED_KEY = 'lab-core';
+// Four rows of a typical card plus its 24px gap. `--lab-card-est-height` is the
+// single value to tune if the real card runs taller; below 640px the cap is
+// dropped in CSS, because one column is the whole grid there.
+const LAB_GRID_HEIGHT = 'calc(4 * (var(--lab-card-est-height, 430px) + 24px))';
 const CACHE_KEY = 'lab_bundle';
 
 /**
@@ -421,8 +425,17 @@ const Lab = ({ embedded = true }) => {
           </div>
         </div>
 
-        {/* Project Grid */}
-        <motion.div layout className="lab-grid">
+        {/* Experiment Grid — Phase 47 caps the viewport at four rows so the
+            section height stays predictable as experiments are added. The box is
+            a labelled region so keyboard users can scroll it. */}
+        <motion.div
+          layout
+          className="lab-grid lab-grid--scroll"
+          style={{ '--lab-grid-height': LAB_GRID_HEIGHT }}
+          tabIndex={0}
+          role="region"
+          aria-label={`Lab experiments, four rows visible, ${visible.length} shown`}
+        >
           <AnimatePresence mode="popLayout">
             {visible.map((project, index) => {
               const demo = getDemoLink(project.links);
@@ -442,6 +455,20 @@ const Lab = ({ embedded = true }) => {
                 <motion.article
                   layout
                   key={cardKey}
+                  // Phase 47 — the card open/close was mouse-only: an `onClick`
+                  // on an article is not reachable by keyboard and announces
+                  // nothing. It is now a real button role with its own label,
+                  // and focus returns here when the modal closes.
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open details for ${project.title}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedProject(project);
+                    }
+                  }}
+                  data-lab-card={cardKey}
                   className={`lab-card group cursor-pointer hover:border-cyan-500/50 ${seedRecord ? 'lab-card-sample' : ''}`}
                   initial={{ opacity: 0, y: 24, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -606,8 +633,8 @@ const Lab = ({ embedded = true }) => {
           <Filter size={13} />
           {owner ? (
             <span>
-              Projects, skills and hobbies are live database records. Items tagged
-              the Lab dashboard holds the experiments shown here. They live in their own collection, separate from portfolio projects.
+              These experiments are live database records in their own collection,
+              separate from portfolio projects. Manage them from the Lab dashboard.
             </span>
           ) : (
             <span>Experiments, tools and interests from the portfolio. New entries are added regularly.</span>
@@ -619,6 +646,7 @@ const Lab = ({ embedded = true }) => {
           <ProjectModal
             project={selectedProject}
             onClose={() => setSelectedProject(null)}
+            returnFocusSelector={`[data-lab-card="${selectedProject._id || selectedProject.id}"]`}
             onProjectUpdate={(updated) => {
               setProjects(prev => prev.map(p => (p.id === updated.id || p._id === updated._id) ? updated : p));
               setSelectedProject(updated);

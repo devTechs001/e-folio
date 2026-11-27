@@ -1619,8 +1619,13 @@
           "difficulty": "intermediate",
           "featured": true,
           "seedKey": "lab-core",
-          "images": [],
-          "thumbnail": "",
+          "images": [
+            {
+              "url": "/images/lab/network-recon-suite.jpg",
+              "caption": "Network reconnaissance workbench, glowing node map"
+            }
+          ],
+          "thumbnail": "/images/lab/network-recon-suite.jpg",
           "views": 0,
           "likes": 0,
           "updatedAt": null
@@ -1655,8 +1660,13 @@
           "difficulty": "intermediate",
           "featured": false,
           "seedKey": "lab-core",
-          "images": [],
-          "thumbnail": "",
+          "images": [
+            {
+              "url": "/images/lab/wifi-security-playground.jpg",
+              "caption": "Wi-Fi signal analysis, shielded access point"
+            }
+          ],
+          "thumbnail": "/images/lab/wifi-security-playground.jpg",
           "views": 0,
           "likes": 0,
           "updatedAt": null
@@ -1691,8 +1701,13 @@
           "difficulty": "introductory",
           "featured": true,
           "seedKey": "lab-core",
-          "images": [],
-          "thumbnail": "",
+          "images": [
+            {
+              "url": "/images/lab/web-pentest-lab-owasp.jpg",
+              "caption": "Web application pentest harness"
+            }
+          ],
+          "thumbnail": "/images/lab/web-pentest-lab-owasp.jpg",
           "views": 0,
           "likes": 0,
           "updatedAt": null
@@ -1727,8 +1742,13 @@
           "difficulty": "advanced",
           "featured": true,
           "seedKey": "lab-core",
-          "images": [],
-          "thumbnail": "",
+          "images": [
+            {
+              "url": "/images/lab/cloud-iam-misconfig-sentinel.jpg",
+              "caption": "Cloud IAM configuration sentinel"
+            }
+          ],
+          "thumbnail": "/images/lab/cloud-iam-misconfig-sentinel.jpg",
           "views": 0,
           "likes": 0,
           "updatedAt": null

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     Edit3, Save, X, ExternalLink, Github, Calendar, Tag, Users, Star, 
     Heart, Share2, Bookmark, Eye, Clock, ChevronLeft, ChevronRight,
@@ -9,7 +9,15 @@ import { useNotifications } from '../components/NotificationSystem';
 import apiService from '../services/api.service';
 import '../styles/ProjectModal.css';
 
-const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
+/**
+ * Phase 47 — dialog semantics.
+ *
+ * `returnFocusSelector` is optional and opt-in: the Lab page passes the card
+ * that opened the modal so focus goes back there on close. The Projects page
+ * passes nothing and keeps its previous behaviour, so this component's public
+ * shape and every existing call site stay valid.
+ */
+const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate, returnFocusSelector }) => {
     const { user } = useAuth();
     const { success, error } = useNotifications();
     const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -34,6 +42,7 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
         netlifyUrl: project?.links?.netlify || project?.netlifyUrl || ''
     });
     const [saving, setSaving] = useState(false);
+    const dialogRef = useRef(null);
 
     const projectId = project?._id || project?.id;
 
@@ -54,13 +63,76 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
         };
     }, [project, projectId]);
 
+    // Kept current so the focus effect below can call the latest close handler
+    // without re-running (and re-stealing focus) every time the project updates.
+    const closeRef = useRef(null);
+    // A stable boolean rather than the project object: the object is replaced
+    // whenever likes/views change, and the focus effect must not re-run then.
+    const isOpen = Boolean(project);
+
+    /**
+     * Phase 47 — focus stays inside the dialog.
+     *
+     * The modal covers the page but `Tab` used to walk straight out into the
+     * content behind it, which for a keyboard or screen-reader user means
+     * interacting with a page they cannot see. Focus moves in on open, cycles
+     * within the dialog, and returns to the element that opened it on close.
+     */
     useEffect(() => {
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') handleClose();
+        if (!isOpen) return undefined;
+        const opener = document.activeElement;
+
+        const focusables = () => {
+            const node = dialogRef.current;
+            if (!node) return [];
+            return Array.from(node.querySelectorAll(
+                'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+            )).filter(el => el.offsetParent !== null || el === document.activeElement);
         };
-        window.addEventListener('keydown', handleEscape);
-        return () => window.removeEventListener('keydown', handleEscape);
-    }, []);
+
+        // Move focus into the dialog on the next frame, after it has painted.
+        const enter = requestAnimationFrame(() => {
+            const [first] = focusables();
+            if (first) first.focus();
+            else dialogRef.current?.focus();
+        });
+
+        const handleKey = (e) => {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                closeRef.current?.();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            const items = focusables();
+            if (!items.length) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKey, true);
+        return () => {
+            cancelAnimationFrame(enter);
+            document.removeEventListener('keydown', handleKey, true);
+            // Return focus to the card that opened this dialog, when one asked.
+            const selector = returnFocusSelector;
+            if (selector) {
+                const target = document.querySelector(selector);
+                if (target) { target.focus(); return; }
+            }
+            if (opener && typeof opener.focus === 'function' && document.contains(opener)) opener.focus();
+        };
+        // Keyed on the record, not the object identity: liking a project
+        // replaces the object, and re-running here would yank focus off the
+        // heart button the visitor just pressed.
+    }, [isOpen, projectId, returnFocusSelector]);
 
     if (!project) {
         return null;
@@ -72,6 +144,8 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
             if (onClose) onClose();
         }, 300);
     };
+
+    closeRef.current = handleClose;
 
     const handleBackdropClick = (e) => {
         if (e.target === e.currentTarget) {
@@ -224,7 +298,14 @@ const ProjectModal = ({ project, onClose, onImageClick, onProjectUpdate }) => {
             className={`modal-backdrop ${isClosing ? 'closing' : ''}`}
             onClick={handleBackdropClick}
         >
-            <div className={`modal-container ${isClosing ? 'closing' : ''}`}>
+            <div
+                className={`modal-container ${isClosing ? 'closing' : ''}`}
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={project.title || 'Project details'}
+                tabIndex={-1}
+            >
                 {/* Close Button */}
                 <button 
                     className="modal-close-btn"
